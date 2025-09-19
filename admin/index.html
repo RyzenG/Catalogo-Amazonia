@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel administrativo | Catálogo Amazonia</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <section id="login-view" class="card">
+      <h1>Panel administrativo</h1>
+      <p class="subtitle">Inicia sesión para gestionar el catálogo.</p>
+      <form id="login-form" class="form">
+        <label for="login-username">Usuario</label>
+        <input type="text" id="login-username" name="username" autocomplete="username" required>
+
+        <label for="login-password">Contraseña</label>
+        <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+
+        <button type="submit" class="primary" id="login-submit">Ingresar</button>
+        <p id="login-error" class="message error" role="alert" hidden></p>
+      </form>
+    </section>
+
+    <section id="admin-view" class="hidden">
+      <header class="top-bar">
+        <div>
+          <h1>Catálogo Amazonia</h1>
+          <p class="subtitle">Gestiona categorías y productos del catálogo público.</p>
+        </div>
+        <div class="session-info">
+          <span id="session-username"></span>
+          <button id="logout-button" class="secondary">Cerrar sesión</button>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="card">
+          <header class="section-header">
+            <div>
+              <h2>Categorías</h2>
+              <p class="subtitle">Crea y organiza tus categorías.</p>
+            </div>
+            <button id="category-reset" class="link" type="button">Nueva categoría</button>
+          </header>
+
+          <form id="category-form" class="form">
+            <input type="hidden" id="category-id">
+
+            <label for="category-name">Nombre</label>
+            <input type="text" id="category-name" required>
+
+            <label for="category-slug">Slug (opcional)</label>
+            <input type="text" id="category-slug" placeholder="macetas">
+
+            <label for="category-description">Descripción</label>
+            <textarea id="category-description" rows="3" placeholder="Describe brevemente la categoría"></textarea>
+
+            <button type="submit" class="primary" id="category-submit">Guardar categoría</button>
+            <p id="category-message" class="message" hidden></p>
+          </form>
+
+          <ul id="category-list" class="list"></ul>
+        </section>
+
+        <section class="card">
+          <header class="section-header">
+            <div>
+              <h2>Productos</h2>
+              <p class="subtitle">Gestiona los productos y sus especificaciones.</p>
+            </div>
+            <button id="product-reset" class="link" type="button">Nuevo producto</button>
+          </header>
+
+          <div class="filters">
+            <label for="product-filter">Filtrar por categoría</label>
+            <select id="product-filter"></select>
+          </div>
+
+          <form id="product-form" class="form">
+            <input type="hidden" id="product-id">
+
+            <label for="product-name">Nombre</label>
+            <input type="text" id="product-name" required>
+
+            <label for="product-slug">Slug (opcional)</label>
+            <input type="text" id="product-slug" placeholder="maceta-tropical">
+
+            <label for="product-category">Categoría</label>
+            <select id="product-category" required></select>
+
+            <label for="product-icon">Icono (emoji opcional)</label>
+            <input type="text" id="product-icon" maxlength="4" placeholder="🪴">
+
+            <label for="product-price">Precio (opcional)</label>
+            <input type="number" id="product-price" step="0.01" min="0" placeholder="0.00">
+
+            <label for="product-image">URL de imagen (opcional)</label>
+            <input type="url" id="product-image" placeholder="https://...">
+
+            <label for="product-description">Descripción</label>
+            <textarea id="product-description" rows="3" required></textarea>
+
+            <label for="product-specs">Especificaciones (una por línea, formato: etiqueta: valor)</label>
+            <textarea id="product-specs" rows="6" placeholder="Material: Concreto reforzado"></textarea>
+
+            <button type="submit" class="primary" id="product-submit">Guardar producto</button>
+            <p id="product-message" class="message" hidden></p>
+          </form>
+
+          <div id="product-list" class="list products"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <template id="category-item-template">
+    <li class="list-item">
+      <div class="item-body">
+        <h3 class="item-title"></h3>
+        <p class="item-subtitle"></p>
+      </div>
+      <div class="item-actions">
+        <button class="secondary item-edit">Editar</button>
+        <button class="danger item-delete">Eliminar</button>
+      </div>
+    </li>
+  </template>
+
+  <template id="product-card-template">
+    <article class="product-card">
+      <header>
+        <span class="product-icon"></span>
+        <div>
+          <h3 class="product-title"></h3>
+          <p class="product-meta"></p>
+        </div>
+      </header>
+      <p class="product-description"></p>
+      <ul class="product-specs"></ul>
+      <footer class="item-actions">
+        <button class="secondary product-edit">Editar</button>
+        <button class="danger product-delete">Eliminar</button>
+      </footer>
+    </article>
+  </template>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
