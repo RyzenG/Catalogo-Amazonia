@@ -5,24 +5,6 @@
     <title>Content Manager</title>
   </head>
   <body>
-    <!-- Netlify Identity (para login/registro con email/clave) -->
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <script>
-      if (window.netlifyIdentity) {
-        // Si no hay usuario, abre el modal de registro
-        window.netlifyIdentity.on("init", (user) => {
-          if (!user) {
-            window.netlifyIdentity.open("signup"); // fuerza "crear cuenta"
-          }
-        });
-        // Tras login/registro, manda al CMS
-        window.netlifyIdentity.on("login", () => {
-          document.location.href = "/admin/";
-        });
-      }
-    </script>
-
-    <!-- El CMS -->
-    <script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
