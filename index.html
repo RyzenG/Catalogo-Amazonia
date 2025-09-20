@@ -583,11 +583,11 @@
     <div class="nav-container">
         <nav>
             <div class="nav-buttons">
-                <button class="nav-btn active" onclick="showCategory('macetas')">🪴 Macetas</button>
-                <button class="nav-btn" onclick="showCategory('pisos')">⬜ Pisos</button>
-                <button class="nav-btn" onclick="showCategory('revestimientos')">🏗️ Revestimientos</button>
-                <button class="nav-btn" onclick="showCategory('mobiliario')">🪑 Mobiliario</button>
-                <button class="nav-btn" onclick="showCategory('decoracion')">🎨 Decoración</button>
+                <button class="nav-btn active" onclick="showCategory(event, 'macetas')">🪴 Macetas</button>
+                <button class="nav-btn" onclick="showCategory(event, 'pisos')">⬜ Pisos</button>
+                <button class="nav-btn" onclick="showCategory(event, 'revestimientos')">🏗️ Revestimientos</button>
+                <button class="nav-btn" onclick="showCategory(event, 'mobiliario')">🪑 Mobiliario</button>
+                <button class="nav-btn" onclick="showCategory(event, 'decoracion')">🎨 Decoración</button>
             </div>
         </nav>
     </div>
@@ -1024,18 +1024,20 @@
         });
 
         // Función para mostrar categorías
-        function showCategory(categoryId) {
+        function showCategory(event, categoryId) {
             // Ocultar todas las categorías
             const categories = document.querySelectorAll('.category');
             categories.forEach(cat => cat.classList.remove('active'));
-            
+
             // Mostrar la categoría seleccionada
             document.getElementById(categoryId).classList.add('active');
-            
+
             // Actualizar botones de navegación
             const buttons = document.querySelectorAll('.nav-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
             
             // Scroll suave al inicio del contenido
             window.scrollTo({
