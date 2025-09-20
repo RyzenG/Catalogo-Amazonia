@@ -935,7 +935,11 @@
         function generateCatalogHTML() {
             const config = catalogData.config;
             const products = catalogData.products;
-            
+
+            const firstCategoryWithProducts = Object.keys(products).find(category =>
+                products[category] && products[category].length > 0
+            ) || null;
+
             // Generate products HTML for each category
             let productsHTML = '';
             let productDataJS = {};
@@ -954,7 +958,7 @@
                     
                     productsHTML += `
         <!-- ${catInfo.title} Category -->
-        <div class="category${category === 'macetas' ? ' active' : ''}" id="${category}">
+        <div class="category${category === firstCategoryWithProducts ? ' active' : ''}" id="${category}">
             <h2 class="category-title">${catInfo.title}</h2>
             <p class="category-description">${catInfo.desc}</p>
             <div class="products-grid">`;
@@ -993,6 +997,16 @@
                 }
             }
             
+            const navButtonsHTML = Object.keys(categoryInfo)
+                .map(cat => {
+                    if (products[cat] && products[cat].length > 0) {
+                        const isActive = cat === firstCategoryWithProducts;
+                        return `<button class="nav-btn${isActive ? ' active' : ''}" data-category="${cat}" onclick="showCategory(event, '${cat}')">${categoryInfo[cat].icon} ${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`;
+                    }
+                    return '';
+                })
+                .join('');
+
             // Generate the complete HTML
             return `<!DOCTYPE html>
 <html lang="es">
@@ -1025,10 +1039,7 @@
     <div class="nav-container">
         <nav>
             <div class="nav-buttons">
-                ${Object.keys(categoryInfo).map((cat, index) =>
-                    products[cat] && products[cat].length > 0 ?
-                    `<button class="nav-btn${index === 0 ? ' active' : ''}" data-category="${cat}" onclick="showCategory(event, '${cat}')">${categoryInfo[cat].icon} ${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>` : ''
-                ).join('')}
+                ${navButtonsHTML}
             </div>
         </nav>
     </div>
