@@ -1,8 +1,11 @@
 backend:
-  name: git-gateway
-  branch: main  # tu rama principal
+  name: github
+  repo: RyzenG/Catalogo-Amazonia   # <— tu repo
+  branch: main
+  base_url: https://catalogoamazonia.netlify.app
+  auth_endpoint: /api/auth
 
-media_folder: "images/uploads"  # donde se guardan imágenes
+media_folder: "images/uploads"
 public_folder: "/images/uploads"
 
 collections:
@@ -10,8 +13,8 @@ collections:
     label: "Páginas"
     files:
       - file: "index.html"
-        label: "Página Principal"
+        label: "Página principal"
         name: "home"
         fields:
-          - { label: "Título", name: "title", widget: "string" }
-          - { label: "Contenido", name: "body", widget: "markdown" }
+          - { label: "Título", name: "title", widget: "string", required: false }
+          - { label: "Contenido", name: "body", widget: "markdown", required: false }
