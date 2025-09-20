@@ -1,0 +1,17 @@
+backend:
+  name: git-gateway
+  branch: main  # tu rama principal
+
+media_folder: "images/uploads"  # donde se guardan imágenes
+public_folder: "/images/uploads"
+
+collections:
+  - name: "paginas"
+    label: "Páginas"
+    files:
+      - file: "index.html"
+        label: "Página Principal"
+        name: "home"
+        fields:
+          - { label: "Título", name: "title", widget: "string" }
+          - { label: "Contenido", name: "body", widget: "markdown" }
