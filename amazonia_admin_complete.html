@@ -461,11 +461,11 @@
                     <h2 class="section-title">📦 Gestión de Productos</h2>
                     
                     <div class="category-tabs">
-                        <button class="tab active" onclick="showCategory('macetas')">🪴 Macetas</button>
-                        <button class="tab" onclick="showCategory('pisos')">⬜ Pisos</button>
-                        <button class="tab" onclick="showCategory('revestimientos')">🗿 Revestimientos</button>
-                        <button class="tab" onclick="showCategory('mobiliario')">🪑 Mobiliario</button>
-                        <button class="tab" onclick="showCategory('decoracion')">🎨 Decoración</button>
+                        <button class="tab active" data-category="macetas" onclick="showCategory(event, 'macetas')">🪴 Macetas</button>
+                        <button class="tab" data-category="pisos" onclick="showCategory(event, 'pisos')">⬜ Pisos</button>
+                        <button class="tab" data-category="revestimientos" onclick="showCategory(event, 'revestimientos')">🗿 Revestimientos</button>
+                        <button class="tab" data-category="mobiliario" onclick="showCategory(event, 'mobiliario')">🪑 Mobiliario</button>
+                        <button class="tab" data-category="decoracion" onclick="showCategory(event, 'decoracion')">🎨 Decoración</button>
                     </div>
 
                     <button class="btn btn-primary" onclick="openProductModal()">➕ Añadir Producto</button>
@@ -537,12 +537,7 @@
 
                 <div class="form-group">
                     <label>Características (etiquetas):</label>
-                    <div id="featuresList" class="feature-list">
-                        <div class="feature-input-group">
-                            <input type="text" placeholder="Ej: 30cm x 25cm">
-                            <button type="button" class="remove-feature" onclick="removeFeature(this)">✕</button>
-                        </div>
-                    </div>
+                    <div id="featuresList" class="feature-list"></div>
                     <button type="button" class="btn btn-secondary" onclick="addFeature()">+ Añadir característica</button>
                 </div>
 
@@ -595,17 +590,24 @@
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', function() {
             loadData();
+            renderFeatureInputs();
         });
 
         // Load saved data from localStorage
         function loadData() {
             const saved = localStorage.getItem('amazoniaData');
+
             if (saved) {
-                catalogData = JSON.parse(saved);
-                loadConfig();
-                loadProducts();
-                console.log('Datos cargados correctamente');
+                try {
+                    catalogData = JSON.parse(saved);
+                    console.log('Datos cargados correctamente');
+                } catch (error) {
+                    console.error('No se pudieron leer los datos guardados', error);
+                }
             }
+
+            loadConfig();
+            loadProducts();
         }
 
         // Save data to localStorage
@@ -643,22 +645,64 @@
         function showSection(section) {
             document.getElementById('configSection').style.display = section === 'config' ? 'block' : 'none';
             document.getElementById('productsSection').style.display = section === 'products' ? 'block' : 'none';
-            
+
             if (section === 'products') {
                 loadProducts();
             }
         }
 
         // Show category
-        function showCategory(category) {
+        function showCategory(event, category) {
             currentCategory = category;
-            
-            // Update tabs
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            // Load products
+
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            const activeTab = (event && (event.currentTarget || event.target)) || document.querySelector(`.tab[data-category="${category}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+
             loadProducts();
+        }
+
+        function createFeatureRow(value = '', placeholder = 'Ej: 30cm x 25cm') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'feature-input-group';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = value;
+            if (!value) {
+                input.placeholder = placeholder;
+            }
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'remove-feature';
+            removeButton.textContent = '✕';
+            removeButton.addEventListener('click', () => removeFeature(removeButton));
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(removeButton);
+
+            return wrapper;
+        }
+
+        function renderFeatureInputs(features = []) {
+            const featuresList = document.getElementById('featuresList');
+            if (!featuresList) return;
+
+            featuresList.innerHTML = '';
+
+            if (!Array.isArray(features) || features.length === 0) {
+                featuresList.appendChild(createFeatureRow());
+                return;
+            }
+
+            features.forEach(feature => {
+                featuresList.appendChild(createFeatureRow(feature));
+            });
         }
 
         // Load products
@@ -689,50 +733,42 @@
         function openProductModal(productId = null) {
             const modal = document.getElementById('productModal');
             const form = document.getElementById('productForm');
-            
+
             editingProductId = productId;
-            
+
             if (productId) {
                 // Find product
                 let product = null;
+                let productCategory = null;
                 for (let cat in catalogData.products) {
                     product = catalogData.products[cat].find(p => p.id === productId);
-                    if (product) break;
+                    if (product) {
+                        productCategory = cat;
+                        break;
+                    }
                 }
-                
+
                 if (product) {
                     document.getElementById('modalTitle').textContent = 'Editar Producto';
-                    document.getElementById('productCategory').value = currentCategory;
+                    document.getElementById('productCategory').value = productCategory || currentCategory;
                     document.getElementById('productName').value = product.name;
                     document.getElementById('productShortDesc').value = product.shortDesc;
                     document.getElementById('productLongDesc').value = product.longDesc || '';
                     document.getElementById('productPrice').value = product.price;
                     document.getElementById('productIcon').value = product.icon || '';
                     document.getElementById('productSpecs').value = product.specs || '';
-                    
-                    // Load features
-                    const featuresList = document.getElementById('featuresList');
-                    if (product.features && product.features.length > 0) {
-                        featuresList.innerHTML = product.features.map(feature => `
-                            <div class="feature-input-group">
-                                <input type="text" value="${feature}">
-                                <button type="button" class="remove-feature" onclick="removeFeature(this)">✕</button>
-                            </div>
-                        `).join('');
-                    }
+                    document.getElementById('productId').value = productId;
+
+                    renderFeatureInputs(product.features);
                 }
             } else {
                 document.getElementById('modalTitle').textContent = 'Añadir Producto';
                 form.reset();
                 document.getElementById('productCategory').value = currentCategory;
-                document.getElementById('featuresList').innerHTML = `
-                    <div class="feature-input-group">
-                        <input type="text" placeholder="Ej: 30cm x 25cm">
-                        <button type="button" class="remove-feature" onclick="removeFeature(this)">✕</button>
-                    </div>
-                `;
+                document.getElementById('productId').value = '';
+                renderFeatureInputs();
             }
-            
+
             modal.classList.add('active');
         }
 
@@ -741,25 +777,30 @@
             document.getElementById('productModal').classList.remove('active');
             document.getElementById('productForm').reset();
             editingProductId = null;
+            renderFeatureInputs();
         }
 
         // Add feature input
         function addFeature() {
             const featuresList = document.getElementById('featuresList');
-            const div = document.createElement('div');
-            div.className = 'feature-input-group';
-            div.innerHTML = `
-                <input type="text" placeholder="Nueva característica">
-                <button type="button" class="remove-feature" onclick="removeFeature(this)">✕</button>
-            `;
-            featuresList.appendChild(div);
+            if (!featuresList) return;
+
+            featuresList.appendChild(createFeatureRow('', 'Nueva característica'));
         }
 
         // Remove feature input
         function removeFeature(button) {
             const featuresList = document.getElementById('featuresList');
+            if (!featuresList) return;
+
             if (featuresList.children.length > 1) {
-                button.parentElement.remove();
+                featuresList.removeChild(button.parentElement);
+            } else {
+                const input = button.parentElement.querySelector('input');
+                if (input) {
+                    input.value = '';
+                    input.placeholder = 'Ej: 30cm x 25cm';
+                }
             }
         }
 
@@ -919,13 +960,14 @@
             <div class="products-grid">`;
                     
                     products[category].forEach(product => {
-                        const features = product.features.map(f => `<span class="feature-tag">${f}</span>`).join('');
+                        const features = (product.features || []).map(f => `<span class="feature-tag">${f}</span>`).join('');
+                        const productDescription = product.shortDesc || 'Información disponible próximamente.';
                         productsHTML += `
                 <div class="product-card" onclick="openModal('${product.id}')">
                     <div class="product-image">${product.icon || catInfo.icon}</div>
                     <div class="product-info">
                         <h3 class="product-name">${product.name}</h3>
-                        <p class="product-description">${product.shortDesc}</p>
+                        <p class="product-description">${productDescription}</p>
                         <div class="product-features">${features}</div>
                         <p class="product-price">${product.price}</p>
                     </div>
@@ -936,11 +978,11 @@
                             const parts = s.split(':');
                             return parts.length === 2 ? [parts[0].trim(), parts[1].trim()] : ['', ''];
                         }).filter(s => s[0]) : [];
-                        
+
                         productDataJS[product.id] = {
                             title: product.name,
                             icon: product.icon || catInfo.icon,
-                            description: product.longDesc || product.shortDesc,
+                            description: product.longDesc || productDescription,
                             specs: specs
                         };
                     });
@@ -983,9 +1025,9 @@
     <div class="nav-container">
         <nav>
             <div class="nav-buttons">
-                ${Object.keys(categoryInfo).map((cat, index) => 
-                    products[cat] && products[cat].length > 0 ? 
-                    `<button class="nav-btn${index === 0 ? ' active' : ''}" onclick="showCategory('${cat}')">${categoryInfo[cat].icon} ${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>` : ''
+                ${Object.keys(categoryInfo).map((cat, index) =>
+                    products[cat] && products[cat].length > 0 ?
+                    `<button class="nav-btn${index === 0 ? ' active' : ''}" data-category="${cat}" onclick="showCategory(event, '${cat}')">${categoryInfo[cat].icon} ${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>` : ''
                 ).join('')}
             </div>
         </nav>
@@ -1626,44 +1668,54 @@
         });
 
         // Función para mostrar categorías
-        function showCategory(categoryId) {
+        function showCategory(event, categoryId) {
             // Ocultar todas las categorías
             const categories = document.querySelectorAll('.category');
             categories.forEach(cat => cat.classList.remove('active'));
-            
+
             // Mostrar la categoría seleccionada
             document.getElementById(categoryId).classList.add('active');
-            
+
             // Actualizar botones de navegación
             const buttons = document.querySelectorAll('.nav-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
+            const targetButton = (event && (event.currentTarget || event.target)) || document.querySelector('[data-category="' + categoryId + '"]');
+            if (targetButton) {
+                targetButton.classList.add('active');
+            }
+
             // Scroll suave al inicio del contenido
-            window.scrollTo({
-                top: document.querySelector('.nav-container').offsetTop - 20,
-                behavior: 'smooth'
-            });
+            const navContainer = document.querySelector('.nav-container');
+            if (navContainer) {
+                window.scrollTo({
+                    top: navContainer.offsetTop - 20,
+                    behavior: 'smooth'
+                });
+            }
         }
 
         // Función para abrir modal
         function openModal(productId) {
             const modal = document.getElementById('productModal');
             const product = productData[productId];
-            
+
             if (product) {
                 currentProduct = product.title;
                 document.getElementById('modalTitle').textContent = product.title;
-                document.getElementById('modalImage').textContent = product.icon;
+                document.getElementById('modalImage').textContent = product.icon || '🛠️';
                 document.getElementById('modalDescription').textContent = product.description;
-                
+
                 // Actualizar especificaciones
                 const specsList = document.getElementById('modalSpecs');
-                specsList.innerHTML = product.specs.map(spec => 
-                    \`<li><span>\${spec[0]}:</span><span>\${spec[1]}</span></li>\`
-                ).join('');
+                if (product.specs && product.specs.length) {
+                    specsList.innerHTML = product.specs.map(spec =>
+                        \`<li><span>\${spec[0]}:</span><span>\${spec[1]}</span></li>\`
+                    ).join('');
+                } else {
+                    specsList.innerHTML = '<li><span>Información:</span><span>Disponible a solicitud</span></li>';
+                }
             }
-            
+
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
