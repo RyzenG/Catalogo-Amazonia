@@ -1,30 +1,28 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="utf-8" />
     <title>Content Manager</title>
   </head>
   <body>
-<!-- Netlify Identity (para login/registro con email/clave) -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
-  if (window.netlifyIdentity) {
-    // Si no hay usuario, abre el modal de registro la primera vez
-    window.netlifyIdentity.on("init", (user) => {
-      if (!user) {
-        // Fuerza mostrar "Sign up" para crear contraseña
-        window.netlifyIdentity.open("signup");
+    <!-- Netlify Identity (para login/registro con email/clave) -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <script>
+      if (window.netlifyIdentity) {
+        // Si no hay usuario, abre el modal de registro
+        window.netlifyIdentity.on("init", (user) => {
+          if (!user) {
+            window.netlifyIdentity.open("signup"); // fuerza "crear cuenta"
+          }
+        });
+        // Tras login/registro, manda al CMS
+        window.netlifyIdentity.on("login", () => {
+          document.location.href = "/admin/";
+        });
       }
-    });
-    // Tras login/registro, manda al CMS
-    window.netlifyIdentity.on("login", () => {
-      document.location.href = "/admin/";
-    });
-  }
-</script>
+    </script>
 
-<!-- El CMS (Netlify CMS o Decap, el que estés usando) -->
-<script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
-
-</script>
+    <!-- El CMS -->
+    <script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
   </body>
 </html>
