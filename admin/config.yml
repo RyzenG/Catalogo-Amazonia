@@ -1,36 +1,22 @@
+
 backend:
   name: github
   repo: RyzenG/Catalogo-Amazonia
   branch: main
   base_url: https://catalogoamazonia.netlify.app
-  auth_endpoint: /api/auth
+  auth_endpoint: api/auth
 
-media_folder: "images/uploads"
+media_folder: "static/images/uploads"
 public_folder: "/images/uploads"
 
-# Ejemplo de colección "Productos" (archivos .json)
 collections:
   - name: "productos"
     label: "Productos"
     folder: "content/productos"
-    extension: "json"
     create: true
     slug: "{{slug}}"
     fields:
-      - { label: "Nombre", name: "name", widget: "string" }
-      - { label: "Precio (COP)", name: "price", widget: "number", value_type: "int", min: 0 }
-      - { label: "Descripción", name: "desc", widget: "text" }
-      - { label: "Imagen", name: "image", widget: "image", required: false }
-
-  # Si quieres editar textos generales vía JSON:
-  - name: "config"
-    label: "Contenido del sitio"
-    files:
-      - file: "content/site.json"
-        label: "Textos generales"
-        name: "site"
-        fields:
-          - { label: "Título del sitio", name: "siteTitle", widget: "string" }
-          - { label: "Título principal", name: "heroTitle", widget: "string" }
-          - { label: "Subtítulo", name: "heroSubtitle", widget: "text" }
-          - { label: "WhatsApp link", name: "whatsapp", widget: "string", required: false }
+      - {label: "Título", name: "title", widget: "string"}
+      - {label: "Descripción", name: "description", widget: "text"}
+      - {label: "Precio", name: "price", widget: "number"}
+      - {label: "Imagen", name: "image", widget: "image"}
