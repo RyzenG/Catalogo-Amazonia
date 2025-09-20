@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Amazonia Concrete</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .admin-header h1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sidebar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .main-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            color: #2d4a2b;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #6b8e68;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6b8e68 0%, #8fa68c 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(107,142,104,0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 0.6rem 1.2rem;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #6b8e68;
+            color: white;
+        }
+
+        .product-list {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .product-item {
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .product-item:hover {
+            background: #f0f0f0;
+            border-color: #6b8e68;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #2d4a2b;
+            margin-bottom: 0.25rem;
+        }
+
+        .product-price {
+            color: #6b8e68;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .edit-btn {
+            background: #3498db;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-modal {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info-box {
+            background: #e8f5e9;
+            border: 1px solid #81c784;
+            color: #2e7d32;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            color: #e65100;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .config-section {
+            background: #f9f9f9;
+            padding: 1.5rem;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .export-section {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .big-button {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 1.2rem 3rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .big-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(46,204,113,0.3);
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .feature-input-group input {
+            flex: 1;
+        }
+
+        .remove-feature {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .status-message {
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1>🛠️ Panel de Administración - Amazonia Concrete</h1>
+        <p>Gestiona tu catálogo de productos de forma fácil y rápida</p>
+    </div>
+
+    <div class="admin-container">
+        <div class="info-box">
+            <strong>💡 Instrucciones:</strong> Configura tu información de contacto, añade o edita productos, y luego genera tu catálogo actualizado con el botón "Generar Catálogo".
+        </div>
+
+        <div class="admin-grid">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h3 class="section-title">Menú</h3>
+                <button class="btn btn-primary" style="width: 100%" onclick="showSection('config')">⚙️ Configuración</button>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem" onclick="showSection('products')">📦 Productos</button>
+                <button class="btn btn-success" style="width: 100%; margin-top: 1rem" onclick="generateCatalog()">📥 Generar Catálogo</button>
+                
+                <div style="margin-top: 2rem">
+                    <h4 style="margin-bottom: 1rem">Acciones Rápidas</h4>
+                    <button class="btn btn-secondary" style="width: 100%" onclick="saveData()">💾 Guardar Cambios</button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" onclick="loadData()">📂 Cargar Datos</button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" onclick="exportData()">📤 Exportar Datos</button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" onclick="importData()">📥 Importar Datos</button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Configuration Section -->
+                <div id="configSection" class="section">
+                    <h2 class="section-title">⚙️ Configuración General</h2>
+                    
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Información de Contacto</h3>
+                        <div class="two-columns">
+                            <div class="form-group">
+                                <label>Número de WhatsApp (con código de país):</label>
+                                <input type="text" id="whatsapp" placeholder="573001234567" value="573000000000">
+                            </div>
+                            <div class="form-group">
+                                <label>Email de contacto:</label>
+                                <input type="email" id="email" placeholder="info@amazoniaconcrete.com" value="info@amazoniaconcrete.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono de contacto:</label>
+                                <input type="text" id="phone" placeholder="+57 300 123 4567" value="+57 300 000 0000">
+                            </div>
+                            <div class="form-group">
+                                <label>Dirección (opcional):</label>
+                                <input type="text" id="address" placeholder="Calle 123 #45-67, Ciudad">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Información de la Empresa</h3>
+                        <div class="form-group">
+                            <label>Nombre de la empresa:</label>
+                            <input type="text" id="companyName" value="AMAZONIA CONCRETE">
+                        </div>
+                        <div class="form-group">
+                            <label>Eslogan:</label>
+                            <input type="text" id="tagline" value="Naturaleza y Modernidad en Perfecta Armonía">
+                        </div>
+                        <div class="form-group">
+                            <label>Mensaje del footer:</label>
+                            <textarea id="footerMessage">Creando espacios únicos con concreto sostenible</textarea>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="saveConfig()">Guardar Configuración</button>
+                </div>
+
+                <!-- Products Section -->
+                <div id="productsSection" class="section" style="display: none">
+                    <h2 class="section-title">📦 Gestión de Productos</h2>
+                    
+                    <div class="category-tabs">
+                        <button class="tab active" onclick="showCategory('macetas')">🪴 Macetas</button>
+                        <button class="tab" onclick="showCategory('pisos')">⬜ Pisos</button>
+                        <button class="tab" onclick="showCategory('revestimientos')">🗿 Revestimientos</button>
+                        <button class="tab" onclick="showCategory('mobiliario')">🪑 Mobiliario</button>
+                        <button class="tab" onclick="showCategory('decoracion')">🎨 Decoración</button>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="openProductModal()">➕ Añadir Producto</button>
+
+                    <div id="productsList" class="product-list" style="margin-top: 1.5rem">
+                        <!-- Products will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section">
+            <h2 style="margin-bottom: 1rem">¿Listo para actualizar tu catálogo?</h2>
+            <p style="margin-bottom: 1.5rem">Genera tu catálogo actualizado con todos los cambios realizados</p>
+            <button class="big-button" onclick="generateCatalog()">
+                <span>📥</span> Generar Catálogo Actualizado
+            </button>
+            <div id="statusMessage" class="status-message" style="margin-top: 1rem"></div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Añadir Producto</h2>
+                <button class="close-modal" onclick="closeModal()">✕</button>
+            </div>
+            
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                
+                <div class="form-group">
+                    <label>Categoría:</label>
+                    <select id="productCategory">
+                        <option value="macetas">Macetas</option>
+                        <option value="pisos">Pisos</option>
+                        <option value="revestimientos">Revestimientos</option>
+                        <option value="mobiliario">Mobiliario</option>
+                        <option value="decoracion">Decoración</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre del producto:</label>
+                    <input type="text" id="productName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción corta:</label>
+                    <textarea id="productShortDesc" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción detallada:</label>
+                    <textarea id="productLongDesc" rows="4"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Precio:</label>
+                    <input type="text" id="productPrice" placeholder="$45.000 o $85.000/m²">
+                </div>
+
+                <div class="form-group">
+                    <label>Emoji/Icono (opcional):</label>
+                    <input type="text" id="productIcon" placeholder="🪴" maxlength="2">
+                </div>
+
+                <div class="form-group">
+                    <label>Características (etiquetas):</label>
+                    <div id="featuresList" class="feature-list">
+                        <div class="feature-input-group">
+                            <input type="text" placeholder="Ej: 30cm x 25cm">
+                            <button type="button" class="remove-feature" onclick="removeFeature(this)">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="addFeature()">+ Añadir característica</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Especificaciones técnicas:</label>
+                    <div class="warning-box">
+                        Formato: Nombre: Valor (una por línea)<br>
+                        Ejemplo:<br>
+                        Material: Concreto reforzado<br>
+                        Peso: 8 kg
+                    </div>
+                    <textarea id="productSpecs" rows="6" placeholder="Material: Concreto reforzado&#10;Dimensiones: 30cm x 25cm&#10;Peso: 8 kg"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Data Modal -->
+    <input type="file" id="importFile" style="display: none" accept=".json">
+
+    <script>
+        // Default data structure
+        let catalogData = {
+            config: {
+                whatsapp: '573000000000',
+                email: 'info@amazoniaconcrete.com',
+                phone: '+57 300 000 0000',
+                address: '',
+                companyName: 'AMAZONIA CONCRETE',
+                tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
+                footerMessage: 'Creando espacios únicos con concreto sostenible'
+            },
+            products: {
+                macetas: [],
+                pisos: [],
+                revestimientos: [],
+                mobiliario: [],
+                decoracion: []
+            }
+        };
+
+        let currentCategory = 'macetas';
+        let editingProductId = null;
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+
+        // Load saved data from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('amazoniaData');
+            if (saved) {
+                catalogData = JSON.parse(saved);
+                loadConfig();
+                loadProducts();
+                console.log('Datos cargados correctamente');
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
+            showMessage('Datos guardados correctamente', 'success');
+        }
+
+        // Load configuration
+        function loadConfig() {
+            document.getElementById('whatsapp').value = catalogData.config.whatsapp || '';
+            document.getElementById('email').value = catalogData.config.email || '';
+            document.getElementById('phone').value = catalogData.config.phone || '';
+            document.getElementById('address').value = catalogData.config.address || '';
+            document.getElementById('companyName').value = catalogData.config.companyName || '';
+            document.getElementById('tagline').value = catalogData.config.tagline || '';
+            document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
+        }
+
+        // Save configuration
+        function saveConfig() {
+            catalogData.config = {
+                whatsapp: document.getElementById('whatsapp').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                companyName: document.getElementById('companyName').value,
+                tagline: document.getElementById('tagline').value,
+                footerMessage: document.getElementById('footerMessage').value
+            };
+            saveData();
+        }
+
+        // Show section
+        function showSection(section) {
+            document.getElementById('configSection').style.display = section === 'config' ? 'block' : 'none';
+            document.getElementById('productsSection').style.display = section === 'products' ? 'block' : 'none';
+            
+            if (section === 'products') {
+                loadProducts();
+            }
+        }
+
+        // Show category
+        function showCategory(category) {
+            currentCategory = category;
+            
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Load products
+            loadProducts();
+        }
+
+        // Load products
+        function loadProducts() {
+            const container = document.getElementById('productsList');
+            const products = catalogData.products[currentCategory] || [];
+            
+            if (products.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999">No hay productos en esta categoría. Haz clic en "Añadir Producto" para comenzar.</p>';
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product-item">
+                    <div class="product-info">
+                        <div class="product-name">${product.icon || ''} ${product.name}</div>
+                        <div class="product-price">${product.price}</div>
+                    </div>
+                    <div class="product-actions">
+                        <button class="icon-btn edit-btn" onclick="editProduct('${product.id}')">✏️</button>
+                        <button class="icon-btn delete-btn" onclick="deleteProduct('${product.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Open product modal
+        function openProductModal(productId = null) {
+            const modal = document.getElementById('productModal');
+            const form = document.getElementById('productForm');
+            
+            editingProductId = productId;
+            
+            if (productId) {
+                // Find product
+                let product = null;
+                for (let cat in catalogData.products) {
+                    product = catalogData.products[cat].find(p => p.id === productId);
+                    if (product) break;
+                }
+                
+                if (product) {
+                    document.getElementById('modalTitle').textContent = 'Editar Producto';
+                    document.getElementById('productCategory').value = currentCategory;
+                    document.getElementById('productName').value = product.name;
+                    document.getElementById('productShortDesc').value = product.shortDesc;
+                    document.getElementById('productLongDesc').value = product.longDesc || '';
+                    document.getElementById('productPrice').value = product.price;
+                    document.getElementById('productIcon').value = product.icon || '';
+                    document.getElementById('productSpecs').value = product.specs || '';
+                    
+                    // Load features
+                    const featuresList = document.getElementById('featuresList');
+                    if (product.features && product.features.length > 0) {
+                        featuresList.innerHTML = product.features.map(feature => `
+                            <div class="feature-input-group">
+                                <input type="text" value="${feature}">
+                                <button type="button" class="remove-feature" onclick="removeFeature(this)">✕</button>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } else {
+                document.getElementById('modalTitle').textContent = 'Añadir Producto';
+                form.reset();
+                document.getElementById('productCategory').value = currentCategory;
+                document.getElementById('featuresList').innerHTML = `
+                    <div class="feature-input-group">
+                        <input type="text" placeholder="Ej: 30cm x 25cm">
+                        <button type="button" class="remove-feature" onclick="removeFeature(this)">✕</button>
+                    </div>
+                `;
+            }
+            
+            modal.classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('active');
+            document.getElementById('productForm').reset();
+            editingProductId = null;
+        }
+
+        // Add feature input
+        function addFeature() {
+            const featuresList = document.getElementById('featuresList');
+            const div = document.createElement('div');
+            div.className = 'feature-input-group';
+            div.innerHTML = `
+                <input type="text" placeholder="Nueva característica">
+                <button type="button" class="remove-feature" onclick="removeFeature(this)">✕</button>
+            `;
+            featuresList.appendChild(div);
+        }
+
+        // Remove feature input
+        function removeFeature(button) {
+            const featuresList = document.getElementById('featuresList');
+            if (featuresList.children.length > 1) {
+                button.parentElement.remove();
+            }
+        }
+
+        // Edit product
+        function editProduct(productId) {
+            openProductModal(productId);
+        }
+
+        // Delete product
+        function deleteProduct(productId) {
+            if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                catalogData.products[currentCategory] = catalogData.products[currentCategory].filter(p => p.id !== productId);
+                saveData();
+                loadProducts();
+            }
+        }
+
+        // Handle product form submission
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const category = document.getElementById('productCategory').value;
+            const features = Array.from(document.querySelectorAll('#featuresList input'))
+                .map(input => input.value)
+                .filter(value => value.trim() !== '');
+            
+            const productData = {
+                id: editingProductId || 'product_' + Date.now(),
+                name: document.getElementById('productName').value,
+                icon: document.getElementById('productIcon').value,
+                shortDesc: document.getElementById('productShortDesc').value,
+                longDesc: document.getElementById('productLongDesc').value,
+                price: document.getElementById('productPrice').value,
+                features: features,
+                specs: document.getElementById('productSpecs').value
+            };
+            
+            if (!catalogData.products[category]) {
+                catalogData.products[category] = [];
+            }
+            
+            if (editingProductId) {
+                // Remove from all categories
+                for (let cat in catalogData.products) {
+                    catalogData.products[cat] = catalogData.products[cat].filter(p => p.id !== editingProductId);
+                }
+            }
+            
+            // Add to new/current category
+            catalogData.products[category].push(productData);
+            
+            saveData();
+            currentCategory = category;
+            loadProducts();
+            closeModal();
+            showMessage('Producto guardado correctamente', 'success');
+        });
+
+        // Show message
+        function showMessage(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message ' + type;
+            
+            setTimeout(() => {
+                statusMessage.className = 'status-message';
+            }, 3000);
+        }
+
+        // Export data
+        function exportData() {
+            const dataStr = JSON.stringify(catalogData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'amazonia_datos_' + new Date().toISOString().split('T')[0] + '.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showMessage('Datos exportados correctamente', 'success');
+        }
+
+        // Import data
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        // Handle file import
+        document.getElementById('importFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        catalogData = JSON.parse(event.target.result);
+                        loadConfig();
+                        loadProducts();
+                        showMessage('Datos importados correctamente', 'success');
+                    } catch (error) {
+                        showMessage('Error al importar los datos', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Generate Catalog
+        function generateCatalog() {
+            // First save current data
+            saveData();
+            
+            // Generate the HTML content
+            const htmlContent = generateCatalogHTML();
+            
+            // Create download link
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'catalogo_amazonia_' + new Date().toISOString().split('T')[0] + '.html';
+            link.click();
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+            
+            showMessage('¡Catálogo generado correctamente! Revisa tu carpeta de descargas.', 'success');
+        }
+
+        // Generate catalog HTML
+        function generateCatalogHTML() {
+            const config = catalogData.config;
+            const products = catalogData.products;
+            
+            // Generate products HTML for each category
+            let productsHTML = '';
+            let productDataJS = {};
+            
+            const categoryInfo = {
+                macetas: { title: 'Macetas de Concreto', desc: 'Diseños únicos inspirados en la naturaleza amazónica', icon: '🪴' },
+                pisos: { title: 'Pisos de Concreto', desc: 'Resistencia y elegancia para tus espacios', icon: '⬜' },
+                revestimientos: { title: 'Revestimientos', desc: 'Transforma tus paredes con texturas naturales', icon: '🗿' },
+                mobiliario: { title: 'Mobiliario de Concreto', desc: 'Piezas únicas y duraderas para tu hogar', icon: '🪑' },
+                decoracion: { title: 'Decoración', desc: 'Detalles que marcan la diferencia', icon: '🎨' }
+            };
+            
+            for (let category in products) {
+                if (products[category].length > 0) {
+                    const catInfo = categoryInfo[category];
+                    
+                    productsHTML += `
+        <!-- ${catInfo.title} Category -->
+        <div class="category${category === 'macetas' ? ' active' : ''}" id="${category}">
+            <h2 class="category-title">${catInfo.title}</h2>
+            <p class="category-description">${catInfo.desc}</p>
+            <div class="products-grid">`;
+                    
+                    products[category].forEach(product => {
+                        const features = product.features.map(f => `<span class="feature-tag">${f}</span>`).join('');
+                        productsHTML += `
+                <div class="product-card" onclick="openModal('${product.id}')">
+                    <div class="product-image">${product.icon || catInfo.icon}</div>
+                    <div class="product-info">
+                        <h3 class="product-name">${product.name}</h3>
+                        <p class="product-description">${product.shortDesc}</p>
+                        <div class="product-features">${features}</div>
+                        <p class="product-price">${product.price}</p>
+                    </div>
+                </div>`;
+                        
+                        // Add to product data for modal
+                        const specs = product.specs ? product.specs.split('\n').map(s => {
+                            const parts = s.split(':');
+                            return parts.length === 2 ? [parts[0].trim(), parts[1].trim()] : ['', ''];
+                        }).filter(s => s[0]) : [];
+                        
+                        productDataJS[product.id] = {
+                            title: product.name,
+                            icon: product.icon || catInfo.icon,
+                            description: product.longDesc || product.shortDesc,
+                            specs: specs
+                        };
+                    });
+                    
+                    productsHTML += `
+            </div>
+        </div>`;
+                }
+            }
+            
+            // Generate the complete HTML
+            return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${config.companyName} - Catálogo Digital</title>
+    <style>
+        ${getCatalogStyles()}
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <svg class="leaf-spinner" viewBox="0 0 100 100">
+            <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="#6b8e68"/>
+            <path d="M50 40 Q30 60 50 80 Q70 60 50 40" fill="#8fa68c"/>
+        </svg>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <h1>${config.companyName}</h1>
+            <p class="tagline">${config.tagline}</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <div class="nav-container">
+        <nav>
+            <div class="nav-buttons">
+                ${Object.keys(categoryInfo).map((cat, index) => 
+                    products[cat] && products[cat].length > 0 ? 
+                    `<button class="nav-btn${index === 0 ? ' active' : ''}" onclick="showCategory('${cat}')">${categoryInfo[cat].icon} ${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>` : ''
+                ).join('')}
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        ${productsHTML}
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">✕</button>
+            <div class="modal-header">
+                <h2 id="modalTitle">Título del Producto</h2>
+            </div>
+            <div class="modal-body">
+                <div class="modal-grid">
+                    <div class="modal-image" id="modalImage">🪴</div>
+                    <div class="modal-details">
+                        <h3>Descripción Detallada</h3>
+                        <p id="modalDescription">Descripción del producto.</p>
+                        <h3>Especificaciones</h3>
+                        <ul class="specs-list" id="modalSpecs">
+                            <li><span>Material:</span><span>Concreto reforzado</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="cta-section">
+                    <h3>¿Interesado en este producto?</h3>
+                    <p>Contáctanos para más información o para realizar tu pedido</p>
+                    <button class="cta-button" onclick="contactWhatsApp()">💬 WhatsApp</button>
+                    <button class="cta-button" onclick="requestQuote()">📋 Solicitar Cotización</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="contact-info">
+                <h3>${config.companyName}</h3>
+                <p>${config.footerMessage}</p>
+                <div class="contact-buttons">
+                    <a href="tel:${config.phone.replace(/\s/g, '')}" class="contact-btn">📞 Llamar</a>
+                    <a href="mailto:${config.email}" class="contact-btn">✉️ Email</a>
+                    <a href="https://wa.me/${config.whatsapp}" class="contact-btn">💬 WhatsApp</a>
+                    ${config.address ? `<a href="#" class="contact-btn">📍 Ubicación</a>` : ''}
+                </div>
+            </div>
+            <p style="margin-top: 2rem; opacity: 0.7;">© 2024 ${config.companyName} - Todos los derechos reservados</p>
+        </div>
+    </footer>
+
+    <script>
+        ${getCatalogScript(productDataJS, config)}
+    </script>
+</body>
+</html>`;
+        }
+
+        // Get catalog styles
+        function getCatalogStyles() {
+            return `
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #2d4a2b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s, visibility 1s;
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .leaf-spinner {
+            width: 80px;
+            height: 80px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 3px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        /* Navigation */
+        .nav-container {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: slideDown 0.5s ease-out 0.5s both;
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 0.7rem 1.5rem;
+            background: linear-gradient(135deg, #6b8e68 0%, #8fa68c 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .nav-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(107,142,104,0.3);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Category Sections */
+        .category {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .category.active {
+            display: block;
+        }
+
+        .category-title {
+            font-size: 2.5rem;
+            color: #2d4a2b;
+            margin-bottom: 1rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .category-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #6b8e68, transparent);
+        }
+
+        .category-description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* Product Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(107,142,104,0.1) 0%, rgba(45,74,43,0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-image::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg) translateX(-100%); }
+            100% { transform: rotate(0deg) translateX(100%); }
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-name {
+            font-size: 1.3rem;
+            color: #2d4a2b;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .product-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-tag {
+            background: rgba(107,142,104,0.1);
+            color: #2d4a2b;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            color: #6b8e68;
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .close-modal:hover {
+            background: rgba(0,0,0,0.2);
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+
+        .modal-details h3 {
+            color: #2d4a2b;
+            margin-bottom: 1rem;
+        }
+
+        .modal-details p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .specs-list {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .specs-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .cta-section {
+            background: rgba(107,142,104,0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, #6b8e68 0%, #8fa68c 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(107,142,104,0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: #2d4a2b;
+            color: white;
+            padding: 3rem 0 2rem;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            text-align: center;
+        }
+
+        .contact-info {
+            margin-bottom: 2rem;
+        }
+
+        .contact-info h3 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .contact-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .contact-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .contact-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .category-title {
+                font-size: 1.8rem;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }`;
+        }
+
+        // Get catalog script
+        function getCatalogScript(productData, config) {
+            return `
+        // Variables globales
+        let currentProduct = null;
+        
+        // Datos de productos expandidos
+        const productData = ${JSON.stringify(productData)};
+
+        // Ocultar loader cuando la página carga
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 1500);
+        });
+
+        // Función para mostrar categorías
+        function showCategory(categoryId) {
+            // Ocultar todas las categorías
+            const categories = document.querySelectorAll('.category');
+            categories.forEach(cat => cat.classList.remove('active'));
+            
+            // Mostrar la categoría seleccionada
+            document.getElementById(categoryId).classList.add('active');
+            
+            // Actualizar botones de navegación
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Scroll suave al inicio del contenido
+            window.scrollTo({
+                top: document.querySelector('.nav-container').offsetTop - 20,
+                behavior: 'smooth'
+            });
+        }
+
+        // Función para abrir modal
+        function openModal(productId) {
+            const modal = document.getElementById('productModal');
+            const product = productData[productId];
+            
+            if (product) {
+                currentProduct = product.title;
+                document.getElementById('modalTitle').textContent = product.title;
+                document.getElementById('modalImage').textContent = product.icon;
+                document.getElementById('modalDescription').textContent = product.description;
+                
+                // Actualizar especificaciones
+                const specsList = document.getElementById('modalSpecs');
+                specsList.innerHTML = product.specs.map(spec => 
+                    \`<li><span>\${spec[0]}:</span><span>\${spec[1]}</span></li>\`
+                ).join('');
+            }
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Función para cerrar modal
+        function closeModal() {
+            const modal = document.getElementById('productModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('productModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Función para contactar por WhatsApp
+        function contactWhatsApp() {
+            const message = \`Hola! Me interesa el producto: \${currentProduct}. ¿Podrían darme más información?\`;
+            const phone = '${config.whatsapp}';
+            const url = \`https://wa.me/\${phone}?text=\${encodeURIComponent(message)}\`;
+            window.open(url, '_blank');
+        }
+
+        // Función para solicitar cotización
+        function requestQuote() {
+            const subject = \`Cotización - \${currentProduct}\`;
+            const body = \`Hola,\\n\\nMe gustaría recibir una cotización para el producto: \${currentProduct}.\\n\\nMis datos de contacto son:\\nNombre:\\nTeléfono:\\nCantidad requerida:\\n\\nGracias!\`;
+            const email = '${config.email}';
+            const url = \`mailto:\${email}?subject=\${encodeURIComponent(subject)}&body=\${encodeURIComponent(body)}\`;
+            window.location.href = url;
+        }
+
+        // Animación de entrada para las tarjetas de producto
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observar todas las tarjetas de producto
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                observer.observe(card);
+            });
+        });
+
+        // Efecto parallax suave en el header
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const header = document.querySelector('header');
+            if (scrolled < 300) {
+                header.style.transform = \`translateY(\${scrolled * 0.5}px)\`;
+            }
+        });`;
+        }
+    </script>
+</body>
+</html>
