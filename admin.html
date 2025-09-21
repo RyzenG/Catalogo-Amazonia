@@ -936,6 +936,16 @@
             const config = catalogData.config;
             const products = catalogData.products;
 
+            const trimmedConfig = {
+                whatsapp: (config.whatsapp || '').trim(),
+                email: (config.email || '').trim(),
+                phone: (config.phone || '').trim(),
+                address: (config.address || '').trim(),
+                companyName: config.companyName || '',
+                tagline: config.tagline || '',
+                footerMessage: config.footerMessage || ''
+            };
+
             const firstCategoryWithProducts = Object.keys(products).find(category =>
                 products[category] && products[category].length > 0
             ) || null;
@@ -1007,6 +1017,18 @@
                 })
                 .join('');
 
+            const modalCTAButtons = [
+                trimmedConfig.whatsapp ? `<button class="cta-button" id="modalWhatsAppButton" onclick="contactWhatsApp()">💬 WhatsApp</button>` : '',
+                trimmedConfig.email ? `<button class="cta-button" id="modalQuoteButton" onclick="requestQuote()">📋 Solicitar Cotización</button>` : ''
+            ].filter(Boolean).join('');
+
+            const contactButtons = [
+                trimmedConfig.phone ? `<a id="contactPhone" class="contact-btn" href="#">📞 Llamar</a>` : '',
+                trimmedConfig.email ? `<a id="contactEmail" class="contact-btn" href="#">✉️ Email</a>` : '',
+                trimmedConfig.whatsapp ? `<a id="contactWhatsAppLink" class="contact-btn" href="#">💬 WhatsApp</a>` : '',
+                trimmedConfig.address ? `<a id="contactAddress" class="contact-btn" href="#">📍 Ubicación</a>` : ''
+            ].filter(Boolean).join('');
+
             // Generate the complete HTML
             return `<!DOCTYPE html>
 <html lang="es">
@@ -1030,8 +1052,8 @@
     <!-- Header -->
     <header>
         <div class="header-content">
-            <h1>${config.companyName}</h1>
-            <p class="tagline">${config.tagline}</p>
+            <h1>${trimmedConfig.companyName}</h1>
+            <p class="tagline">${trimmedConfig.tagline}</p>
         </div>
     </header>
 
@@ -1071,8 +1093,7 @@
                 <div class="cta-section">
                     <h3>¿Interesado en este producto?</h3>
                     <p>Contáctanos para más información o para realizar tu pedido</p>
-                    <button class="cta-button" onclick="contactWhatsApp()">💬 WhatsApp</button>
-                    <button class="cta-button" onclick="requestQuote()">📋 Solicitar Cotización</button>
+                    ${modalCTAButtons}
                 </div>
             </div>
         </div>
@@ -1082,16 +1103,11 @@
     <footer>
         <div class="footer-content">
             <div class="contact-info">
-                <h3>${config.companyName}</h3>
-                <p>${config.footerMessage}</p>
-                <div class="contact-buttons">
-                    <a href="tel:${config.phone.replace(/\s/g, '')}" class="contact-btn">📞 Llamar</a>
-                    <a href="mailto:${config.email}" class="contact-btn">✉️ Email</a>
-                    <a href="https://wa.me/${config.whatsapp}" class="contact-btn">💬 WhatsApp</a>
-                    ${config.address ? `<a href="#" class="contact-btn">📍 Ubicación</a>` : ''}
-                </div>
+                <h3>${trimmedConfig.companyName}</h3>
+                <p>${trimmedConfig.footerMessage}</p>
+                <div class="contact-buttons">${contactButtons}</div>
             </div>
-            <p style="margin-top: 2rem; opacity: 0.7;">© 2024 ${config.companyName} - Todos los derechos reservados</p>
+            <p style="margin-top: 2rem; opacity: 0.7;">© 2024 ${trimmedConfig.companyName} - Todos los derechos reservados</p>
         </div>
     </footer>
 
@@ -1665,29 +1681,106 @@
         // Get catalog script
         function getCatalogScript(productData, config) {
             return `
-        // Variables globales
         let currentProduct = null;
-        
-        // Datos de productos expandidos
         const productData = ${JSON.stringify(productData)};
+        const catalogConfig = ${JSON.stringify(config || {})};
 
-        // Ocultar loader cuando la página carga
         window.addEventListener('load', function() {
             setTimeout(() => {
-                document.getElementById('loader').classList.add('hidden');
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.classList.add('hidden');
+                }
             }, 1500);
         });
 
-        // Función para mostrar categorías
+        document.addEventListener('DOMContentLoaded', function() {
+            applyConfig();
+
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                observer.observe(card);
+            });
+
+            const modalElement = document.getElementById('productModal');
+            if (modalElement) {
+                modalElement.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal();
+                    }
+                });
+            }
+        });
+
+        function applyConfig() {
+            const config = catalogConfig || {};
+            const whatsappNumber = (config.whatsapp || '').replace(/\\D+/g, '');
+            const emailValue = (config.email || '').trim();
+            const phoneValue = config.phone || '';
+            const addressValue = config.address || '';
+
+            const whatsappButton = document.getElementById('modalWhatsAppButton');
+            if (whatsappButton) {
+                whatsappButton.style.display = whatsappNumber ? 'inline-block' : 'none';
+            }
+
+            const quoteButton = document.getElementById('modalQuoteButton');
+            if (quoteButton) {
+                quoteButton.style.display = emailValue ? 'inline-block' : 'none';
+            }
+
+            const phoneLink = document.getElementById('contactPhone');
+            if (phoneLink) {
+                const sanitizedPhone = phoneValue.replace(/[^+\\d]/g, '');
+                if (sanitizedPhone) {
+                    phoneLink.href = \`tel:\${sanitizedPhone}\`;
+                    phoneLink.style.display = 'inline-flex';
+                } else {
+                    phoneLink.style.display = 'none';
+                }
+            }
+
+            const emailLink = document.getElementById('contactEmail');
+            if (emailLink) {
+                if (emailValue) {
+                    emailLink.href = \`mailto:\${emailValue}\`;
+                    emailLink.style.display = 'inline-flex';
+                } else {
+                    emailLink.style.display = 'none';
+                }
+            }
+
+            const whatsappLink = document.getElementById('contactWhatsAppLink');
+            if (whatsappLink) {
+                if (whatsappNumber) {
+                    whatsappLink.href = \`https://wa.me/\${whatsappNumber}\`;
+                    whatsappLink.style.display = 'inline-flex';
+                } else {
+                    whatsappLink.style.display = 'none';
+                }
+            }
+
+            const addressLink = document.getElementById('contactAddress');
+            if (addressLink) {
+                if (addressValue) {
+                    addressLink.href = \`https://www.google.com/maps/search/\${encodeURIComponent(addressValue)}\`;
+                    addressLink.style.display = 'inline-flex';
+                } else {
+                    addressLink.style.display = 'none';
+                }
+            }
+        }
+
         function showCategory(event, categoryId) {
-            // Ocultar todas las categorías
             const categories = document.querySelectorAll('.category');
             categories.forEach(cat => cat.classList.remove('active'));
 
-            // Mostrar la categoría seleccionada
-            document.getElementById(categoryId).classList.add('active');
+            const targetCategory = document.getElementById(categoryId);
+            if (targetCategory) {
+                targetCategory.classList.add('active');
+            }
 
-            // Actualizar botones de navegación
             const buttons = document.querySelectorAll('.nav-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
             const targetButton = (event && (event.currentTarget || event.target)) || document.querySelector('[data-category="' + categoryId + '"]');
@@ -1695,7 +1788,6 @@
                 targetButton.classList.add('active');
             }
 
-            // Scroll suave al inicio del contenido
             const navContainer = document.querySelector('.nav-container');
             if (navContainer) {
                 window.scrollTo({
@@ -1705,19 +1797,33 @@
             }
         }
 
-        // Función para abrir modal
         function openModal(productId) {
             const modal = document.getElementById('productModal');
             const product = productData[productId];
 
-            if (product) {
-                currentProduct = product.title;
-                document.getElementById('modalTitle').textContent = product.title;
-                document.getElementById('modalImage').textContent = product.icon || '🛠️';
-                document.getElementById('modalDescription').textContent = product.description;
+            if (!modal || !product) {
+                return;
+            }
 
-                // Actualizar especificaciones
-                const specsList = document.getElementById('modalSpecs');
+            currentProduct = product.title;
+            const titleEl = document.getElementById('modalTitle');
+            const imageEl = document.getElementById('modalImage');
+            const descriptionEl = document.getElementById('modalDescription');
+            const specsList = document.getElementById('modalSpecs');
+
+            if (titleEl) {
+                titleEl.textContent = product.title;
+            }
+
+            if (imageEl) {
+                imageEl.textContent = product.icon || '🛠️';
+            }
+
+            if (descriptionEl) {
+                descriptionEl.textContent = product.description;
+            }
+
+            if (specsList) {
                 if (product.specs && product.specs.length) {
                     specsList.innerHTML = product.specs.map(spec =>
                         \`<li><span>\${spec[0]}:</span><span>\${spec[1]}</span></li>\`
@@ -1731,38 +1837,44 @@
             document.body.style.overflow = 'hidden';
         }
 
-        // Función para cerrar modal
         function closeModal() {
             const modal = document.getElementById('productModal');
-            modal.classList.remove('active');
+            if (modal) {
+                modal.classList.remove('active');
+            }
             document.body.style.overflow = 'auto';
         }
 
-        // Cerrar modal al hacer clic fuera
-        document.getElementById('productModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        // Función para contactar por WhatsApp
         function contactWhatsApp() {
-            const message = \`Hola! Me interesa el producto: \${currentProduct}. ¿Podrían darme más información?\`;
-            const phone = '${config.whatsapp}';
-            const url = \`https://wa.me/\${phone}?text=\${encodeURIComponent(message)}\`;
+            const config = catalogConfig || {};
+            const whatsappNumber = (config.whatsapp || '').replace(/\\D+/g, '');
+
+            if (!whatsappNumber) {
+                return;
+            }
+
+            const productName = currentProduct || 'Producto Amazonia';
+            const message = \`Hola! Me interesa el producto: \${productName}. ¿Podrían darme más información?\`;
+            const url = \`https://wa.me/\${whatsappNumber}?text=\${encodeURIComponent(message)}\`;
             window.open(url, '_blank');
         }
 
-        // Función para solicitar cotización
         function requestQuote() {
-            const subject = \`Cotización - \${currentProduct}\`;
-            const body = \`Hola,\\n\\nMe gustaría recibir una cotización para el producto: \${currentProduct}.\\n\\nMis datos de contacto son:\\nNombre:\\nTeléfono:\\nCantidad requerida:\\n\\nGracias!\`;
-            const email = '${config.email}';
-            const url = \`mailto:\${email}?subject=\${encodeURIComponent(subject)}&body=\${encodeURIComponent(body)}\`;
+            const config = catalogConfig || {};
+            const emailValue = (config.email || '').trim();
+
+            if (!emailValue) {
+                return;
+            }
+
+            const productName = currentProduct || 'Producto Amazonia';
+            const subject = \`Cotización - \${productName}\`;
+            const phoneLine = config.phone ? \`Teléfono de contacto preferido: \${config.phone}\` : 'Teléfono de contacto:';
+            const body = \`Hola,\\n\\nMe gustaría recibir una cotización para el producto: \${productName}.\\n\\n\${phoneLine}\\nCantidad requerida:\\n\\nGracias!\`;
+            const url = \`mailto:\${emailValue}?subject=\${encodeURIComponent(subject)}&body=\${encodeURIComponent(body)}\`;
             window.location.href = url;
         }
 
-        // Animación de entrada para las tarjetas de producto
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -1777,20 +1889,10 @@
             });
         }, observerOptions);
 
-        // Observar todas las tarjetas de producto
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.product-card');
-            cards.forEach(card => {
-                card.style.opacity = '0';
-                observer.observe(card);
-            });
-        });
-
-        // Efecto parallax suave en el header
         window.addEventListener('scroll', function() {
             const scrolled = window.pageYOffset;
             const header = document.querySelector('header');
-            if (scrolled < 300) {
+            if (header && scrolled < 300) {
                 header.style.transform = \`translateY(\${scrolled * 0.5}px)\`;
             }
         });`;
