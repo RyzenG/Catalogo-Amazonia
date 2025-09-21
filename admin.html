@@ -62,6 +62,23 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
+        .preview-section {
+            margin-top: 2rem;
+        }
+
+        .preview-section h2 {
+            margin-bottom: 1rem;
+            color: #2d4a2b;
+        }
+
+        #catalogPreview {
+            width: 100%;
+            min-height: 600px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
         .section-title {
             color: #2d4a2b;
             margin-bottom: 1.5rem;
@@ -399,6 +416,7 @@
                 <button class="btn btn-primary" style="width: 100%" onclick="showSection('config')">⚙️ Configuración</button>
                 <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem" onclick="showSection('products')">📦 Productos</button>
                 <button class="btn btn-success" style="width: 100%; margin-top: 1rem" onclick="generateCatalog()">📥 Generar Catálogo</button>
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" onclick="updateCatalogPreview()">🔄 Actualizar vista previa</button>
                 
                 <div style="margin-top: 2rem">
                     <h4 style="margin-bottom: 1rem">Acciones Rápidas</h4>
@@ -459,7 +477,7 @@
                 <!-- Products Section -->
                 <div id="productsSection" class="section" style="display: none">
                     <h2 class="section-title">📦 Gestión de Productos</h2>
-                    
+
                     <div class="category-tabs">
                         <button class="tab active" data-category="macetas" onclick="showCategory(event, 'macetas')">🪴 Macetas</button>
                         <button class="tab" data-category="pisos" onclick="showCategory(event, 'pisos')">⬜ Pisos</button>
@@ -474,6 +492,11 @@
                         <!-- Products will be loaded here -->
                     </div>
                 </div>
+
+                <section id="previewSection" class="preview-section">
+                    <h2 class="section-title">👀 Vista previa del catálogo</h2>
+                    <iframe id="catalogPreview" title="Vista previa del catálogo"></iframe>
+                </section>
             </div>
         </div>
 
@@ -614,6 +637,7 @@
         function saveData() {
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             showMessage('Datos guardados correctamente', 'success');
+            updateCatalogPreview();
         }
 
         // Load configuration
@@ -625,6 +649,7 @@
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
+            updateCatalogPreview();
         }
 
         // Save configuration
@@ -712,9 +737,10 @@
             
             if (products.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #999">No hay productos en esta categoría. Haz clic en "Añadir Producto" para comenzar.</p>';
+                updateCatalogPreview();
                 return;
             }
-            
+
             container.innerHTML = products.map(product => `
                 <div class="product-item">
                     <div class="product-info">
@@ -727,6 +753,8 @@
                     </div>
                 </div>
             `).join('');
+
+            updateCatalogPreview();
         }
 
         // Open product modal
@@ -857,6 +885,7 @@
             loadProducts();
             closeModal();
             showMessage('Producto guardado correctamente', 'success');
+            updateCatalogPreview();
         });
 
         // Show message
@@ -913,7 +942,7 @@
         function generateCatalog() {
             // First save current data
             saveData();
-            
+
             // Generate the HTML content
             const htmlContent = generateCatalogHTML();
             
@@ -927,8 +956,26 @@
             
             // Clean up
             URL.revokeObjectURL(url);
-            
+
             showMessage('¡Catálogo generado correctamente! Revisa tu carpeta de descargas.', 'success');
+        }
+
+        function updateCatalogPreview() {
+            const previewFrame = document.getElementById('catalogPreview');
+            if (!previewFrame) {
+                return;
+            }
+
+            try {
+                const htmlContent = generateCatalogHTML();
+                if ('srcdoc' in previewFrame) {
+                    previewFrame.srcdoc = htmlContent;
+                } else {
+                    previewFrame.innerHTML = htmlContent;
+                }
+            } catch (error) {
+                console.error('No se pudo actualizar la vista previa del catálogo', error);
+            }
         }
 
         // Generate catalog HTML
