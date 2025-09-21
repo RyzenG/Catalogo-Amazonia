@@ -574,221 +574,22 @@
     <!-- Header -->
     <header>
         <div class="header-content">
-            <h1>AMAZONIA CONCRETE</h1>
-            <p class="tagline">Naturaleza y Modernidad en Perfecta Armonía</p>
+            <h1 id="headerTitle">AMAZONIA CONCRETE</h1>
+            <p class="tagline" id="headerTagline">Naturaleza y Modernidad en Perfecta Armonía</p>
         </div>
     </header>
 
     <!-- Navigation -->
     <div class="nav-container">
         <nav>
-            <div class="nav-buttons">
-                <button class="nav-btn active" onclick="showCategory(event, 'macetas')">🪴 Macetas</button>
-                <button class="nav-btn" onclick="showCategory(event, 'pisos')">⬜ Pisos</button>
-                <button class="nav-btn" onclick="showCategory(event, 'revestimientos')">🏗️ Revestimientos</button>
-                <button class="nav-btn" onclick="showCategory(event, 'mobiliario')">🪑 Mobiliario</button>
-                <button class="nav-btn" onclick="showCategory(event, 'decoracion')">🎨 Decoración</button>
-            </div>
+            <div class="nav-buttons" id="navButtons"></div>
         </nav>
     </div>
 
     <!-- Main Container -->
     <div class="container">
-        <!-- Macetas Category -->
-        <div class="category active" id="macetas">
-            <h2 class="category-title">Macetas de Concreto</h2>
-            <p class="category-description">Diseños únicos inspirados en la naturaleza amazónica</p>
-            <div class="products-grid">
-                <div class="product-card" onclick="openModal('maceta1')">
-                    <div class="product-image">🪴</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Maceta Tropical</h3>
-                        <p class="product-description">Diseño orgánico con textura de hojas tropicales</p>
-                        <div class="product-features">
-                            <span class="feature-tag">30cm x 25cm</span>
-                            <span class="feature-tag">Interior/Exterior</span>
-                        </div>
-                        <p class="product-price">$45.000</p>
-                    </div>
-                </div>
-                <div class="product-card" onclick="openModal('maceta2')">
-                    <div class="product-image">🌿</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Maceta Minimalista</h3>
-                        <p class="product-description">Líneas limpias con acabado natural</p>
-                        <div class="product-features">
-                            <span class="feature-tag">20cm x 20cm</span>
-                            <span class="feature-tag">Drenaje incluido</span>
-                        </div>
-                        <p class="product-price">$35.000</p>
-                    </div>
-                </div>
-                <div class="product-card" onclick="openModal('maceta3')">
-                    <div class="product-image">🌱</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Set Jardín Vertical</h3>
-                        <p class="product-description">Sistema modular para crear tu propio jardín vertical</p>
-                        <div class="product-features">
-                            <span class="feature-tag">3 piezas</span>
-                            <span class="feature-tag">Montaje en pared</span>
-                        </div>
-                        <p class="product-price">$120.000</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pisos Category -->
-        <div class="category" id="pisos">
-            <h2 class="category-title">Pisos de Concreto</h2>
-            <p class="category-description">Resistencia y elegancia para tus espacios</p>
-            <div class="products-grid">
-                <div class="product-card" onclick="openModal('piso1')">
-                    <div class="product-image">⬜</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Baldosa Amazonia</h3>
-                        <p class="product-description">Patrón de hojas en relieve sutil</p>
-                        <div class="product-features">
-                            <span class="feature-tag">40cm x 40cm</span>
-                            <span class="feature-tag">Antideslizante</span>
-                        </div>
-                        <p class="product-price">$85.000/m²</p>
-                    </div>
-                </div>
-                <div class="product-card" onclick="openModal('piso2')">
-                    <div class="product-image">⬛</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Concreto Pulido</h3>
-                        <p class="product-description">Acabado espejo con sellador ecológico</p>
-                        <div class="product-features">
-                            <span class="feature-tag">Personalizable</span>
-                            <span class="feature-tag">Alta durabilidad</span>
-                        </div>
-                        <p class="product-price">$120.000/m²</p>
-                    </div>
-                </div>
-                <div class="product-card" onclick="openModal('piso3')">
-                    <div class="product-image">🔲</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Adoquín Ecológico</h3>
-                        <p class="product-description">Permeable para jardines y exteriores</p>
-                        <div class="product-features">
-                            <span class="feature-tag">20cm x 10cm</span>
-                            <span class="feature-tag">Drenaje natural</span>
-                        </div>
-                        <p class="product-price">$65.000/m²</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Revestimientos Category -->
-        <div class="category" id="revestimientos">
-            <h2 class="category-title">Revestimientos</h2>
-            <p class="category-description">Transforma tus paredes con texturas naturales</p>
-            <div class="products-grid">
-                <div class="product-card" onclick="openModal('revest1')">
-                    <div class="product-image">🏗️</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Panel 3D Selva</h3>
-                        <p class="product-description">Relieve tridimensional inspirado en la selva</p>
-                        <div class="product-features">
-                            <span class="feature-tag">60cm x 60cm</span>
-                            <span class="feature-tag">Interior</span>
-                        </div>
-                        <p class="product-price">$95.000/panel</p>
-                    </div>
-                </div>
-                <div class="product-card" onclick="openModal('revest2')">
-                    <div class="product-image">🧱</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Ladrillo Aparente</h3>
-                        <p class="product-description">Estilo industrial con toque natural</p>
-                        <div class="product-features">
-                            <span class="feature-tag">Varios colores</span>
-                            <span class="feature-tag">Fácil instalación</span>
-                        </div>
-                        <p class="product-price">$75.000/m²</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mobiliario Category -->
-        <div class="category" id="mobiliario">
-            <h2 class="category-title">Mobiliario de Concreto</h2>
-            <p class="category-description">Piezas únicas y duraderas para tu hogar</p>
-            <div class="products-grid">
-                <div class="product-card" onclick="openModal('mueble1')">
-                    <div class="product-image">🪑</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Banca Jardín</h3>
-                        <p class="product-description">Diseño ergonómico con respaldo de hojas</p>
-                        <div class="product-features">
-                            <span class="feature-tag">150cm largo</span>
-                            <span class="feature-tag">Resistente UV</span>
-                        </div>
-                        <p class="product-price">$450.000</p>
-                    </div>
-                </div>
-                <div class="product-card" onclick="openModal('mueble2')">
-                    <div class="product-image">🪜</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Mesa Centro</h3>
-                        <p class="product-description">Diseño minimalista con base de concreto</p>
-                        <div class="product-features">
-                            <span class="feature-tag">100cm x 60cm</span>
-                            <span class="feature-tag">Tope de vidrio</span>
-                        </div>
-                        <p class="product-price">$580.000</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Decoración Category -->
-        <div class="category" id="decoracion">
-            <h2 class="category-title">Decoración</h2>
-            <p class="category-description">Detalles que marcan la diferencia</p>
-            <div class="products-grid">
-                <div class="product-card" onclick="openModal('deco1')">
-                    <div class="product-image">🎨</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Escultura Hoja</h3>
-                        <p class="product-description">Pieza decorativa con detalle botánico</p>
-                        <div class="product-features">
-                            <span class="feature-tag">30cm altura</span>
-                            <span class="feature-tag">Edición limitada</span>
-                        </div>
-                        <p class="product-price">$180.000</p>
-                    </div>
-                </div>
-                <div class="product-card" onclick="openModal('deco2')">
-                    <div class="product-image">🕯️</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Portavelas Natural</h3>
-                        <p class="product-description">Set de 3 portavelas con textura orgánica</p>
-                        <div class="product-features">
-                            <span class="feature-tag">3 tamaños</span>
-                            <span class="feature-tag">Acabado mate</span>
-                        </div>
-                        <p class="product-price">$65.000</p>
-                    </div>
-                </div>
-                <div class="product-card" onclick="openModal('deco3')">
-                    <div class="product-image">🖼️</div>
-                    <div class="product-info">
-                        <h3 class="product-name">Mural Relieve</h3>
-                        <p class="product-description">Arte en concreto para tu pared</p>
-                        <div class="product-features">
-                            <span class="feature-tag">80cm x 60cm</span>
-                            <span class="feature-tag">Personalizable</span>
-                        </div>
-                        <p class="product-price">$320.000</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div id="catalogContainer"></div>
+        <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">No hay productos disponibles en este momento. Vuelve pronto para descubrir las novedades.</p>
     </div>
 
     <!-- Modal -->
@@ -815,8 +616,8 @@
                 <div class="cta-section">
                     <h3>¿Interesado en este producto?</h3>
                     <p>Contáctanos para más información o para realizar tu pedido</p>
-                    <button class="cta-button" onclick="contactWhatsApp()">💬 WhatsApp</button>
-                    <button class="cta-button" onclick="requestQuote()">📋 Solicitar Cotización</button>
+                    <button class="cta-button" id="modalWhatsAppButton" onclick="contactWhatsApp()">💬 WhatsApp</button>
+                    <button class="cta-button" id="modalQuoteButton" onclick="requestQuote()">📋 Solicitar Cotización</button>
                 </div>
             </div>
         </div>
@@ -826,244 +627,422 @@
     <footer>
         <div class="footer-content">
             <div class="contact-info">
-                <h3>AMAZONIA CONCRETE</h3>
-                <p>Creando espacios únicos con concreto sostenible</p>
+                <h3 id="footerCompanyName">AMAZONIA CONCRETE</h3>
+                <p id="footerMessage">Creando espacios únicos con concreto sostenible</p>
                 <div class="contact-buttons">
-                    <a href="tel:+573000000000" class="contact-btn">📞 Llamar</a>
-                    <a href="mailto:info@amazoniaconcrete.com" class="contact-btn">✉️ Email</a>
-                    <a href="https://wa.me/573000000000" class="contact-btn">💬 WhatsApp</a>
-                    <a href="#" class="contact-btn">📍 Ubicación</a>
+                    <a id="contactPhone" class="contact-btn" href="#">📞 Llamar</a>
+                    <a id="contactEmail" class="contact-btn" href="#">✉️ Email</a>
+                    <a id="contactWhatsAppLink" class="contact-btn" href="#" target="_blank">💬 WhatsApp</a>
+                    <a id="contactAddress" class="contact-btn" href="#" target="_blank">📍 Ubicación</a>
                 </div>
             </div>
-            <p style="margin-top: 2rem; opacity: 0.7;">© 2024 Amazonia Concrete - Todos los derechos reservados</p>
+            <p style="margin-top: 2rem; opacity: 0.7;" id="footerLegal">© 2024 Amazonia Concrete - Todos los derechos reservados</p>
         </div>
     </footer>
 
     <script>
         // Variables globales
         let currentProduct = null;
-        
-        // Datos de productos expandidos
-        const productData = {
-            maceta1: {
-                title: 'Maceta Tropical',
-                icon: '🪴',
-                description: 'Nuestra maceta tropical está inspirada en las hojas del Amazonas. Cada pieza es única, con texturas que imitan las venas de las hojas tropicales. Perfecta para plantas de interior y exterior, cuenta con sistema de drenaje integrado y acabado resistente a la intemperie.',
-                specs: [
-                    ['Material', 'Concreto reforzado con fibra'],
-                    ['Dimensiones', '30cm x 25cm x 28cm'],
-                    ['Peso', '8 kg'],
-                    ['Colores', 'Gris natural, Verde musgo, Terracota'],
-                    ['Drenaje', 'Sistema integrado con plato'],
-                    ['Garantía', '2 años']
-                ]
+        let catalogData = null;
+        let productData = {};
+        let cardObserver = null;
+
+        const defaultCatalogData = {
+            config: {
+                whatsapp: '573000000000',
+                email: 'info@amazoniaconcrete.com',
+                phone: '+57 300 000 0000',
+                address: '',
+                companyName: 'AMAZONIA CONCRETE',
+                tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
+                footerMessage: 'Creando espacios únicos con concreto sostenible'
             },
-            maceta2: {
-                title: 'Maceta Minimalista',
-                icon: '🌿',
-                description: 'Diseño contemporáneo que combina la simplicidad con la funcionalidad. Su acabado liso y formas geométricas la convierten en el complemento perfecto para espacios modernos. Ideal para suculentas y cactus.',
-                specs: [
-                    ['Material', 'Concreto pulido'],
-                    ['Dimensiones', '20cm x 20cm x 18cm'],
-                    ['Peso', '4 kg'],
-                    ['Colores', 'Blanco, Gris, Negro'],
-                    ['Acabado', 'Sellador impermeable'],
-                    ['Garantía', '2 años']
-                ]
-            },
-            maceta3: {
-                title: 'Set Jardín Vertical',
-                icon: '🌱',
-                description: 'Sistema modular revolucionario para crear jardines verticales. Cada módulo se conecta fácilmente permitiendo diseños personalizados. Incluye sistema de riego por goteo opcional.',
-                specs: [
-                    ['Material', 'Concreto aligerado'],
-                    ['Módulos', '3 piezas hexagonales'],
-                    ['Dimensiones', '25cm x 22cm cada módulo'],
-                    ['Peso total', '12 kg'],
-                    ['Instalación', 'Incluye kit de montaje'],
-                    ['Garantía', '3 años']
-                ]
-            },
-            piso1: {
-                title: 'Baldosa Amazonia',
-                icon: '⬜',
-                description: 'Baldosas premium con diseño exclusivo de hojas en relieve. Cada baldosa es una obra de arte que combina durabilidad con estética natural. Perfecta para crear caminos orgánicos en jardines o terrazas.',
-                specs: [
-                    ['Material', 'Concreto de alta resistencia'],
-                    ['Dimensiones', '40cm x 40cm x 4cm'],
-                    ['Peso', '12 kg/unidad'],
-                    ['Resistencia', '350 kg/cm²'],
-                    ['Acabado', 'Antideslizante clase 3'],
-                    ['Vida útil', '25+ años']
-                ]
-            },
-            piso2: {
-                title: 'Concreto Pulido',
-                icon: '⬛',
-                description: 'Solución integral de pisos con acabado espejo. Proceso de pulido diamantado que resalta los agregados naturales del concreto. Incluye tratamiento densificador y sellador de última generación.',
-                specs: [
-                    ['Espesor', '10-15cm'],
-                    ['Acabado', 'Pulido diamantado 3000 grit'],
-                    ['Sellador', 'Base agua, bajo VOC'],
-                    ['Mantenimiento', 'Mínimo'],
-                    ['Colores', 'Personalizable con tintes'],
-                    ['Garantía', '10 años']
-                ]
-            },
-            piso3: {
-                title: 'Adoquín Ecológico',
-                icon: '🔲',
-                description: 'Adoquines permeables que permiten la filtración natural del agua. Ideales para proyectos sostenibles y manejo de aguas pluviales. Disponibles en varios patrones de instalación.',
-                specs: [
-                    ['Material', 'Concreto poroso'],
-                    ['Dimensiones', '20cm x 10cm x 8cm'],
-                    ['Permeabilidad', '300 l/m²/min'],
-                    ['Peso', '3.5 kg/unidad'],
-                    ['Resistencia', '280 kg/cm²'],
-                    ['Certificación', 'LEED compatible']
-                ]
-            },
-            revest1: {
-                title: 'Panel 3D Selva',
-                icon: '🏗️',
-                description: 'Paneles decorativos con relieve tridimensional que recrean la exuberancia de la selva amazónica. Cada panel es una pieza única que transforma cualquier pared en una obra de arte.',
-                specs: [
-                    ['Material', 'Concreto arquitectónico'],
-                    ['Dimensiones', '60cm x 60cm x 3cm'],
-                    ['Peso', '15 kg/panel'],
-                    ['Instalación', 'Adhesivo especial incluido'],
-                    ['Acabado', 'Pintura mineral ecológica'],
-                    ['Uso', 'Interior']
-                ]
-            },
-            revest2: {
-                title: 'Ladrillo Aparente',
-                icon: '🧱',
-                description: 'Revestimiento que simula ladrillo expuesto con la durabilidad del concreto. Perfecto para ambientes industriales o rústicos modernos. Disponible en varios tonos y texturas.',
-                specs: [
-                    ['Material', 'Concreto texturizado'],
-                    ['Formato', 'Placas de 50x25cm'],
-                    ['Espesor', '2cm'],
-                    ['Colores', 'Rojo, Café, Gris, Blanco'],
-                    ['Instalación', 'Sistema click o adhesivo'],
-                    ['Rendimiento', '8 placas/m²']
-                ]
-            },
-            mueble1: {
-                title: 'Banca Jardín',
-                icon: '🪑',
-                description: 'Banca escultórica con respaldo inspirado en hojas tropicales. Combina arte y funcionalidad, perfecta como pieza central en jardines o terrazas. Tratamiento anti-UV garantiza colores duraderos.',
-                specs: [
-                    ['Material', 'Concreto reforzado'],
-                    ['Dimensiones', '150cm x 45cm x 85cm'],
-                    ['Peso', '120 kg'],
-                    ['Capacidad', '3 personas (300kg)'],
-                    ['Acabado', 'Hidrofugante y anti-UV'],
-                    ['Anclaje', 'Opcional al piso']
-                ]
-            },
-            mueble2: {
-                title: 'Mesa Centro',
-                icon: '🪜',
-                description: 'Mesa de centro con base escultórica de concreto y tope de vidrio templado. El diseño fluido de la base evoca las formas orgánicas de la naturaleza. Pieza statement para cualquier sala.',
-                specs: [
-                    ['Base', 'Concreto arquitectónico'],
-                    ['Tope', 'Vidrio templado 12mm'],
-                    ['Dimensiones', '100cm x 60cm x 45cm'],
-                    ['Peso', '85 kg'],
-                    ['Capacidad', '50 kg'],
-                    ['Mantenimiento', 'Limpieza con paño húmedo']
-                ]
-            },
-            deco1: {
-                title: 'Escultura Hoja',
-                icon: '🎨',
-                description: 'Escultura artística que captura la elegancia de una hoja amazónica en concreto. Cada pieza es moldeada a mano, garantizando su exclusividad. Incluye base y puede ser personalizada.',
-                specs: [
-                    ['Material', 'Concreto fino'],
-                    ['Altura', '30cm'],
-                    ['Base', '15cm diámetro'],
-                    ['Peso', '3 kg'],
-                    ['Acabado', 'Pátina artística'],
-                    ['Edición', 'Limitada, numerada']
-                ]
-            },
-            deco2: {
-                title: 'Portavelas Natural',
-                icon: '🕯️',
-                description: 'Set de portavelas con textura que imita la corteza de los árboles amazónicos. Crea ambientes cálidos y acogedores. Compatible con velas de té y velas pilares pequeñas.',
-                specs: [
-                    ['Material', 'Concreto texturizado'],
-                    ['Set', '3 piezas (S, M, L)'],
-                    ['Alturas', '5cm, 8cm, 11cm'],
-                    ['Peso total', '2 kg'],
-                    ['Acabado', 'Mate, resistente al calor'],
-                    ['Incluye', 'Velas de muestra']
-                ]
-            },
-            deco3: {
-                title: 'Mural Relieve',
-                icon: '🖼️',
-                description: 'Obra de arte en concreto personalizable. Podemos crear diseños exclusivos basados en tus ideas o elegir de nuestra galería de diseños tropicales. Incluye sistema de montaje invisible.',
-                specs: [
-                    ['Material', 'Concreto artístico'],
-                    ['Dimensiones', '80cm x 60cm x 4cm'],
-                    ['Peso', '25 kg'],
-                    ['Personalización', 'Diseño a medida'],
-                    ['Instalación', 'Kit de montaje oculto'],
-                    ['Tiempo entrega', '15 días']
-                ]
+            products: {
+                macetas: [],
+                pisos: [],
+                revestimientos: [],
+                mobiliario: [],
+                decoracion: []
             }
         };
+
+        const categoryMetadata = {
+            macetas: { title: 'Macetas de Concreto', desc: 'Diseños únicos inspirados en la naturaleza amazónica', icon: '🪴' },
+            pisos: { title: 'Pisos de Concreto', desc: 'Resistencia y elegancia para tus espacios', icon: '⬜' },
+            revestimientos: { title: 'Revestimientos', desc: 'Transforma tus paredes con texturas naturales', icon: '🗿' },
+            mobiliario: { title: 'Mobiliario de Concreto', desc: 'Piezas únicas y duraderas para tu hogar', icon: '🪑' },
+            decoracion: { title: 'Decoración', desc: 'Detalles que marcan la diferencia', icon: '🎨' }
+        };
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        function loadCatalogData() {
+            const saved = localStorage.getItem('amazoniaData');
+            let parsed = {};
+
+            if (saved) {
+                try {
+                    parsed = JSON.parse(saved) || {};
+                } catch (error) {
+                    console.error('No se pudieron leer los datos guardados', error);
+                }
+            }
+
+            const mergedProducts = {};
+            const storedProducts = parsed.products && typeof parsed.products === 'object' ? parsed.products : {};
+            const categories = new Set([
+                ...Object.keys(defaultCatalogData.products),
+                ...Object.keys(storedProducts)
+            ]);
+
+            categories.forEach(category => {
+                const categoryProducts = storedProducts[category];
+                if (Array.isArray(categoryProducts)) {
+                    mergedProducts[category] = categoryProducts;
+                } else {
+                    mergedProducts[category] = Array.isArray(defaultCatalogData.products[category]) ? [...defaultCatalogData.products[category]] : [];
+                }
+            });
+
+            return {
+                config: Object.assign({}, defaultCatalogData.config, parsed.config || {}),
+                products: mergedProducts
+            };
+        }
+
+        function applyConfig() {
+            if (!catalogData) return;
+
+            const config = catalogData.config || {};
+            const fallbackName = defaultCatalogData.config.companyName;
+            const companyName = config.companyName || fallbackName;
+            const whatsappNumber = (config.whatsapp || '').replace(/\D+/g, '');
+            const emailValue = (config.email || '').trim();
+            const phoneValue = config.phone || '';
+            const addressValue = config.address || '';
+
+            document.title = companyName ? `${companyName} - Catálogo Digital` : 'Catálogo Digital';
+
+            const headerTitle = document.getElementById('headerTitle');
+            if (headerTitle) {
+                headerTitle.textContent = companyName;
+            }
+
+            const headerTagline = document.getElementById('headerTagline');
+            if (headerTagline) {
+                if (config.tagline) {
+                    headerTagline.textContent = config.tagline;
+                    headerTagline.style.display = 'block';
+                } else {
+                    headerTagline.textContent = '';
+                    headerTagline.style.display = 'none';
+                }
+            }
+
+            const whatsappButton = document.getElementById('modalWhatsAppButton');
+            if (whatsappButton) {
+                whatsappButton.style.display = whatsappNumber ? 'inline-block' : 'none';
+            }
+
+            const quoteButton = document.getElementById('modalQuoteButton');
+            if (quoteButton) {
+                quoteButton.style.display = emailValue ? 'inline-block' : 'none';
+            }
+
+            const footerCompanyName = document.getElementById('footerCompanyName');
+            if (footerCompanyName) {
+                footerCompanyName.textContent = companyName;
+            }
+
+            const footerMessage = document.getElementById('footerMessage');
+            if (footerMessage) {
+                if (config.footerMessage) {
+                    footerMessage.textContent = config.footerMessage;
+                    footerMessage.style.display = 'block';
+                } else {
+                    footerMessage.textContent = '';
+                    footerMessage.style.display = 'none';
+                }
+            }
+
+            const footerLegal = document.getElementById('footerLegal');
+            if (footerLegal) {
+                const year = new Date().getFullYear();
+                footerLegal.textContent = `© ${year} ${companyName} - Todos los derechos reservados`;
+            }
+
+            const phoneLink = document.getElementById('contactPhone');
+            if (phoneLink) {
+                const sanitizedPhone = phoneValue.replace(/[^+\d]/g, '');
+                if (sanitizedPhone) {
+                    phoneLink.href = `tel:${sanitizedPhone}`;
+                    phoneLink.style.display = 'inline-flex';
+                } else {
+                    phoneLink.style.display = 'none';
+                }
+            }
+
+            const emailLink = document.getElementById('contactEmail');
+            if (emailLink) {
+                if (emailValue) {
+                    emailLink.href = `mailto:${emailValue}`;
+                    emailLink.style.display = 'inline-flex';
+                } else {
+                    emailLink.style.display = 'none';
+                }
+            }
+
+            const whatsappLink = document.getElementById('contactWhatsAppLink');
+            if (whatsappLink) {
+                if (whatsappNumber) {
+                    whatsappLink.href = `https://wa.me/${whatsappNumber}`;
+                    whatsappLink.style.display = 'inline-flex';
+                } else {
+                    whatsappLink.style.display = 'none';
+                }
+            }
+
+            const addressLink = document.getElementById('contactAddress');
+            if (addressLink) {
+                if (addressValue) {
+                    addressLink.href = `https://www.google.com/maps/search/${encodeURIComponent(addressValue)}`;
+                    addressLink.style.display = 'inline-flex';
+                } else {
+                    addressLink.style.display = 'none';
+                }
+            }
+        }
+
+        function initializeObserver() {
+            cardObserver = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+        }
+
+        function observeProductCards() {
+            if (!cardObserver) {
+                initializeObserver();
+            } else {
+                cardObserver.disconnect();
+            }
+
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.animation = 'none';
+                cardObserver.observe(card);
+            });
+        }
+
+        function buildNavButton(category, label, icon) {
+            const button = document.createElement('button');
+            button.className = 'nav-btn';
+            button.dataset.category = category;
+            button.innerHTML = `${icon} ${label}`;
+            button.addEventListener('click', event => showCategory(event, category));
+            return button;
+        }
+
+        function buildProductCard(product, catInfo, category, index) {
+            const productId = product.id || `${category}-${index}`;
+            const productName = product.name || 'Producto Amazonia';
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.dataset.productId = productId;
+
+            const features = Array.isArray(product.features) ? product.features : [];
+            const featuresHTML = features.map(feature => `<span class="feature-tag">${feature}</span>`).join('');
+            const productDescription = product.shortDesc || 'Información disponible próximamente.';
+            const priceValue = typeof product.price !== 'undefined' && product.price !== null ? product.price : '';
+
+            card.innerHTML = `
+                <div class="product-image">${product.icon || catInfo.icon}</div>
+                <div class="product-info">
+                    <h3 class="product-name">${productName}</h3>
+                    <p class="product-description">${productDescription}</p>
+                    <div class="product-features">${featuresHTML}</div>
+                    <p class="product-price">${priceValue}</p>
+                </div>
+            `;
+
+            card.addEventListener('click', () => openModal(productId));
+
+            const specs = [];
+            if (product.specs) {
+                product.specs.split('\n').forEach(line => {
+                    const parts = line.split(':');
+                    if (parts.length >= 2) {
+                        specs.push([parts[0].trim(), parts.slice(1).join(':').trim()]);
+                    }
+                });
+            }
+
+            productData[productId] = {
+                title: productName,
+                icon: product.icon || catInfo.icon,
+                description: product.longDesc || productDescription,
+                specs: specs
+            };
+
+            return card;
+        }
+
+        function renderCatalog() {
+            if (!catalogData) return;
+
+            const navButtons = document.getElementById('navButtons');
+            const catalogContainer = document.getElementById('catalogContainer');
+            const emptyMessage = document.getElementById('emptyCatalogMessage');
+            const navWrapper = document.querySelector('.nav-container');
+
+            if (!navButtons || !catalogContainer) {
+                return;
+            }
+
+            navButtons.innerHTML = '';
+            catalogContainer.innerHTML = '';
+            productData = {};
+
+            const categoriesOrder = Array.from(new Set([...Object.keys(categoryMetadata), ...Object.keys(catalogData.products || {})]));
+            const categoriesWithProducts = [];
+
+            categoriesOrder.forEach(category => {
+                const items = catalogData.products[category];
+                if (!Array.isArray(items) || items.length === 0) {
+                    return;
+                }
+
+                if (!categoryMetadata[category]) {
+                    categoryMetadata[category] = {
+                        title: category.charAt(0).toUpperCase() + category.slice(1),
+                        desc: 'Productos disponibles',
+                        icon: '📦'
+                    };
+                }
+
+                const catInfo = categoryMetadata[category];
+                const section = document.createElement('div');
+                section.className = 'category';
+                section.id = category;
+                section.innerHTML = `
+            <h2 class="category-title">${catInfo.title}</h2>
+            <p class="category-description">${catInfo.desc}</p>
+            <div class="products-grid"></div>
+        `;
+
+                const grid = section.querySelector('.products-grid');
+                items.forEach((product, index) => {
+                    const card = buildProductCard(product, catInfo, category, index);
+                    grid.appendChild(card);
+                });
+
+                catalogContainer.appendChild(section);
+
+                const label = category.charAt(0).toUpperCase() + category.slice(1);
+                const navButton = buildNavButton(category, label, catInfo.icon);
+                navButtons.appendChild(navButton);
+                categoriesWithProducts.push(category);
+            });
+
+            const hasProducts = categoriesWithProducts.length > 0;
+
+            if (navWrapper) {
+                navWrapper.style.display = hasProducts ? '' : 'none';
+            }
+
+            if (emptyMessage) {
+                emptyMessage.style.display = hasProducts ? 'none' : 'block';
+            }
+
+            if (hasProducts) {
+                const firstCategory = categoriesWithProducts[0];
+                const firstSection = document.getElementById(firstCategory);
+                const firstButton = navButtons.querySelector(`[data-category="${firstCategory}"]`);
+
+                if (firstSection) {
+                    firstSection.classList.add('active');
+                }
+
+                if (firstButton) {
+                    firstButton.classList.add('active');
+                }
+            }
+
+            observeProductCards();
+        }
+
+        function initializeCatalog() {
+            catalogData = loadCatalogData();
+            applyConfig();
+            renderCatalog();
+        }
 
         // Ocultar loader cuando la página carga
         window.addEventListener('load', function() {
             setTimeout(() => {
-                document.getElementById('loader').classList.add('hidden');
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.classList.add('hidden');
+                }
             }, 1500);
         });
 
         // Función para mostrar categorías
         function showCategory(event, categoryId) {
-            // Ocultar todas las categorías
             const categories = document.querySelectorAll('.category');
             categories.forEach(cat => cat.classList.remove('active'));
 
-            // Mostrar la categoría seleccionada
-            document.getElementById(categoryId).classList.add('active');
+            const targetCategory = document.getElementById(categoryId);
+            if (targetCategory) {
+                targetCategory.classList.add('active');
+            }
 
-            // Actualizar botones de navegación
             const buttons = document.querySelectorAll('.nav-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
-            if (event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
+
+            const targetButton = event && event.currentTarget ? event.currentTarget : document.querySelector(`.nav-btn[data-category="${categoryId}"]`);
+            if (targetButton) {
+                targetButton.classList.add('active');
             }
-            
-            // Scroll suave al inicio del contenido
-            window.scrollTo({
-                top: document.querySelector('.nav-container').offsetTop - 20,
-                behavior: 'smooth'
-            });
+
+            const navWrapper = document.querySelector('.nav-container');
+            if (navWrapper && navWrapper.offsetParent !== null) {
+                window.scrollTo({
+                    top: navWrapper.offsetTop - 20,
+                    behavior: 'smooth'
+                });
+            }
         }
 
         // Función para abrir modal
         function openModal(productId) {
             const modal = document.getElementById('productModal');
             const product = productData[productId];
-            
-            if (product) {
-                currentProduct = product.title;
-                document.getElementById('modalTitle').textContent = product.title;
-                document.getElementById('modalImage').textContent = product.icon;
-                document.getElementById('modalDescription').textContent = product.description;
-                
-                // Actualizar especificaciones
-                const specsList = document.getElementById('modalSpecs');
-                specsList.innerHTML = product.specs.map(spec => 
-                    `<li><span>${spec[0]}:</span><span>${spec[1]}</span></li>`
-                ).join('');
+
+            if (!modal || !product) {
+                return;
             }
-            
+
+            currentProduct = product.title;
+            document.getElementById('modalTitle').textContent = product.title;
+            document.getElementById('modalImage').textContent = product.icon;
+            document.getElementById('modalDescription').textContent = product.description;
+
+            const specsList = document.getElementById('modalSpecs');
+            if (specsList) {
+                specsList.innerHTML = product.specs.map(spec => `
+                    <li><span>${spec[0]}:</span><span>${spec[1]}</span></li>
+                `).join('');
+            }
+
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
@@ -1071,58 +1050,58 @@
         // Función para cerrar modal
         function closeModal() {
             const modal = document.getElementById('productModal');
-            modal.classList.remove('active');
+            if (modal) {
+                modal.classList.remove('active');
+            }
             document.body.style.overflow = 'auto';
         }
 
-        // Cerrar modal al hacer clic fuera
-        document.getElementById('productModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
+        const modalElement = document.getElementById('productModal');
+        if (modalElement) {
+            modalElement.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        }
 
         // Función para contactar por WhatsApp
         function contactWhatsApp() {
-            const message = `Hola! Me interesa el producto: ${currentProduct}. ¿Podrían darme más información?`;
-            const phone = '573000000000'; // Reemplazar con tu número
-            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            if (!catalogData) return;
+
+            const config = catalogData.config || {};
+            const whatsappNumber = (config.whatsapp || '').replace(/\D+/g, '');
+
+            if (!whatsappNumber) {
+                return;
+            }
+
+            const productName = currentProduct || 'Producto Amazonia';
+            const message = `Hola! Me interesa el producto: ${productName}. ¿Podrían darme más información?`;
+            const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
             window.open(url, '_blank');
         }
 
         // Función para solicitar cotización
         function requestQuote() {
-            const subject = `Cotización - ${currentProduct}`;
-            const body = `Hola,\n\nMe gustaría recibir una cotización para el producto: ${currentProduct}.\n\nMis datos de contacto son:\nNombre:\nTeléfono:\nCantidad requerida:\n\nGracias!`;
-            const email = 'info@amazoniaconcrete.com'; // Reemplazar con tu email
-            const url = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            if (!catalogData) return;
+
+            const config = catalogData.config || {};
+            const emailValue = (config.email || '').trim();
+
+            if (!emailValue) {
+                return;
+            }
+
+            const productName = currentProduct || 'Producto Amazonia';
+            const subject = `Cotización - ${productName}`;
+            const phoneLine = config.phone ? `Teléfono de contacto preferido: ${config.phone}` : 'Teléfono de contacto:';
+            const body = `Hola,\n\nMe gustaría recibir una cotización para el producto: ${productName}.\n\n${phoneLine}\nCantidad requerida:\n\nGracias!`;
+            const url = `mailto:${emailValue}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = url;
         }
 
-        // Animación de entrada para las tarjetas de producto
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-
-        // Observar todas las tarjetas de producto
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.product-card');
-            cards.forEach(card => {
-                card.style.opacity = '0';
-                observer.observe(card);
-            });
-        });
-
+        document.addEventListener('DOMContentLoaded', initializeCatalog);
         // Efecto parallax suave en el header
         window.addEventListener('scroll', function() {
             const scrolled = window.pageYOffset;
