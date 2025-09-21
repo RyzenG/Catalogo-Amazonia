@@ -475,17 +475,17 @@
             <!-- Sidebar -->
             <div class="sidebar">
                 <h3 class="section-title">Menú</h3>
-                <button class="btn btn-primary" style="width: 100%" onclick="showSection('config')">⚙️ Configuración</button>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem" onclick="showSection('products')">📦 Productos</button>
-                <button class="btn btn-success" style="width: 100%; margin-top: 1rem" onclick="generateCatalog()">📥 Generar Catálogo</button>
-                <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" onclick="updateCatalogPreview()">🔄 Actualizar vista previa</button>
+                <button class="btn btn-primary" style="width: 100%" data-section="config">⚙️ Configuración</button>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem" data-section="products">📦 Productos</button>
+                <button class="btn btn-success" style="width: 100%; margin-top: 1rem" data-action="generate-catalog">📥 Generar Catálogo</button>
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" id="updatePreviewButton">🔄 Actualizar vista previa</button>
                 
                 <div style="margin-top: 2rem">
                     <h4 style="margin-bottom: 1rem">Acciones Rápidas</h4>
-                    <button class="btn btn-secondary" style="width: 100%" onclick="saveData()">💾 Guardar Cambios</button>
-                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" onclick="loadData()">📂 Cargar Datos</button>
-                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" onclick="exportData()">📤 Exportar Datos</button>
-                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" onclick="importData()">📥 Importar Datos</button>
+                    <button class="btn btn-secondary" style="width: 100%" id="saveDataButton">💾 Guardar Cambios</button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" id="loadDataButton">📂 Cargar Datos</button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" id="exportDataButton">📤 Exportar Datos</button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem" id="importDataButton">📥 Importar Datos</button>
                 </div>
             </div>
 
@@ -533,7 +533,7 @@
                         </div>
                     </div>
 
-                    <button class="btn btn-primary" onclick="saveConfig()">Guardar Configuración</button>
+                    <button class="btn btn-primary" id="saveConfigButton">Guardar Configuración</button>
                 </div>
 
                 <!-- Products Section -->
@@ -541,14 +541,14 @@
                     <h2 class="section-title">📦 Gestión de Productos</h2>
 
                     <div class="category-tabs">
-                        <button class="tab active" data-category="macetas" onclick="showCategory(event, 'macetas')">🪴 Macetas</button>
-                        <button class="tab" data-category="pisos" onclick="showCategory(event, 'pisos')">⬜ Pisos</button>
-                        <button class="tab" data-category="revestimientos" onclick="showCategory(event, 'revestimientos')">🗿 Revestimientos</button>
-                        <button class="tab" data-category="mobiliario" onclick="showCategory(event, 'mobiliario')">🪑 Mobiliario</button>
-                        <button class="tab" data-category="decoracion" onclick="showCategory(event, 'decoracion')">🎨 Decoración</button>
+                        <button class="tab active" data-category="macetas">🪴 Macetas</button>
+                        <button class="tab" data-category="pisos">⬜ Pisos</button>
+                        <button class="tab" data-category="revestimientos">🗿 Revestimientos</button>
+                        <button class="tab" data-category="mobiliario">🪑 Mobiliario</button>
+                        <button class="tab" data-category="decoracion">🎨 Decoración</button>
                     </div>
 
-                    <button class="btn btn-primary" onclick="openProductModal()">➕ Añadir Producto</button>
+                    <button class="btn btn-primary" id="openProductModalButton">➕ Añadir Producto</button>
 
                     <div id="productsList" class="product-list" style="margin-top: 1.5rem">
                         <!-- Products will be loaded here -->
@@ -566,7 +566,7 @@
         <div class="export-section">
             <h2 style="margin-bottom: 1rem">¿Listo para actualizar tu catálogo?</h2>
             <p style="margin-bottom: 1.5rem">Genera tu catálogo actualizado con todos los cambios realizados</p>
-            <button class="big-button" onclick="generateCatalog()">
+            <button class="big-button" data-action="generate-catalog">
                 <span>📥</span> Generar Catálogo Actualizado
             </button>
             <div id="statusMessage" class="status-message" style="margin-top: 1rem"></div>
@@ -578,7 +578,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Añadir Producto</h2>
-                <button class="close-modal" onclick="closeModal()">✕</button>
+                <button class="close-modal" type="button">✕</button>
             </div>
             
             <form id="productForm">
@@ -627,7 +627,7 @@
                 <div class="form-group">
                     <label>Características (etiquetas):</label>
                     <div id="featuresList" class="feature-list"></div>
-                    <button type="button" class="btn btn-secondary" onclick="addFeature()">+ Añadir característica</button>
+                    <button type="button" class="btn btn-secondary" id="addFeatureButton">+ Añadir característica</button>
                 </div>
 
                 <div class="form-group">
@@ -642,7 +642,7 @@
                 </div>
 
                 <div style="display: flex; gap: 1rem; justify-content: flex-end">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" id="cancelProductButton">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar Producto</button>
                 </div>
             </form>
@@ -795,8 +795,116 @@
             reader.readAsDataURL(file);
         }
 
+        function registerAdminEventHandlers() {
+            const sectionButtons = document.querySelectorAll('button[data-section]');
+            sectionButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const section = button.getAttribute('data-section');
+                    if (section) {
+                        showSection(section);
+                    }
+                });
+            });
+
+            const generateButtons = document.querySelectorAll('button[data-action="generate-catalog"]');
+            generateButtons.forEach(button => {
+                button.addEventListener('click', generateCatalog);
+            });
+
+            const updatePreviewButton = document.getElementById('updatePreviewButton');
+            if (updatePreviewButton) {
+                updatePreviewButton.addEventListener('click', updateCatalogPreview);
+            }
+
+            const saveDataButton = document.getElementById('saveDataButton');
+            if (saveDataButton) {
+                saveDataButton.addEventListener('click', saveData);
+            }
+
+            const loadDataButton = document.getElementById('loadDataButton');
+            if (loadDataButton) {
+                loadDataButton.addEventListener('click', loadData);
+            }
+
+            const exportDataButton = document.getElementById('exportDataButton');
+            if (exportDataButton) {
+                exportDataButton.addEventListener('click', exportData);
+            }
+
+            const importDataButton = document.getElementById('importDataButton');
+            if (importDataButton) {
+                importDataButton.addEventListener('click', importData);
+            }
+
+            const saveConfigButton = document.getElementById('saveConfigButton');
+            if (saveConfigButton) {
+                saveConfigButton.addEventListener('click', saveConfig);
+            }
+
+            const categoryTabs = document.querySelector('.category-tabs');
+            if (categoryTabs) {
+                categoryTabs.addEventListener('click', event => {
+                    const targetButton = event.target.closest('button[data-category]');
+                    if (!targetButton) {
+                        return;
+                    }
+
+                    showCategory(event, targetButton.getAttribute('data-category'));
+                });
+            }
+
+            const openProductModalButton = document.getElementById('openProductModalButton');
+            if (openProductModalButton) {
+                openProductModalButton.addEventListener('click', () => openProductModal());
+            }
+
+            const closeModalButtons = document.querySelectorAll('.close-modal');
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', closeModal);
+            });
+
+            const cancelProductButton = document.getElementById('cancelProductButton');
+            if (cancelProductButton) {
+                cancelProductButton.addEventListener('click', closeModal);
+            }
+
+            const addFeatureButton = document.getElementById('addFeatureButton');
+            if (addFeatureButton) {
+                addFeatureButton.addEventListener('click', addFeature);
+            }
+
+            const productsList = document.getElementById('productsList');
+            if (productsList) {
+                productsList.addEventListener('click', event => {
+                    const actionButton = event.target.closest('button[data-action]');
+                    if (!actionButton) {
+                        return;
+                    }
+
+                    const action = actionButton.getAttribute('data-action');
+                    const productId = actionButton.getAttribute('data-product-id');
+
+                    if (!productId) {
+                        return;
+                    }
+
+                    if (action === 'move') {
+                        const direction = actionButton.getAttribute('data-direction');
+                        if (direction) {
+                            moveProduct(productId, direction);
+                        }
+                    } else if (action === 'edit') {
+                        editProduct(productId);
+                    } else if (action === 'delete') {
+                        deleteProduct(productId);
+                    }
+                });
+            }
+        }
+
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', function() {
+            registerAdminEventHandlers();
             loadData();
             renderFeatureInputs();
             setupImageInput();
@@ -937,10 +1045,10 @@
                     const imageAlt = escapeHtml(`Vista previa de ${productName}`);
                     const priceValue = typeof product.price !== 'undefined' && product.price !== null ? product.price : '';
                     return `
-                <div class="product-item">
+                <div class="product-item" data-product-id="${product.id}">
                     <div class="order-controls">
-                        <button type="button" class="icon-btn move-btn" onclick="moveProduct('${product.id}', 'up')" ${disableUp}>↑</button>
-                        <button type="button" class="icon-btn move-btn" onclick="moveProduct('${product.id}', 'down')" ${disableDown}>↓</button>
+                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="up" data-product-id="${product.id}" ${disableUp}>↑</button>
+                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="down" data-product-id="${product.id}" ${disableDown}>↓</button>
                     </div>
                     <div class="product-thumb">
                         <img src="${imageSrc}" alt="${imageAlt}">
@@ -950,8 +1058,8 @@
                         <div class="product-price">${priceValue}</div>
                     </div>
                     <div class="product-actions">
-                        <button type="button" class="icon-btn edit-btn" onclick="editProduct('${product.id}')">✏️</button>
-                        <button type="button" class="icon-btn delete-btn" onclick="deleteProduct('${product.id}')">🗑️</button>
+                        <button type="button" class="icon-btn edit-btn" data-action="edit" data-product-id="${product.id}">✏️</button>
+                        <button type="button" class="icon-btn delete-btn" data-action="delete" data-product-id="${product.id}">🗑️</button>
                     </div>
                 </div>`;
                 })
@@ -1229,6 +1337,23 @@
                 console.error('No se pudo actualizar la vista previa del catálogo', error);
             }
         }
+
+        // Expose functions for inline handlers (backward compatibility)
+        window.showSection = showSection;
+        window.generateCatalog = generateCatalog;
+        window.updateCatalogPreview = updateCatalogPreview;
+        window.saveData = saveData;
+        window.loadData = loadData;
+        window.exportData = exportData;
+        window.importData = importData;
+        window.saveConfig = saveConfig;
+        window.showCategory = showCategory;
+        window.openProductModal = openProductModal;
+        window.closeModal = closeModal;
+        window.addFeature = addFeature;
+        window.moveProduct = moveProduct;
+        window.editProduct = editProduct;
+        window.deleteProduct = deleteProduct;
 
         // Generate catalog HTML
         function generateCatalogHTML() {
