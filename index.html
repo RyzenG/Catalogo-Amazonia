@@ -247,12 +247,15 @@
             width: 100%;
             height: 250px;
             background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
             position: relative;
             overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .product-image::after {
@@ -390,13 +393,18 @@
 
         .modal-image {
             width: 100%;
-            height: 300px;
+            max-height: 320px;
             background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
             border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
+            overflow: hidden;
+            display: block;
+        }
+
+        .modal-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .modal-details h3 {
@@ -601,7 +609,9 @@
             </div>
             <div class="modal-body">
                 <div class="modal-grid">
-                    <div class="modal-image" id="modalImage">🪴</div>
+                    <div class="modal-image">
+                        <img id="modalImage" src="" alt="Imagen del producto seleccionado">
+                    </div>
                     <div class="modal-details">
                         <h3>Descripción Detallada</h3>
                         <p id="modalDescription">Esta es una descripción más detallada del producto seleccionado.</p>
@@ -678,6 +688,69 @@
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
         };
+
+        function escapeHtml(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeForSvg(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function createIconPlaceholder(icon, name) {
+            const displayIcon = escapeForSvg(icon || '🛠️');
+            const displayName = escapeForSvg(name || 'Producto Amazonia');
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+                <defs>
+                    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#f0f0f0" />
+                        <stop offset="100%" stop-color="#e0e0e0" />
+                    </linearGradient>
+                </defs>
+                <rect width="600" height="400" fill="url(#bg)" />
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="140">${displayIcon}</text>
+                <text x="50%" y="78%" dominant-baseline="middle" text-anchor="middle" font-size="36" fill="#4d4d4d">${displayName}</text>
+            </svg>`;
+            return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }
+
+        function getProductImageSource(product, fallbackIcon = '🛠️', fallbackName = 'Producto Amazonia') {
+            if (!product) {
+                return createIconPlaceholder(fallbackIcon, fallbackName);
+            }
+
+            if (product.imageData) {
+                return product.imageData;
+            }
+
+            if (product.image) {
+                return product.image;
+            }
+
+            const iconValue = product.icon || fallbackIcon;
+            const nameValue = product.name || fallbackName;
+
+            if (!iconValue) {
+                return createIconPlaceholder('🛠️', nameValue);
+            }
+
+            return createIconPlaceholder(iconValue, nameValue);
+        }
 
         function loadCatalogData() {
             const saved = localStorage.getItem('amazoniaData');
@@ -862,9 +935,13 @@
             const featuresHTML = features.map(feature => `<span class="feature-tag">${feature}</span>`).join('');
             const productDescription = product.shortDesc || 'Información disponible próximamente.';
             const priceValue = typeof product.price !== 'undefined' && product.price !== null ? product.price : '';
+            const imageSrc = getProductImageSource(product, catInfo.icon, productName);
+            const imageAlt = escapeHtml(`Imagen de ${productName}`);
 
             card.innerHTML = `
-                <div class="product-image">${product.icon || catInfo.icon}</div>
+                <div class="product-image">
+                    <img src="${imageSrc}" alt="${imageAlt}">
+                </div>
                 <div class="product-info">
                     <h3 class="product-name">${productName}</h3>
                     <p class="product-description">${productDescription}</p>
@@ -887,7 +964,8 @@
 
             productData[productId] = {
                 title: productName,
-                icon: product.icon || catInfo.icon,
+                image: imageSrc,
+                alt: `Imagen de ${productName}`,
                 description: product.longDesc || productDescription,
                 specs: specs
             };
@@ -1033,7 +1111,13 @@
 
             currentProduct = product.title;
             document.getElementById('modalTitle').textContent = product.title;
-            document.getElementById('modalImage').textContent = product.icon;
+            const modalImage = document.getElementById('modalImage');
+            if (modalImage) {
+                const fallbackTitle = product.title || 'Producto Amazonia';
+                const imageSource = product.image || createIconPlaceholder('🛠️', fallbackTitle);
+                modalImage.src = imageSource;
+                modalImage.alt = product.alt || `Imagen de ${fallbackTitle}`;
+            }
             document.getElementById('modalDescription').textContent = product.description;
 
             const specsList = document.getElementById('modalSpecs');
