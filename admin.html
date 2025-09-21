@@ -1060,7 +1060,7 @@
     <!-- Navigation -->
     <div class="nav-container">
         <nav>
-            <div class="nav-buttons">
+            <div class="nav-buttons" id="navButtons">
                 ${navButtonsHTML}
             </div>
         </nav>
@@ -1069,6 +1069,7 @@
     <!-- Main Container -->
     <div class="container">
         ${productsHTML}
+        <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">No hay productos disponibles en este momento. Vuelve pronto para descubrir las novedades.</p>
     </div>
 
     <!-- Modal -->
@@ -1696,6 +1697,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             applyConfig();
+            initializeCatalogState();
 
             const cards = document.querySelectorAll('.product-card');
             cards.forEach(card => {
@@ -1768,6 +1770,50 @@
                     addressLink.style.display = 'inline-flex';
                 } else {
                     addressLink.style.display = 'none';
+                }
+            }
+        }
+
+        function initializeCatalogState() {
+            const categories = Array.from(document.querySelectorAll('.category'));
+            const navWrapper = document.querySelector('.nav-container');
+            const navButtonsContainer = document.getElementById('navButtons');
+            const emptyMessage = document.getElementById('emptyCatalogMessage');
+
+            const categoriesWithProducts = categories.filter(category =>
+                category.querySelectorAll('.product-card').length > 0
+            );
+
+            const hasProducts = categoriesWithProducts.length > 0;
+
+            if (navWrapper) {
+                navWrapper.style.display = hasProducts ? '' : 'none';
+            }
+
+            if (emptyMessage) {
+                emptyMessage.style.display = hasProducts ? 'none' : 'block';
+            }
+
+            if (hasProducts) {
+                const firstCategory = categoriesWithProducts[0];
+                const firstCategoryId = firstCategory ? firstCategory.id : null;
+
+                categories.forEach(category => {
+                    if (category) {
+                        category.classList.toggle('active', category === firstCategory);
+                    }
+                });
+
+                if (navButtonsContainer) {
+                    const navButtons = Array.from(navButtonsContainer.querySelectorAll('.nav-btn'));
+                    navButtons.forEach(button => {
+                        if (!button.dataset || !firstCategoryId) {
+                            button.classList.remove('active');
+                            return;
+                        }
+
+                        button.classList.toggle('active', button.dataset.category === firstCategoryId);
+                    });
                 }
             }
         }
