@@ -97,6 +97,31 @@
             font-weight: 500;
         }
 
+        .image-preview {
+            position: relative;
+            margin-top: 0.75rem;
+            border: 1px dashed #c2c2c2;
+            border-radius: 8px;
+            min-height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #fafafa;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .image-placeholder {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
         input, textarea, select {
             width: 100%;
             padding: 0.8rem;
@@ -194,6 +219,25 @@
         .product-item:hover {
             background: #f0f0f0;
             border-color: #6b8e68;
+        }
+
+        .product-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .product-info {
@@ -572,8 +616,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Emoji/Icono (opcional):</label>
-                    <input type="text" id="productIcon" placeholder="🪴" maxlength="2">
+                    <label>Imagen del producto:</label>
+                    <input type="file" id="productImage" accept="image/*">
+                    <div class="image-preview" id="productImagePreviewWrapper">
+                        <img id="productImagePreview" alt="Vista previa del producto" src="" />
+                        <span class="image-placeholder" id="productImagePlaceholder">Sin imagen seleccionada</span>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -627,11 +675,132 @@
 
         let currentCategory = 'macetas';
         let editingProductId = null;
+        let currentImageData = null;
+        let currentIconFallback = '';
+
+        function escapeHtml(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeForSvg(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function createIconPlaceholder(icon, name) {
+            const displayIcon = escapeForSvg(icon || '🛠️');
+            const displayName = escapeForSvg(name || 'Producto Amazonia');
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+                <defs>
+                    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#f0f0f0" />
+                        <stop offset="100%" stop-color="#e0e0e0" />
+                    </linearGradient>
+                </defs>
+                <rect width="600" height="400" fill="url(#bg)" />
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="140">${displayIcon}</text>
+                <text x="50%" y="78%" dominant-baseline="middle" text-anchor="middle" font-size="36" fill="#4d4d4d">${displayName}</text>
+            </svg>`;
+            return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }
+
+        function getProductImageSource(product, fallbackIcon = '🛠️') {
+            if (!product) {
+                return createIconPlaceholder(fallbackIcon, 'Producto Amazonia');
+            }
+
+            if (product.imageData) {
+                return product.imageData;
+            }
+
+            if (product.image) {
+                return product.image;
+            }
+
+            const iconValue = product.icon || fallbackIcon;
+            const nameValue = product.name || 'Producto Amazonia';
+
+            if (!iconValue) {
+                return createIconPlaceholder('🛠️', nameValue);
+            }
+
+            return createIconPlaceholder(iconValue, nameValue);
+        }
+
+        function updateProductImagePreview(src, altText) {
+            const previewImg = document.getElementById('productImagePreview');
+            const placeholderEl = document.getElementById('productImagePlaceholder');
+
+            if (!previewImg || !placeholderEl) {
+                return;
+            }
+
+            if (src) {
+                previewImg.src = src;
+                previewImg.alt = altText || 'Vista previa del producto';
+                previewImg.style.display = 'block';
+                placeholderEl.style.display = 'none';
+            } else {
+                previewImg.removeAttribute('src');
+                previewImg.alt = 'Vista previa del producto';
+                previewImg.style.display = 'none';
+                placeholderEl.textContent = 'Sin imagen seleccionada';
+                placeholderEl.style.display = 'block';
+            }
+        }
+
+        function resetImagePreview() {
+            updateProductImagePreview(null);
+        }
+
+        function setupImageInput() {
+            const imageInput = document.getElementById('productImage');
+            if (!imageInput) {
+                return;
+            }
+
+            imageInput.addEventListener('change', handleProductImageChange);
+        }
+
+        function handleProductImageChange(event) {
+            const file = event.target.files && event.target.files[0];
+
+            if (!file) {
+                if (!currentImageData) {
+                    updateProductImagePreview(null);
+                }
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(loadEvent) {
+                currentImageData = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
+                currentIconFallback = '';
+                updateProductImagePreview(currentImageData, file.name);
+            };
+            reader.readAsDataURL(file);
+        }
 
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', function() {
             loadData();
             renderFeatureInputs();
+            setupImageInput();
+            resetImagePreview();
         });
 
         // Load saved data from localStorage
@@ -763,15 +932,22 @@
                 .map((product, index) => {
                     const disableUp = index === 0 ? 'disabled' : '';
                     const disableDown = index === products.length - 1 ? 'disabled' : '';
+                    const productName = product.name || 'Producto sin nombre';
+                    const imageSrc = getProductImageSource(product);
+                    const imageAlt = escapeHtml(`Vista previa de ${productName}`);
+                    const priceValue = typeof product.price !== 'undefined' && product.price !== null ? product.price : '';
                     return `
                 <div class="product-item">
                     <div class="order-controls">
                         <button type="button" class="icon-btn move-btn" onclick="moveProduct('${product.id}', 'up')" ${disableUp}>↑</button>
                         <button type="button" class="icon-btn move-btn" onclick="moveProduct('${product.id}', 'down')" ${disableDown}>↓</button>
                     </div>
+                    <div class="product-thumb">
+                        <img src="${imageSrc}" alt="${imageAlt}">
+                    </div>
                     <div class="product-info">
-                        <div class="product-name">${product.icon || ''} ${product.name}</div>
-                        <div class="product-price">${product.price}</div>
+                        <div class="product-name">${productName}</div>
+                        <div class="product-price">${priceValue}</div>
                     </div>
                     <div class="product-actions">
                         <button type="button" class="icon-btn edit-btn" onclick="editProduct('${product.id}')">✏️</button>
@@ -833,9 +1009,17 @@
                     document.getElementById('productShortDesc').value = product.shortDesc;
                     document.getElementById('productLongDesc').value = product.longDesc || '';
                     document.getElementById('productPrice').value = product.price;
-                    document.getElementById('productIcon').value = product.icon || '';
                     document.getElementById('productSpecs').value = product.specs || '';
                     document.getElementById('productId').value = productId;
+
+                    currentImageData = product.imageData || product.image || null;
+                    currentIconFallback = product.icon || '';
+                    const previewSource = currentImageData || createIconPlaceholder(currentIconFallback || '🛠️', product.name);
+                    updateProductImagePreview(previewSource, product.name || 'Producto Amazonia');
+                    const imageInput = document.getElementById('productImage');
+                    if (imageInput) {
+                        imageInput.value = '';
+                    }
 
                     renderFeatureInputs(product.features);
                 }
@@ -844,6 +1028,13 @@
                 form.reset();
                 document.getElementById('productCategory').value = currentCategory;
                 document.getElementById('productId').value = '';
+                currentImageData = null;
+                currentIconFallback = '';
+                const imageInput = document.getElementById('productImage');
+                if (imageInput) {
+                    imageInput.value = '';
+                }
+                updateProductImagePreview(null);
                 renderFeatureInputs();
             }
 
@@ -855,6 +1046,13 @@
             document.getElementById('productModal').classList.remove('active');
             document.getElementById('productForm').reset();
             editingProductId = null;
+            currentImageData = null;
+            currentIconFallback = '';
+            const imageInput = document.getElementById('productImage');
+            if (imageInput) {
+                imageInput.value = '';
+            }
+            updateProductImagePreview(null);
             renderFeatureInputs();
         }
 
@@ -908,13 +1106,17 @@
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
                 name: document.getElementById('productName').value,
-                icon: document.getElementById('productIcon').value,
                 shortDesc: document.getElementById('productShortDesc').value,
                 longDesc: document.getElementById('productLongDesc').value,
                 price: document.getElementById('productPrice').value,
                 features: features,
-                specs: document.getElementById('productSpecs').value
+                specs: document.getElementById('productSpecs').value,
+                imageData: currentImageData || null
             };
+
+            if (currentIconFallback) {
+                productData.icon = currentIconFallback;
+            }
             
             if (!catalogData.products[category]) {
                 catalogData.products[category] = [];
@@ -1071,19 +1273,25 @@
             <div class="products-grid">`;
                     
                     products[category].forEach(product => {
+                        const productName = product.name || 'Producto Amazonia';
                         const features = (product.features || []).map(f => `<span class="feature-tag">${f}</span>`).join('');
                         const productDescription = product.shortDesc || 'Información disponible próximamente.';
+                        const imageSrc = getProductImageSource(product, catInfo.icon);
+                        const imageAlt = escapeHtml(`Imagen de ${productName}`);
+                        const priceValue = typeof product.price !== 'undefined' && product.price !== null ? product.price : '';
                         productsHTML += `
                 <div class="product-card" onclick="openModal('${product.id}')">
-                    <div class="product-image">${product.icon || catInfo.icon}</div>
+                    <div class="product-image">
+                        <img src="${imageSrc}" alt="${imageAlt}">
+                    </div>
                     <div class="product-info">
-                        <h3 class="product-name">${product.name}</h3>
+                        <h3 class="product-name">${productName}</h3>
                         <p class="product-description">${productDescription}</p>
                         <div class="product-features">${features}</div>
-                        <p class="product-price">${product.price}</p>
+                        <p class="product-price">${priceValue}</p>
                     </div>
                 </div>`;
-                        
+
                         // Add to product data for modal
                         const specs = product.specs ? product.specs.split('\n').map(s => {
                             const parts = s.split(':');
@@ -1091,8 +1299,9 @@
                         }).filter(s => s[0]) : [];
 
                         productDataJS[product.id] = {
-                            title: product.name,
-                            icon: product.icon || catInfo.icon,
+                            title: productName,
+                            image: imageSrc,
+                            alt: `Imagen de ${productName}`,
                             description: product.longDesc || productDescription,
                             specs: specs
                         };
@@ -1178,7 +1387,9 @@
             </div>
             <div class="modal-body">
                 <div class="modal-grid">
-                    <div class="modal-image" id="modalImage">🪴</div>
+                    <div class="modal-image">
+                        <img id="modalImage" src="" alt="Imagen del producto seleccionado">
+                    </div>
                     <div class="modal-details">
                         <h3>Descripción Detallada</h3>
                         <p id="modalDescription">Descripción del producto.</p>
@@ -1461,12 +1672,15 @@
             width: 100%;
             height: 250px;
             background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
             position: relative;
             overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .product-image::after {
@@ -1604,13 +1818,18 @@
 
         .modal-image {
             width: 100%;
-            height: 300px;
+            max-height: 320px;
             background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
             border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
+            overflow: hidden;
+            display: block;
+        }
+
+        .modal-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .modal-details h3 {
@@ -1959,7 +2178,8 @@
             }
 
             if (imageEl) {
-                imageEl.textContent = product.icon || '🛠️';
+                imageEl.src = product.image || '';
+                imageEl.alt = product.alt || `Imagen de ${product.title}`;
             }
 
             if (descriptionEl) {
