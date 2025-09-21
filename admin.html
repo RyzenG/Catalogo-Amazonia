@@ -187,6 +187,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 1rem;
             transition: all 0.3s;
         }
 
@@ -197,6 +198,12 @@
 
         .product-info {
             flex: 1;
+        }
+
+        .order-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
         }
 
         .product-name {
@@ -224,6 +231,17 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s;
+        }
+
+        .icon-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .move-btn {
+            background: #6b8e68;
+            color: white;
         }
 
         .edit-btn {
@@ -734,27 +752,59 @@
         function loadProducts() {
             const container = document.getElementById('productsList');
             const products = catalogData.products[currentCategory] || [];
-            
+
             if (products.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #999">No hay productos en esta categoría. Haz clic en "Añadir Producto" para comenzar.</p>';
                 updateCatalogPreview();
                 return;
             }
 
-            container.innerHTML = products.map(product => `
+            container.innerHTML = products
+                .map((product, index) => {
+                    const disableUp = index === 0 ? 'disabled' : '';
+                    const disableDown = index === products.length - 1 ? 'disabled' : '';
+                    return `
                 <div class="product-item">
+                    <div class="order-controls">
+                        <button type="button" class="icon-btn move-btn" onclick="moveProduct('${product.id}', 'up')" ${disableUp}>↑</button>
+                        <button type="button" class="icon-btn move-btn" onclick="moveProduct('${product.id}', 'down')" ${disableDown}>↓</button>
+                    </div>
                     <div class="product-info">
                         <div class="product-name">${product.icon || ''} ${product.name}</div>
                         <div class="product-price">${product.price}</div>
                     </div>
                     <div class="product-actions">
-                        <button class="icon-btn edit-btn" onclick="editProduct('${product.id}')">✏️</button>
-                        <button class="icon-btn delete-btn" onclick="deleteProduct('${product.id}')">🗑️</button>
+                        <button type="button" class="icon-btn edit-btn" onclick="editProduct('${product.id}')">✏️</button>
+                        <button type="button" class="icon-btn delete-btn" onclick="deleteProduct('${product.id}')">🗑️</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+                })
+                .join('');
 
             updateCatalogPreview();
+        }
+
+        function moveProduct(productId, direction) {
+            const products = catalogData.products[currentCategory] || [];
+            const currentIndex = products.findIndex(product => product.id === productId);
+
+            if (currentIndex === -1) {
+                return;
+            }
+
+            const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+            if (targetIndex < 0 || targetIndex >= products.length) {
+                return;
+            }
+
+            const temp = products[currentIndex];
+            products[currentIndex] = products[targetIndex];
+            products[targetIndex] = temp;
+
+            catalogData.products[currentCategory] = products;
+            saveData();
+            loadProducts();
         }
 
         // Open product modal
