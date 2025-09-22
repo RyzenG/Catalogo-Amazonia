@@ -1492,6 +1492,27 @@
 
                 const actions = document.createElement('div');
                 actions.className = 'category-manager-item-actions';
+
+                const isFirst = index === 0;
+                const isLast = index === totalCategories - 1;
+
+                const upButton = document.createElement('button');
+                upButton.type = 'button';
+                upButton.className = 'btn btn-secondary';
+                upButton.textContent = 'Subir';
+                upButton.disabled = isFirst;
+                upButton.addEventListener('click', () => moveCategory(index, 'up'));
+
+                const downButton = document.createElement('button');
+                downButton.type = 'button';
+                downButton.className = 'btn btn-secondary';
+                downButton.textContent = 'Bajar';
+                downButton.disabled = isLast;
+                downButton.addEventListener('click', () => moveCategory(index, 'down'));
+
+                actions.appendChild(upButton);
+                actions.appendChild(downButton);
+
                 const deleteButton = document.createElement('button');
                 deleteButton.type = 'button';
                 deleteButton.className = 'btn btn-danger';
@@ -1603,6 +1624,47 @@
             saveData();
             showMessage('Categorías actualizadas correctamente', 'success');
             renderCategoryManagerList();
+        }
+
+        function moveCategory(index, direction) {
+            ensureCategoryStructure();
+
+            if (!Array.isArray(catalogData.categories) || catalogData.categories.length < 2) {
+                return;
+            }
+
+            const offset = direction === 'up' ? -1 : direction === 'down' ? 1 : 0;
+            if (offset === 0) {
+                return;
+            }
+
+            const targetIndex = index + offset;
+            if (targetIndex < 0 || targetIndex >= catalogData.categories.length) {
+                return;
+            }
+
+            const categories = catalogData.categories;
+            const selectedCategoryId = currentCategory;
+            const [movedCategory] = categories.splice(index, 1);
+            categories.splice(targetIndex, 0, movedCategory);
+
+            const productsByCategory = isPlainObject(catalogData.products) ? catalogData.products : {};
+            const reorderedProducts = {};
+            categories.forEach(category => {
+                reorderedProducts[category.id] = productsByCategory[category.id] || [];
+            });
+            catalogData.products = reorderedProducts;
+
+            if (categories.some(category => category.id === selectedCategoryId)) {
+                currentCategory = selectedCategoryId;
+            } else {
+                currentCategory = categories[0] ? categories[0].id : '';
+            }
+
+            refreshCategoriesUI({ preserveCurrent: true });
+            loadProducts();
+            renderCategoryManagerList();
+            saveData();
         }
 
         function deleteCategory(categoryId) {
