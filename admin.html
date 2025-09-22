@@ -2043,9 +2043,28 @@
         // Save data to localStorage
         function saveData() {
             ensureCategoryStructure();
-            localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
-            showMessage('Datos guardados correctamente', 'success');
-            updateCatalogPreview();
+            try {
+                localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
+                showMessage('Datos guardados correctamente', 'success');
+                updateCatalogPreview();
+            } catch (error) {
+                const isQuotaExceeded = error instanceof DOMException && (
+                    error.name === 'QuotaExceededError' ||
+                    error.code === 22 ||
+                    error.code === 1014 ||
+                    error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+                );
+
+                if (isQuotaExceeded) {
+                    console.warn('No se pudo guardar en localStorage: cuota excedida.', error);
+                    showMessage(
+                        'El almacenamiento local está lleno. No se pudieron guardar las imágenes. Exporta tus datos y libera espacio eliminando imágenes o limpiando el almacenamiento para continuar.',
+                        'error'
+                    );
+                } else {
+                    showMessage('Ocurrió un error al guardar los datos. Inténtalo nuevamente.', 'error');
+                }
+            }
         }
 
         function validateConfigFields(fieldsToValidate = null) {
