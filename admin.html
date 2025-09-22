@@ -157,6 +157,17 @@
             border-color: #6b8e68;
         }
 
+        .field-error {
+            color: #c0392b;
+            font-size: 0.9rem;
+            margin-top: 0.35rem;
+            min-height: 1em;
+        }
+
+        .field-invalid {
+            border-color: #c0392b !important;
+        }
+
         textarea {
             resize: vertical;
             min-height: 100px;
@@ -581,14 +592,17 @@
                             <div class="form-group">
                                 <label>Número de WhatsApp (con código de país):</label>
                                 <input type="text" id="whatsapp" placeholder="573001234567" value="573000000000">
+                                <p class="field-error" id="whatsappError"></p>
                             </div>
                             <div class="form-group">
                                 <label>Email de contacto:</label>
                                 <input type="email" id="email" placeholder="info@amazoniaconcrete.com" value="info@amazoniaconcrete.com">
+                                <p class="field-error" id="emailError"></p>
                             </div>
                             <div class="form-group">
                                 <label>Teléfono de contacto:</label>
                                 <input type="text" id="phone" placeholder="+57 300 123 4567" value="+57 300 000 0000">
+                                <p class="field-error" id="phoneError"></p>
                             </div>
                             <div class="form-group">
                                 <label>Dirección (opcional):</label>
@@ -678,11 +692,13 @@
                 <div class="form-group">
                     <label>Nombre del producto:</label>
                     <input type="text" id="productName" required>
+                    <p class="field-error" id="productNameError"></p>
                 </div>
 
                 <div class="form-group">
                     <label>Descripción corta:</label>
                     <textarea id="productShortDesc" required></textarea>
+                    <p class="field-error" id="productShortDescError"></p>
                 </div>
 
                 <div class="form-group">
@@ -693,6 +709,7 @@
                 <div class="form-group">
                     <label>Precio:</label>
                     <input type="text" id="productPrice" placeholder="$45.000 o $85.000/m²">
+                    <p class="field-error" id="productPriceError"></p>
                 </div>
 
                 <div class="form-group">
@@ -837,6 +854,72 @@
         let editingProductId = null;
         let currentImageData = null;
         let currentIconFallback = '';
+        const configFieldIds = ['whatsapp', 'email', 'phone'];
+        const productFieldIds = ['productName', 'productShortDesc', 'productPrice'];
+
+        function setFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(`${fieldId}Error`);
+
+            if (errorElement) {
+                errorElement.textContent = message || '';
+            }
+
+            if (field) {
+                if (message) {
+                    field.classList.add('field-invalid');
+                } else {
+                    field.classList.remove('field-invalid');
+                }
+            }
+        }
+
+        function clearFieldErrors(fieldIds) {
+            fieldIds.forEach(fieldId => setFieldError(fieldId, ''));
+        }
+
+        function applyFieldErrors(fieldIds, errors) {
+            fieldIds.forEach(fieldId => {
+                const message = errors && errors[fieldId] ? errors[fieldId] : '';
+                setFieldError(fieldId, message);
+            });
+        }
+
+        function clearProductFieldErrors() {
+            clearFieldErrors(productFieldIds);
+        }
+
+        function registerValidationListeners() {
+            configFieldIds.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field) {
+                    return;
+                }
+
+                const handler = () => {
+                    const { errors } = validateConfigFields([fieldId]);
+                    applyFieldErrors([fieldId], errors);
+                };
+
+                field.addEventListener('input', handler);
+                field.addEventListener('change', handler);
+            });
+
+            productFieldIds.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field) {
+                    return;
+                }
+
+                const handler = () => {
+                    const { errors } = validateProductData([fieldId]);
+                    applyFieldErrors([fieldId], errors);
+                };
+
+                field.addEventListener('input', handler);
+                field.addEventListener('change', handler);
+            });
+        }
 
         function generateCategoryId(value) {
             if (!value) {
@@ -1797,6 +1880,7 @@
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', function() {
             registerAdminEventHandlers();
+            registerValidationListeners();
             loadData();
             renderFeatureInputs();
             setupImageInput();
@@ -1855,6 +1939,48 @@
             updateCatalogPreview();
         }
 
+        function validateConfigFields(fieldsToValidate = null) {
+            const fieldsSet = Array.isArray(fieldsToValidate) && fieldsToValidate.length > 0
+                ? new Set(fieldsToValidate)
+                : null;
+
+            const data = {
+                whatsapp: document.getElementById('whatsapp').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                address: document.getElementById('address').value,
+                companyName: document.getElementById('companyName').value,
+                tagline: document.getElementById('tagline').value,
+                footerMessage: document.getElementById('footerMessage').value
+            };
+
+            const errors = {};
+            const shouldValidate = fieldId => !fieldsSet || fieldsSet.has(fieldId);
+
+            if (shouldValidate('whatsapp')) {
+                const sanitizedWhatsApp = data.whatsapp.replace(/[\s-]/g, '');
+                if (data.whatsapp && !/^\+?\d{7,15}$/.test(sanitizedWhatsApp)) {
+                    errors.whatsapp = 'Proporciona un número de WhatsApp en formato internacional (ej: +573001234567).';
+                }
+            }
+
+            if (shouldValidate('email')) {
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (data.email && !emailPattern.test(data.email)) {
+                    errors.email = 'Ingresa un correo electrónico válido.';
+                }
+            }
+
+            if (shouldValidate('phone')) {
+                const digitsOnly = data.phone.replace(/[\s()-]/g, '');
+                if (data.phone && !/^\+?\d{7,15}$/.test(digitsOnly)) {
+                    errors.phone = 'Ingresa un número de teléfono válido con prefijo internacional si aplica.';
+                }
+            }
+
+            return { data, errors };
+        }
+
         // Load configuration
         function loadConfig() {
             document.getElementById('whatsapp').value = catalogData.config.whatsapp || '';
@@ -1869,6 +1995,7 @@
             if (logoInput) {
                 logoInput.value = '';
             }
+            clearFieldErrors(configFieldIds);
             updateCatalogPreview();
         }
 
@@ -1877,14 +2004,22 @@
             const existingLogoData = catalogData && catalogData.config && catalogData.config.logoData
                 ? catalogData.config.logoData
                 : '';
+            const { data, errors } = validateConfigFields();
+            applyFieldErrors(configFieldIds, errors);
+
+            if (Object.keys(errors).length > 0) {
+                showMessage('Corrige los errores en la información de contacto.', 'error');
+                return;
+            }
+
             catalogData.config = {
-                whatsapp: document.getElementById('whatsapp').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                address: document.getElementById('address').value,
-                companyName: document.getElementById('companyName').value,
-                tagline: document.getElementById('tagline').value,
-                footerMessage: document.getElementById('footerMessage').value,
+                whatsapp: data.whatsapp,
+                email: data.email,
+                phone: data.phone,
+                address: data.address,
+                companyName: data.companyName,
+                tagline: data.tagline,
+                footerMessage: data.footerMessage,
                 logoData: existingLogoData
             };
             saveData();
@@ -2030,6 +2165,7 @@
             const form = document.getElementById('productForm');
 
             editingProductId = productId;
+            clearProductFieldErrors();
 
             if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
                 alert('Crea al menos una categoría antes de añadir productos.');
@@ -2101,6 +2237,7 @@
                 imageInput.value = '';
             }
             updateProductImagePreview(null);
+            clearProductFieldErrors();
             renderFeatureInputs();
         }
 
@@ -2149,6 +2286,42 @@
             }
         }
 
+        function validateProductData(fieldsToValidate = null) {
+            const fieldsSet = Array.isArray(fieldsToValidate) && fieldsToValidate.length > 0
+                ? new Set(fieldsToValidate)
+                : null;
+
+            const data = {
+                productName: document.getElementById('productName').value.trim(),
+                productShortDesc: document.getElementById('productShortDesc').value.trim(),
+                productLongDesc: document.getElementById('productLongDesc').value,
+                productPrice: document.getElementById('productPrice').value.trim(),
+                productSpecs: document.getElementById('productSpecs').value
+            };
+
+            const errors = {};
+            const shouldValidate = fieldId => !fieldsSet || fieldsSet.has(fieldId);
+
+            if (shouldValidate('productName') && data.productName.length === 0) {
+                errors.productName = 'El nombre del producto es obligatorio.';
+            }
+
+            if (shouldValidate('productShortDesc') && data.productShortDesc.length === 0) {
+                errors.productShortDesc = 'La descripción corta es obligatoria.';
+            }
+
+            if (shouldValidate('productPrice') && data.productPrice) {
+                const digits = data.productPrice.replace(/[^\d]/g, '');
+                const normalizedPrice = data.productPrice.replace(/\s+/g, '');
+                const pricePattern = /^\$?\d+(?:[.,]\d+)*(?:\/(?:m2|m²))?$/i;
+                if (digits.length === 0 || !pricePattern.test(normalizedPrice)) {
+                    errors.productPrice = 'Ingresa un precio numérico válido (ej: $85000 o 85.000/m²).';
+                }
+            }
+
+            return { data, errors };
+        }
+
         // Handle product form submission
         document.getElementById('productForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -2156,7 +2329,14 @@
             ensureCategoryStructure();
             const category = document.getElementById('productCategory').value;
             if (!category) {
-                alert('Selecciona una categoría válida para el producto.');
+                showMessage('Selecciona una categoría válida para el producto.', 'error');
+                return;
+            }
+            const validation = validateProductData();
+            applyFieldErrors(productFieldIds, validation.errors);
+
+            if (Object.keys(validation.errors).length > 0) {
+                showMessage('Corrige los errores antes de guardar el producto.', 'error');
                 return;
             }
             const features = Array.from(document.querySelectorAll('#featuresList input'))
@@ -2165,12 +2345,12 @@
 
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
-                name: document.getElementById('productName').value,
-                shortDesc: document.getElementById('productShortDesc').value,
-                longDesc: document.getElementById('productLongDesc').value,
-                price: document.getElementById('productPrice').value,
+                name: validation.data.productName,
+                shortDesc: validation.data.productShortDesc,
+                longDesc: validation.data.productLongDesc,
+                price: validation.data.productPrice,
                 features: features,
-                specs: document.getElementById('productSpecs').value,
+                specs: validation.data.productSpecs,
                 imageData: currentImageData || null
             };
 
