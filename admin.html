@@ -250,6 +250,24 @@
             flex-wrap: wrap;
         }
 
+        .product-filters {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .product-filters input[type="text"] {
+            flex: 1 1 240px;
+            min-width: 200px;
+        }
+
+        .product-filters select {
+            flex: 0 1 200px;
+            min-width: 180px;
+        }
+
         .category-manager-list {
             display: flex;
             flex-direction: column;
@@ -650,6 +668,13 @@
                         </div>
                     </div>
 
+                    <div class="product-filters">
+                        <input type="text" id="productSearch" placeholder="Buscar por nombre, descripción o precio">
+                        <select id="featureFilter">
+                            <option value="">Todas las características</option>
+                        </select>
+                    </div>
+
                     <div id="productsList" class="product-list" style="margin-top: 1.5rem">
                         <!-- Products will be loaded here -->
                     </div>
@@ -854,6 +879,8 @@
         let editingProductId = null;
         let currentImageData = null;
         let currentIconFallback = '';
+        let productSearchTerm = '';
+        let activeFeatureFilter = '';
         const configFieldIds = ['whatsapp', 'email', 'phone'];
         const productFieldIds = ['productName', 'productShortDesc', 'productPrice'];
 
@@ -1910,6 +1937,26 @@
                 });
             }
 
+            const productSearchInput = document.getElementById('productSearch');
+            if (productSearchInput) {
+                productSearchInput.addEventListener('input', event => {
+                    productSearchTerm = (event.target && typeof event.target.value === 'string')
+                        ? event.target.value
+                        : '';
+                    loadProducts();
+                });
+            }
+
+            const featureFilterSelect = document.getElementById('featureFilter');
+            if (featureFilterSelect) {
+                featureFilterSelect.addEventListener('change', event => {
+                    activeFeatureFilter = (event.target && typeof event.target.value === 'string')
+                        ? event.target.value
+                        : '';
+                    loadProducts();
+                });
+            }
+
             const productsList = document.getElementById('productsList');
             if (productsList) {
                 productsList.addEventListener('click', event => {
@@ -2150,13 +2197,65 @@
                 return;
             }
 
+            const searchInput = document.getElementById('productSearch');
+            if (searchInput && searchInput.value !== productSearchTerm) {
+                searchInput.value = productSearchTerm;
+            }
+
+            const featureFilterSelect = document.getElementById('featureFilter');
+
             if (!currentCategory) {
                 container.innerHTML = '<p style="text-align: center; color: #999">Crea una categoría para comenzar a añadir productos.</p>';
+                if (featureFilterSelect) {
+                    featureFilterSelect.innerHTML = '<option value="">Todas las características</option>';
+                    featureFilterSelect.value = '';
+                }
+                activeFeatureFilter = '';
                 updateCatalogPreview();
                 return;
             }
 
             const products = catalogData.products[currentCategory] || [];
+
+            const productOrderMap = new Map();
+            products.forEach((product, index) => {
+                if (product) {
+                    productOrderMap.set(product, index);
+                }
+            });
+
+            const availableFeatures = new Set();
+            products.forEach(product => {
+                if (!product || !Array.isArray(product.features)) {
+                    return;
+                }
+                product.features.forEach(feature => {
+                    if (typeof feature !== 'string') {
+                        return;
+                    }
+                    const normalized = feature.trim();
+                    if (normalized) {
+                        availableFeatures.add(normalized);
+                    }
+                });
+            });
+
+            if (featureFilterSelect) {
+                const options = ['<option value="">Todas las características</option>'];
+                Array.from(availableFeatures)
+                    .sort((a, b) => a.localeCompare(b))
+                    .forEach(feature => {
+                        const escaped = escapeHtml(feature);
+                        options.push(`<option value="${escaped}">${escaped}</option>`);
+                    });
+                featureFilterSelect.innerHTML = options.join('');
+
+                if (activeFeatureFilter && !availableFeatures.has(activeFeatureFilter)) {
+                    activeFeatureFilter = '';
+                }
+
+                featureFilterSelect.value = activeFeatureFilter;
+            }
 
             if (products.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #999">No hay productos en esta categoría. Haz clic en "Añadir Producto" para comenzar.</p>';
@@ -2164,10 +2263,71 @@
                 return;
             }
 
-            container.innerHTML = products
-                .map((product, index) => {
-                    const disableUp = index === 0 ? 'disabled' : '';
-                    const disableDown = index === products.length - 1 ? 'disabled' : '';
+            const normalizedTerm = productSearchTerm
+                ? productSearchTerm.toLowerCase().trim()
+                : '';
+
+            const filteredProducts = products.filter(product => {
+                if (activeFeatureFilter) {
+                    const productFeatures = Array.isArray(product.features) ? product.features : [];
+                    const matchesFeature = productFeatures.some(feature => {
+                        if (typeof feature !== 'string') {
+                            return false;
+                        }
+                        return feature.trim() === activeFeatureFilter;
+                    });
+                    if (!matchesFeature) {
+                        return false;
+                    }
+                }
+
+                if (!normalizedTerm) {
+                    return true;
+                }
+
+                const valuesToSearch = [];
+
+                if (typeof product.name === 'string') {
+                    valuesToSearch.push(product.name);
+                }
+
+                if (typeof product.shortDesc === 'string') {
+                    valuesToSearch.push(product.shortDesc);
+                }
+
+                if (typeof product.longDesc === 'string') {
+                    valuesToSearch.push(product.longDesc);
+                }
+
+                if (typeof product.price !== 'undefined' && product.price !== null) {
+                    valuesToSearch.push(String(product.price));
+                }
+
+                if (Array.isArray(product.features) && product.features.length > 0) {
+                    valuesToSearch.push(product.features.join(' '));
+                }
+
+                return valuesToSearch.some(value => {
+                    if (typeof value !== 'string') {
+                        return false;
+                    }
+                    return value.toLowerCase().includes(normalizedTerm);
+                });
+            });
+
+            if (filteredProducts.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999">Ningún producto coincide con los filtros aplicados.</p>';
+                updateCatalogPreview();
+                return;
+            }
+
+            container.innerHTML = filteredProducts
+                .map(product => {
+                    const originalIndex = productOrderMap.has(product)
+                        ? productOrderMap.get(product)
+                        : products.indexOf(product);
+                    const disableUp = originalIndex <= 0 ? 'disabled' : '';
+                    const disableDown = originalIndex === -1 || originalIndex >= products.length - 1 ? 'disabled' : '';
                     const productName = product.name || 'Producto sin nombre';
                     const imageSrc = getProductImageSource(product);
                     const imageAlt = escapeHtml(`Vista previa de ${productName}`);
