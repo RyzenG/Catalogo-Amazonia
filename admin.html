@@ -122,6 +122,27 @@
             font-size: 0.95rem;
         }
 
+        .logo-preview {
+            position: relative;
+            margin-top: 0.75rem;
+            border: 1px dashed #c2c2c2;
+            border-radius: 8px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #fafafa;
+            padding: 1rem;
+        }
+
+        .logo-preview img {
+            max-width: 100%;
+            max-height: 100px;
+            object-fit: contain;
+            display: none;
+        }
+
         input, textarea, select {
             width: 100%;
             padding: 0.8rem;
@@ -587,6 +608,14 @@
                             <input type="text" id="tagline" value="Naturaleza y Modernidad en Perfecta Armonía">
                         </div>
                         <div class="form-group">
+                            <label>Logo de la empresa:</label>
+                            <input type="file" id="companyLogo" accept="image/*">
+                            <div class="logo-preview" id="companyLogoPreviewWrapper">
+                                <img id="companyLogoPreview" alt="Vista previa del logo" src="">
+                                <span class="image-placeholder" id="companyLogoPlaceholder">Sin logo seleccionado</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
                             <label>Mensaje del footer:</label>
                             <textarea id="footerMessage">Creando espacios únicos con concreto sostenible</textarea>
                         </div>
@@ -752,7 +781,8 @@
             address: '',
             companyName: 'AMAZONIA CONCRETE',
             tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
-            footerMessage: 'Creando espacios únicos con concreto sostenible'
+            footerMessage: 'Creando espacios únicos con concreto sostenible',
+            logoData: ''
         };
 
         const defaultCategories = [
@@ -1546,8 +1576,30 @@
             }
         }
 
+        function updateLogoPreview(src) {
+            const previewImg = document.getElementById('companyLogoPreview');
+            const placeholderEl = document.getElementById('companyLogoPlaceholder');
+
+            if (!previewImg || !placeholderEl) {
+                return;
+            }
+
+            if (src) {
+                previewImg.src = src;
+                previewImg.style.display = 'block';
+                placeholderEl.style.display = 'none';
+            } else {
+                previewImg.removeAttribute('src');
+                previewImg.style.display = 'none';
+                placeholderEl.textContent = 'Sin logo seleccionado';
+                placeholderEl.style.display = 'block';
+            }
+        }
+
         function resetImagePreview() {
             updateProductImagePreview(null);
+            const logoData = catalogData && catalogData.config ? catalogData.config.logoData : '';
+            updateLogoPreview(logoData || null);
         }
 
         function setupImageInput() {
@@ -1557,6 +1609,15 @@
             }
 
             imageInput.addEventListener('change', handleProductImageChange);
+        }
+
+        function setupLogoInput() {
+            const logoInput = document.getElementById('companyLogo');
+            if (!logoInput) {
+                return;
+            }
+
+            logoInput.addEventListener('change', handleCompanyLogoChange);
         }
 
         function handleProductImageChange(event) {
@@ -1574,6 +1635,32 @@
                 currentImageData = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
                 currentIconFallback = '';
                 updateProductImagePreview(currentImageData, file.name);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleCompanyLogoChange(event) {
+            const file = event.target.files && event.target.files[0];
+            const input = event.target;
+
+            if (!file) {
+                const hasLogo = catalogData && catalogData.config && catalogData.config.logoData;
+                if (!hasLogo) {
+                    updateLogoPreview(null);
+                }
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(loadEvent) {
+                const result = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
+                catalogData.config = catalogData.config || {};
+                catalogData.config.logoData = result || '';
+                updateLogoPreview(result);
+                updateCatalogPreview();
+                if (input) {
+                    input.value = '';
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -1713,6 +1800,7 @@
             loadData();
             renderFeatureInputs();
             setupImageInput();
+            setupLogoInput();
             resetImagePreview();
         });
 
@@ -1776,11 +1864,19 @@
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
+            updateLogoPreview(catalogData.config.logoData || null);
+            const logoInput = document.getElementById('companyLogo');
+            if (logoInput) {
+                logoInput.value = '';
+            }
             updateCatalogPreview();
         }
 
         // Save configuration
         function saveConfig() {
+            const existingLogoData = catalogData && catalogData.config && catalogData.config.logoData
+                ? catalogData.config.logoData
+                : '';
             catalogData.config = {
                 whatsapp: document.getElementById('whatsapp').value,
                 email: document.getElementById('email').value,
@@ -1788,7 +1884,8 @@
                 address: document.getElementById('address').value,
                 companyName: document.getElementById('companyName').value,
                 tagline: document.getElementById('tagline').value,
-                footerMessage: document.getElementById('footerMessage').value
+                footerMessage: document.getElementById('footerMessage').value,
+                logoData: existingLogoData
             };
             saveData();
         }
@@ -2300,8 +2397,23 @@
                 address: (config.address || '').trim(),
                 companyName: config.companyName || '',
                 tagline: config.tagline || '',
-                footerMessage: config.footerMessage || ''
+                footerMessage: config.footerMessage || '',
+                logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
             };
+
+            const companyNameHtml = escapeHtml(trimmedConfig.companyName);
+            const taglineHtml = escapeHtml(trimmedConfig.tagline);
+            const footerMessageHtml = escapeHtml(trimmedConfig.footerMessage);
+            const logoAltName = companyNameHtml || 'la empresa';
+            const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : '';
+            const logoContainerStyle = trimmedConfig.logoData ? '' : 'display: none;';
+            const headerLogoMarkup = `
+        <div class="logo-container" id="headerLogoContainer" style="${logoContainerStyle}">
+            <img id="headerLogo" src="${sanitizedLogoData}" alt="Logo de ${logoAltName}">
+        </div>`;
+            const taglineMarkup = trimmedConfig.tagline
+                ? `<p class="tagline" id="headerTagline">${taglineHtml}</p>`
+                : `<p class="tagline" id="headerTagline" style="display: none;"></p>`;
 
             const categoriesWithProducts = resolvedCategories.filter(category => {
                 const list = products && products[category.id];
@@ -2383,6 +2495,10 @@
                 trimmedConfig.email ? `<button class="cta-button" id="modalQuoteButton" onclick="requestQuote()">📋 Solicitar Cotización</button>` : ''
             ].filter(Boolean).join('');
 
+            const defaultCompanyNameHtml = escapeHtml(defaultConfig.companyName || 'Amazonia Concrete');
+            const headerTitleText = companyNameHtml || defaultCompanyNameHtml;
+            const footerCompanyName = companyNameHtml || defaultCompanyNameHtml;
+
             const contactButtons = [
                 trimmedConfig.phone ? `<a id="contactPhone" class="contact-btn" href="#">📞 Llamar</a>` : '',
                 trimmedConfig.email ? `<a id="contactEmail" class="contact-btn" href="#">✉️ Email</a>` : '',
@@ -2412,9 +2528,12 @@
 
     <!-- Header -->
     <header>
-        <div class="header-content">
-            <h1>${trimmedConfig.companyName}</h1>
-            <p class="tagline">${trimmedConfig.tagline}</p>
+        <div class="header-inner">
+            ${headerLogoMarkup}
+            <div class="header-content">
+                <h1 id="headerTitle">${headerTitleText}</h1>
+                ${taglineMarkup}
+            </div>
         </div>
     </header>
 
@@ -2467,11 +2586,11 @@
     <footer>
         <div class="footer-content">
             <div class="contact-info">
-                <h3>${trimmedConfig.companyName}</h3>
-                <p>${trimmedConfig.footerMessage}</p>
+                <h3>${footerCompanyName}</h3>
+                <p>${footerMessageHtml}</p>
                 <div class="contact-buttons">${contactButtons}</div>
             </div>
-            <p style="margin-top: 2rem; opacity: 0.7;">© 2024 ${trimmedConfig.companyName} - Todos los derechos reservados</p>
+            <p style="margin-top: 2rem; opacity: 0.7;">© 2024 ${footerCompanyName} - Todos los derechos reservados</p>
         </div>
     </footer>
 
@@ -2554,13 +2673,41 @@
             50% { transform: translateY(-20px) rotate(180deg); }
         }
 
-        .header-content {
+        .header-inner {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
             position: relative;
             z-index: 1;
+        }
+
+        .header-content {
+            text-align: center;
+        }
+
+        .logo-container {
+            width: 140px;
+            height: 140px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
         h1 {
@@ -3040,6 +3187,16 @@
                 font-size: 2rem;
             }
             
+            .header-inner {
+                gap: 1.5rem;
+            }
+
+            .logo-container {
+                width: 110px;
+                height: 110px;
+                padding: 0.75rem;
+            }
+
             .category-title {
                 font-size: 1.8rem;
             }
@@ -3102,10 +3259,45 @@
 
         function applyConfig() {
             const config = catalogConfig || {};
+            const companyName = config.companyName || '';
+            const taglineValue = config.tagline || '';
+            const logoData = config.logoData || '';
             const whatsappNumber = (config.whatsapp || '').replace(/\\D+/g, '');
             const emailValue = (config.email || '').trim();
             const phoneValue = config.phone || '';
             const addressValue = config.address || '';
+
+            document.title = companyName ? \`${companyName} - Catálogo Digital\` : 'Catálogo Digital';
+
+            const headerTitle = document.getElementById('headerTitle');
+            if (headerTitle) {
+                headerTitle.textContent = companyName || 'Catálogo Digital';
+            }
+
+            const headerTagline = document.getElementById('headerTagline');
+            if (headerTagline) {
+                if (taglineValue) {
+                    headerTagline.textContent = taglineValue;
+                    headerTagline.style.display = 'block';
+                } else {
+                    headerTagline.textContent = '';
+                    headerTagline.style.display = 'none';
+                }
+            }
+
+            const logoContainer = document.getElementById('headerLogoContainer');
+            const logoImage = document.getElementById('headerLogo');
+            if (logoContainer && logoImage) {
+                if (logoData) {
+                    logoImage.src = logoData;
+                    logoImage.alt = \`Logo de ${companyName || 'la empresa'}\`;
+                    logoContainer.style.display = 'flex';
+                } else {
+                    logoImage.removeAttribute('src');
+                    logoImage.alt = 'Logo de la empresa';
+                    logoContainer.style.display = 'none';
+                }
+            }
 
             const whatsappButton = document.getElementById('modalWhatsAppButton');
             if (whatsappButton) {
