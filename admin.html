@@ -799,7 +799,8 @@
         let catalogData = {
             config: { ...defaultConfig },
             categories: defaultCategories.map(category => ({ ...category })),
-            products: createDefaultProductsMap(defaultCategories)
+            products: createDefaultProductsMap(defaultCategories),
+            categoryInfo: {}
         };
 
         let currentCategory = defaultCategories[0] ? defaultCategories[0].id : '';
@@ -844,6 +845,101 @@
             return id
                 .replace(/[-_]+/g, ' ')
                 .replace(/^(.)/, (match, char) => char.toUpperCase());
+        }
+
+        function isPlainObject(value) {
+            return typeof value === 'object' && value !== null && !Array.isArray(value);
+        }
+
+        function createLegacyCategoryResolver(rawInfo) {
+            if (!isPlainObject(rawInfo)) {
+                return {
+                    lookup: () => null,
+                    fallbackCategories: []
+                };
+            }
+
+            const lookupMap = new Map();
+            const fallbackCategories = [];
+            const usedFallbackIds = new Set();
+
+            Object.entries(rawInfo).forEach(([key, value]) => {
+                if (value === null || typeof value === 'undefined') {
+                    return;
+                }
+
+                const normalizedEntry = isPlainObject(value) ? { ...value } : { title: value };
+                const rawTitle = (normalizedEntry.title || normalizedEntry.name || (typeof key === 'string' ? key : '') || '').toString().trim();
+                const rawDescription = (normalizedEntry.description || normalizedEntry.desc || '').toString();
+                const rawIcon = (normalizedEntry.icon || normalizedEntry.emoji || '').toString().trim();
+
+                const baseIdSource = typeof key === 'string' && key ? key : rawTitle;
+                let sanitizedId = generateCategoryId(baseIdSource || rawTitle || 'categoria');
+                sanitizedId = ensureUniqueCategoryId(sanitizedId, usedFallbackIds);
+                usedFallbackIds.add(sanitizedId);
+
+                const displayTitle = rawTitle || formatCategoryLabel(sanitizedId);
+                const displayIcon = rawIcon || '📦';
+
+                const metadata = {
+                    icon: displayIcon,
+                    title: displayTitle,
+                    description: rawDescription
+                };
+
+                const candidateKeys = new Set([
+                    typeof key === 'string' ? key : '',
+                    rawTitle,
+                    sanitizedId
+                ].filter(Boolean));
+
+                candidateKeys.forEach(candidate => {
+                    lookupMap.set(candidate, metadata);
+                    lookupMap.set(candidate.toLowerCase(), metadata);
+                });
+
+                fallbackCategories.push({
+                    id: sanitizedId,
+                    name: displayTitle,
+                    icon: displayIcon,
+                    description: rawDescription
+                });
+            });
+
+            return {
+                lookup: values => {
+                    const candidates = Array.isArray(values) ? values : [values];
+                    for (const candidate of candidates) {
+                        if (typeof candidate !== 'string' || !candidate) {
+                            continue;
+                        }
+
+                        if (lookupMap.has(candidate)) {
+                            return lookupMap.get(candidate);
+                        }
+
+                        const lowerCandidate = candidate.toLowerCase();
+                        if (lookupMap.has(lowerCandidate)) {
+                            return lookupMap.get(lowerCandidate);
+                        }
+
+                        const sanitizedCandidate = generateCategoryId(candidate);
+                        if (sanitizedCandidate) {
+                            if (lookupMap.has(sanitizedCandidate)) {
+                                return lookupMap.get(sanitizedCandidate);
+                            }
+
+                            const sanitizedLower = sanitizedCandidate.toLowerCase();
+                            if (lookupMap.has(sanitizedLower)) {
+                                return lookupMap.get(sanitizedLower);
+                            }
+                        }
+                    }
+
+                    return null;
+                },
+                fallbackCategories
+            };
         }
 
         function escapeHtml(value) {
@@ -914,37 +1010,134 @@
                 catalogData = {
                     config: { ...defaultConfig },
                     categories: defaultCategories.map(category => ({ ...category })),
-                    products: createDefaultProductsMap(defaultCategories)
+                    products: createDefaultProductsMap(defaultCategories),
+                    categoryInfo: {}
                 };
             }
 
+            if (!isPlainObject(catalogData.categoryInfo)) {
+                catalogData.categoryInfo = {};
+            }
+
+            const legacyCategoryResolver = createLegacyCategoryResolver(catalogData.categoryInfo);
+
             let rawCategories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
             if (rawCategories.length === 0) {
-                rawCategories = defaultCategories.map(category => ({ ...category }));
+                if (legacyCategoryResolver.fallbackCategories.length > 0) {
+                    rawCategories = legacyCategoryResolver.fallbackCategories.map(category => ({ ...category }));
+                } else {
+                    rawCategories = defaultCategories.map(category => ({ ...category }));
+                }
             }
 
             const categoryMappings = [];
 
             catalogData.categories = rawCategories.map((category, index) => {
-                const normalized = typeof category === 'object' && category !== null ? { ...category } : {};
+                let normalized;
+                const candidateValues = [];
+
+                if (typeof category === 'string') {
+                    normalized = { name: category };
+                    candidateValues.push(category);
+                } else if (isPlainObject(category)) {
+                    normalized = { ...category };
+                    ['id', 'name', 'title', 'label', 'category'].forEach(key => {
+                        if (typeof normalized[key] === 'string' && normalized[key]) {
+                            candidateValues.push(normalized[key]);
+                        }
+                    });
+                } else {
+                    normalized = {};
+                }
+
                 const originalId = typeof normalized.id === 'string' ? normalized.id : null;
-                normalized.name = (normalized.name || '').toString().trim() || 'Nueva categoría';
-                normalized.icon = (normalized.icon || '').toString().trim() || '📦';
-                normalized.description = typeof normalized.description === 'string' ? normalized.description : '';
-                const baseId = originalId || normalized.name;
-                let sanitizedId = generateCategoryId(baseId);
+                if (originalId) {
+                    candidateValues.push(originalId);
+                }
+
+                const legacyMeta = legacyCategoryResolver.lookup(candidateValues);
+
+                const nameCandidates = [
+                    typeof normalized.name === 'string' ? normalized.name.trim() : '',
+                    typeof normalized.title === 'string' ? normalized.title.trim() : '',
+                    typeof normalized.label === 'string' ? normalized.label.trim() : '',
+                    typeof normalized.category === 'string' ? normalized.category.trim() : '',
+                    legacyMeta && legacyMeta.title ? legacyMeta.title : ''
+                ].filter(Boolean);
+
+                let resolvedName = nameCandidates.length > 0 ? nameCandidates[0] : '';
+                if (!resolvedName && originalId) {
+                    resolvedName = formatCategoryLabel(originalId);
+                }
+                if (!resolvedName && candidateValues.length > 0) {
+                    const fallbackCandidate = candidateValues.find(value => typeof value === 'string' && value);
+                    if (fallbackCandidate) {
+                        resolvedName = formatCategoryLabel(fallbackCandidate);
+                    }
+                }
+                if (!resolvedName) {
+                    resolvedName = 'Nueva categoría';
+                }
+
+                const idCandidates = [
+                    originalId,
+                    typeof normalized.id === 'string' ? normalized.id : '',
+                    typeof normalized.category === 'string' ? normalized.category : '',
+                    resolvedName,
+                    legacyMeta && legacyMeta.title ? legacyMeta.title : ''
+                ];
+
+                let sanitizedId = null;
+                for (const candidate of idCandidates) {
+                    if (typeof candidate !== 'string' || !candidate) {
+                        continue;
+                    }
+
+                    const possible = generateCategoryId(candidate);
+                    if (possible) {
+                        sanitizedId = possible;
+                        break;
+                    }
+                }
+
                 if (!sanitizedId) {
                     sanitizedId = generateCategoryId('categoria');
+                }
+
+                const iconCandidates = [
+                    typeof normalized.icon === 'string' ? normalized.icon.trim() : '',
+                    typeof normalized.emoji === 'string' ? normalized.emoji.trim() : '',
+                    legacyMeta && legacyMeta.icon ? legacyMeta.icon : ''
+                ].filter(Boolean);
+                const resolvedIcon = iconCandidates.length > 0 ? iconCandidates[0] : '📦';
+
+                const descriptionCandidates = [
+                    typeof normalized.description === 'string' ? normalized.description : '',
+                    typeof normalized.desc === 'string' ? normalized.desc : '',
+                    legacyMeta && legacyMeta.description ? legacyMeta.description : ''
+                ];
+                const resolvedDescription = descriptionCandidates.find(value => typeof value === 'string' && value.trim().length > 0) || '';
+
+                const mappingCandidates = new Set(candidateValues.filter(value => typeof value === 'string' && value));
+                mappingCandidates.add(resolvedName);
+                mappingCandidates.add(sanitizedId);
+                if (legacyMeta && legacyMeta.title) {
+                    mappingCandidates.add(legacyMeta.title);
                 }
 
                 categoryMappings[index] = {
                     index,
                     originalId,
                     sanitizedId,
-                    finalId: sanitizedId
+                    finalId: sanitizedId,
+                    candidates: Array.from(mappingCandidates)
                 };
 
                 normalized.id = sanitizedId;
+                normalized.name = resolvedName;
+                normalized.icon = resolvedIcon;
+                normalized.description = resolvedDescription;
+
                 return normalized;
             });
 
@@ -972,10 +1165,16 @@
                 if (mapping.finalId) {
                     candidateIds.push(mapping.finalId);
                 }
-                if (mapping.sanitizedId && mapping.sanitizedId !== mapping.finalId) {
-                    candidateIds.push(mapping.sanitizedId);
+
+                if (Array.isArray(mapping.candidates)) {
+                    mapping.candidates.forEach(value => {
+                        if (value && !candidateIds.includes(value)) {
+                            candidateIds.push(value);
+                        }
+                    });
                 }
-                if (mapping.originalId && mapping.originalId !== mapping.sanitizedId && mapping.originalId !== mapping.finalId) {
+
+                if (mapping.originalId && !candidateIds.includes(mapping.originalId)) {
                     candidateIds.push(mapping.originalId);
                 }
 
@@ -1534,20 +1733,23 @@
                         catalogData.products = parsed.products && typeof parsed.products === 'object'
                             ? parsed.products
                             : createDefaultProductsMap(catalogData.categories);
+                        catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
                     }
                 } catch (error) {
                     console.error('No se pudieron leer los datos guardados', error);
                     catalogData = {
                         config: { ...defaultConfig },
                         categories: defaultCategories.map(category => ({ ...category })),
-                        products: createDefaultProductsMap(defaultCategories)
+                        products: createDefaultProductsMap(defaultCategories),
+                        categoryInfo: {}
                     };
                 }
             } else {
                 catalogData = {
                     config: { ...defaultConfig },
                     categories: defaultCategories.map(category => ({ ...category })),
-                    products: createDefaultProductsMap(defaultCategories)
+                    products: createDefaultProductsMap(defaultCategories),
+                    categoryInfo: {}
                 };
             }
 
@@ -1949,6 +2151,7 @@
                             catalogData.products = parsed.products && typeof parsed.products === 'object'
                                 ? parsed.products
                                 : createDefaultProductsMap(catalogData.categories);
+                            catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
 
                             refreshCategoriesUI({ preserveCurrent: false });
                             renderCategoryManagerList();
@@ -2034,6 +2237,61 @@
             const config = catalogData.config;
             const products = catalogData.products;
             const categories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
+            const legacyCategoryResolver = createLegacyCategoryResolver(catalogData.categoryInfo);
+            const resolvedCategories = categories.map((category, index) => {
+                const normalized = isPlainObject(category)
+                    ? category
+                    : (typeof category === 'string'
+                        ? { id: generateCategoryId(category), name: category }
+                        : {});
+
+                const candidateValues = [
+                    typeof category === 'string' ? category : '',
+                    typeof normalized.id === 'string' ? normalized.id : '',
+                    typeof normalized.name === 'string' ? normalized.name : '',
+                    typeof normalized.title === 'string' ? normalized.title : '',
+                    typeof normalized.label === 'string' ? normalized.label : ''
+                ].filter(Boolean);
+
+                const metadata = legacyCategoryResolver.lookup(candidateValues) || {};
+
+                let categoryId = typeof normalized.id === 'string' && normalized.id
+                    ? normalized.id
+                    : '';
+
+                if (!categoryId) {
+                    const fallbackSource = metadata.title || normalized.name || candidateValues[0] || `categoria-${index + 1}`;
+                    categoryId = generateCategoryId(fallbackSource) || `categoria-${index + 1}`;
+                }
+
+                const titleCandidates = [
+                    typeof normalized.name === 'string' ? normalized.name.trim() : '',
+                    typeof normalized.title === 'string' ? normalized.title.trim() : '',
+                    metadata.title || ''
+                ].filter(Boolean);
+                const title = titleCandidates.length > 0 ? titleCandidates[0] : formatCategoryLabel(categoryId);
+
+                const iconCandidates = [
+                    typeof normalized.icon === 'string' ? normalized.icon.trim() : '',
+                    typeof normalized.emoji === 'string' ? normalized.emoji.trim() : '',
+                    metadata.icon || ''
+                ].filter(Boolean);
+                const icon = iconCandidates.length > 0 ? iconCandidates[0] : '📦';
+
+                const descriptionCandidates = [
+                    typeof normalized.description === 'string' ? normalized.description.trim() : '',
+                    typeof normalized.desc === 'string' ? normalized.desc.trim() : '',
+                    metadata.description || ''
+                ].filter(value => typeof value === 'string');
+                const description = descriptionCandidates.find(value => value.trim().length > 0) || '';
+
+                return {
+                    id: categoryId,
+                    title,
+                    icon,
+                    description
+                };
+            });
 
             const trimmedConfig = {
                 whatsapp: (config.whatsapp || '').trim(),
@@ -2045,7 +2303,7 @@
                 footerMessage: config.footerMessage || ''
             };
 
-            const categoriesWithProducts = categories.filter(category => {
+            const categoriesWithProducts = resolvedCategories.filter(category => {
                 const list = products && products[category.id];
                 return Array.isArray(list) && list.length > 0;
             });
@@ -2056,10 +2314,10 @@
             let productsHTML = '';
             let productDataJS = {};
 
-            categories.forEach(category => {
+            resolvedCategories.forEach(category => {
                 const categoryProducts = products && products[category.id] ? products[category.id] : [];
                 if (categoryProducts.length > 0) {
-                    const categoryTitle = escapeHtml(category.name || formatCategoryLabel(category.id));
+                    const categoryTitle = escapeHtml(category.title || formatCategoryLabel(category.id));
                     const categoryDescription = escapeHtml(category.description || '');
                     const categoryIcon = category.icon || '🛠️';
                     const descriptionMarkup = categoryDescription ? `<p class="category-description">${categoryDescription}</p>` : '';
@@ -2115,7 +2373,7 @@
             const navButtonsHTML = categoriesWithProducts
                 .map(category => {
                     const isActive = category.id === firstCategoryWithProducts;
-                    const label = `${category.icon || '📦'} ${category.name || formatCategoryLabel(category.id)}`;
+                    const label = `${category.icon || '📦'} ${category.title || formatCategoryLabel(category.id)}`;
                     return `<button class="nav-btn${isActive ? ' active' : ''}" data-category="${category.id}" onclick="showCategory(event, '${category.id}')">${escapeHtml(label)}</button>`;
                 })
                 .join('');
@@ -2946,17 +3204,30 @@
         }
 
         function showCategory(event, categoryId) {
-            const categories = document.querySelectorAll('.category');
+            const categories = Array.from(document.querySelectorAll('.category'));
+            if (!categories.length) {
+                return;
+            }
+
+            let requestedCategoryId = typeof categoryId === 'string' ? categoryId : '';
+
             categories.forEach(cat => cat.classList.remove('active'));
 
-            const targetCategory = document.getElementById(categoryId);
+            let targetCategory = requestedCategoryId ? document.getElementById(requestedCategoryId) : null;
+            if (!targetCategory) {
+                targetCategory = categories[0] || null;
+                requestedCategoryId = targetCategory ? targetCategory.id : requestedCategoryId;
+            }
+
             if (targetCategory) {
                 targetCategory.classList.add('active');
             }
 
-            const buttons = document.querySelectorAll('.nav-btn');
+            const buttons = Array.from(document.querySelectorAll('.nav-btn'));
             buttons.forEach(btn => btn.classList.remove('active'));
-            const targetButton = (event && (event.currentTarget || event.target)) || document.querySelector('[data-category="' + categoryId + '"]');
+            const targetButton = (event && (event.currentTarget || event.target)) || (requestedCategoryId
+                ? document.querySelector('[data-category="' + requestedCategoryId + '"]')
+                : null);
             if (targetButton) {
                 targetButton.classList.add('active');
             }
