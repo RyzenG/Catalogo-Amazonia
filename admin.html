@@ -152,6 +152,11 @@
             margin-bottom: 0.5rem;
         }
 
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .btn-primary {
             background: linear-gradient(135deg, #6b8e68 0%, #8fa68c 100%);
             color: white;
@@ -177,11 +182,20 @@
             color: white;
         }
 
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
         .category-tabs {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 2rem;
             flex-wrap: wrap;
+            flex: 1;
         }
 
         .tab {
@@ -196,6 +210,51 @@
         .tab.active {
             background: #6b8e68;
             color: white;
+        }
+
+        .category-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .category-manager-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .category-manager-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #fafafa;
+        }
+
+        .category-manager-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+
+        .category-manager-item-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .category-manager-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .category-empty-message {
+            text-align: center;
+            color: #777;
+            padding: 1rem 0;
         }
 
         .product-list {
@@ -540,15 +599,13 @@
                 <div id="productsSection" class="section" style="display: none">
                     <h2 class="section-title">📦 Gestión de Productos</h2>
 
-                    <div class="category-tabs">
-                        <button class="tab active" data-category="macetas">🪴 Macetas</button>
-                        <button class="tab" data-category="pisos">⬜ Pisos</button>
-                        <button class="tab" data-category="revestimientos">🗿 Revestimientos</button>
-                        <button class="tab" data-category="mobiliario">🪑 Mobiliario</button>
-                        <button class="tab" data-category="decoracion">🎨 Decoración</button>
+                    <div class="category-header">
+                        <div class="category-tabs" id="categoryTabs"></div>
+                        <div class="category-controls">
+                            <button class="btn btn-secondary" type="button" id="manageCategoriesButton">⚙️ Gestionar categorías</button>
+                            <button class="btn btn-primary" type="button" id="openProductModalButton">➕ Añadir Producto</button>
+                        </div>
                     </div>
-
-                    <button class="btn btn-primary" id="openProductModalButton">➕ Añadir Producto</button>
 
                     <div id="productsList" class="product-list" style="margin-top: 1.5rem">
                         <!-- Products will be loaded here -->
@@ -578,21 +635,15 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Añadir Producto</h2>
-                <button class="close-modal" type="button">✕</button>
+                <button class="close-modal" type="button" id="closeProductModalButton">✕</button>
             </div>
-            
+
             <form id="productForm">
                 <input type="hidden" id="productId">
                 
                 <div class="form-group">
                     <label>Categoría:</label>
-                    <select id="productCategory">
-                        <option value="macetas">Macetas</option>
-                        <option value="pisos">Pisos</option>
-                        <option value="revestimientos">Revestimientos</option>
-                        <option value="mobiliario">Mobiliario</option>
-                        <option value="decoracion">Decoración</option>
-                    </select>
+                    <select id="productCategory"></select>
                 </div>
 
                 <div class="form-group">
@@ -649,34 +700,151 @@
         </div>
     </div>
 
+    <!-- Category Modal -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Gestionar Categorías</h2>
+                <button class="close-modal" type="button" id="closeCategoryModalButton">✕</button>
+            </div>
+
+            <div class="info-box">
+                <strong>Organiza tus categorías:</strong> Cambia los nombres, iconos o descripciones y elimina las categorías que ya no necesites. Los cambios se reflejarán automáticamente en la vista previa y en el catálogo exportado.
+            </div>
+
+            <div id="categoryManagerList" class="category-manager-list"></div>
+
+            <div class="config-section">
+                <h3 style="margin-bottom: 1rem">Crear nueva categoría</h3>
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label for="newCategoryName">Nombre</label>
+                        <input type="text" id="newCategoryName" placeholder="Ej: Luminarias">
+                    </div>
+                    <div class="form-group">
+                        <label for="newCategoryIcon">Icono</label>
+                        <input type="text" id="newCategoryIcon" placeholder="💡">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newCategoryDescription">Descripción</label>
+                    <textarea id="newCategoryDescription" rows="3" placeholder="Describe brevemente la categoría"></textarea>
+                </div>
+                <button type="button" class="btn btn-secondary" id="addCategoryButton">➕ Añadir categoría</button>
+            </div>
+
+            <div class="category-manager-actions">
+                <button type="button" class="btn btn-secondary" id="cancelCategoryButton">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryChangesButton">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Import Data Modal -->
     <input type="file" id="importFile" style="display: none" accept=".json">
 
     <script>
         // Default data structure
-        let catalogData = {
-            config: {
-                whatsapp: '573000000000',
-                email: 'info@amazoniaconcrete.com',
-                phone: '+57 300 000 0000',
-                address: '',
-                companyName: 'AMAZONIA CONCRETE',
-                tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
-                footerMessage: 'Creando espacios únicos con concreto sostenible'
-            },
-            products: {
-                macetas: [],
-                pisos: [],
-                revestimientos: [],
-                mobiliario: [],
-                decoracion: []
-            }
+        const defaultConfig = {
+            whatsapp: '573000000000',
+            email: 'info@amazoniaconcrete.com',
+            phone: '+57 300 000 0000',
+            address: '',
+            companyName: 'AMAZONIA CONCRETE',
+            tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
+            footerMessage: 'Creando espacios únicos con concreto sostenible'
         };
 
-        let currentCategory = 'macetas';
+        const defaultCategories = [
+            {
+                id: 'macetas',
+                name: 'Macetas de Concreto',
+                icon: '🪴',
+                description: 'Diseños únicos inspirados en la naturaleza amazónica'
+            },
+            {
+                id: 'pisos',
+                name: 'Pisos de Concreto',
+                icon: '⬜',
+                description: 'Resistencia y elegancia para tus espacios'
+            },
+            {
+                id: 'revestimientos',
+                name: 'Revestimientos',
+                icon: '🗿',
+                description: 'Transforma tus paredes con texturas naturales'
+            },
+            {
+                id: 'mobiliario',
+                name: 'Mobiliario de Concreto',
+                icon: '🪑',
+                description: 'Piezas únicas y duraderas para tu hogar'
+            },
+            {
+                id: 'decoracion',
+                name: 'Decoración',
+                icon: '🎨',
+                description: 'Detalles que marcan la diferencia'
+            }
+        ];
+
+        function createDefaultProductsMap(categories) {
+            return categories.reduce((acc, category) => {
+                const idSource = category && category.id ? category.id : generateCategoryId(category && category.name ? category.name : 'categoria');
+                acc[idSource] = [];
+                return acc;
+            }, {});
+        }
+
+        let catalogData = {
+            config: { ...defaultConfig },
+            categories: defaultCategories.map(category => ({ ...category })),
+            products: createDefaultProductsMap(defaultCategories)
+        };
+
+        let currentCategory = defaultCategories[0] ? defaultCategories[0].id : '';
         let editingProductId = null;
         let currentImageData = null;
         let currentIconFallback = '';
+
+        function generateCategoryId(value) {
+            if (!value) {
+                return 'categoria';
+            }
+
+            const normalized = value
+                .toString()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+
+            return normalized || 'categoria';
+        }
+
+        function ensureUniqueCategoryId(baseId, existingIds) {
+            const fallback = baseId || 'categoria';
+            let candidate = fallback;
+            let counter = 1;
+
+            while (existingIds.has(candidate)) {
+                candidate = `${fallback}-${counter}`;
+                counter += 1;
+            }
+
+            return candidate;
+        }
+
+        function formatCategoryLabel(id) {
+            if (!id) {
+                return 'Categoría';
+            }
+
+            return id
+                .replace(/[-_]+/g, ' ')
+                .replace(/^(.)/, (match, char) => char.toUpperCase());
+        }
 
         function escapeHtml(value) {
             if (typeof value !== 'string') {
@@ -739,6 +907,422 @@
             }
 
             return createIconPlaceholder(iconValue, nameValue);
+        }
+
+        function ensureCategoryStructure() {
+            if (!catalogData || typeof catalogData !== 'object') {
+                catalogData = {
+                    config: { ...defaultConfig },
+                    categories: defaultCategories.map(category => ({ ...category })),
+                    products: createDefaultProductsMap(defaultCategories)
+                };
+            }
+
+            let rawCategories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
+            if (rawCategories.length === 0) {
+                rawCategories = defaultCategories.map(category => ({ ...category }));
+            }
+
+            const categoryMappings = [];
+
+            catalogData.categories = rawCategories.map((category, index) => {
+                const normalized = typeof category === 'object' && category !== null ? { ...category } : {};
+                const originalId = typeof normalized.id === 'string' ? normalized.id : null;
+                normalized.name = (normalized.name || '').toString().trim() || 'Nueva categoría';
+                normalized.icon = (normalized.icon || '').toString().trim() || '📦';
+                normalized.description = typeof normalized.description === 'string' ? normalized.description : '';
+                const baseId = originalId || normalized.name;
+                let sanitizedId = generateCategoryId(baseId);
+                if (!sanitizedId) {
+                    sanitizedId = generateCategoryId('categoria');
+                }
+
+                categoryMappings[index] = {
+                    index,
+                    originalId,
+                    sanitizedId,
+                    finalId: sanitizedId
+                };
+
+                normalized.id = sanitizedId;
+                return normalized;
+            });
+
+            const existingIds = new Set();
+            catalogData.categories.forEach((category, index) => {
+                const uniqueId = ensureUniqueCategoryId(category.id, existingIds);
+                if (uniqueId !== category.id) {
+                    category.id = uniqueId;
+                }
+                categoryMappings[index].finalId = category.id;
+                existingIds.add(category.id);
+            });
+
+            if (!catalogData.products || typeof catalogData.products !== 'object') {
+                catalogData.products = {};
+            }
+
+            const currentProducts = catalogData.products;
+            const remappedProducts = {};
+
+            catalogData.categories.forEach((category, index) => {
+                const mapping = categoryMappings[index];
+                const candidateIds = [];
+
+                if (mapping.finalId) {
+                    candidateIds.push(mapping.finalId);
+                }
+                if (mapping.sanitizedId && mapping.sanitizedId !== mapping.finalId) {
+                    candidateIds.push(mapping.sanitizedId);
+                }
+                if (mapping.originalId && mapping.originalId !== mapping.sanitizedId && mapping.originalId !== mapping.finalId) {
+                    candidateIds.push(mapping.originalId);
+                }
+
+                let assignedProducts = null;
+                candidateIds.some(id => {
+                    if (Array.isArray(currentProducts[id])) {
+                        assignedProducts = currentProducts[id];
+                        return true;
+                    }
+                    return false;
+                });
+
+                remappedProducts[category.id] = Array.isArray(assignedProducts) ? assignedProducts : [];
+            });
+
+            catalogData.products = remappedProducts;
+
+            const validIds = new Set(catalogData.categories.map(category => category.id));
+
+            if (!currentCategory || !validIds.has(currentCategory)) {
+                currentCategory = catalogData.categories[0] ? catalogData.categories[0].id : '';
+            }
+        }
+
+        function renderCategoryTabs() {
+            const tabsContainer = document.getElementById('categoryTabs');
+            if (!tabsContainer) {
+                return;
+            }
+
+            tabsContainer.innerHTML = '';
+
+            if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
+                const message = document.createElement('p');
+                message.className = 'category-empty-message';
+                message.textContent = 'Crea una categoría para comenzar a añadir productos.';
+                tabsContainer.appendChild(message);
+                return;
+            }
+
+            catalogData.categories.forEach(category => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'tab' + (category.id === currentCategory ? ' active' : '');
+                button.dataset.category = category.id;
+                const label = `${category.icon || '📦'} ${category.name || formatCategoryLabel(category.id)}`;
+                button.textContent = label;
+                button.addEventListener('click', () => {
+                    setCurrentCategory(category.id);
+                });
+                tabsContainer.appendChild(button);
+            });
+        }
+
+        function renderCategoryOptions(selectedId) {
+            const select = document.getElementById('productCategory');
+            if (!select) {
+                return;
+            }
+
+            const previousValue = typeof selectedId !== 'undefined' ? selectedId : select.value;
+            select.innerHTML = '';
+
+            if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Sin categorías disponibles';
+                select.appendChild(option);
+                select.disabled = true;
+                return;
+            }
+
+            select.disabled = false;
+
+            catalogData.categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = `${category.icon || '📦'} ${category.name || formatCategoryLabel(category.id)}`;
+                select.appendChild(option);
+            });
+
+            const availableIds = catalogData.categories.map(category => category.id);
+            const targetValue = availableIds.includes(previousValue) ? previousValue : (availableIds[0] || '');
+            select.value = targetValue;
+        }
+
+        function refreshCategoriesUI(options = {}) {
+            const { preserveCurrent = true, load = false } = options;
+
+            ensureCategoryStructure();
+
+            const availableIds = catalogData.categories.map(category => category.id);
+            if (!preserveCurrent || !availableIds.includes(currentCategory)) {
+                currentCategory = availableIds[0] || '';
+            }
+
+            renderCategoryTabs();
+            renderCategoryOptions(currentCategory);
+
+            const openProductButton = document.getElementById('openProductModalButton');
+            if (openProductButton) {
+                openProductButton.disabled = availableIds.length === 0;
+            }
+
+            if (load) {
+                loadProducts();
+            }
+        }
+
+        function setCurrentCategory(categoryId) {
+            ensureCategoryStructure();
+            const availableIds = catalogData.categories.map(category => category.id);
+            if (!availableIds.includes(categoryId)) {
+                categoryId = availableIds[0] || '';
+            }
+
+            currentCategory = categoryId;
+            renderCategoryTabs();
+            renderCategoryOptions(currentCategory);
+            loadProducts();
+        }
+
+        function resetNewCategoryForm() {
+            const nameInput = document.getElementById('newCategoryName');
+            const iconInput = document.getElementById('newCategoryIcon');
+            const descriptionInput = document.getElementById('newCategoryDescription');
+
+            if (nameInput) {
+                nameInput.value = '';
+            }
+
+            if (iconInput) {
+                iconInput.value = '';
+            }
+
+            if (descriptionInput) {
+                descriptionInput.value = '';
+            }
+        }
+
+        function renderCategoryManagerList() {
+            const list = document.getElementById('categoryManagerList');
+            if (!list) {
+                return;
+            }
+
+            list.innerHTML = '';
+
+            if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
+                const message = document.createElement('p');
+                message.className = 'category-empty-message';
+                message.textContent = 'No hay categorías disponibles. Añade una nueva para comenzar.';
+                list.appendChild(message);
+                return;
+            }
+
+            const totalCategories = catalogData.categories.length;
+
+            catalogData.categories.forEach(category => {
+                const item = document.createElement('div');
+                item.className = 'category-manager-item';
+                item.dataset.categoryId = category.id;
+
+                const grid = document.createElement('div');
+                grid.className = 'category-manager-grid';
+
+                const nameGroup = document.createElement('div');
+                nameGroup.className = 'form-group';
+                const nameLabel = document.createElement('label');
+                nameLabel.textContent = 'Nombre';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = category.name || '';
+                nameInput.setAttribute('data-field', 'name');
+                nameGroup.appendChild(nameLabel);
+                nameGroup.appendChild(nameInput);
+
+                const iconGroup = document.createElement('div');
+                iconGroup.className = 'form-group';
+                const iconLabel = document.createElement('label');
+                iconLabel.textContent = 'Icono';
+                const iconInput = document.createElement('input');
+                iconInput.type = 'text';
+                iconInput.value = category.icon || '';
+                iconInput.setAttribute('data-field', 'icon');
+                iconGroup.appendChild(iconLabel);
+                iconGroup.appendChild(iconInput);
+
+                grid.appendChild(nameGroup);
+                grid.appendChild(iconGroup);
+
+                const descriptionGroup = document.createElement('div');
+                descriptionGroup.className = 'form-group';
+                const descriptionLabel = document.createElement('label');
+                descriptionLabel.textContent = 'Descripción';
+                const descriptionInput = document.createElement('textarea');
+                descriptionInput.rows = 3;
+                descriptionInput.value = category.description || '';
+                descriptionInput.setAttribute('data-field', 'description');
+                descriptionGroup.appendChild(descriptionLabel);
+                descriptionGroup.appendChild(descriptionInput);
+
+                const actions = document.createElement('div');
+                actions.className = 'category-manager-item-actions';
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'btn btn-danger';
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.disabled = totalCategories <= 1;
+                if (deleteButton.disabled) {
+                    deleteButton.title = 'Debe existir al menos una categoría activa.';
+                }
+                deleteButton.addEventListener('click', () => deleteCategory(category.id));
+                actions.appendChild(deleteButton);
+
+                item.appendChild(grid);
+                item.appendChild(descriptionGroup);
+                item.appendChild(actions);
+
+                list.appendChild(item);
+            });
+        }
+
+        function openCategoryModal() {
+            ensureCategoryStructure();
+            renderCategoryManagerList();
+            resetNewCategoryForm();
+
+            const modal = document.getElementById('categoryModal');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function closeCategoryModal() {
+            const modal = document.getElementById('categoryModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function handleAddCategory() {
+            ensureCategoryStructure();
+
+            const nameInput = document.getElementById('newCategoryName');
+            const iconInput = document.getElementById('newCategoryIcon');
+            const descriptionInput = document.getElementById('newCategoryDescription');
+
+            if (!nameInput) {
+                return;
+            }
+
+            const nameValue = nameInput.value.trim();
+            if (!nameValue) {
+                alert('Ingresa un nombre para la nueva categoría.');
+                return;
+            }
+
+            const iconValue = iconInput ? iconInput.value.trim() : '';
+            const descriptionValue = descriptionInput ? descriptionInput.value.trim() : '';
+
+            const existingIds = new Set(catalogData.categories.map(category => category.id));
+            const baseId = generateCategoryId(nameValue);
+            const newId = ensureUniqueCategoryId(baseId, existingIds);
+
+            const newCategory = {
+                id: newId,
+                name: nameValue,
+                icon: iconValue || '📦',
+                description: descriptionValue
+            };
+
+            catalogData.categories.push(newCategory);
+            catalogData.products[newCategory.id] = [];
+
+            currentCategory = newCategory.id;
+            refreshCategoriesUI({ preserveCurrent: true });
+            loadProducts();
+            saveData();
+            showMessage('Categoría añadida correctamente', 'success');
+            renderCategoryManagerList();
+            resetNewCategoryForm();
+        }
+
+        function saveCategoryEdits() {
+            const list = document.getElementById('categoryManagerList');
+            if (!list) {
+                return;
+            }
+
+            const items = Array.from(list.querySelectorAll('.category-manager-item'));
+            if (items.length === 0) {
+                closeCategoryModal();
+                return;
+            }
+
+            items.forEach(item => {
+                const categoryId = item.dataset.categoryId;
+                const nameInput = item.querySelector('[data-field="name"]');
+                const iconInput = item.querySelector('[data-field="icon"]');
+                const descriptionInput = item.querySelector('[data-field="description"]');
+
+                const category = catalogData.categories.find(cat => cat.id === categoryId);
+                if (category) {
+                    category.name = (nameInput && nameInput.value.trim()) || 'Nueva categoría';
+                    category.icon = (iconInput && iconInput.value.trim()) || '📦';
+                    category.description = descriptionInput ? descriptionInput.value : '';
+                }
+            });
+
+            refreshCategoriesUI({ preserveCurrent: true });
+            loadProducts();
+            saveData();
+            showMessage('Categorías actualizadas correctamente', 'success');
+            renderCategoryManagerList();
+        }
+
+        function deleteCategory(categoryId) {
+            ensureCategoryStructure();
+
+            if (!Array.isArray(catalogData.categories) || catalogData.categories.length <= 1) {
+                alert('Debe existir al menos una categoría en el catálogo.');
+                return;
+            }
+
+            const category = catalogData.categories.find(cat => cat.id === categoryId);
+            if (!category) {
+                return;
+            }
+
+            const productCount = (catalogData.products[categoryId] || []).length;
+            const confirmationMessage = productCount > 0
+                ? `¿Eliminar la categoría "${category.name}" y sus ${productCount} productos?`
+                : `¿Eliminar la categoría "${category.name}"?`;
+
+            if (!confirm(confirmationMessage)) {
+                return;
+            }
+
+            catalogData.categories = catalogData.categories.filter(cat => cat.id !== categoryId);
+            delete catalogData.products[categoryId];
+
+            refreshCategoriesUI({ preserveCurrent: false });
+            loadProducts();
+            saveData();
+            showMessage('Categoría eliminada correctamente', 'success');
+            renderCategoryManagerList();
         }
 
         function updateProductImagePreview(src, altText) {
@@ -841,36 +1425,58 @@
                 saveConfigButton.addEventListener('click', saveConfig);
             }
 
-            const categoryTabs = document.querySelector('.category-tabs');
-            if (categoryTabs) {
-                categoryTabs.addEventListener('click', event => {
-                    const targetButton = event.target.closest('button[data-category]');
-                    if (!targetButton) {
-                        return;
-                    }
-
-                    showCategory(event, targetButton.getAttribute('data-category'));
-                });
-            }
-
             const openProductModalButton = document.getElementById('openProductModalButton');
             if (openProductModalButton) {
                 openProductModalButton.addEventListener('click', () => openProductModal());
             }
 
-            const closeModalButtons = document.querySelectorAll('.close-modal');
-            closeModalButtons.forEach(button => {
-                button.addEventListener('click', closeModal);
-            });
+            const closeProductModalButton = document.getElementById('closeProductModalButton');
+            if (closeProductModalButton) {
+                closeProductModalButton.addEventListener('click', closeProductModal);
+            }
 
             const cancelProductButton = document.getElementById('cancelProductButton');
             if (cancelProductButton) {
-                cancelProductButton.addEventListener('click', closeModal);
+                cancelProductButton.addEventListener('click', closeProductModal);
             }
 
             const addFeatureButton = document.getElementById('addFeatureButton');
             if (addFeatureButton) {
                 addFeatureButton.addEventListener('click', addFeature);
+            }
+
+            const manageCategoriesButton = document.getElementById('manageCategoriesButton');
+            if (manageCategoriesButton) {
+                manageCategoriesButton.addEventListener('click', openCategoryModal);
+            }
+
+            const closeCategoryModalButton = document.getElementById('closeCategoryModalButton');
+            if (closeCategoryModalButton) {
+                closeCategoryModalButton.addEventListener('click', closeCategoryModal);
+            }
+
+            const cancelCategoryButton = document.getElementById('cancelCategoryButton');
+            if (cancelCategoryButton) {
+                cancelCategoryButton.addEventListener('click', closeCategoryModal);
+            }
+
+            const addCategoryButton = document.getElementById('addCategoryButton');
+            if (addCategoryButton) {
+                addCategoryButton.addEventListener('click', handleAddCategory);
+            }
+
+            const saveCategoryChangesButton = document.getElementById('saveCategoryChangesButton');
+            if (saveCategoryChangesButton) {
+                saveCategoryChangesButton.addEventListener('click', saveCategoryEdits);
+            }
+
+            const categoryModal = document.getElementById('categoryModal');
+            if (categoryModal) {
+                categoryModal.addEventListener('click', event => {
+                    if (event.target === categoryModal) {
+                        closeCategoryModal();
+                    }
+                });
             }
 
             const productsList = document.getElementById('productsList');
@@ -917,19 +1523,43 @@
 
             if (saved) {
                 try {
-                    catalogData = JSON.parse(saved);
+                    const parsed = JSON.parse(saved);
                     console.log('Datos cargados correctamente');
+
+                    if (parsed && typeof parsed === 'object') {
+                        catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                        catalogData.categories = Array.isArray(parsed.categories)
+                            ? parsed.categories
+                            : defaultCategories.map(category => ({ ...category }));
+                        catalogData.products = parsed.products && typeof parsed.products === 'object'
+                            ? parsed.products
+                            : createDefaultProductsMap(catalogData.categories);
+                    }
                 } catch (error) {
                     console.error('No se pudieron leer los datos guardados', error);
+                    catalogData = {
+                        config: { ...defaultConfig },
+                        categories: defaultCategories.map(category => ({ ...category })),
+                        products: createDefaultProductsMap(defaultCategories)
+                    };
                 }
+            } else {
+                catalogData = {
+                    config: { ...defaultConfig },
+                    categories: defaultCategories.map(category => ({ ...category })),
+                    products: createDefaultProductsMap(defaultCategories)
+                };
             }
 
+            refreshCategoriesUI({ preserveCurrent: false });
+            renderCategoryManagerList();
             loadConfig();
             loadProducts();
         }
 
         // Save data to localStorage
         function saveData() {
+            ensureCategoryStructure();
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             showMessage('Datos guardados correctamente', 'success');
             updateCatalogPreview();
@@ -971,19 +1601,9 @@
             }
         }
 
-        // Show category
+        // Show category (backward compatibility)
         function showCategory(event, category) {
-            currentCategory = category;
-
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-
-            const activeTab = (event && (event.currentTarget || event.target)) || document.querySelector(`.tab[data-category="${category}"]`);
-            if (activeTab) {
-                activeTab.classList.add('active');
-            }
-
-            loadProducts();
+            setCurrentCategory(category);
         }
 
         function createFeatureRow(value = '', placeholder = 'Ej: 30cm x 25cm') {
@@ -1028,6 +1648,18 @@
         // Load products
         function loadProducts() {
             const container = document.getElementById('productsList');
+            ensureCategoryStructure();
+
+            if (!container) {
+                return;
+            }
+
+            if (!currentCategory) {
+                container.innerHTML = '<p style="text-align: center; color: #999">Crea una categoría para comenzar a añadir productos.</p>';
+                updateCatalogPreview();
+                return;
+            }
+
             const products = catalogData.products[currentCategory] || [];
 
             if (products.length === 0) {
@@ -1069,6 +1701,7 @@
         }
 
         function moveProduct(productId, direction) {
+            ensureCategoryStructure();
             const products = catalogData.products[currentCategory] || [];
             const currentIndex = products.findIndex(product => product.id === productId);
 
@@ -1093,10 +1726,16 @@
 
         // Open product modal
         function openProductModal(productId = null) {
+            ensureCategoryStructure();
             const modal = document.getElementById('productModal');
             const form = document.getElementById('productForm');
 
             editingProductId = productId;
+
+            if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
+                alert('Crea al menos una categoría antes de añadir productos.');
+                return;
+            }
 
             if (productId) {
                 // Find product
@@ -1112,6 +1751,7 @@
 
                 if (product) {
                     document.getElementById('modalTitle').textContent = 'Editar Producto';
+                    renderCategoryOptions(productCategory || currentCategory);
                     document.getElementById('productCategory').value = productCategory || currentCategory;
                     document.getElementById('productName').value = product.name;
                     document.getElementById('productShortDesc').value = product.shortDesc;
@@ -1134,6 +1774,7 @@
             } else {
                 document.getElementById('modalTitle').textContent = 'Añadir Producto';
                 form.reset();
+                renderCategoryOptions(currentCategory);
                 document.getElementById('productCategory').value = currentCategory;
                 document.getElementById('productId').value = '';
                 currentImageData = null;
@@ -1150,7 +1791,7 @@
         }
 
         // Close modal
-        function closeModal() {
+        function closeProductModal() {
             document.getElementById('productModal').classList.remove('active');
             document.getElementById('productForm').reset();
             editingProductId = null;
@@ -1195,6 +1836,13 @@
 
         // Delete product
         function deleteProduct(productId) {
+            ensureCategoryStructure();
+
+            if (!currentCategory) {
+                alert('No hay una categoría seleccionada para eliminar productos.');
+                return;
+            }
+
             if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
                 catalogData.products[currentCategory] = catalogData.products[currentCategory].filter(p => p.id !== productId);
                 saveData();
@@ -1205,12 +1853,17 @@
         // Handle product form submission
         document.getElementById('productForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
+            ensureCategoryStructure();
             const category = document.getElementById('productCategory').value;
+            if (!category) {
+                alert('Selecciona una categoría válida para el producto.');
+                return;
+            }
             const features = Array.from(document.querySelectorAll('#featuresList input'))
                 .map(input => input.value)
                 .filter(value => value.trim() !== '');
-            
+
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
                 name: document.getElementById('productName').value,
@@ -1243,7 +1896,7 @@
             saveData();
             currentCategory = category;
             loadProducts();
-            closeModal();
+            closeProductModal();
             showMessage('Producto guardado correctamente', 'success');
             updateCatalogPreview();
         });
@@ -1286,10 +1939,26 @@
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     try {
-                        catalogData = JSON.parse(event.target.result);
-                        loadConfig();
-                        loadProducts();
-                        showMessage('Datos importados correctamente', 'success');
+                        const parsed = JSON.parse(event.target.result);
+
+                        if (parsed && typeof parsed === 'object') {
+                            catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                            catalogData.categories = Array.isArray(parsed.categories)
+                                ? parsed.categories
+                                : defaultCategories.map(category => ({ ...category }));
+                            catalogData.products = parsed.products && typeof parsed.products === 'object'
+                                ? parsed.products
+                                : createDefaultProductsMap(catalogData.categories);
+
+                            refreshCategoriesUI({ preserveCurrent: false });
+                            renderCategoryManagerList();
+                            loadConfig();
+                            loadProducts();
+                            saveData();
+                            showMessage('Datos importados correctamente', 'success');
+                        } else {
+                            throw new Error('Formato de datos no válido');
+                        }
                     } catch (error) {
                         showMessage('Error al importar los datos', 'error');
                     }
@@ -1348,8 +2017,12 @@
         window.importData = importData;
         window.saveConfig = saveConfig;
         window.showCategory = showCategory;
+        window.setCurrentCategory = setCurrentCategory;
         window.openProductModal = openProductModal;
-        window.closeModal = closeModal;
+        window.closeProductModal = closeProductModal;
+        window.closeModal = closeProductModal;
+        window.openCategoryModal = openCategoryModal;
+        window.closeCategoryModal = closeCategoryModal;
         window.addFeature = addFeature;
         window.moveProduct = moveProduct;
         window.editProduct = editProduct;
@@ -1357,8 +2030,10 @@
 
         // Generate catalog HTML
         function generateCatalogHTML() {
+            ensureCategoryStructure();
             const config = catalogData.config;
             const products = catalogData.products;
+            const categories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
 
             const trimmedConfig = {
                 whatsapp: (config.whatsapp || '').trim(),
@@ -1370,38 +2045,37 @@
                 footerMessage: config.footerMessage || ''
             };
 
-            const firstCategoryWithProducts = Object.keys(products).find(category =>
-                products[category] && products[category].length > 0
-            ) || null;
+            const categoriesWithProducts = categories.filter(category => {
+                const list = products && products[category.id];
+                return Array.isArray(list) && list.length > 0;
+            });
+
+            const firstCategoryWithProducts = categoriesWithProducts[0] ? categoriesWithProducts[0].id : null;
 
             // Generate products HTML for each category
             let productsHTML = '';
             let productDataJS = {};
-            
-            const categoryInfo = {
-                macetas: { title: 'Macetas de Concreto', desc: 'Diseños únicos inspirados en la naturaleza amazónica', icon: '🪴' },
-                pisos: { title: 'Pisos de Concreto', desc: 'Resistencia y elegancia para tus espacios', icon: '⬜' },
-                revestimientos: { title: 'Revestimientos', desc: 'Transforma tus paredes con texturas naturales', icon: '🗿' },
-                mobiliario: { title: 'Mobiliario de Concreto', desc: 'Piezas únicas y duraderas para tu hogar', icon: '🪑' },
-                decoracion: { title: 'Decoración', desc: 'Detalles que marcan la diferencia', icon: '🎨' }
-            };
-            
-            for (let category in products) {
-                if (products[category].length > 0) {
-                    const catInfo = categoryInfo[category];
-                    
+
+            categories.forEach(category => {
+                const categoryProducts = products && products[category.id] ? products[category.id] : [];
+                if (categoryProducts.length > 0) {
+                    const categoryTitle = escapeHtml(category.name || formatCategoryLabel(category.id));
+                    const categoryDescription = escapeHtml(category.description || '');
+                    const categoryIcon = category.icon || '🛠️';
+                    const descriptionMarkup = categoryDescription ? `<p class="category-description">${categoryDescription}</p>` : '';
+
                     productsHTML += `
-        <!-- ${catInfo.title} Category -->
-        <div class="category${category === firstCategoryWithProducts ? ' active' : ''}" id="${category}">
-            <h2 class="category-title">${catInfo.title}</h2>
-            <p class="category-description">${catInfo.desc}</p>
+        <!-- ${categoryTitle} Category -->
+        <div class="category${category.id === firstCategoryWithProducts ? ' active' : ''}" id="${category.id}">
+            <h2 class="category-title">${categoryTitle}</h2>
+            ${descriptionMarkup}
             <div class="products-grid">`;
-                    
-                    products[category].forEach(product => {
+
+                    categoryProducts.forEach(product => {
                         const productName = product.name || 'Producto Amazonia';
                         const features = (product.features || []).map(f => `<span class="feature-tag">${f}</span>`).join('');
                         const productDescription = product.shortDesc || 'Información disponible próximamente.';
-                        const imageSrc = getProductImageSource(product, catInfo.icon);
+                        const imageSrc = getProductImageSource(product, categoryIcon);
                         const imageAlt = escapeHtml(`Imagen de ${productName}`);
                         const priceValue = typeof product.price !== 'undefined' && product.price !== null ? product.price : '';
                         productsHTML += `
@@ -1431,20 +2105,18 @@
                             specs: specs
                         };
                     });
-                    
+
                     productsHTML += `
             </div>
         </div>`;
                 }
-            }
-            
-            const navButtonsHTML = Object.keys(categoryInfo)
-                .map(cat => {
-                    if (products[cat] && products[cat].length > 0) {
-                        const isActive = cat === firstCategoryWithProducts;
-                        return `<button class="nav-btn${isActive ? ' active' : ''}" data-category="${cat}" onclick="showCategory(event, '${cat}')">${categoryInfo[cat].icon} ${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`;
-                    }
-                    return '';
+            });
+
+            const navButtonsHTML = categoriesWithProducts
+                .map(category => {
+                    const isActive = category.id === firstCategoryWithProducts;
+                    const label = `${category.icon || '📦'} ${category.name || formatCategoryLabel(category.id)}`;
+                    return `<button class="nav-btn${isActive ? ' active' : ''}" data-category="${category.id}" onclick="showCategory(event, '${category.id}')">${escapeHtml(label)}</button>`;
                 })
                 .join('');
 
