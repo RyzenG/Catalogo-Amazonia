@@ -1230,12 +1230,26 @@
                 .map((product, index) => {
                     const disableUp = index === 0 ? 'disabled' : '';
                     const disableDown = index === products.length - 1 ? 'disabled' : '';
-                    const productName = product.name || 'Producto sin nombre';
+                    const rawName = typeof product.name === 'string' && product.name.trim()
+                        ? product.name
+                        : 'Producto sin nombre';
+                    const productNameHtml = escapeHtml(rawName);
+                    const rawShortDesc = typeof product.shortDesc === 'string' ? product.shortDesc : '';
+                    const shortDescHtml = escapeHtml(rawShortDesc);
+                    const hasPrice = typeof product.price !== 'undefined' && product.price !== null;
+                    const rawPrice = hasPrice ? String(product.price) : '';
+                    const priceHtml = escapeHtml(rawPrice);
+                    const sanitizedFeatures = Array.isArray(product.features)
+                        ? product.features
+                            .map(feature => (typeof feature === 'string' ? feature : ''))
+                            .filter(feature => feature.length > 0)
+                            .map(feature => escapeHtml(feature))
+                        : [];
+                    const featuresAttr = sanitizedFeatures.join('||');
                     const imageSrc = getProductImageSource(product);
-                    const imageAlt = escapeHtml(`Vista previa de ${productName}`);
-                    const priceValue = typeof product.price !== 'undefined' && product.price !== null ? product.price : '';
+                    const imageAlt = escapeHtml(`Vista previa de ${rawName}`);
                     return `
-                <div class="product-item" data-product-id="${product.id}">
+                <div class="product-item" data-product-id="${product.id}" data-short-desc="${shortDescHtml}" data-features="${featuresAttr}">
                     <div class="order-controls">
                         <button type="button" class="icon-btn move-btn" data-action="move" data-direction="up" data-product-id="${product.id}" ${disableUp}>↑</button>
                         <button type="button" class="icon-btn move-btn" data-action="move" data-direction="down" data-product-id="${product.id}" ${disableDown}>↓</button>
@@ -1244,8 +1258,8 @@
                         <img src="${imageSrc}" alt="${imageAlt}">
                     </div>
                     <div class="product-info">
-                        <div class="product-name">${productName}</div>
-                        <div class="product-price">${priceValue}</div>
+                        <div class="product-name">${productNameHtml}</div>
+                        <div class="product-price">${priceHtml}</div>
                     </div>
                     <div class="product-actions">
                         <button type="button" class="icon-btn edit-btn" data-action="edit" data-product-id="${product.id}">✏️</button>
@@ -1737,22 +1751,36 @@
             <div class="products-grid">`;
 
                     categoryProducts.forEach(product => {
-                        const productName = product.name || 'Producto Amazonia';
-                        const features = (product.features || []).map(f => `<span class="feature-tag">${f}</span>`).join('');
-                        const productDescription = product.shortDesc || 'Información disponible próximamente.';
+                        const rawName = typeof product.name === 'string' && product.name.trim()
+                            ? product.name
+                            : 'Producto Amazonia';
+                        const productNameHtml = escapeHtml(rawName);
+                        const rawShortDesc = typeof product.shortDesc === 'string' && product.shortDesc.trim()
+                            ? product.shortDesc
+                            : 'Información disponible próximamente.';
+                        const productShortDescHtml = escapeHtml(rawShortDesc);
+                        const sanitizedFeatures = Array.isArray(product.features)
+                            ? product.features
+                                .map(feature => (typeof feature === 'string' ? feature : ''))
+                                .filter(feature => feature.length > 0)
+                                .map(feature => `<span class="feature-tag">${escapeHtml(feature)}</span>`)
+                            : [];
+                        const featuresHtml = sanitizedFeatures.join('');
                         const imageSrc = getProductImageSource(product, categoryIcon);
-                        const imageAlt = escapeHtml(`Imagen de ${productName}`);
-                        const priceValue = typeof product.price !== 'undefined' && product.price !== null ? product.price : '';
+                        const imageAlt = escapeHtml(`Imagen de ${rawName}`);
+                        const hasPrice = typeof product.price !== 'undefined' && product.price !== null;
+                        const rawPrice = hasPrice ? String(product.price) : '';
+                        const productPriceHtml = escapeHtml(rawPrice);
                         productsHTML += `
                 <div class="product-card" onclick="openModal('${product.id}')">
                     <div class="product-image">
                         <img src="${imageSrc}" alt="${imageAlt}">
                     </div>
                     <div class="product-info">
-                        <h3 class="product-name">${productName}</h3>
-                        <p class="product-description">${productDescription}</p>
-                        <div class="product-features">${features}</div>
-                        <p class="product-price">${priceValue}</p>
+                        <h3 class="product-name">${productNameHtml}</h3>
+                        <p class="product-description">${productShortDescHtml}</p>
+                        <div class="product-features">${featuresHtml}</div>
+                        <p class="product-price">${productPriceHtml}</p>
                     </div>
                 </div>`;
 
@@ -1761,13 +1789,19 @@
                             const parts = s.split(':');
                             return parts.length === 2 ? [parts[0].trim(), parts[1].trim()] : ['', ''];
                         }).filter(s => s[0]) : [];
+                        const sanitizedSpecs = specs.map(spec => [
+                            escapeHtml(spec[0]),
+                            escapeHtml(spec[1])
+                        ]);
 
                         productDataJS[product.id] = {
-                            title: productName,
+                            title: rawName,
                             image: imageSrc,
-                            alt: `Imagen de ${productName}`,
-                            description: product.longDesc || productDescription,
-                            specs: specs
+                            alt: `Imagen de ${rawName}`,
+                            description: typeof product.longDesc === 'string' && product.longDesc.trim()
+                                ? product.longDesc
+                                : rawShortDesc,
+                            specs: sanitizedSpecs
                         };
                     });
 
