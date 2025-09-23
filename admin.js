@@ -1491,16 +1491,35 @@
                 catalogData.products[category] = [];
             }
             
+            let oldCategoryId = null;
+            let oldIndex = -1;
+
             if (editingProductId) {
+                // Preserve original position before removing the product
+                for (const [catId, products] of Object.entries(catalogData.products)) {
+                    const foundIndex = products.findIndex(p => p.id === editingProductId);
+                    if (foundIndex !== -1) {
+                        oldCategoryId = catId;
+                        oldIndex = foundIndex;
+                        break;
+                    }
+                }
+
                 // Remove from all categories
                 for (let cat in catalogData.products) {
                     catalogData.products[cat] = catalogData.products[cat].filter(p => p.id !== editingProductId);
                 }
             }
-            
+
+            const stayingInSameCategory = editingProductId && oldCategoryId === category;
+
             // Add to new/current category
-            catalogData.products[category].push(productData);
-            
+            if (stayingInSameCategory && oldIndex > -1 && oldIndex <= catalogData.products[category].length) {
+                catalogData.products[category].splice(oldIndex, 0, productData);
+            } else {
+                catalogData.products[category].push(productData);
+            }
+
             saveData();
             currentCategory = category;
             loadProducts();
