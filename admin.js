@@ -1561,38 +1561,49 @@
 
         // Handle file import
         document.getElementById('importFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    try {
-                        const parsed = JSON.parse(event.target.result);
+            const inputElement = e.target;
+            const file = inputElement.files && inputElement.files[0];
 
-                        if (parsed && typeof parsed === 'object') {
-                            catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
-                            catalogData.categories = Array.isArray(parsed.categories)
-                                ? parsed.categories
-                                : defaultCategories.map(category => ({ ...category }));
-                            catalogData.products = parsed.products && typeof parsed.products === 'object'
-                                ? parsed.products
-                                : createDefaultProductsMap(catalogData.categories);
-                            catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
-
-                            refreshCategoriesUI({ preserveCurrent: false });
-                            renderCategoryManagerList();
-                            loadConfig();
-                            loadProducts();
-                            saveData();
-                            showMessage('Datos importados correctamente', 'success');
-                        } else {
-                            throw new Error('Formato de datos no válido');
-                        }
-                    } catch (error) {
-                        showMessage('Error al importar los datos', 'error');
-                    }
-                };
-                reader.readAsText(file);
+            if (!file) {
+                inputElement.value = '';
+                return;
             }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+
+                    if (parsed && typeof parsed === 'object') {
+                        catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                        catalogData.categories = Array.isArray(parsed.categories)
+                            ? parsed.categories
+                            : defaultCategories.map(category => ({ ...category }));
+                        catalogData.products = parsed.products && typeof parsed.products === 'object'
+                            ? parsed.products
+                            : createDefaultProductsMap(catalogData.categories);
+                        catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
+
+                        refreshCategoriesUI({ preserveCurrent: false });
+                        renderCategoryManagerList();
+                        loadConfig();
+                        loadProducts();
+                        saveData();
+                        showMessage('Datos importados correctamente', 'success');
+                    } else {
+                        throw new Error('Formato de datos no válido');
+                    }
+                } catch (error) {
+                    showMessage('Error al importar los datos', 'error');
+                } finally {
+                    inputElement.value = '';
+                }
+            };
+            reader.onerror = function() {
+                showMessage('Error al importar los datos', 'error');
+                inputElement.value = '';
+            };
+            reader.readAsText(file);
         });
 
         // Generate Catalog
