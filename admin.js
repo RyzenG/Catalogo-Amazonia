@@ -1830,8 +1830,14 @@
 
                         // Add to product data for modal
                         const specs = product.specs ? product.specs.split('\n').map(s => {
-                            const parts = s.split(':');
-                            return parts.length === 2 ? [parts[0].trim(), parts[1].trim()] : ['', ''];
+                            const separatorIndex = typeof s === 'string' ? s.indexOf(':') : -1;
+                            if (separatorIndex === -1) {
+                                return ['', ''];
+                            }
+
+                            const label = s.slice(0, separatorIndex).trim();
+                            const value = s.slice(separatorIndex + 1).trim();
+                            return label ? [label, value] : ['', ''];
                         }).filter(s => s[0]) : [];
                         const sanitizedSpecs = specs.map(spec => [
                             escapeHtml(spec[0]),
