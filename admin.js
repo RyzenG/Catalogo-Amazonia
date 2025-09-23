@@ -1643,6 +1643,20 @@
             const config = catalogData.config;
             const products = catalogData.products;
             const categories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
+            const serializeForScript = (value) => {
+                const jsonString = JSON.stringify(value);
+
+                if (typeof jsonString !== 'string') {
+                    return 'null';
+                }
+
+                return jsonString
+                    .replace(/</g, '\\u003C')
+                    .replace(/>/g, '\\u003E')
+                    .replace(/&/g, '\\u0026')
+                    .replace(/\u2028/g, '\\u2028')
+                    .replace(/\u2029/g, '\\u2029');
+            };
             const legacyCategoryResolver = createLegacyCategoryResolver(catalogData.categoryInfo);
             const resolvedCategories = categories.map((category, index) => {
                 const normalized = isPlainObject(category)
@@ -1924,7 +1938,7 @@
     </footer>
 
     <script>
-        ${getCatalogScript(productDataJS, config)}
+        ${getCatalogScript(productDataJS, config, serializeForScript)}
     <\/script>
 </body>
 </html>`;
@@ -2538,11 +2552,28 @@
         }
 
         // Get catalog script
-        function getCatalogScript(productData, config) {
+        function getCatalogScript(productData, config, serializer) {
+            const serialize = typeof serializer === 'function'
+                ? serializer
+                : (value) => {
+                    const jsonString = JSON.stringify(value);
+
+                    if (typeof jsonString !== 'string') {
+                        return 'null';
+                    }
+
+                    return jsonString
+                        .replace(/</g, '\\u003C')
+                        .replace(/>/g, '\\u003E')
+                        .replace(/&/g, '\\u0026')
+                        .replace(/\u2028/g, '\\u2028')
+                        .replace(/\u2029/g, '\\u2029');
+                };
+
             return `
         let currentProduct = null;
-        const productData = ${JSON.stringify(productData)};
-        const catalogConfig = ${JSON.stringify(config || {})};
+        const productData = ${serialize(productData)};
+        const catalogConfig = ${serialize(config || {})};
 
         const observerOptions = {
             threshold: 0.1,
