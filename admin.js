@@ -210,6 +210,67 @@
                 .replace(/'/g, '&#039;');
         }
 
+        const COP_CURRENCY_FORMATTER = new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            currencyDisplay: 'code',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+
+        function formatCurrencyCOP(value) {
+            if (value === null || typeof value === 'undefined') {
+                return '';
+            }
+
+            if (typeof value === 'number' && !Number.isFinite(value)) {
+                return '';
+            }
+
+            const stringValue = typeof value === 'number' ? String(value) : String(value);
+            if (!stringValue) {
+                return '';
+            }
+
+            const match = stringValue.match(/[\d][\d.,]*/);
+            if (!match) {
+                return '';
+            }
+
+            const numericChunk = match[0];
+            const digitsOnly = numericChunk.replace(/[^\d]/g, '');
+            if (!digitsOnly) {
+                return '';
+            }
+
+            const parsedValue = parseInt(digitsOnly, 10);
+            if (Number.isNaN(parsedValue)) {
+                return '';
+            }
+
+            const formatted = COP_CURRENCY_FORMATTER.format(parsedValue);
+            let prefix = stringValue.slice(0, match.index);
+            let suffix = stringValue.slice(match.index + numericChunk.length);
+
+            const prefixWithoutCop = prefix.replace(/\s*COP\s*$/i, '');
+            if (prefixWithoutCop !== prefix) {
+                prefix = prefixWithoutCop;
+                if (prefix && !/\s$/.test(prefix)) {
+                    prefix += ' ';
+                }
+            }
+
+            const suffixWithoutCop = suffix.replace(/^\s*COP\s*/i, '');
+            if (suffixWithoutCop !== suffix) {
+                suffix = suffixWithoutCop;
+                if (suffix && !/^\s/.test(suffix)) {
+                    suffix = ` ${suffix}`;
+                }
+            }
+
+            return `${prefix}${formatted}${suffix}`;
+        }
+
         function escapeForSvg(value) {
             if (typeof value !== 'string') {
                 return '';
@@ -1256,9 +1317,8 @@
                     const productNameHtml = escapeHtml(rawName);
                     const rawShortDesc = typeof product.shortDesc === 'string' ? product.shortDesc : '';
                     const shortDescHtml = escapeHtml(rawShortDesc);
-                    const hasPrice = typeof product.price !== 'undefined' && product.price !== null;
-                    const rawPrice = hasPrice ? String(product.price) : '';
-                    const priceHtml = escapeHtml(rawPrice);
+                    const formattedPrice = formatCurrencyCOP(product.price);
+                    const priceHtml = escapeHtml(formattedPrice);
                     const sanitizedFeatures = Array.isArray(product.features)
                         ? product.features
                             .map(feature => (typeof feature === 'string' ? feature : ''))
@@ -1348,7 +1408,10 @@
                     document.getElementById('productName').value = product.name;
                     document.getElementById('productShortDesc').value = product.shortDesc;
                     document.getElementById('productLongDesc').value = product.longDesc || '';
-                    document.getElementById('productPrice').value = product.price;
+                    const productPriceInput = document.getElementById('productPrice');
+                    if (productPriceInput) {
+                        productPriceInput.value = formatCurrencyCOP(product.price);
+                    }
                     document.getElementById('productSpecs').value = product.specs || '';
                     document.getElementById('productId').value = productId;
 
@@ -1484,13 +1547,15 @@
 
             const imageUrlInput = document.getElementById('productImageUrl');
             const imageUrl = imageUrlInput ? imageUrlInput.value.trim() : '';
+            const priceInput = document.getElementById('productPrice');
+            const normalizedPrice = formatCurrencyCOP(priceInput ? priceInput.value : '');
 
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
                 name: document.getElementById('productName').value,
                 shortDesc: document.getElementById('productShortDesc').value,
                 longDesc: document.getElementById('productLongDesc').value,
-                price: document.getElementById('productPrice').value,
+                price: normalizedPrice,
                 features: features,
                 specs: document.getElementById('productSpecs').value,
                 imageData: currentImageData || null
@@ -1832,9 +1897,8 @@
                         const featuresHtml = sanitizedFeatures.join('');
                         const imageSrc = getProductImageSource(product, categoryIcon);
                         const imageAlt = escapeHtml(`Imagen de ${rawName}`);
-                        const hasPrice = typeof product.price !== 'undefined' && product.price !== null;
-                        const rawPrice = hasPrice ? String(product.price) : '';
-                        const productPriceHtml = escapeHtml(rawPrice);
+                        const formattedPrice = formatCurrencyCOP(product.price);
+                        const productPriceHtml = escapeHtml(formattedPrice);
                         productsHTML += `
                 <div class="product-card" onclick="openModal('${product.id}')">
                     <div class="product-image">
