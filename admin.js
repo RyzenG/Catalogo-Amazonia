@@ -1841,7 +1841,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${config.companyName} - Catálogo Digital</title>
+    <title>${companyNameHtml || defaultCompanyNameHtml} - Catálogo Digital</title>
     <style>
         ${getCatalogStyles()}
     </style>
