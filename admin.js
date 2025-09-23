@@ -924,6 +924,21 @@
             reader.readAsDataURL(file);
         }
 
+        function handleRemoveLogoClick() {
+            catalogData.config = catalogData.config || {};
+            catalogData.config.logoData = '';
+            updateLogoPreview(null);
+            updateCatalogPreview();
+
+            const logoInput = document.getElementById('companyLogo');
+            if (logoInput) {
+                logoInput.value = '';
+            }
+
+            saveData();
+            showMessage('Logo eliminado correctamente', 'success');
+        }
+
         function registerAdminEventHandlers() {
             const sectionButtons = document.querySelectorAll('button[data-section]');
             sectionButtons.forEach(button => {
@@ -968,6 +983,11 @@
             const saveConfigButton = document.getElementById('saveConfigButton');
             if (saveConfigButton) {
                 saveConfigButton.addEventListener('click', saveConfig);
+            }
+
+            const removeLogoButton = document.getElementById('removeLogoButton');
+            if (removeLogoButton) {
+                removeLogoButton.addEventListener('click', handleRemoveLogoClick);
             }
 
             const openProductModalButton = document.getElementById('openProductModalButton');
