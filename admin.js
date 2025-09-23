@@ -61,6 +61,7 @@
         let currentCategory = defaultCategories[0] ? defaultCategories[0].id : '';
         let editingProductId = null;
         let currentImageData = null;
+        let currentImageUrl = '';
         let currentIconFallback = '';
 
         function generateCategoryId(value) {
@@ -822,18 +823,28 @@
         }
 
         function resetImagePreview() {
+            currentImageData = null;
+            currentImageUrl = '';
             updateProductImagePreview(null);
+            const imageUrlInput = document.getElementById('productImageUrl');
+            if (imageUrlInput) {
+                imageUrlInput.value = '';
+            }
             const logoData = catalogData && catalogData.config ? catalogData.config.logoData : '';
             updateLogoPreview(logoData || null);
         }
 
         function setupImageInput() {
             const imageInput = document.getElementById('productImage');
-            if (!imageInput) {
-                return;
+            const imageUrlInput = document.getElementById('productImageUrl');
+
+            if (imageInput) {
+                imageInput.addEventListener('change', handleProductImageChange);
             }
 
-            imageInput.addEventListener('change', handleProductImageChange);
+            if (imageUrlInput) {
+                imageUrlInput.addEventListener('input', handleProductImageUrlChange);
+            }
         }
 
         function setupLogoInput() {
@@ -849,7 +860,9 @@
             const file = event.target.files && event.target.files[0];
 
             if (!file) {
-                if (!currentImageData) {
+                if (currentImageUrl) {
+                    updateProductImagePreview(currentImageUrl, 'Vista previa del producto');
+                } else if (!currentImageData) {
                     updateProductImagePreview(null);
                 }
                 return;
@@ -858,10 +871,31 @@
             const reader = new FileReader();
             reader.onload = function(loadEvent) {
                 currentImageData = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
+                currentImageUrl = '';
                 currentIconFallback = '';
                 updateProductImagePreview(currentImageData, file.name);
+                const imageUrlInput = document.getElementById('productImageUrl');
+                if (imageUrlInput) {
+                    imageUrlInput.value = '';
+                }
             };
             reader.readAsDataURL(file);
+        }
+
+        function handleProductImageUrlChange(event) {
+            const urlValue = event && event.target ? event.target.value.trim() : '';
+            currentImageUrl = urlValue;
+
+            if (urlValue) {
+                currentImageData = null;
+                const imageInput = document.getElementById('productImage');
+                if (imageInput && imageInput.value) {
+                    imageInput.value = '';
+                }
+                updateProductImagePreview(urlValue, 'Vista previa del producto');
+            } else if (!currentImageData) {
+                updateProductImagePreview(null);
+            }
         }
 
         function handleCompanyLogoChange(event) {
@@ -1284,9 +1318,25 @@
                     document.getElementById('productSpecs').value = product.specs || '';
                     document.getElementById('productId').value = productId;
 
-                    currentImageData = product.imageData || product.image || null;
+                    const imageUrlInput = document.getElementById('productImageUrl');
+                    const productImageUrl = typeof product.image === 'string' ? product.image : '';
+
+                    if (imageUrlInput) {
+                        imageUrlInput.value = productImageUrl;
+                    }
+
+                    if (product.imageData) {
+                        currentImageData = product.imageData;
+                        currentImageUrl = productImageUrl;
+                    } else if (productImageUrl) {
+                        currentImageData = null;
+                        currentImageUrl = productImageUrl;
+                    } else {
+                        currentImageData = null;
+                        currentImageUrl = '';
+                    }
                     currentIconFallback = product.icon || '';
-                    const previewSource = currentImageData || createIconPlaceholder(currentIconFallback || '🛠️', product.name);
+                    const previewSource = currentImageData || currentImageUrl || createIconPlaceholder(currentIconFallback || '🛠️', product.name);
                     updateProductImagePreview(previewSource, product.name || 'Producto Amazonia');
                     const imageInput = document.getElementById('productImage');
                     if (imageInput) {
@@ -1302,10 +1352,15 @@
                 document.getElementById('productCategory').value = currentCategory;
                 document.getElementById('productId').value = '';
                 currentImageData = null;
+                currentImageUrl = '';
                 currentIconFallback = '';
                 const imageInput = document.getElementById('productImage');
                 if (imageInput) {
                     imageInput.value = '';
+                }
+                const imageUrlInput = document.getElementById('productImageUrl');
+                if (imageUrlInput) {
+                    imageUrlInput.value = '';
                 }
                 updateProductImagePreview(null);
                 renderFeatureInputs();
@@ -1320,10 +1375,15 @@
             document.getElementById('productForm').reset();
             editingProductId = null;
             currentImageData = null;
+            currentImageUrl = '';
             currentIconFallback = '';
             const imageInput = document.getElementById('productImage');
             if (imageInput) {
                 imageInput.value = '';
+            }
+            const imageUrlInput = document.getElementById('productImageUrl');
+            if (imageUrlInput) {
+                imageUrlInput.value = '';
             }
             updateProductImagePreview(null);
             renderFeatureInputs();
@@ -1388,6 +1448,9 @@
                 .map(input => input.value)
                 .filter(value => value.trim() !== '');
 
+            const imageUrlInput = document.getElementById('productImageUrl');
+            const imageUrl = imageUrlInput ? imageUrlInput.value.trim() : '';
+
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
                 name: document.getElementById('productName').value,
@@ -1398,6 +1461,13 @@
                 specs: document.getElementById('productSpecs').value,
                 imageData: currentImageData || null
             };
+
+            if (imageUrl && !currentImageData) {
+                productData.image = imageUrl;
+                productData.imageData = null;
+            } else {
+                delete productData.image;
+            }
 
             if (currentIconFallback) {
                 productData.icon = currentIconFallback;
