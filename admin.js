@@ -1,3 +1,4 @@
+(() => {
         // Default data structure
         const defaultConfig = {
             whatsapp: '573000000000',
@@ -3471,4 +3472,6 @@
             }
         });`;
         }
+
+})();
     
