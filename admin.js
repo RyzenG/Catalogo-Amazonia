@@ -1,4 +1,3 @@
-(() => {
         // Default data structure
         const defaultConfig = {
             whatsapp: '573000000000',
@@ -52,194 +51,18 @@
             }, {});
         }
 
-        class CatalogStateManager {
-            constructor(defaultConfig, defaultCategories) {
-                this.defaultConfig = { ...defaultConfig };
-                this.defaultCategories = defaultCategories.map(category => ({ ...category }));
-                this.resetState();
-            }
+        let catalogData = {
+            config: { ...defaultConfig },
+            categories: defaultCategories.map(category => ({ ...category })),
+            products: createDefaultProductsMap(defaultCategories),
+            categoryInfo: {}
+        };
 
-            resetState() {
-                this.data = {
-                    config: { ...this.defaultConfig },
-                    categories: this.defaultCategories.map(category => ({ ...category })),
-                    products: createDefaultProductsMap(this.defaultCategories),
-                    categoryInfo: {}
-                };
-                this.currentCategoryId = this.defaultCategories[0] ? this.defaultCategories[0].id : '';
-                this.editingProductId = null;
-                this.imageState = {
-                    data: null,
-                    url: '',
-                    iconFallback: ''
-                };
-            }
-
-            getData() {
-                return this.data;
-            }
-
-            setData(nextData) {
-                if (!nextData || typeof nextData !== 'object') {
-                    this.resetState();
-                    return this.data;
-                }
-
-                this.data = nextData;
-                this.ensureStructure();
-                return this.data;
-            }
-
-            ensureStructure() {
-                ensureCategoryStructureInternal(this);
-            }
-
-            getCurrentCategory() {
-                return this.currentCategoryId;
-            }
-
-            setCurrentCategory(categoryId) {
-                this.currentCategoryId = categoryId || '';
-            }
-
-            getEditingProductId() {
-                return this.editingProductId;
-            }
-
-            setEditingProductId(productId) {
-                this.editingProductId = productId || null;
-            }
-
-            getCurrentImageData() {
-                return this.imageState.data;
-            }
-
-            setCurrentImageData(value) {
-                this.imageState.data = value || null;
-            }
-
-            getCurrentImageUrl() {
-                return this.imageState.url;
-            }
-
-            setCurrentImageUrl(value) {
-                this.imageState.url = value || '';
-            }
-
-            getCurrentIconFallback() {
-                return this.imageState.iconFallback;
-            }
-
-            setCurrentIconFallback(value) {
-                this.imageState.iconFallback = value || '';
-            }
-
-            clearImageState() {
-                this.imageState = {
-                    data: null,
-                    url: '',
-                    iconFallback: ''
-                };
-            }
-
-            loadFromObject(rawData) {
-                if (!rawData || typeof rawData !== 'object') {
-                    this.resetState();
-                    return this.data;
-                }
-
-                const categories = Array.isArray(rawData.categories)
-                    ? rawData.categories
-                    : this.defaultCategories.map(category => ({ ...category }));
-
-                this.data = {
-                    config: { ...this.defaultConfig, ...(rawData.config || {}) },
-                    categories,
-                    products: rawData.products && typeof rawData.products === 'object'
-                        ? rawData.products
-                        : createDefaultProductsMap(categories),
-                    categoryInfo: isPlainObject(rawData.categoryInfo) ? rawData.categoryInfo : {}
-                };
-
-                this.ensureStructure();
-
-                const availableIds = this.data.categories.map(category => category.id);
-                if (!availableIds.includes(this.currentCategoryId)) {
-                    this.currentCategoryId = availableIds[0] || '';
-                }
-
-                return this.data;
-            }
-
-            toJSON() {
-                return JSON.parse(JSON.stringify(this.data));
-            }
-        }
-
-        const catalogState = new CatalogStateManager(defaultConfig, defaultCategories);
-
-        let catalogData = catalogState.getData();
-        let currentCategory = catalogState.getCurrentCategory();
-        let editingProductId = catalogState.getEditingProductId();
-        let currentImageData = catalogState.getCurrentImageData();
-        let currentImageUrl = catalogState.getCurrentImageUrl();
-        let currentIconFallback = catalogState.getCurrentIconFallback();
-
-        function syncStateReferences() {
-            catalogData = catalogState.getData();
-            currentCategory = catalogState.getCurrentCategory();
-            editingProductId = catalogState.getEditingProductId();
-            currentImageData = catalogState.getCurrentImageData();
-            currentImageUrl = catalogState.getCurrentImageUrl();
-            currentIconFallback = catalogState.getCurrentIconFallback();
-        }
-
-        function setCatalogData(nextData) {
-            const updated = catalogState.setData(nextData);
-            syncStateReferences();
-            return updated;
-        }
-
-        function setCurrentCategoryId(categoryId) {
-            catalogState.setCurrentCategory(categoryId);
-            currentCategory = catalogState.getCurrentCategory();
-            return currentCategory;
-        }
-
-        function setEditingProduct(productId) {
-            catalogState.setEditingProductId(productId);
-            editingProductId = catalogState.getEditingProductId();
-            return editingProductId;
-        }
-
-        function setCurrentImageDataValue(value) {
-            catalogState.setCurrentImageData(value);
-            currentImageData = catalogState.getCurrentImageData();
-            return currentImageData;
-        }
-
-        function setCurrentImageUrlValue(value) {
-            catalogState.setCurrentImageUrl(value);
-            currentImageUrl = catalogState.getCurrentImageUrl();
-            return currentImageUrl;
-        }
-
-        function setCurrentIconFallbackValue(value) {
-            catalogState.setCurrentIconFallback(value);
-            currentIconFallback = catalogState.getCurrentIconFallback();
-            return currentIconFallback;
-        }
-
-        function clearImageState() {
-            catalogState.clearImageState();
-            syncStateReferences();
-        }
-
-        function loadCatalogState(rawData) {
-            const updated = catalogState.loadFromObject(rawData);
-            syncStateReferences();
-            return updated;
-        }
+        let currentCategory = defaultCategories[0] ? defaultCategories[0].id : '';
+        let editingProductId = null;
+        let currentImageData = null;
+        let currentImageUrl = '';
+        let currentIconFallback = '';
 
         function generateCategoryId(value) {
             if (!value) {
@@ -500,19 +323,13 @@
         }
 
         function ensureCategoryStructure() {
-            ensureCategoryStructureInternal(catalogState);
-            syncStateReferences();
-        }
-
-        function ensureCategoryStructureInternal(stateManager) {
-            if (!stateManager) {
-                return;
-            }
-
-            let catalogData = stateManager.getData();
             if (!catalogData || typeof catalogData !== 'object') {
-                stateManager.resetState();
-                catalogData = stateManager.getData();
+                catalogData = {
+                    config: { ...defaultConfig },
+                    categories: defaultCategories.map(category => ({ ...category })),
+                    products: createDefaultProductsMap(defaultCategories),
+                    categoryInfo: {}
+                };
             }
 
             if (!isPlainObject(catalogData.categoryInfo)) {
@@ -694,12 +511,11 @@
 
             const validIds = new Set(catalogData.categories.map(category => category.id));
 
-            let nextCategory = stateManager.getCurrentCategory();
-            if (!nextCategory || !validIds.has(nextCategory)) {
-                nextCategory = catalogData.categories[0] ? catalogData.categories[0].id : '';
+            if (!currentCategory || !validIds.has(currentCategory)) {
+                currentCategory = catalogData.categories[0] ? catalogData.categories[0].id : '';
             }
-            stateManager.setCurrentCategory(nextCategory);
         }
+
         function renderCategoryTabs() {
             const tabsContainer = document.getElementById('categoryTabs');
             if (!tabsContainer) {
@@ -769,7 +585,7 @@
 
             const availableIds = catalogData.categories.map(category => category.id);
             if (!preserveCurrent || !availableIds.includes(currentCategory)) {
-                currentCategory = setCurrentCategoryId(availableIds[0] || '');
+                currentCategory = availableIds[0] || '';
             }
 
             renderCategoryTabs();
@@ -792,7 +608,7 @@
                 categoryId = availableIds[0] || '';
             }
 
-            currentCategory = setCurrentCategoryId(categoryId);
+            currentCategory = categoryId;
             renderCategoryTabs();
             renderCategoryOptions(currentCategory);
             loadProducts();
@@ -951,7 +767,7 @@
             catalogData.categories.push(newCategory);
             catalogData.products[newCategory.id] = [];
 
-            currentCategory = setCurrentCategoryId(newCategory.id);
+            currentCategory = newCategory.id;
             refreshCategoriesUI({ preserveCurrent: true });
             loadProducts();
             saveData();
@@ -1068,8 +884,8 @@
         }
 
         function resetImagePreview() {
-            currentImageData = setCurrentImageDataValue(null);
-            currentImageUrl = setCurrentImageUrlValue('');
+            currentImageData = null;
+            currentImageUrl = '';
             updateProductImagePreview(null);
             const imageUrlInput = document.getElementById('productImageUrl');
             if (imageUrlInput) {
@@ -1115,9 +931,9 @@
 
             const reader = new FileReader();
             reader.onload = function(loadEvent) {
-                currentImageData = setCurrentImageDataValue(loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null);
-                currentImageUrl = setCurrentImageUrlValue('');
-                currentIconFallback = setCurrentIconFallbackValue('');
+                currentImageData = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
+                currentImageUrl = '';
+                currentIconFallback = '';
                 updateProductImagePreview(currentImageData, file.name);
                 const imageUrlInput = document.getElementById('productImageUrl');
                 if (imageUrlInput) {
@@ -1129,10 +945,10 @@
 
         function handleProductImageUrlChange(event) {
             const urlValue = event && event.target ? event.target.value.trim() : '';
-            currentImageUrl = setCurrentImageUrlValue(urlValue);
+            currentImageUrl = urlValue;
 
             if (urlValue) {
-                currentImageData = setCurrentImageDataValue(null);
+                currentImageData = null;
                 const imageInput = document.getElementById('productImage');
                 if (imageInput && imageInput.value) {
                     imageInput.value = '';
@@ -1336,15 +1152,33 @@
                 try {
                     const parsed = JSON.parse(saved);
                     console.log('Datos cargados correctamente');
-                    loadCatalogState(parsed);
+
+                    if (parsed && typeof parsed === 'object') {
+                        catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                        catalogData.categories = Array.isArray(parsed.categories)
+                            ? parsed.categories
+                            : defaultCategories.map(category => ({ ...category }));
+                        catalogData.products = parsed.products && typeof parsed.products === 'object'
+                            ? parsed.products
+                            : createDefaultProductsMap(catalogData.categories);
+                        catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
+                    }
                 } catch (error) {
                     console.error('No se pudieron leer los datos guardados', error);
-                    catalogState.resetState();
-                    syncStateReferences();
+                    catalogData = {
+                        config: { ...defaultConfig },
+                        categories: defaultCategories.map(category => ({ ...category })),
+                        products: createDefaultProductsMap(defaultCategories),
+                        categoryInfo: {}
+                    };
                 }
             } else {
-                catalogState.resetState();
-                syncStateReferences();
+                catalogData = {
+                    config: { ...defaultConfig },
+                    categories: defaultCategories.map(category => ({ ...category })),
+                    products: createDefaultProductsMap(defaultCategories),
+                    categoryInfo: {}
+                };
             }
 
             refreshCategoriesUI({ preserveCurrent: false });
@@ -1352,149 +1186,13 @@
             loadConfig();
             loadProducts();
         }
+
         // Save data to localStorage
         function saveData() {
             ensureCategoryStructure();
-            const serialized = JSON.stringify(catalogState.toJSON());
-            localStorage.setItem('amazoniaData', serialized);
+            localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             showMessage('Datos guardados correctamente', 'success');
             updateCatalogPreview();
-            return catalogData;
-        }
-        const EMAIL_VALIDATION_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        function setFieldValidationState(input, isValid) {
-            if (!input) {
-                return;
-            }
-
-            if (isValid) {
-                input.classList.remove('input-error');
-                input.removeAttribute('aria-invalid');
-            } else {
-                input.classList.add('input-error');
-                input.setAttribute('aria-invalid', 'true');
-            }
-        }
-
-        function collectConfigValues() {
-            const readValue = (id) => {
-                const element = document.getElementById(id);
-                if (!element || typeof element.value !== 'string') {
-                    return '';
-                }
-                return element.value.trim();
-            };
-
-            const logoData = catalogData && catalogData.config && catalogData.config.logoData
-                ? catalogData.config.logoData
-                : '';
-
-            return {
-                whatsapp: readValue('whatsapp'),
-                email: readValue('email'),
-                phone: readValue('phone'),
-                address: readValue('address'),
-                companyName: readValue('companyName'),
-                tagline: readValue('tagline'),
-                footerMessage: readValue('footerMessage'),
-                logoData
-            };
-        }
-
-        function validateConfiguration({ values, forExport = false } = {}) {
-            const configValues = values || collectConfigValues();
-            const errors = [];
-
-            const whatsappDigits = (configValues.whatsapp || '').replace(/\D/g, '');
-            const whatsappValid = whatsappDigits.length >= 10 && whatsappDigits.length <= 15;
-            setFieldValidationState(document.getElementById('whatsapp'), whatsappValid);
-            if (!whatsappValid) {
-                errors.push('Ingresa un número de WhatsApp válido (entre 10 y 15 dígitos).');
-            }
-
-            const emailValid = EMAIL_VALIDATION_REGEX.test(configValues.email || '');
-            setFieldValidationState(document.getElementById('email'), emailValid);
-            if (!emailValid) {
-                errors.push('Ingresa un correo electrónico válido.');
-            }
-
-            const hasCompanyName = Boolean(configValues.companyName);
-            setFieldValidationState(document.getElementById('companyName'), hasCompanyName);
-            if (!hasCompanyName) {
-                errors.push('Indica el nombre de la empresa para tu catálogo.');
-            }
-
-            const phoneInput = document.getElementById('phone');
-            if (phoneInput) {
-                const phoneValue = configValues.phone || '';
-                if (phoneValue) {
-                    const phoneDigits = phoneValue.replace(/\D/g, '');
-                    const phoneValid = phoneDigits.length >= 7;
-                    setFieldValidationState(phoneInput, phoneValid);
-                    if (!phoneValid) {
-                        errors.push('Verifica que el teléfono de contacto tenga al menos 7 dígitos.');
-                    }
-                } else {
-                    setFieldValidationState(phoneInput, true);
-                }
-            }
-
-            if (forExport) {
-                ensureCategoryStructure();
-                const productsWithoutImage = [];
-
-                if (catalogData && catalogData.products && typeof catalogData.products === 'object') {
-                    Object.values(catalogData.products).forEach(productList => {
-                        if (!Array.isArray(productList)) {
-                            return;
-                        }
-
-                        productList.forEach(product => {
-                            if (!product) {
-                                return;
-                            }
-
-                            const hasImageData = typeof product.imageData === 'string' && product.imageData.trim().length > 0;
-                            const hasImageUrl = typeof product.image === 'string' && product.image.trim().length > 0;
-
-                            if (!hasImageData && !hasImageUrl) {
-                                const displayName = typeof product.name === 'string' && product.name.trim().length > 0
-                                    ? product.name.trim()
-                                    : 'Producto sin nombre';
-                                productsWithoutImage.push(displayName);
-                            }
-                        });
-                    });
-                }
-
-                if (productsWithoutImage.length > 0) {
-                    const previewList = productsWithoutImage.slice(0, 3).join(', ');
-                    const remainingCount = productsWithoutImage.length - Math.min(productsWithoutImage.length, 3);
-                    const suffix = remainingCount > 0 ? ` y ${remainingCount} producto(s) más` : '';
-                    errors.push(`Agrega una imagen o URL válida para los productos: ${previewList}${suffix}.`);
-                }
-            }
-
-            return {
-                valid: errors.length === 0,
-                errors,
-                values: configValues
-            };
-        }
-
-        function showValidationErrors(errors) {
-            if (!Array.isArray(errors) || errors.length === 0) {
-                return;
-            }
-
-            const uniqueErrors = Array.from(new Set(errors));
-            showMessage(uniqueErrors[0], 'error');
-
-            const statusMessage = document.getElementById('statusMessage');
-            if (statusMessage) {
-                statusMessage.textContent = uniqueErrors.join(' • ');
-            }
         }
 
         const EMAIL_VALIDATION_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1820,7 +1518,7 @@
             const modal = document.getElementById('productModal');
             const form = document.getElementById('productForm');
 
-            editingProductId = setEditingProduct(productId);
+            editingProductId = productId;
 
             if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
                 alert('Crea al menos una categoría antes de añadir productos.');
@@ -1861,16 +1559,16 @@
                     }
 
                     if (product.imageData) {
-                        currentImageData = setCurrentImageDataValue(product.imageData);
-                        currentImageUrl = setCurrentImageUrlValue(productImageUrl);
+                        currentImageData = product.imageData;
+                        currentImageUrl = productImageUrl;
                     } else if (productImageUrl) {
-                        currentImageData = setCurrentImageDataValue(null);
-                        currentImageUrl = setCurrentImageUrlValue(productImageUrl);
+                        currentImageData = null;
+                        currentImageUrl = productImageUrl;
                     } else {
-                        currentImageData = setCurrentImageDataValue(null);
-                        currentImageUrl = setCurrentImageUrlValue('');
+                        currentImageData = null;
+                        currentImageUrl = '';
                     }
-                    currentIconFallback = setCurrentIconFallbackValue(product.icon || '');
+                    currentIconFallback = product.icon || '';
                     const previewSource = currentImageData || currentImageUrl || createIconPlaceholder(currentIconFallback || '🛠️', product.name);
                     updateProductImagePreview(previewSource, product.name || 'Producto Amazonia');
                     const imageInput = document.getElementById('productImage');
@@ -1886,9 +1584,9 @@
                 renderCategoryOptions(currentCategory);
                 document.getElementById('productCategory').value = currentCategory;
                 document.getElementById('productId').value = '';
-                currentImageData = setCurrentImageDataValue(null);
-                currentImageUrl = setCurrentImageUrlValue('');
-                currentIconFallback = setCurrentIconFallbackValue('');
+                currentImageData = null;
+                currentImageUrl = '';
+                currentIconFallback = '';
                 const imageInput = document.getElementById('productImage');
                 if (imageInput) {
                     imageInput.value = '';
@@ -1908,10 +1606,10 @@
         function closeProductModal() {
             document.getElementById('productModal').classList.remove('active');
             document.getElementById('productForm').reset();
-            editingProductId = setEditingProduct(null);
-            currentImageData = setCurrentImageDataValue(null);
-            currentImageUrl = setCurrentImageUrlValue('');
-            currentIconFallback = setCurrentIconFallbackValue('');
+            editingProductId = null;
+            currentImageData = null;
+            currentImageUrl = '';
+            currentIconFallback = '';
             const imageInput = document.getElementById('productImage');
             if (imageInput) {
                 imageInput.value = '';
@@ -2044,7 +1742,7 @@
             }
 
             saveData();
-            currentCategory = setCurrentCategoryId(category);
+            currentCategory = category;
             loadProducts();
             closeProductModal();
             showMessage('Producto guardado correctamente', 'success');
@@ -2082,7 +1780,7 @@
 
         // Export data
         function exportData() {
-            const dataStr = JSON.stringify(catalogState.toJSON(), null, 2);
+            const dataStr = JSON.stringify(catalogData, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             
             const exportFileDefaultName = 'amazonia_datos_' + new Date().toISOString().split('T')[0] + '.json';
@@ -2116,7 +1814,15 @@
                     const parsed = JSON.parse(event.target.result);
 
                     if (parsed && typeof parsed === 'object') {
-                        loadCatalogState(parsed);
+                        catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                        catalogData.categories = Array.isArray(parsed.categories)
+                            ? parsed.categories
+                            : defaultCategories.map(category => ({ ...category }));
+                        catalogData.products = parsed.products && typeof parsed.products === 'object'
+                            ? parsed.products
+                            : createDefaultProductsMap(catalogData.categories);
+                        catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
+
                         refreshCategoriesUI({ preserveCurrent: false });
                         renderCategoryManagerList();
                         loadConfig();
@@ -2208,18 +1914,6 @@
         window.moveProduct = moveProduct;
         window.editProduct = editProduct;
         window.deleteProduct = deleteProduct;
-
-        window.CatalogAdminApp = {
-            loadData,
-            saveData,
-            refreshCategoriesUI,
-            loadCatalogState,
-            getState: () => catalogState,
-            resetState: () => {
-                catalogState.resetState();
-                syncStateReferences();
-            }
-        };
 
         // Generate catalog HTML
         function generateCatalogHTML() {
@@ -3472,6 +3166,4 @@
             }
         });`;
         }
-
-})();
     
