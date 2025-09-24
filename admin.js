@@ -886,6 +886,7 @@
         function resetImagePreview() {
             currentImageData = null;
             currentImageUrl = '';
+            currentIconFallback = '';
             updateProductImagePreview(null);
             const imageUrlInput = document.getElementById('productImageUrl');
             if (imageUrlInput) {
@@ -893,15 +894,14 @@
             }
             const logoData = catalogData && catalogData.config ? catalogData.config.logoData : '';
             updateLogoPreview(logoData || null);
+            const logoUrlInput = document.getElementById('companyLogoUrl');
+            if (logoUrlInput) {
+                logoUrlInput.value = logoData || '';
+            }
         }
 
         function setupImageInput() {
-            const imageInput = document.getElementById('productImage');
             const imageUrlInput = document.getElementById('productImageUrl');
-
-            if (imageInput) {
-                imageInput.addEventListener('change', handleProductImageChange);
-            }
 
             if (imageUrlInput) {
                 imageUrlInput.addEventListener('input', handleProductImageUrlChange);
@@ -909,38 +909,12 @@
         }
 
         function setupLogoInput() {
-            const logoInput = document.getElementById('companyLogo');
-            if (!logoInput) {
+            const logoUrlInput = document.getElementById('companyLogoUrl');
+            if (!logoUrlInput) {
                 return;
             }
 
-            logoInput.addEventListener('change', handleCompanyLogoChange);
-        }
-
-        function handleProductImageChange(event) {
-            const file = event.target.files && event.target.files[0];
-
-            if (!file) {
-                if (currentImageUrl) {
-                    updateProductImagePreview(currentImageUrl, 'Vista previa del producto');
-                } else if (!currentImageData) {
-                    updateProductImagePreview(null);
-                }
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(loadEvent) {
-                currentImageData = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
-                currentImageUrl = '';
-                currentIconFallback = '';
-                updateProductImagePreview(currentImageData, file.name);
-                const imageUrlInput = document.getElementById('productImageUrl');
-                if (imageUrlInput) {
-                    imageUrlInput.value = '';
-                }
-            };
-            reader.readAsDataURL(file);
+            logoUrlInput.addEventListener('input', handleCompanyLogoUrlChange);
         }
 
         function handleProductImageUrlChange(event) {
@@ -949,40 +923,27 @@
 
             if (urlValue) {
                 currentImageData = null;
-                const imageInput = document.getElementById('productImage');
-                if (imageInput && imageInput.value) {
-                    imageInput.value = '';
-                }
                 updateProductImagePreview(urlValue, 'Vista previa del producto');
-            } else if (!currentImageData) {
+            } else if (currentImageData) {
+                const nameInput = document.getElementById('productName');
+                const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
+                updateProductImagePreview(currentImageData, displayName);
+            } else if (currentIconFallback) {
+                const nameInput = document.getElementById('productName');
+                const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
+                const placeholder = createIconPlaceholder(currentIconFallback, displayName);
+                updateProductImagePreview(placeholder, displayName);
+            } else {
                 updateProductImagePreview(null);
             }
         }
 
-        function handleCompanyLogoChange(event) {
-            const file = event.target.files && event.target.files[0];
-            const input = event.target;
-
-            if (!file) {
-                const hasLogo = catalogData && catalogData.config && catalogData.config.logoData;
-                if (!hasLogo) {
-                    updateLogoPreview(null);
-                }
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(loadEvent) {
-                const result = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
-                catalogData.config = catalogData.config || {};
-                catalogData.config.logoData = result || '';
-                updateLogoPreview(result);
-                updateCatalogPreview();
-                if (input) {
-                    input.value = '';
-                }
-            };
-            reader.readAsDataURL(file);
+        function handleCompanyLogoUrlChange(event) {
+            const urlValue = event && event.target ? event.target.value.trim() : '';
+            catalogData.config = catalogData.config || {};
+            catalogData.config.logoData = urlValue;
+            updateLogoPreview(urlValue || null);
+            updateCatalogPreview();
         }
 
         function handleRemoveLogoClick() {
@@ -991,7 +952,7 @@
             updateLogoPreview(null);
             updateCatalogPreview();
 
-            const logoInput = document.getElementById('companyLogo');
+            const logoInput = document.getElementById('companyLogoUrl');
             if (logoInput) {
                 logoInput.value = '';
             }
@@ -1155,6 +1116,9 @@
 
                     if (parsed && typeof parsed === 'object') {
                         catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                        if (catalogData.config.logoUrl && !catalogData.config.logoData) {
+                            catalogData.config.logoData = catalogData.config.logoUrl;
+                        }
                         catalogData.categories = Array.isArray(parsed.categories)
                             ? parsed.categories
                             : defaultCategories.map(category => ({ ...category }));
@@ -1220,10 +1184,6 @@
                 return element.value.trim();
             };
 
-            const logoData = catalogData && catalogData.config && catalogData.config.logoData
-                ? catalogData.config.logoData
-                : '';
-
             return {
                 whatsapp: readValue('whatsapp'),
                 email: readValue('email'),
@@ -1232,7 +1192,7 @@
                 companyName: readValue('companyName'),
                 tagline: readValue('tagline'),
                 footerMessage: readValue('footerMessage'),
-                logoData
+                logoData: readValue('companyLogoUrl')
             };
         }
 
@@ -1340,11 +1300,12 @@
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
-            updateLogoPreview(catalogData.config.logoData || null);
-            const logoInput = document.getElementById('companyLogo');
-            if (logoInput) {
-                logoInput.value = '';
+            const logoValue = catalogData.config.logoData || '';
+            const logoUrlInput = document.getElementById('companyLogoUrl');
+            if (logoUrlInput) {
+                logoUrlInput.value = logoValue;
             }
+            updateLogoPreview(logoValue || null);
             updateCatalogPreview();
         }
 
@@ -1558,23 +1519,13 @@
                         imageUrlInput.value = productImageUrl;
                     }
 
-                    if (product.imageData) {
-                        currentImageData = product.imageData;
-                        currentImageUrl = productImageUrl;
-                    } else if (productImageUrl) {
-                        currentImageData = null;
-                        currentImageUrl = productImageUrl;
-                    } else {
-                        currentImageData = null;
-                        currentImageUrl = '';
-                    }
+                    currentImageData = product.imageData || null;
+                    currentImageUrl = productImageUrl;
                     currentIconFallback = product.icon || '';
-                    const previewSource = currentImageData || currentImageUrl || createIconPlaceholder(currentIconFallback || '🛠️', product.name);
+                    const previewSource = currentImageData
+                        || currentImageUrl
+                        || getProductImageSource(product, currentIconFallback || '🛠️');
                     updateProductImagePreview(previewSource, product.name || 'Producto Amazonia');
-                    const imageInput = document.getElementById('productImage');
-                    if (imageInput) {
-                        imageInput.value = '';
-                    }
 
                     renderFeatureInputs(product.features);
                 }
@@ -1587,10 +1538,6 @@
                 currentImageData = null;
                 currentImageUrl = '';
                 currentIconFallback = '';
-                const imageInput = document.getElementById('productImage');
-                if (imageInput) {
-                    imageInput.value = '';
-                }
                 const imageUrlInput = document.getElementById('productImageUrl');
                 if (imageUrlInput) {
                     imageUrlInput.value = '';
@@ -1610,10 +1557,6 @@
             currentImageData = null;
             currentImageUrl = '';
             currentIconFallback = '';
-            const imageInput = document.getElementById('productImage');
-            if (imageInput) {
-                imageInput.value = '';
-            }
             const imageUrlInput = document.getElementById('productImageUrl');
             if (imageUrlInput) {
                 imageUrlInput.value = '';
@@ -1693,15 +1636,13 @@
                 longDesc: document.getElementById('productLongDesc').value,
                 price: normalizedPrice,
                 features: features,
-                specs: document.getElementById('productSpecs').value,
-                imageData: currentImageData || null
+                specs: document.getElementById('productSpecs').value
             };
 
-            if (imageUrl && !currentImageData) {
+            if (imageUrl) {
                 productData.image = imageUrl;
-                productData.imageData = null;
-            } else {
-                delete productData.image;
+            } else if (currentImageData) {
+                productData.imageData = currentImageData;
             }
 
             if (currentIconFallback) {
