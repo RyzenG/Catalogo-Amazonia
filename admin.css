@@ -150,6 +150,13 @@ input:focus, textarea:focus, select:focus {
     border-color: #6b8e68;
 }
 
+input.input-error,
+textarea.input-error,
+select.input-error {
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.15);
+}
+
 textarea {
     resize: vertical;
     min-height: 100px;

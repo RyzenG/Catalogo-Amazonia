@@ -1195,6 +1195,142 @@
             updateCatalogPreview();
         }
 
+        const EMAIL_VALIDATION_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        function setFieldValidationState(input, isValid) {
+            if (!input) {
+                return;
+            }
+
+            if (isValid) {
+                input.classList.remove('input-error');
+                input.removeAttribute('aria-invalid');
+            } else {
+                input.classList.add('input-error');
+                input.setAttribute('aria-invalid', 'true');
+            }
+        }
+
+        function collectConfigValues() {
+            const readValue = (id) => {
+                const element = document.getElementById(id);
+                if (!element || typeof element.value !== 'string') {
+                    return '';
+                }
+                return element.value.trim();
+            };
+
+            const logoData = catalogData && catalogData.config && catalogData.config.logoData
+                ? catalogData.config.logoData
+                : '';
+
+            return {
+                whatsapp: readValue('whatsapp'),
+                email: readValue('email'),
+                phone: readValue('phone'),
+                address: readValue('address'),
+                companyName: readValue('companyName'),
+                tagline: readValue('tagline'),
+                footerMessage: readValue('footerMessage'),
+                logoData
+            };
+        }
+
+        function validateConfiguration({ values, forExport = false } = {}) {
+            const configValues = values || collectConfigValues();
+            const errors = [];
+
+            const whatsappDigits = (configValues.whatsapp || '').replace(/\D/g, '');
+            const whatsappValid = whatsappDigits.length >= 10 && whatsappDigits.length <= 15;
+            setFieldValidationState(document.getElementById('whatsapp'), whatsappValid);
+            if (!whatsappValid) {
+                errors.push('Ingresa un número de WhatsApp válido (entre 10 y 15 dígitos).');
+            }
+
+            const emailValid = EMAIL_VALIDATION_REGEX.test(configValues.email || '');
+            setFieldValidationState(document.getElementById('email'), emailValid);
+            if (!emailValid) {
+                errors.push('Ingresa un correo electrónico válido.');
+            }
+
+            const hasCompanyName = Boolean(configValues.companyName);
+            setFieldValidationState(document.getElementById('companyName'), hasCompanyName);
+            if (!hasCompanyName) {
+                errors.push('Indica el nombre de la empresa para tu catálogo.');
+            }
+
+            const phoneInput = document.getElementById('phone');
+            if (phoneInput) {
+                const phoneValue = configValues.phone || '';
+                if (phoneValue) {
+                    const phoneDigits = phoneValue.replace(/\D/g, '');
+                    const phoneValid = phoneDigits.length >= 7;
+                    setFieldValidationState(phoneInput, phoneValid);
+                    if (!phoneValid) {
+                        errors.push('Verifica que el teléfono de contacto tenga al menos 7 dígitos.');
+                    }
+                } else {
+                    setFieldValidationState(phoneInput, true);
+                }
+            }
+
+            if (forExport) {
+                ensureCategoryStructure();
+                const productsWithoutImage = [];
+
+                if (catalogData && catalogData.products && typeof catalogData.products === 'object') {
+                    Object.values(catalogData.products).forEach(productList => {
+                        if (!Array.isArray(productList)) {
+                            return;
+                        }
+
+                        productList.forEach(product => {
+                            if (!product) {
+                                return;
+                            }
+
+                            const hasImageData = typeof product.imageData === 'string' && product.imageData.trim().length > 0;
+                            const hasImageUrl = typeof product.image === 'string' && product.image.trim().length > 0;
+
+                            if (!hasImageData && !hasImageUrl) {
+                                const displayName = typeof product.name === 'string' && product.name.trim().length > 0
+                                    ? product.name.trim()
+                                    : 'Producto sin nombre';
+                                productsWithoutImage.push(displayName);
+                            }
+                        });
+                    });
+                }
+
+                if (productsWithoutImage.length > 0) {
+                    const previewList = productsWithoutImage.slice(0, 3).join(', ');
+                    const remainingCount = productsWithoutImage.length - Math.min(productsWithoutImage.length, 3);
+                    const suffix = remainingCount > 0 ? ` y ${remainingCount} producto(s) más` : '';
+                    errors.push(`Agrega una imagen o URL válida para los productos: ${previewList}${suffix}.`);
+                }
+            }
+
+            return {
+                valid: errors.length === 0,
+                errors,
+                values: configValues
+            };
+        }
+
+        function showValidationErrors(errors) {
+            if (!Array.isArray(errors) || errors.length === 0) {
+                return;
+            }
+
+            const uniqueErrors = Array.from(new Set(errors));
+            showMessage(uniqueErrors[0], 'error');
+
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.textContent = uniqueErrors.join(' • ');
+            }
+        }
+
         // Load configuration
         function loadConfig() {
             document.getElementById('whatsapp').value = catalogData.config.whatsapp || '';
@@ -1213,20 +1349,20 @@
         }
 
         // Save configuration
-        function saveConfig() {
-            const existingLogoData = catalogData && catalogData.config && catalogData.config.logoData
-                ? catalogData.config.logoData
-                : '';
-            catalogData.config = {
-                whatsapp: document.getElementById('whatsapp').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                address: document.getElementById('address').value,
-                companyName: document.getElementById('companyName').value,
-                tagline: document.getElementById('tagline').value,
-                footerMessage: document.getElementById('footerMessage').value,
-                logoData: existingLogoData
-            };
+        function saveConfig(event) {
+            if (event && typeof event.preventDefault === 'function') {
+                event.preventDefault();
+            }
+
+            const configValues = collectConfigValues();
+            const validation = validateConfiguration({ values: configValues });
+
+            if (!validation.valid) {
+                showValidationErrors(validation.errors);
+                return;
+            }
+
+            catalogData.config = validation.values;
             saveData();
         }
 
@@ -1618,7 +1754,7 @@
             const statusMessage = document.getElementById('statusMessage');
             if (statusMessage) {
                 statusMessage.textContent = message;
-                statusMessage.className = 'status-message';
+                statusMessage.className = type ? `status-message ${type}` : 'status-message';
             }
 
             const notificationContainer = document.getElementById('notificationContainer');
@@ -1711,6 +1847,15 @@
 
         // Generate Catalog
         function generateCatalog() {
+            const validation = validateConfiguration({ forExport: true });
+
+            if (!validation.valid) {
+                showValidationErrors(validation.errors);
+                return;
+            }
+
+            catalogData.config = validation.values;
+
             // First save current data
             saveData();
 
