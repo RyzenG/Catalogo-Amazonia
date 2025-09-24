@@ -1614,13 +1614,31 @@
         });
 
         // Show message
-        function showMessage(message, type) {
+        function showMessage(message, type = 'success') {
             const statusMessage = document.getElementById('statusMessage');
-            statusMessage.textContent = message;
-            statusMessage.className = 'status-message ' + type;
-            
-            setTimeout(() => {
+            if (statusMessage) {
+                statusMessage.textContent = message;
                 statusMessage.className = 'status-message';
+            }
+
+            const notificationContainer = document.getElementById('notificationContainer');
+            if (!notificationContainer) {
+                return;
+            }
+
+            const notification = document.createElement('div');
+            notification.className = 'notification ' + type;
+            notification.setAttribute('role', type === 'error' ? 'alert' : 'status');
+            notification.textContent = message;
+
+            notificationContainer.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('hide');
+            }, 2500);
+
+            setTimeout(() => {
+                notification.remove();
             }, 3000);
         }
 
