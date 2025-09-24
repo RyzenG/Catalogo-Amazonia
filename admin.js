@@ -2673,6 +2673,8 @@
 
         // Get catalog script
         function getCatalogScript(productData, config, serializer) {
+            const nonDigitPatternLiteral = String.raw`/\D+/g`;
+            const phoneSanitizePatternLiteral = String.raw`/[^+\d]/g`;
             const serialize = typeof serializer === 'function'
                 ? serializer
                 : (value) => {
@@ -2743,7 +2745,7 @@
             const companyName = config.companyName || '';
             const taglineValue = config.tagline || '';
             const logoData = config.logoData || '';
-            const whatsappNumber = (config.whatsapp || '').replace(/\\D+/g, '');
+            const whatsappNumber = (config.whatsapp || '').replace(${nonDigitPatternLiteral}, '');
             const emailValue = (config.email || '').trim();
             const phoneValue = config.phone || '';
             const addressValue = config.address || '';
@@ -2792,7 +2794,7 @@
 
             const phoneLink = document.getElementById('contactPhone');
             if (phoneLink) {
-                const sanitizedPhone = phoneValue.replace(/[^+\\d]/g, '');
+                const sanitizedPhone = phoneValue.replace(${phoneSanitizePatternLiteral}, '');
                 if (sanitizedPhone) {
                     phoneLink.href = \`tel:\${sanitizedPhone}\`;
                     phoneLink.style.display = 'inline-flex';
@@ -2965,7 +2967,7 @@
 
         function contactWhatsApp() {
             const config = catalogConfig || {};
-            const whatsappNumber = (config.whatsapp || '').replace(/\\D+/g, '');
+            const whatsappNumber = (config.whatsapp || '').replace(${nonDigitPatternLiteral}, '');
 
             if (!whatsappNumber) {
                 return;
