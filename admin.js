@@ -650,7 +650,7 @@
 
             const totalCategories = catalogData.categories.length;
 
-            catalogData.categories.forEach(category => {
+            catalogData.categories.forEach((category, index) => {
                 const item = document.createElement('div');
                 item.className = 'category-manager-item';
                 item.dataset.categoryId = category.id;
@@ -696,6 +696,23 @@
 
                 const actions = document.createElement('div');
                 actions.className = 'category-manager-item-actions';
+
+                const moveUpButton = document.createElement('button');
+                moveUpButton.type = 'button';
+                moveUpButton.className = 'btn btn-secondary';
+                moveUpButton.textContent = '⬆️ Subir';
+                moveUpButton.title = 'Mover categoría hacia arriba';
+                moveUpButton.disabled = index === 0;
+                moveUpButton.addEventListener('click', () => moveCategory(category.id, -1));
+
+                const moveDownButton = document.createElement('button');
+                moveDownButton.type = 'button';
+                moveDownButton.className = 'btn btn-secondary';
+                moveDownButton.textContent = '⬇️ Bajar';
+                moveDownButton.title = 'Mover categoría hacia abajo';
+                moveDownButton.disabled = index === totalCategories - 1;
+                moveDownButton.addEventListener('click', () => moveCategory(category.id, 1));
+
                 const deleteButton = document.createElement('button');
                 deleteButton.type = 'button';
                 deleteButton.className = 'btn btn-danger';
@@ -705,6 +722,9 @@
                     deleteButton.title = 'Debe existir al menos una categoría activa.';
                 }
                 deleteButton.addEventListener('click', () => deleteCategory(category.id));
+
+                actions.appendChild(moveUpButton);
+                actions.appendChild(moveDownButton);
                 actions.appendChild(deleteButton);
 
                 item.appendChild(grid);
@@ -713,6 +733,72 @@
 
                 list.appendChild(item);
             });
+        }
+
+        function captureCategoryManagerValues() {
+            const list = document.getElementById('categoryManagerList');
+            if (!list) {
+                return;
+            }
+
+            const items = Array.from(list.querySelectorAll('.category-manager-item'));
+            if (items.length === 0) {
+                return;
+            }
+
+            const updatedCategories = [];
+            const seenIds = new Set();
+
+            items.forEach(item => {
+                const categoryId = item.dataset.categoryId;
+                if (!categoryId) {
+                    return;
+                }
+
+                const category = catalogData.categories.find(cat => cat.id === categoryId);
+                if (!category) {
+                    return;
+                }
+
+                const nameInput = item.querySelector('[data-field="name"]');
+                const iconInput = item.querySelector('[data-field="icon"]');
+                const descriptionInput = item.querySelector('[data-field="description"]');
+
+                category.name = (nameInput && nameInput.value.trim()) || 'Nueva categoría';
+                category.icon = (iconInput && iconInput.value.trim()) || '📦';
+                category.description = descriptionInput ? descriptionInput.value : '';
+
+                updatedCategories.push(category);
+                seenIds.add(categoryId);
+            });
+
+            if (updatedCategories.length > 0) {
+                const remainingCategories = catalogData.categories.filter(category => !seenIds.has(category.id));
+                catalogData.categories = [...updatedCategories, ...remainingCategories];
+            }
+        }
+
+        function moveCategory(categoryId, direction) {
+            ensureCategoryStructure();
+            captureCategoryManagerValues();
+
+            const currentIndex = catalogData.categories.findIndex(category => category.id === categoryId);
+            if (currentIndex === -1) {
+                return;
+            }
+
+            const targetIndex = currentIndex + direction;
+            if (targetIndex < 0 || targetIndex >= catalogData.categories.length) {
+                return;
+            }
+
+            const [movedCategory] = catalogData.categories.splice(currentIndex, 1);
+            catalogData.categories.splice(targetIndex, 0, movedCategory);
+
+            refreshCategoriesUI({ preserveCurrent: true, load: true });
+            saveData({ silent: true });
+            renderCategoryManagerList();
+            showMessage('Orden de categorías actualizado', 'success');
         }
 
         function openCategoryModal() {
@@ -735,6 +821,7 @@
 
         function handleAddCategory() {
             ensureCategoryStructure();
+            captureCategoryManagerValues();
 
             const nameInput = document.getElementById('newCategoryName');
             const iconInput = document.getElementById('newCategoryIcon');
@@ -768,8 +855,7 @@
             catalogData.products[newCategory.id] = [];
 
             currentCategory = newCategory.id;
-            refreshCategoriesUI({ preserveCurrent: true });
-            loadProducts();
+            refreshCategoriesUI({ preserveCurrent: true, load: true });
             saveData();
             showMessage('Categoría añadida correctamente', 'success');
             renderCategoryManagerList();
@@ -777,33 +863,9 @@
         }
 
         function saveCategoryEdits() {
-            const list = document.getElementById('categoryManagerList');
-            if (!list) {
-                return;
-            }
+            captureCategoryManagerValues();
 
-            const items = Array.from(list.querySelectorAll('.category-manager-item'));
-            if (items.length === 0) {
-                closeCategoryModal();
-                return;
-            }
-
-            items.forEach(item => {
-                const categoryId = item.dataset.categoryId;
-                const nameInput = item.querySelector('[data-field="name"]');
-                const iconInput = item.querySelector('[data-field="icon"]');
-                const descriptionInput = item.querySelector('[data-field="description"]');
-
-                const category = catalogData.categories.find(cat => cat.id === categoryId);
-                if (category) {
-                    category.name = (nameInput && nameInput.value.trim()) || 'Nueva categoría';
-                    category.icon = (iconInput && iconInput.value.trim()) || '📦';
-                    category.description = descriptionInput ? descriptionInput.value : '';
-                }
-            });
-
-            refreshCategoriesUI({ preserveCurrent: true });
-            loadProducts();
+            refreshCategoriesUI({ preserveCurrent: true, load: true });
             saveData();
             showMessage('Categorías actualizadas correctamente', 'success');
             renderCategoryManagerList();
@@ -811,6 +873,7 @@
 
         function deleteCategory(categoryId) {
             ensureCategoryStructure();
+            captureCategoryManagerValues();
 
             if (!Array.isArray(catalogData.categories) || catalogData.categories.length <= 1) {
                 alert('Debe existir al menos una categoría en el catálogo.');
@@ -834,8 +897,7 @@
             catalogData.categories = catalogData.categories.filter(cat => cat.id !== categoryId);
             delete catalogData.products[categoryId];
 
-            refreshCategoriesUI({ preserveCurrent: false });
-            loadProducts();
+            refreshCategoriesUI({ preserveCurrent: false, load: true });
             saveData();
             showMessage('Categoría eliminada correctamente', 'success');
             renderCategoryManagerList();
@@ -886,6 +948,7 @@
         function resetImagePreview() {
             currentImageData = null;
             currentImageUrl = '';
+            currentIconFallback = '';
             updateProductImagePreview(null);
             const imageUrlInput = document.getElementById('productImageUrl');
             if (imageUrlInput) {
@@ -893,15 +956,14 @@
             }
             const logoData = catalogData && catalogData.config ? catalogData.config.logoData : '';
             updateLogoPreview(logoData || null);
+            const logoUrlInput = document.getElementById('companyLogoUrl');
+            if (logoUrlInput) {
+                logoUrlInput.value = logoData || '';
+            }
         }
 
         function setupImageInput() {
-            const imageInput = document.getElementById('productImage');
             const imageUrlInput = document.getElementById('productImageUrl');
-
-            if (imageInput) {
-                imageInput.addEventListener('change', handleProductImageChange);
-            }
 
             if (imageUrlInput) {
                 imageUrlInput.addEventListener('input', handleProductImageUrlChange);
@@ -909,38 +971,12 @@
         }
 
         function setupLogoInput() {
-            const logoInput = document.getElementById('companyLogo');
-            if (!logoInput) {
+            const logoUrlInput = document.getElementById('companyLogoUrl');
+            if (!logoUrlInput) {
                 return;
             }
 
-            logoInput.addEventListener('change', handleCompanyLogoChange);
-        }
-
-        function handleProductImageChange(event) {
-            const file = event.target.files && event.target.files[0];
-
-            if (!file) {
-                if (currentImageUrl) {
-                    updateProductImagePreview(currentImageUrl, 'Vista previa del producto');
-                } else if (!currentImageData) {
-                    updateProductImagePreview(null);
-                }
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(loadEvent) {
-                currentImageData = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
-                currentImageUrl = '';
-                currentIconFallback = '';
-                updateProductImagePreview(currentImageData, file.name);
-                const imageUrlInput = document.getElementById('productImageUrl');
-                if (imageUrlInput) {
-                    imageUrlInput.value = '';
-                }
-            };
-            reader.readAsDataURL(file);
+            logoUrlInput.addEventListener('input', handleCompanyLogoUrlChange);
         }
 
         function handleProductImageUrlChange(event) {
@@ -949,40 +985,27 @@
 
             if (urlValue) {
                 currentImageData = null;
-                const imageInput = document.getElementById('productImage');
-                if (imageInput && imageInput.value) {
-                    imageInput.value = '';
-                }
                 updateProductImagePreview(urlValue, 'Vista previa del producto');
-            } else if (!currentImageData) {
+            } else if (currentImageData) {
+                const nameInput = document.getElementById('productName');
+                const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
+                updateProductImagePreview(currentImageData, displayName);
+            } else if (currentIconFallback) {
+                const nameInput = document.getElementById('productName');
+                const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
+                const placeholder = createIconPlaceholder(currentIconFallback, displayName);
+                updateProductImagePreview(placeholder, displayName);
+            } else {
                 updateProductImagePreview(null);
             }
         }
 
-        function handleCompanyLogoChange(event) {
-            const file = event.target.files && event.target.files[0];
-            const input = event.target;
-
-            if (!file) {
-                const hasLogo = catalogData && catalogData.config && catalogData.config.logoData;
-                if (!hasLogo) {
-                    updateLogoPreview(null);
-                }
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(loadEvent) {
-                const result = loadEvent.target && loadEvent.target.result ? loadEvent.target.result : null;
-                catalogData.config = catalogData.config || {};
-                catalogData.config.logoData = result || '';
-                updateLogoPreview(result);
-                updateCatalogPreview();
-                if (input) {
-                    input.value = '';
-                }
-            };
-            reader.readAsDataURL(file);
+        function handleCompanyLogoUrlChange(event) {
+            const urlValue = event && event.target ? event.target.value.trim() : '';
+            catalogData.config = catalogData.config || {};
+            catalogData.config.logoData = urlValue;
+            updateLogoPreview(urlValue || null);
+            updateCatalogPreview();
         }
 
         function handleRemoveLogoClick() {
@@ -991,7 +1014,7 @@
             updateLogoPreview(null);
             updateCatalogPreview();
 
-            const logoInput = document.getElementById('companyLogo');
+            const logoInput = document.getElementById('companyLogoUrl');
             if (logoInput) {
                 logoInput.value = '';
             }
@@ -1155,6 +1178,9 @@
 
                     if (parsed && typeof parsed === 'object') {
                         catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                        if (catalogData.config.logoUrl && !catalogData.config.logoData) {
+                            catalogData.config.logoData = catalogData.config.logoUrl;
+                        }
                         catalogData.categories = Array.isArray(parsed.categories)
                             ? parsed.categories
                             : defaultCategories.map(category => ({ ...category }));
@@ -1188,10 +1214,13 @@
         }
 
         // Save data to localStorage
-        function saveData() {
+        function saveData(options = {}) {
+            const { silent = false } = options;
             ensureCategoryStructure();
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
-            showMessage('Datos guardados correctamente', 'success');
+            if (!silent) {
+                showMessage('Datos guardados correctamente', 'success');
+            }
             updateCatalogPreview();
         }
 
@@ -1220,10 +1249,6 @@
                 return element.value.trim();
             };
 
-            const logoData = catalogData && catalogData.config && catalogData.config.logoData
-                ? catalogData.config.logoData
-                : '';
-
             return {
                 whatsapp: readValue('whatsapp'),
                 email: readValue('email'),
@@ -1232,7 +1257,7 @@
                 companyName: readValue('companyName'),
                 tagline: readValue('tagline'),
                 footerMessage: readValue('footerMessage'),
-                logoData
+                logoData: readValue('companyLogoUrl')
             };
         }
 
@@ -1340,11 +1365,12 @@
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
-            updateLogoPreview(catalogData.config.logoData || null);
-            const logoInput = document.getElementById('companyLogo');
-            if (logoInput) {
-                logoInput.value = '';
+            const logoValue = catalogData.config.logoData || '';
+            const logoUrlInput = document.getElementById('companyLogoUrl');
+            if (logoUrlInput) {
+                logoUrlInput.value = logoValue;
             }
+            updateLogoPreview(logoValue || null);
             updateCatalogPreview();
         }
 
@@ -1558,23 +1584,13 @@
                         imageUrlInput.value = productImageUrl;
                     }
 
-                    if (product.imageData) {
-                        currentImageData = product.imageData;
-                        currentImageUrl = productImageUrl;
-                    } else if (productImageUrl) {
-                        currentImageData = null;
-                        currentImageUrl = productImageUrl;
-                    } else {
-                        currentImageData = null;
-                        currentImageUrl = '';
-                    }
+                    currentImageData = product.imageData || null;
+                    currentImageUrl = productImageUrl;
                     currentIconFallback = product.icon || '';
-                    const previewSource = currentImageData || currentImageUrl || createIconPlaceholder(currentIconFallback || '🛠️', product.name);
+                    const previewSource = currentImageData
+                        || currentImageUrl
+                        || getProductImageSource(product, currentIconFallback || '🛠️');
                     updateProductImagePreview(previewSource, product.name || 'Producto Amazonia');
-                    const imageInput = document.getElementById('productImage');
-                    if (imageInput) {
-                        imageInput.value = '';
-                    }
 
                     renderFeatureInputs(product.features);
                 }
@@ -1587,10 +1603,6 @@
                 currentImageData = null;
                 currentImageUrl = '';
                 currentIconFallback = '';
-                const imageInput = document.getElementById('productImage');
-                if (imageInput) {
-                    imageInput.value = '';
-                }
                 const imageUrlInput = document.getElementById('productImageUrl');
                 if (imageUrlInput) {
                     imageUrlInput.value = '';
@@ -1610,10 +1622,6 @@
             currentImageData = null;
             currentImageUrl = '';
             currentIconFallback = '';
-            const imageInput = document.getElementById('productImage');
-            if (imageInput) {
-                imageInput.value = '';
-            }
             const imageUrlInput = document.getElementById('productImageUrl');
             if (imageUrlInput) {
                 imageUrlInput.value = '';
@@ -1693,15 +1701,13 @@
                 longDesc: document.getElementById('productLongDesc').value,
                 price: normalizedPrice,
                 features: features,
-                specs: document.getElementById('productSpecs').value,
-                imageData: currentImageData || null
+                specs: document.getElementById('productSpecs').value
             };
 
-            if (imageUrl && !currentImageData) {
+            if (imageUrl) {
                 productData.image = imageUrl;
-                productData.imageData = null;
-            } else {
-                delete productData.image;
+            } else if (currentImageData) {
+                productData.imageData = currentImageData;
             }
 
             if (currentIconFallback) {
