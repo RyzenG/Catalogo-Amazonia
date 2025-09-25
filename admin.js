@@ -60,7 +60,6 @@
 
         let currentCategory = defaultCategories[0] ? defaultCategories[0].id : '';
         let editingProductId = null;
-        let currentImageData = null;
         let currentImageUrl = '';
         let currentIconFallback = '';
         let lastFocusedElement = null;
@@ -307,10 +306,6 @@
                 return createIconPlaceholder(fallbackIcon, 'Producto Amazonia');
             }
 
-            if (product.imageData) {
-                return product.imageData;
-            }
-
             if (product.image) {
                 return product.image;
             }
@@ -323,6 +318,24 @@
             }
 
             return createIconPlaceholder(iconValue, nameValue);
+        }
+
+        function stripLegacyImageData(productsByCategory) {
+            if (!productsByCategory || typeof productsByCategory !== 'object') {
+                return;
+            }
+
+            Object.values(productsByCategory).forEach(productList => {
+                if (!Array.isArray(productList)) {
+                    return;
+                }
+
+                productList.forEach(product => {
+                    if (product && typeof product === 'object' && Object.prototype.hasOwnProperty.call(product, 'imageData')) {
+                        delete product.imageData;
+                    }
+                });
+            });
         }
 
         function ensureCategoryStructure() {
@@ -511,6 +524,7 @@
             });
 
             catalogData.products = remappedProducts;
+            stripLegacyImageData(catalogData.products);
 
             const validIds = new Set(catalogData.categories.map(category => category.id));
 
@@ -949,7 +963,6 @@
         }
 
         function resetImagePreview() {
-            currentImageData = null;
             currentImageUrl = '';
             currentIconFallback = '';
             updateProductImagePreview(null);
@@ -987,12 +1000,9 @@
             currentImageUrl = urlValue;
 
             if (urlValue) {
-                currentImageData = null;
-                updateProductImagePreview(urlValue, 'Vista previa del producto');
-            } else if (currentImageData) {
                 const nameInput = document.getElementById('productName');
                 const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
-                updateProductImagePreview(currentImageData, displayName);
+                updateProductImagePreview(urlValue, displayName);
             } else if (currentIconFallback) {
                 const nameInput = document.getElementById('productName');
                 const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
@@ -1190,6 +1200,7 @@
                         catalogData.products = parsed.products && typeof parsed.products === 'object'
                             ? parsed.products
                             : createDefaultProductsMap(catalogData.categories);
+                        stripLegacyImageData(catalogData.products);
                         catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
                     }
                 } catch (error) {
@@ -1220,6 +1231,7 @@
         function saveData(options = {}) {
             const { silent = false } = options;
             ensureCategoryStructure();
+            stripLegacyImageData(catalogData.products);
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             if (!silent) {
                 showMessage('Datos guardados correctamente', 'success');
@@ -1317,10 +1329,9 @@
                                 return;
                             }
 
-                            const hasImageData = typeof product.imageData === 'string' && product.imageData.trim().length > 0;
                             const hasImageUrl = typeof product.image === 'string' && product.image.trim().length > 0;
 
-                            if (!hasImageData && !hasImageUrl) {
+                            if (!hasImageUrl) {
                                 const displayName = typeof product.name === 'string' && product.name.trim().length > 0
                                     ? product.name.trim()
                                     : 'Producto sin nombre';
@@ -1705,11 +1716,9 @@
                         imageUrlInput.value = productImageUrl;
                     }
 
-                    currentImageData = product.imageData || null;
                     currentImageUrl = productImageUrl;
                     currentIconFallback = product.icon || '';
-                    const previewSource = currentImageData
-                        || currentImageUrl
+                    const previewSource = currentImageUrl
                         || getProductImageSource(product, currentIconFallback || '🛠️');
                     updateProductImagePreview(previewSource, product.name || 'Producto Amazonia');
 
@@ -1721,7 +1730,6 @@
                 renderCategoryOptions(currentCategory);
                 document.getElementById('productCategory').value = currentCategory;
                 document.getElementById('productId').value = '';
-                currentImageData = null;
                 currentImageUrl = '';
                 currentIconFallback = '';
                 const imageUrlInput = document.getElementById('productImageUrl');
@@ -1776,7 +1784,6 @@
 
             form.reset();
             editingProductId = null;
-            currentImageData = null;
             currentImageUrl = '';
             currentIconFallback = '';
             const imageUrlInput = document.getElementById('productImageUrl');
@@ -1868,8 +1875,6 @@
 
             if (imageUrl) {
                 productData.image = imageUrl;
-            } else if (currentImageData) {
-                productData.imageData = currentImageData;
             }
 
             if (currentIconFallback) {
