@@ -12,8 +12,8 @@ El panel de administración permite a Amazonia Concrete configurar su informaci�
 
 ## Manejo de imágenes
 - **Preferencia por URLs directas**: el formulario de productos incluye un campo para pegar enlaces a imágenes, recomendando explícitamente el uso de rutas de `raw.githubusercontent.com` para recursos alojados en GitHub, lo que evita redirecciones y facilita la carga desde el catálogo final.
-- **Selección local vs. remota**: el usuario puede cargar una imagen desde su equipo (`<input type="file">`) o proporcionar una URL. Al seleccionar un archivo, se genera un `DataURL` almacenado en `imageData`; si se ingresa una URL, se guarda en `image` y se descarta `imageData` para priorizar el recurso externo.
-- **Lógica de visualización**: `getProductImageSource()` evalúa primero `imageData`, luego `image`; si ninguno existe, genera un marcador SVG con el icono o emoji del producto para garantizar una presentación consistente.
+- **Entrada mediante enlaces**: todas las imágenes de productos se gestionan a través de URLs proporcionadas por el usuario. El panel guarda únicamente la cadena del enlace (`product.image`), por lo que no se almacena contenido binario ni representaciones en Base64 dentro del catálogo.
+- **Lógica de visualización**: `getProductImageSource()` utiliza la URL registrada en `product.image`; si no hay una imagen definida, genera un marcador SVG con el icono o emoji del producto para garantizar una presentación consistente.
 
 ## Guardado, carga y portabilidad de datos
 - **Persistencia local**: `loadData()` intenta leer la clave `amazoniaData` desde `localStorage`, reconstruye la estructura de categorías/productos y refresca la interfaz. `saveData()` asegura la estructura interna, guarda el JSON serializado en la misma clave y refresca la vista previa.
@@ -32,6 +32,6 @@ El panel de administración permite a Amazonia Concrete configurar su informaci�
 4. Antes de compartir, **📤 Exportar Datos** genera un respaldo y **📥 Importar Datos** permite restaurar configuraciones entre equipos.
 
 ## Mejoras futuras sugeridas
-- Automatizar la optimización de imágenes (compresión y redimensionamiento) antes de guardarlas como `imageData` para evitar superar la cuota de `localStorage`.
+- Automatizar la optimización de imágenes (compresión y redimensionamiento) antes de subirlas a un hosting público o CDN ligero, garantizando que las URLs compartidas mantengan un peso reducido.
 - Implementar un validador de enlaces externos que confirme la disponibilidad y el tamaño máximo permitido.
 - Añadir métricas o advertencias sobre el uso de almacenamiento para informar al usuario cuando el catálogo se acerque a los límites del navegador.
