@@ -63,6 +63,9 @@
         let currentImageData = null;
         let currentImageUrl = '';
         let currentIconFallback = '';
+        let lastFocusedElement = null;
+        let modalKeydownHandler = null;
+        const MODAL_FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
         function generateCategoryId(value) {
             if (!value) {
@@ -1392,12 +1395,120 @@
             saveData();
         }
 
+        function isElementFocusable(element) {
+            if (!element) {
+                return false;
+            }
+
+            if (element.hasAttribute('disabled')) {
+                return false;
+            }
+
+            const ariaHidden = element.getAttribute('aria-hidden');
+            if (ariaHidden === 'true') {
+                return false;
+            }
+
+            const tabIndexAttribute = element.getAttribute('tabindex');
+            if (tabIndexAttribute !== null && parseInt(tabIndexAttribute, 10) < 0) {
+                return false;
+            }
+
+            if (element.offsetParent === null && element !== document.activeElement) {
+                if (element.getClientRects().length === 0) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function getModalFocusableElements(modal) {
+            if (!modal) {
+                return [];
+            }
+
+            const focusableElements = Array.from(modal.querySelectorAll(MODAL_FOCUSABLE_SELECTOR));
+            return focusableElements.filter(isElementFocusable);
+        }
+
+        function createModalKeydownHandler(modal) {
+            return function handleModalKeydown(event) {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    closeProductModal();
+                    return;
+                }
+
+                if (event.key !== 'Tab') {
+                    return;
+                }
+
+                const focusableElements = getModalFocusableElements(modal);
+
+                if (focusableElements.length === 0) {
+                    event.preventDefault();
+                    return;
+                }
+
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                if (!modal.contains(document.activeElement)) {
+                    event.preventDefault();
+                    firstElement.focus();
+                    return;
+                }
+
+                if (event.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        event.preventDefault();
+                        lastElement.focus();
+                    }
+                } else if (document.activeElement === lastElement) {
+                    event.preventDefault();
+                    firstElement.focus();
+                }
+            };
+        }
+
         // Show section
         function showSection(section) {
-            document.getElementById('configSection').style.display = section === 'config' ? 'block' : 'none';
-            document.getElementById('productsSection').style.display = section === 'products' ? 'block' : 'none';
+            const sections = {
+                config: {
+                    element: document.getElementById('configSection'),
+                    button: document.querySelector('button[data-section="config"]')
+                },
+                products: {
+                    element: document.getElementById('productsSection'),
+                    button: document.querySelector('button[data-section="products"]')
+                }
+            };
 
-            if (section === 'products') {
+            const targetSection = sections[section] ? section : 'config';
+
+            Object.keys(sections).forEach(sectionKey => {
+                const { element, button } = sections[sectionKey];
+                const isActive = sectionKey === targetSection;
+
+                if (element) {
+                    if (isActive) {
+                        element.removeAttribute('hidden');
+                        element.setAttribute('aria-hidden', 'false');
+                        element.style.removeProperty('display');
+                    } else {
+                        element.setAttribute('hidden', '');
+                        element.setAttribute('aria-hidden', 'true');
+                        element.style.display = 'none';
+                    }
+                }
+
+                if (button) {
+                    button.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+                }
+            });
+
+            if (targetSection === 'products') {
                 loadProducts();
             }
         }
@@ -1544,7 +1655,17 @@
             const modal = document.getElementById('productModal');
             const form = document.getElementById('productForm');
 
+            if (!modal || !form) {
+                return;
+            }
+
             editingProductId = productId;
+            lastFocusedElement = document.activeElement;
+
+            if (modalKeydownHandler) {
+                modal.removeEventListener('keydown', modalKeydownHandler);
+                modalKeydownHandler = null;
+            }
 
             if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
                 alert('Crea al menos una categoría antes de añadir productos.');
@@ -1612,12 +1733,48 @@
             }
 
             modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+
+            const focusTarget = (() => {
+                const nameInput = document.getElementById('productName');
+                if (isElementFocusable(nameInput)) {
+                    return nameInput;
+                }
+
+                const focusableElements = getModalFocusableElements(modal);
+                if (focusableElements.length > 0) {
+                    return focusableElements[0];
+                }
+
+                return modal;
+            })();
+
+            if (focusTarget && typeof focusTarget.focus === 'function') {
+                focusTarget.focus();
+            }
+
+            modalKeydownHandler = createModalKeydownHandler(modal);
+            modal.addEventListener('keydown', modalKeydownHandler);
         }
 
         // Close modal
         function closeProductModal() {
-            document.getElementById('productModal').classList.remove('active');
-            document.getElementById('productForm').reset();
+            const modal = document.getElementById('productModal');
+            const form = document.getElementById('productForm');
+
+            if (!modal || !form) {
+                return;
+            }
+
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+
+            if (modalKeydownHandler) {
+                modal.removeEventListener('keydown', modalKeydownHandler);
+                modalKeydownHandler = null;
+            }
+
+            form.reset();
             editingProductId = null;
             currentImageData = null;
             currentImageUrl = '';
@@ -1628,6 +1785,11 @@
             }
             updateProductImagePreview(null);
             renderFeatureInputs();
+
+            if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                lastFocusedElement.focus();
+            }
+            lastFocusedElement = null;
         }
 
         // Add feature input
