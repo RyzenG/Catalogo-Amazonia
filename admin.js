@@ -650,7 +650,7 @@
 
             const totalCategories = catalogData.categories.length;
 
-            catalogData.categories.forEach(category => {
+            catalogData.categories.forEach((category, index) => {
                 const item = document.createElement('div');
                 item.className = 'category-manager-item';
                 item.dataset.categoryId = category.id;
@@ -696,6 +696,23 @@
 
                 const actions = document.createElement('div');
                 actions.className = 'category-manager-item-actions';
+
+                const moveUpButton = document.createElement('button');
+                moveUpButton.type = 'button';
+                moveUpButton.className = 'btn btn-secondary';
+                moveUpButton.textContent = '⬆️ Subir';
+                moveUpButton.title = 'Mover categoría hacia arriba';
+                moveUpButton.disabled = index === 0;
+                moveUpButton.addEventListener('click', () => moveCategory(category.id, -1));
+
+                const moveDownButton = document.createElement('button');
+                moveDownButton.type = 'button';
+                moveDownButton.className = 'btn btn-secondary';
+                moveDownButton.textContent = '⬇️ Bajar';
+                moveDownButton.title = 'Mover categoría hacia abajo';
+                moveDownButton.disabled = index === totalCategories - 1;
+                moveDownButton.addEventListener('click', () => moveCategory(category.id, 1));
+
                 const deleteButton = document.createElement('button');
                 deleteButton.type = 'button';
                 deleteButton.className = 'btn btn-danger';
@@ -705,6 +722,9 @@
                     deleteButton.title = 'Debe existir al menos una categoría activa.';
                 }
                 deleteButton.addEventListener('click', () => deleteCategory(category.id));
+
+                actions.appendChild(moveUpButton);
+                actions.appendChild(moveDownButton);
                 actions.appendChild(deleteButton);
 
                 item.appendChild(grid);
@@ -713,6 +733,72 @@
 
                 list.appendChild(item);
             });
+        }
+
+        function captureCategoryManagerValues() {
+            const list = document.getElementById('categoryManagerList');
+            if (!list) {
+                return;
+            }
+
+            const items = Array.from(list.querySelectorAll('.category-manager-item'));
+            if (items.length === 0) {
+                return;
+            }
+
+            const updatedCategories = [];
+            const seenIds = new Set();
+
+            items.forEach(item => {
+                const categoryId = item.dataset.categoryId;
+                if (!categoryId) {
+                    return;
+                }
+
+                const category = catalogData.categories.find(cat => cat.id === categoryId);
+                if (!category) {
+                    return;
+                }
+
+                const nameInput = item.querySelector('[data-field="name"]');
+                const iconInput = item.querySelector('[data-field="icon"]');
+                const descriptionInput = item.querySelector('[data-field="description"]');
+
+                category.name = (nameInput && nameInput.value.trim()) || 'Nueva categoría';
+                category.icon = (iconInput && iconInput.value.trim()) || '📦';
+                category.description = descriptionInput ? descriptionInput.value : '';
+
+                updatedCategories.push(category);
+                seenIds.add(categoryId);
+            });
+
+            if (updatedCategories.length > 0) {
+                const remainingCategories = catalogData.categories.filter(category => !seenIds.has(category.id));
+                catalogData.categories = [...updatedCategories, ...remainingCategories];
+            }
+        }
+
+        function moveCategory(categoryId, direction) {
+            ensureCategoryStructure();
+            captureCategoryManagerValues();
+
+            const currentIndex = catalogData.categories.findIndex(category => category.id === categoryId);
+            if (currentIndex === -1) {
+                return;
+            }
+
+            const targetIndex = currentIndex + direction;
+            if (targetIndex < 0 || targetIndex >= catalogData.categories.length) {
+                return;
+            }
+
+            const [movedCategory] = catalogData.categories.splice(currentIndex, 1);
+            catalogData.categories.splice(targetIndex, 0, movedCategory);
+
+            refreshCategoriesUI({ preserveCurrent: true, load: true });
+            saveData({ silent: true });
+            renderCategoryManagerList();
+            showMessage('Orden de categorías actualizado', 'success');
         }
 
         function openCategoryModal() {
@@ -735,6 +821,7 @@
 
         function handleAddCategory() {
             ensureCategoryStructure();
+            captureCategoryManagerValues();
 
             const nameInput = document.getElementById('newCategoryName');
             const iconInput = document.getElementById('newCategoryIcon');
@@ -768,8 +855,7 @@
             catalogData.products[newCategory.id] = [];
 
             currentCategory = newCategory.id;
-            refreshCategoriesUI({ preserveCurrent: true });
-            loadProducts();
+            refreshCategoriesUI({ preserveCurrent: true, load: true });
             saveData();
             showMessage('Categoría añadida correctamente', 'success');
             renderCategoryManagerList();
@@ -777,33 +863,9 @@
         }
 
         function saveCategoryEdits() {
-            const list = document.getElementById('categoryManagerList');
-            if (!list) {
-                return;
-            }
+            captureCategoryManagerValues();
 
-            const items = Array.from(list.querySelectorAll('.category-manager-item'));
-            if (items.length === 0) {
-                closeCategoryModal();
-                return;
-            }
-
-            items.forEach(item => {
-                const categoryId = item.dataset.categoryId;
-                const nameInput = item.querySelector('[data-field="name"]');
-                const iconInput = item.querySelector('[data-field="icon"]');
-                const descriptionInput = item.querySelector('[data-field="description"]');
-
-                const category = catalogData.categories.find(cat => cat.id === categoryId);
-                if (category) {
-                    category.name = (nameInput && nameInput.value.trim()) || 'Nueva categoría';
-                    category.icon = (iconInput && iconInput.value.trim()) || '📦';
-                    category.description = descriptionInput ? descriptionInput.value : '';
-                }
-            });
-
-            refreshCategoriesUI({ preserveCurrent: true });
-            loadProducts();
+            refreshCategoriesUI({ preserveCurrent: true, load: true });
             saveData();
             showMessage('Categorías actualizadas correctamente', 'success');
             renderCategoryManagerList();
@@ -811,6 +873,7 @@
 
         function deleteCategory(categoryId) {
             ensureCategoryStructure();
+            captureCategoryManagerValues();
 
             if (!Array.isArray(catalogData.categories) || catalogData.categories.length <= 1) {
                 alert('Debe existir al menos una categoría en el catálogo.');
@@ -834,8 +897,7 @@
             catalogData.categories = catalogData.categories.filter(cat => cat.id !== categoryId);
             delete catalogData.products[categoryId];
 
-            refreshCategoriesUI({ preserveCurrent: false });
-            loadProducts();
+            refreshCategoriesUI({ preserveCurrent: false, load: true });
             saveData();
             showMessage('Categoría eliminada correctamente', 'success');
             renderCategoryManagerList();
@@ -1152,10 +1214,13 @@
         }
 
         // Save data to localStorage
-        function saveData() {
+        function saveData(options = {}) {
+            const { silent = false } = options;
             ensureCategoryStructure();
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
-            showMessage('Datos guardados correctamente', 'success');
+            if (!silent) {
+                showMessage('Datos guardados correctamente', 'success');
+            }
             updateCatalogPreview();
         }
 
