@@ -2389,7 +2389,7 @@
                 <p>${footerMessageHtml}</p>
                 <div class="contact-buttons">${contactButtons}</div>
             </div>
-            <p style="margin-top: 2rem; opacity: 0.7;">© 2024 ${footerCompanyName} - Todos los derechos reservados</p>
+            <p style="margin-top: 2rem; opacity: 0.7;">© 2025 ${footerCompanyName} - Todos los derechos reservados</p>
         </div>
     </footer>
 
