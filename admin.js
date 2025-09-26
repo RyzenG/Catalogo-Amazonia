@@ -2363,6 +2363,15 @@
             const headerTitleText = companyNameHtml || defaultCompanyNameHtml;
             const footerCompanyName = companyNameHtml || defaultCompanyNameHtml;
 
+            const contactButtonsMarkup = [
+                trimmedConfig.phone ? `<a id="contactPhone" class="contact-btn" href="#">📞 Llamar</a>` : '',
+                trimmedConfig.email ? `<a id="contactEmail" class="contact-btn" href="#">✉️ Email</a>` : '',
+                trimmedConfig.whatsapp ? `<a id="contactWhatsAppLink" class="contact-btn" href="#">💬 WhatsApp</a>` : '',
+                trimmedConfig.address ? `<a id="contactAddress" class="contact-btn" href="#">📍 Ubicación</a>` : ''
+            ].filter(Boolean).join('');
+
+            const contactButtonsContainer = `<div class="contact-buttons" id="footerContactButtons" style="${contactButtonsMarkup ? '' : 'display: none;'}">${contactButtonsMarkup}</div>`;
+
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
             const instagramUrlRaw = trimmedConfig.instagram;
             const facebookUrlRaw = trimmedConfig.facebook;
@@ -2496,6 +2505,7 @@
                 <h3>${footerCompanyName}</h3>
                 ${socialLinksMarkup}
                 <p>${footerMessageHtml}</p>
+                ${contactButtonsContainer}
             </div>
             <p style="margin-top: 2rem; opacity: 0.7;">© 2025 ${footerCompanyName} - Todos los derechos reservados</p>
         </div>
@@ -3010,6 +3020,32 @@
             font-size: 1.5rem;
         }
 
+        .contact-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .contact-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .contact-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
         .social-links {
             display: flex;
             justify-content: center;
@@ -3160,6 +3196,7 @@
         // Get catalog script
         function getCatalogScript(productData, config, serializer) {
             const nonDigitPatternLiteral = String.raw`/\D+/g`;
+            const phoneSanitizePatternLiteral = String.raw`/[^+\d]/g`;
             const serialize = typeof serializer === 'function'
                 ? serializer
                 : (value) => {
@@ -3248,6 +3285,8 @@
             const logoData = config.logoData || '';
             const whatsappNumber = (config.whatsapp || '').replace(${nonDigitPatternLiteral}, '');
             const emailValue = (config.email || '').trim();
+            const phoneValue = (config.phone || '').trim();
+            const addressValue = (config.address || '').trim();
             const instagramValue = (config.instagram || '').trim();
             const facebookValue = (config.facebook || '').trim();
             const tiktokValue = (config.tiktok || '').trim();
@@ -3292,6 +3331,57 @@
             const quoteButton = document.getElementById('modalQuoteButton');
             if (quoteButton) {
                 quoteButton.style.display = emailValue ? 'inline-block' : 'none';
+            }
+
+            const phoneLink = document.getElementById('contactPhone');
+            if (phoneLink) {
+                if (phoneValue) {
+                    const sanitizedPhone = phoneValue.replace(${phoneSanitizePatternLiteral}, '');
+                    if (sanitizedPhone) {
+                        phoneLink.href = \`tel:\${sanitizedPhone}\`;
+                        phoneLink.style.display = 'inline-flex';
+                    } else {
+                        phoneLink.style.display = 'none';
+                    }
+                } else {
+                    phoneLink.style.display = 'none';
+                }
+            }
+
+            const emailLink = document.getElementById('contactEmail');
+            if (emailLink) {
+                if (emailValue) {
+                    emailLink.href = \`mailto:\${emailValue}\`;
+                    emailLink.style.display = 'inline-flex';
+                } else {
+                    emailLink.style.display = 'none';
+                }
+            }
+
+            const whatsappLink = document.getElementById('contactWhatsAppLink');
+            if (whatsappLink) {
+                if (whatsappNumber) {
+                    whatsappLink.href = \`https://wa.me/\${whatsappNumber}\`;
+                    whatsappLink.style.display = 'inline-flex';
+                } else {
+                    whatsappLink.style.display = 'none';
+                }
+            }
+
+            const addressLink = document.getElementById('contactAddress');
+            if (addressLink) {
+                if (addressValue) {
+                    addressLink.href = \`https://www.google.com/maps/search/\${encodeURIComponent(addressValue)}\`;
+                    addressLink.style.display = 'inline-flex';
+                } else {
+                    addressLink.style.display = 'none';
+                }
+            }
+
+            const contactButtonsContainer = document.getElementById('footerContactButtons');
+            if (contactButtonsContainer) {
+                const hasVisibleContact = [phoneLink, emailLink, whatsappLink, addressLink].some(link => link && link.style.display !== 'none');
+                contactButtonsContainer.style.display = hasVisibleContact ? 'flex' : 'none';
             }
 
             const footerSocialContainer = document.getElementById('footerSocialLinks');
