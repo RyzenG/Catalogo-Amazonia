@@ -25,6 +25,48 @@ El panel de administración permite a Amazonia Concrete configurar su informaci�
 - **Conversión de enlaces de Google Drive**: transforme la URL de vista previa (`https://drive.google.com/file/d/.../view`) en un enlace directo (`https://drive.google.com/uc?export=view&id=...`) antes de pegarlo, garantizando que la imagen cargue sin autenticación.
 - **Optimización pendiente**: reduzca el peso de los recursos antes de subirlos (TinyPNG, Squoosh) y documente un flujo de compresión para no exceder cuotas de hosting o límites de `localStorage`. Planifique un repositorio dedicado o CDN ligero para evitar bloqueos por ancho de banda y simplificar el mantenimiento.
 
+## Guía de troubleshooting y operación diaria
+Cuando el panel no responde como se espera, siga este flujo para recuperar la estabilidad sin perder información importante:
+
+1. **Verificar la versión del navegador**: confirme que utiliza una versión actualizada de Chrome, Edge, Firefox o Safari. Los navegadores desactualizados pueden bloquear APIs como `localStorage` o descargas de archivos.
+2. **Revisar bloqueadores de pop-ups**: la exportación del catálogo y del JSON de respaldo se realiza con descargas directas. Habilite temporalmente el dominio local (`file://`) para permitir la descarga.
+3. **Limpiar el estado de `localStorage`**: si aparecen campos vacíos o datos corruptos, abra las herramientas de desarrollador (F12), vaya a **Application → Local Storage → file://** y elimine la clave `amazoniaData`. Vuelva a cargar la página para iniciar con un estado limpio.
+4. **Restablecer categorías predefinidas**: importe el archivo JSON de referencia almacenado en `docs/seed/amazonia-default.json` (compártalo internamente) para reconstruir categorías y productos iniciales.
+5. **Reinstalar el proyecto**: en caso de cambios accidentales sobre los archivos fuente, vuelva a clonar el repositorio o ejecute `git checkout -- admin.html admin.js admin.css` para restaurar la versión oficial.
+
+### Procedimiento de colaboración
+- Cree ramas temáticas (`feature/`, `fix/`, `docs/`) y solicite revisión antes de fusionar en `main`.
+- Documente cada cambio de datos que requiera migraciones (p. ej. nuevos campos en productos) dentro de `docs/changelog.md`.
+- Coordine la publicación del catálogo compartiendo el archivo HTML exportado en un canal interno y manteniendo una copia en el repositorio de activos.
+
+## Guías internas de iconografía e imágenes
+- **Iconos**: utilice la familia `Material Symbols Rounded` o emojis nativos. Los iconos deben representar la categoría de manera inequívoca y mantener un tamaño de 32px en los listados y 48px en la cabecera del catálogo.
+- **Colores**: respete la paleta corporativa (`#004225`, `#5B8C51`, `#F4A300`) y garantice una relación de contraste mínima de 4.5:1 frente a los fondos.
+- **Formato de imagen**: priorice PNG o WebP para productos con transparencia y JPEG optimizado (calidad 70) para fotografías. Las dimensiones recomendadas son 800x600 px para productos y 1200x400 px para banners.
+- **Peso máximo**: cada imagen no debe exceder 350 KB para asegurar tiempos de carga ágiles. Documente cualquier excepción en el registro de activos.
+- **Repositorio interno**: suba los recursos al repositorio `amazonia-assets` en carpetas `categories/` y `products/` con nombres en `kebab-case` para facilitar su búsqueda.
+
+## Plan de pruebas manuales y de regresión
+Realice las siguientes verificaciones antes de liberar un nuevo catálogo o fusionar cambios relevantes:
+
+1. **Configuración general**
+   - Actualizar los campos de contacto y guardar; comprobar que persisten tras recargar el archivo.
+   - Cambiar el logo y validar que se refleje en la vista previa y en el HTML exportado.
+2. **Gestión de categorías**
+   - Crear una categoría nueva, reorganizarla y confirmar su aparición en los selectores y la vista previa.
+   - Editar una categoría existente y verificar que el cambio se propaga a todos los productos asociados.
+3. **Gestión de productos**
+   - Crear, editar y eliminar un producto con todos los campos completos; asegurar que los íconos y las imágenes se muestran correctamente.
+   - Validar la importación y exportación del JSON, confirmando que los campos obligatorios se mantienen intactos.
+4. **Generación de catálogo**
+   - Ejecutar `Generar Catálogo` y abrir el HTML resultante en un navegador distinto para comprobar estilos, imágenes y enlaces.
+   - Simular un catálogo sin conexión a Internet para verificar que los recursos embebidos siguen operativos.
+5. **Accesibilidad básica**
+   - Navegar el panel con teclado (Tab, Shift+Tab, Enter, Space) y revisar que todos los controles son alcanzables.
+   - Ejecutar un lector de pantalla (NVDA/VoiceOver) para validar que los botones críticos poseen etiquetas descriptivas.
+
+Registre la fecha de ejecución y hallazgos en `docs/testing-log.md` para sostener un historial de regresión.
+
 ## Guardado y carga de trabajo cotidiano
 1. Ingrese cambios en configuraciones o productos.
 2. Pulse **💾 Guardar Cambios** para persistir en `localStorage`.
