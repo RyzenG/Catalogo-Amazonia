@@ -20,8 +20,3 @@
 - Versionar la estructura guardada en `localStorage` (`amazoniaData`) para poder migrar o invalidar datos antiguos cuando cambie el esquema y evitar errores silenciosos al parsear configuraciones previas.【F:admin.js†L1245-L1253】
 - Validar el JSON importado contra un esquema explícito antes de aceptarlo, devolviendo errores detallados y evitando que datos corruptos dejen la aplicación en un estado inconsistente.【F:admin.js†L2035-L2078】
 - Incorporar comprobaciones previas a la descarga del catálogo (por ejemplo, verificar que las URLs de imágenes responden o que el tamaño estimado del HTML no excede límites) y presentar recomendaciones antes de iniciar la exportación.【F:admin.js†L2083-L2110】
-
-## Documentación y operativa – ✅ Completado
-- Ampliar el README con un flujo de "troubleshooting" (cómo limpiar `localStorage`, cómo restablecer categorías) y con instrucciones para colaboración, dado que actualmente sólo describe el flujo funcional principal.【F:README.md†L28-L41】
-- Añadir guías internas sobre estándares de iconografía y tamaños de imagen para que el equipo mantenga consistencia al crear nuevos productos o categorías.【F:README.md†L42-L47】
-- Documentar un plan de pruebas manuales/regresión que cubra creación, edición, importación y generación de catálogos a fin de garantizar la calidad cuando se incorporen nuevas funcionalidades.【F:README.md†L49-L68】【F:admin.js†L1887-L1983】
