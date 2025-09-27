@@ -287,6 +287,286 @@
             return `${prefix}${formatted}${suffix}`;
         }
 
+        const PRODUCT_FIELD_LIMITS = {
+            shortDesc: 140,
+            longDesc: 400,
+            specs: 800
+        };
+
+        const productFormAssistantRefreshers = [];
+        let productFormAssistantsInitialized = false;
+
+        function setHintState(element, state) {
+            if (!element) {
+                return;
+            }
+
+            element.classList.remove('field-hint--muted', 'field-hint--success', 'field-hint--error');
+
+            if (state) {
+                element.classList.add(`field-hint--${state}`);
+            }
+        }
+
+        function setupCharacterCounter(inputId, counterId, limit) {
+            const input = document.getElementById(inputId);
+            const counter = document.getElementById(counterId);
+
+            if (!input || !counter) {
+                return null;
+            }
+
+            if (limit) {
+                input.setAttribute('maxlength', limit);
+            }
+
+            const update = () => {
+                const valueLength = input.value.length;
+                if (limit) {
+                    counter.textContent = `${valueLength} / ${limit} caracteres`;
+                    counter.classList.toggle('over-limit', valueLength > limit);
+                } else {
+                    counter.textContent = `${valueLength} caracteres`;
+                    counter.classList.remove('over-limit');
+                }
+            };
+
+            input.addEventListener('input', update);
+            input.addEventListener('change', update);
+
+            update();
+            return update;
+        }
+
+        function getLastPriceForCategory(categoryId) {
+            if (!categoryId || !catalogData || !catalogData.products) {
+                return '';
+            }
+
+            const products = catalogData.products[categoryId];
+            if (!Array.isArray(products) || products.length === 0) {
+                return '';
+            }
+
+            for (let index = products.length - 1; index >= 0; index -= 1) {
+                const product = products[index];
+                if (!product) {
+                    continue;
+                }
+
+                const formatted = formatCurrencyCOP(product.price);
+                if (formatted) {
+                    return formatted;
+                }
+            }
+
+            return '';
+        }
+
+        function updatePricePreview() {
+            const priceInput = document.getElementById('productPrice');
+            const previewElement = document.getElementById('pricePreview');
+
+            if (!priceInput || !previewElement) {
+                return;
+            }
+
+            const rawValue = priceInput.value.trim();
+
+            if (!rawValue) {
+                previewElement.textContent = 'Vista previa: —';
+                setHintState(previewElement, 'muted');
+                return;
+            }
+
+            const formatted = formatCurrencyCOP(rawValue);
+            if (formatted) {
+                let suffixText = '';
+                const slashIndex = rawValue.indexOf('/');
+                if (slashIndex !== -1) {
+                    const suffixPart = rawValue.slice(slashIndex + 1).trim();
+                    if (suffixPart) {
+                        suffixText = ` / ${suffixPart}`;
+                    }
+                }
+
+                previewElement.textContent = `Vista previa: ${formatted}${suffixText}`;
+                setHintState(previewElement, 'success');
+                return;
+            }
+
+            previewElement.textContent = 'Vista previa: introduce un número para calcular el precio.';
+            setHintState(previewElement, 'error');
+        }
+
+        function updatePriceAssistantsState() {
+            const priceInput = document.getElementById('productPrice');
+            const priceHint = document.getElementById('priceHint');
+            const categorySelect = document.getElementById('productCategory');
+
+            if (!priceInput) {
+                return;
+            }
+
+            const defaultPlaceholder = '$45.000 o $85.000/m²';
+            const categoryId = categorySelect ? categorySelect.value : '';
+            const suggestedPrice = getLastPriceForCategory(categoryId);
+
+            priceInput.placeholder = suggestedPrice
+                ? `${suggestedPrice} (sugerido)`
+                : defaultPlaceholder;
+
+            if (priceHint) {
+                if (suggestedPrice) {
+                    priceHint.innerHTML = `Último precio registrado en esta categoría: <strong>${suggestedPrice}</strong>. `
+                        + 'Puedes añadir sufijos como <strong>/m²</strong> o <strong>/unidad</strong>.';
+                    setHintState(priceHint, 'success');
+                } else {
+                    priceHint.textContent = 'Ejemplos válidos: $45.000, 125000 o 85.000/m².';
+                    setHintState(priceHint, 'muted');
+                }
+            }
+
+            updatePricePreview();
+        }
+
+        function validateSpecsHint() {
+            const specsInput = document.getElementById('productSpecs');
+            const specsHint = document.getElementById('specsHint');
+
+            if (!specsInput || !specsHint) {
+                return;
+            }
+
+            const lines = specsInput.value
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean);
+
+            if (lines.length === 0) {
+                specsHint.innerHTML = 'Añade cada especificación en el formato <strong>Nombre: Valor</strong> '
+                    + 'para que se muestre correctamente.';
+                setHintState(specsHint, 'muted');
+                return;
+            }
+
+            const invalidLines = lines.filter(line => {
+                if (!line.includes(':')) {
+                    return true;
+                }
+                const [label, value] = line.split(':');
+                return !label || !label.trim() || !value || !value.trim();
+            });
+
+            if (invalidLines.length === 0) {
+                const pluralSuffix = lines.length === 1 ? '' : 'es';
+                specsHint.textContent = `¡Perfecto! ${lines.length} especificación${pluralSuffix} con formato válido.`;
+                setHintState(specsHint, 'success');
+                return;
+            }
+
+            const pluralError = invalidLines.length === 1 ? '' : 's';
+            specsHint.textContent = `Revisa ${invalidLines.length} línea${pluralError}: usa el formato Nombre: Valor.`;
+            setHintState(specsHint, 'error');
+        }
+
+        function setupPriceAssistants() {
+            const priceInput = document.getElementById('productPrice');
+            const categorySelect = document.getElementById('productCategory');
+
+            if (!priceInput) {
+                return null;
+            }
+
+            priceInput.addEventListener('input', updatePricePreview);
+            priceInput.addEventListener('blur', updatePricePreview);
+
+            if (categorySelect) {
+                categorySelect.addEventListener('change', updatePriceAssistantsState);
+            }
+
+            updatePriceAssistantsState();
+            return updatePriceAssistantsState;
+        }
+
+        function setupSpecsAssistant() {
+            const specsInput = document.getElementById('productSpecs');
+
+            if (!specsInput) {
+                return null;
+            }
+
+            specsInput.addEventListener('input', validateSpecsHint);
+            specsInput.addEventListener('blur', validateSpecsHint);
+
+            validateSpecsHint();
+            return () => {
+                validateSpecsHint();
+            };
+        }
+
+        function setupProductFormAssistants() {
+            if (productFormAssistantsInitialized) {
+                refreshProductFormAssistants();
+                return;
+            }
+
+            productFormAssistantsInitialized = true;
+            productFormAssistantRefreshers.length = 0;
+
+            const shortDescCounter = setupCharacterCounter(
+                'productShortDesc',
+                'shortDescCounter',
+                PRODUCT_FIELD_LIMITS.shortDesc
+            );
+            if (shortDescCounter) {
+                productFormAssistantRefreshers.push(shortDescCounter);
+            }
+
+            const longDescCounter = setupCharacterCounter(
+                'productLongDesc',
+                'longDescCounter',
+                PRODUCT_FIELD_LIMITS.longDesc
+            );
+            if (longDescCounter) {
+                productFormAssistantRefreshers.push(longDescCounter);
+            }
+
+            const specsCounter = setupCharacterCounter(
+                'productSpecs',
+                'specsCounter',
+                PRODUCT_FIELD_LIMITS.specs
+            );
+            if (specsCounter) {
+                productFormAssistantRefreshers.push(specsCounter);
+            }
+
+            const priceAssistant = setupPriceAssistants();
+            if (priceAssistant) {
+                productFormAssistantRefreshers.push(priceAssistant);
+            }
+
+            const specsAssistant = setupSpecsAssistant();
+            if (specsAssistant) {
+                productFormAssistantRefreshers.push(specsAssistant);
+            }
+        }
+
+        function refreshProductFormAssistants() {
+            if (productFormAssistantRefreshers.length === 0) {
+                if (!productFormAssistantsInitialized) {
+                    setupProductFormAssistants();
+                }
+                return;
+            }
+
+            productFormAssistantRefreshers.forEach(refreshFn => {
+                if (typeof refreshFn === 'function') {
+                    refreshFn();
+                }
+            });
+        }
+
         function escapeForSvg(value) {
             if (typeof value !== 'string') {
                 return '';
@@ -1188,6 +1468,7 @@
         window.addEventListener('DOMContentLoaded', function() {
             registerAdminEventHandlers();
             loadData();
+            setupProductFormAssistants();
             renderFeatureInputs();
             setupImageInput();
             setupLogoInput();
@@ -1803,6 +2084,8 @@
                 renderFeatureInputs();
             }
 
+            refreshProductFormAssistants();
+
             modal.classList.add('active');
             modal.setAttribute('aria-hidden', 'false');
 
@@ -1855,6 +2138,7 @@
             }
             updateProductImagePreview(null);
             renderFeatureInputs();
+            refreshProductFormAssistants();
 
             if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                 lastFocusedElement.focus();

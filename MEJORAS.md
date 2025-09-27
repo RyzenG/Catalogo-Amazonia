@@ -2,7 +2,6 @@
 
 ## Experiencia de usuario
 
-- Incluir ayudas en contexto dentro de los formularios (placeholders dinámicos, ejemplos validados, contadores de caracteres) para reducir la fricción al completar campos como precio o especificaciones técnicas.【F:admin.html†L181-L198】【F:admin.js†L1918-L1934】
 - Mostrar estados de carga persistentes cuando se exporta o genera el catálogo, indicando progreso y posibles errores en lugar de solo notificaciones temporales; esto ayuda cuando se trabaja con catálogos grandes.【F:admin.js†L2000-L2012】【F:admin.js†L2083-L2110】
 
 ## Accesibilidad e internacionalización
@@ -16,4 +15,3 @@
 - Extraer las utilidades compartidas (normalización de IDs, formateo de moneda, sanitización) a un módulo independiente o carpeta `utils/` para promover su reutilización y disminuir duplicidades en validaciones.【F:admin.js†L34-L243】
 
 ## Fiabilidad de datos y exportaciones
-- Versionar la estructura guardada en `localStorage` (`amazoniaData`) para poder migrar o invalidar datos antiguos cuando cambie el esquema y evitar errores silenciosos al parsear configuraciones previas.【F:admin.js†L1245-L1253】

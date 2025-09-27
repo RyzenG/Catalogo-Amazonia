@@ -83,6 +83,55 @@ body {
     margin-bottom: 1.5rem;
 }
 
+.input-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.field-hint {
+    font-size: 0.9rem;
+    color: #2d4a2b;
+    background: #f1f8f4;
+    border: 1px solid #c9e6d4;
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    line-height: 1.4;
+}
+
+.field-hint strong {
+    font-weight: 600;
+}
+
+.field-hint--muted {
+    color: #5f6b5d;
+    background: #f6f6f6;
+    border-color: #e0e0e0;
+}
+
+.field-hint--success {
+    background: #e9f9ef;
+    border-color: #b9e2c6;
+    color: #216739;
+}
+
+.field-hint--error {
+    background: #fff2f0;
+    border-color: #f5c2be;
+    color: #a03a2e;
+}
+
+.char-counter {
+    font-size: 0.85rem;
+    color: #4f5a4d;
+    margin-top: -0.25rem;
+}
+
+.char-counter.over-limit {
+    color: #c0392b;
+    font-weight: 600;
+}
+
 label {
     display: block;
     margin-bottom: 0.5rem;

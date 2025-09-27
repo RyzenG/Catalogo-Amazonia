@@ -159,32 +159,50 @@
                 <input type="hidden" id="productId">
                 
                 <div class="form-group">
-                    <label>Categoría:</label>
+                    <label for="productCategory">Categoría:</label>
                     <select id="productCategory"></select>
                 </div>
 
                 <div class="form-group">
-                    <label>Nombre del producto:</label>
+                    <label for="productName">Nombre del producto:</label>
                     <input type="text" id="productName" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Descripción corta:</label>
-                    <textarea id="productShortDesc" required></textarea>
+                    <label for="productShortDesc">Descripción corta:</label>
+                    <div class="input-meta">
+                        <textarea id="productShortDesc" required aria-describedby="shortDescHint shortDescCounter"></textarea>
+                        <div class="field-hint" id="shortDescHint">
+                            Resume en una o dos frases el valor principal del producto.
+                        </div>
+                        <div class="char-counter" id="shortDescCounter" aria-live="polite">0 / 140 caracteres</div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Descripción detallada:</label>
-                    <textarea id="productLongDesc" rows="4"></textarea>
+                    <label for="productLongDesc">Descripción detallada:</label>
+                    <div class="input-meta">
+                        <textarea id="productLongDesc" rows="4" aria-describedby="longDescHint longDescCounter"></textarea>
+                        <div class="field-hint" id="longDescHint">
+                            Utiliza viñetas o frases cortas para resaltar usos, materiales y cuidados.
+                        </div>
+                        <div class="char-counter" id="longDescCounter" aria-live="polite">0 / 400 caracteres</div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Precio:</label>
-                    <input type="text" id="productPrice" placeholder="$45.000 o $85.000/m²">
+                    <label for="productPrice">Precio:</label>
+                    <div class="input-meta">
+                        <input type="text" id="productPrice" placeholder="$45.000 o $85.000/m²" aria-describedby="priceHint pricePreview">
+                        <div class="field-hint" id="priceHint">
+                            Ejemplos válidos: $45.000, 125000 o 85.000/m².
+                        </div>
+                        <div class="field-hint field-hint--muted" id="pricePreview" aria-live="polite">Vista previa: —</div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Imagen del producto:</label>
+                    <label for="productImageUrl">Imagen del producto:</label>
                     <input type="url" id="productImageUrl" placeholder="https://raw.githubusercontent.com/...">
                     <small style="display: block; margin-top: 0.5rem; color: #555;">Usa enlaces directos de <code>raw.githubusercontent.com</code> para imágenes alojadas en GitHub.</small>
                     <div class="image-preview" id="productImagePreviewWrapper">
@@ -200,14 +218,20 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Especificaciones técnicas:</label>
+                    <label for="productSpecs">Especificaciones técnicas:</label>
                     <div class="warning-box">
                         Formato: Nombre: Valor (una por línea)<br>
                         Ejemplo:<br>
                         Material: Concreto reforzado<br>
                         Peso: 8 kg
                     </div>
-                    <textarea id="productSpecs" rows="6" placeholder="Material: Concreto reforzado&#10;Dimensiones: 30cm x 25cm&#10;Peso: 8 kg"></textarea>
+                    <div class="input-meta">
+                        <textarea id="productSpecs" rows="6" placeholder="Material: Concreto reforzado&#10;Dimensiones: 30cm x 25cm&#10;Peso: 8 kg" aria-describedby="specsHint specsCounter"></textarea>
+                        <div class="field-hint" id="specsHint">
+                            Añade cada especificación en el formato <strong>Nombre: Valor</strong> para que se muestre correctamente.
+                        </div>
+                        <div class="char-counter" id="specsCounter" aria-live="polite">0 / 800 caracteres</div>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 1rem; justify-content: flex-end">
