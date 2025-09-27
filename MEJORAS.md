@@ -2,9 +2,6 @@
 
 ## Experiencia de usuario
 
-
-## Accesibilidad e internacionalización
-- Mantener sincronizados los atributos `aria-expanded` de los botones de navegación con el estado visual de las secciones, y comunicar el cambio en un `aria-live` dedicado para los lectores de pantalla.【F:admin.js†L1548-L1580】
 - Proporcionar equivalentes textuales a los iconos de categorías/acciones dentro del catálogo generado (por ejemplo usando `aria-label` o texto alternativo adicional) para evitar pérdida de información en usuarios con tecnologías asistivas.【F:admin.js†L1674-L1687】【F:admin.js†L2188-L2199】
 - Preparar la interfaz para traducciones (mensajes, etiquetas, notificaciones) extrayendo los literales actuales a un diccionario, ya que todo el contenido está embebido directamente en el HTML y JavaScript.【F:admin.html†L12-L147】【F:admin.js†L1987-L2110】
 

@@ -2041,18 +2041,45 @@
         }
 
         // Show section
-        function showSection(section) {
-            const sections = {
+        function getNavigationSections() {
+            return {
                 config: {
                     element: document.getElementById('configSection'),
-                    button: document.querySelector('button[data-section="config"]')
+                    button: document.querySelector('button[data-section="config"]'),
+                    label: 'Configuración general'
                 },
                 products: {
                     element: document.getElementById('productsSection'),
-                    button: document.querySelector('button[data-section="products"]')
+                    button: document.querySelector('button[data-section="products"]'),
+                    label: 'Gestión de productos'
                 }
             };
+        }
 
+        function announceSectionChange(sectionKey, sectionConfig) {
+            const liveRegion = document.getElementById('navigationStatus');
+            if (!liveRegion || !sectionConfig) {
+                return;
+            }
+
+            const announcement = `Sección "${sectionConfig.label}" activa.`;
+            if (liveRegion.textContent === announcement) {
+                liveRegion.textContent = '';
+            }
+
+            const updateLiveRegion = () => {
+                liveRegion.textContent = announcement;
+            };
+
+            if (typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(updateLiveRegion);
+            } else {
+                setTimeout(updateLiveRegion, 0);
+            }
+        }
+
+        function showSection(section) {
+            const sections = getNavigationSections();
             const targetSection = sections[section] ? section : 'config';
 
             Object.keys(sections).forEach(sectionKey => {
@@ -2075,6 +2102,8 @@
                     button.setAttribute('aria-expanded', isActive ? 'true' : 'false');
                 }
             });
+
+            announceSectionChange(targetSection, sections[targetSection]);
 
             if (targetSection === 'products') {
                 loadProducts();
