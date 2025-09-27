@@ -67,7 +67,212 @@
         let currentIconFallback = '';
         let lastFocusedElement = null;
         let modalKeydownHandler = null;
+        const processStatusEntries = new Map();
+        let processStatusCounter = 0;
+        let processStatusListElement = null;
+        let processStatusEmptyElement = null;
+        let processStatusPanelElement = null;
+        let processStatusClearButton = null;
+        const PROCESS_LABELS = {
+            'generate-catalog': 'Generar catálogo',
+            'export-data': 'Exportar datos'
+        };
+        const PROCESS_STATE_CLASSES = [
+            'process-panel__item--running',
+            'process-panel__item--success',
+            'process-panel__item--error'
+        ];
         const MODAL_FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+        function resolveProcessStatusElements() {
+            if (!processStatusPanelElement || !processStatusPanelElement.isConnected) {
+                processStatusPanelElement = document.getElementById('exportStatusPanel');
+            }
+
+            if (!processStatusListElement || !processStatusListElement.isConnected) {
+                processStatusListElement = document.getElementById('exportStatusList');
+            }
+
+            if (!processStatusEmptyElement || !processStatusEmptyElement.isConnected) {
+                processStatusEmptyElement = document.getElementById('exportStatusEmpty');
+            }
+
+            if (!processStatusClearButton || !processStatusClearButton.isConnected) {
+                processStatusClearButton = document.getElementById('clearProcessStatusButton');
+            }
+
+            if (!processStatusPanelElement || !processStatusListElement) {
+                return null;
+            }
+
+            return {
+                panel: processStatusPanelElement,
+                list: processStatusListElement,
+                empty: processStatusEmptyElement,
+                clearButton: processStatusClearButton
+            };
+        }
+
+        function toggleProcessStatusEmptyState() {
+            const elements = resolveProcessStatusElements();
+
+            if (!elements) {
+                return;
+            }
+
+            const hasItems = elements.list.children.length > 0;
+
+            if (elements.empty) {
+                elements.empty.hidden = hasItems;
+            }
+
+            if (elements.clearButton) {
+                elements.clearButton.disabled = !hasItems;
+            }
+        }
+
+        function formatProcessTime(date) {
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        function createProcessStatusEntry(operation, initialDetail = 'Iniciando…') {
+            const elements = resolveProcessStatusElements();
+
+            if (!elements) {
+                return null;
+            }
+
+            const label = PROCESS_LABELS[operation] || 'Proceso';
+            const now = new Date();
+            processStatusCounter += 1;
+            const entryId = `${operation}-${now.getTime()}-${processStatusCounter}`;
+
+            const item = document.createElement('li');
+            item.className = 'process-panel__item process-panel__item--running';
+            item.setAttribute('data-operation', operation);
+            item.setAttribute('data-entry-id', entryId);
+            item.setAttribute('role', 'status');
+
+            const icon = document.createElement('span');
+            icon.className = 'process-panel__icon';
+            icon.setAttribute('aria-hidden', 'true');
+
+            const content = document.createElement('div');
+            content.className = 'process-panel__content';
+
+            const row = document.createElement('div');
+            row.className = 'process-panel__row';
+
+            const labelElement = document.createElement('span');
+            labelElement.className = 'process-panel__label';
+            labelElement.textContent = label;
+
+            const timeElement = document.createElement('time');
+            timeElement.className = 'process-panel__time';
+            timeElement.setAttribute('datetime', now.toISOString());
+            timeElement.textContent = formatProcessTime(now);
+
+            row.appendChild(labelElement);
+            row.appendChild(timeElement);
+
+            const detailElement = document.createElement('p');
+            detailElement.className = 'process-panel__detail';
+            detailElement.textContent = initialDetail;
+
+            content.appendChild(row);
+            content.appendChild(detailElement);
+
+            item.appendChild(icon);
+            item.appendChild(content);
+
+            elements.list.prepend(item);
+            processStatusEntries.set(entryId, {
+                element: item,
+                detail: detailElement,
+                icon
+            });
+
+            toggleProcessStatusEmptyState();
+
+            return entryId;
+        }
+
+        function updateProcessStatusEntry(entryId, options = {}) {
+            if (!entryId || !processStatusEntries.has(entryId)) {
+                return;
+            }
+
+            const entry = processStatusEntries.get(entryId);
+            const { element, detail, icon } = entry;
+            const { state, detail: detailText } = options;
+
+            if (typeof detailText === 'string') {
+                detail.textContent = detailText;
+            }
+
+            if (state) {
+                PROCESS_STATE_CLASSES.forEach(className => {
+                    element.classList.remove(className);
+                });
+
+                const targetClass = `process-panel__item--${state}`;
+                element.classList.add(targetClass);
+
+                if (state === 'success') {
+                    icon.textContent = '✓';
+                } else if (state === 'error') {
+                    icon.textContent = '!';
+                } else {
+                    icon.textContent = '';
+                }
+            }
+        }
+
+        function clearProcessStatusEntries() {
+            const elements = resolveProcessStatusElements();
+
+            processStatusEntries.forEach(entry => {
+                if (entry.element && entry.element.parentNode) {
+                    entry.element.parentNode.removeChild(entry.element);
+                }
+            });
+
+            processStatusEntries.clear();
+
+            if (elements && elements.list) {
+                elements.list.innerHTML = '';
+            }
+
+            toggleProcessStatusEmptyState();
+        }
+
+        function setElementBusyState(element, isBusy) {
+            if (!element) {
+                return;
+            }
+
+            element.disabled = !!isBusy;
+
+            if (isBusy) {
+                element.setAttribute('aria-busy', 'true');
+            } else {
+                element.removeAttribute('aria-busy');
+            }
+        }
+
+        function setGenerateButtonsDisabled(isDisabled) {
+            const generateButtons = document.querySelectorAll('button[data-action="generate-catalog"]');
+            generateButtons.forEach(button => {
+                setElementBusyState(button, isDisabled);
+            });
+        }
+
+        function setExportButtonDisabled(isDisabled) {
+            const exportButton = document.getElementById('exportDataButton');
+            setElementBusyState(exportButton, isDisabled);
+        }
 
         function generateCategoryId(value) {
             if (!value) {
@@ -285,6 +490,286 @@
             }
 
             return `${prefix}${formatted}${suffix}`;
+        }
+
+        const PRODUCT_FIELD_LIMITS = {
+            shortDesc: 140,
+            longDesc: 400,
+            specs: 800
+        };
+
+        const productFormAssistantRefreshers = [];
+        let productFormAssistantsInitialized = false;
+
+        function setHintState(element, state) {
+            if (!element) {
+                return;
+            }
+
+            element.classList.remove('field-hint--muted', 'field-hint--success', 'field-hint--error');
+
+            if (state) {
+                element.classList.add(`field-hint--${state}`);
+            }
+        }
+
+        function setupCharacterCounter(inputId, counterId, limit) {
+            const input = document.getElementById(inputId);
+            const counter = document.getElementById(counterId);
+
+            if (!input || !counter) {
+                return null;
+            }
+
+            if (limit) {
+                input.setAttribute('maxlength', limit);
+            }
+
+            const update = () => {
+                const valueLength = input.value.length;
+                if (limit) {
+                    counter.textContent = `${valueLength} / ${limit} caracteres`;
+                    counter.classList.toggle('over-limit', valueLength > limit);
+                } else {
+                    counter.textContent = `${valueLength} caracteres`;
+                    counter.classList.remove('over-limit');
+                }
+            };
+
+            input.addEventListener('input', update);
+            input.addEventListener('change', update);
+
+            update();
+            return update;
+        }
+
+        function getLastPriceForCategory(categoryId) {
+            if (!categoryId || !catalogData || !catalogData.products) {
+                return '';
+            }
+
+            const products = catalogData.products[categoryId];
+            if (!Array.isArray(products) || products.length === 0) {
+                return '';
+            }
+
+            for (let index = products.length - 1; index >= 0; index -= 1) {
+                const product = products[index];
+                if (!product) {
+                    continue;
+                }
+
+                const formatted = formatCurrencyCOP(product.price);
+                if (formatted) {
+                    return formatted;
+                }
+            }
+
+            return '';
+        }
+
+        function updatePricePreview() {
+            const priceInput = document.getElementById('productPrice');
+            const previewElement = document.getElementById('pricePreview');
+
+            if (!priceInput || !previewElement) {
+                return;
+            }
+
+            const rawValue = priceInput.value.trim();
+
+            if (!rawValue) {
+                previewElement.textContent = 'Vista previa: —';
+                setHintState(previewElement, 'muted');
+                return;
+            }
+
+            const formatted = formatCurrencyCOP(rawValue);
+            if (formatted) {
+                let suffixText = '';
+                const slashIndex = rawValue.indexOf('/');
+                if (slashIndex !== -1) {
+                    const suffixPart = rawValue.slice(slashIndex + 1).trim();
+                    if (suffixPart) {
+                        suffixText = ` / ${suffixPart}`;
+                    }
+                }
+
+                previewElement.textContent = `Vista previa: ${formatted}${suffixText}`;
+                setHintState(previewElement, 'success');
+                return;
+            }
+
+            previewElement.textContent = 'Vista previa: introduce un número para calcular el precio.';
+            setHintState(previewElement, 'error');
+        }
+
+        function updatePriceAssistantsState() {
+            const priceInput = document.getElementById('productPrice');
+            const priceHint = document.getElementById('priceHint');
+            const categorySelect = document.getElementById('productCategory');
+
+            if (!priceInput) {
+                return;
+            }
+
+            const defaultPlaceholder = '$45.000 o $85.000/m²';
+            const categoryId = categorySelect ? categorySelect.value : '';
+            const suggestedPrice = getLastPriceForCategory(categoryId);
+
+            priceInput.placeholder = suggestedPrice
+                ? `${suggestedPrice} (sugerido)`
+                : defaultPlaceholder;
+
+            if (priceHint) {
+                if (suggestedPrice) {
+                    priceHint.innerHTML = `Último precio registrado en esta categoría: <strong>${suggestedPrice}</strong>. `
+                        + 'Puedes añadir sufijos como <strong>/m²</strong> o <strong>/unidad</strong>.';
+                    setHintState(priceHint, 'success');
+                } else {
+                    priceHint.textContent = 'Ejemplos válidos: $45.000, 125000 o 85.000/m².';
+                    setHintState(priceHint, 'muted');
+                }
+            }
+
+            updatePricePreview();
+        }
+
+        function validateSpecsHint() {
+            const specsInput = document.getElementById('productSpecs');
+            const specsHint = document.getElementById('specsHint');
+
+            if (!specsInput || !specsHint) {
+                return;
+            }
+
+            const lines = specsInput.value
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean);
+
+            if (lines.length === 0) {
+                specsHint.innerHTML = 'Añade cada especificación en el formato <strong>Nombre: Valor</strong> '
+                    + 'para que se muestre correctamente.';
+                setHintState(specsHint, 'muted');
+                return;
+            }
+
+            const invalidLines = lines.filter(line => {
+                if (!line.includes(':')) {
+                    return true;
+                }
+                const [label, value] = line.split(':');
+                return !label || !label.trim() || !value || !value.trim();
+            });
+
+            if (invalidLines.length === 0) {
+                const pluralSuffix = lines.length === 1 ? '' : 'es';
+                specsHint.textContent = `¡Perfecto! ${lines.length} especificación${pluralSuffix} con formato válido.`;
+                setHintState(specsHint, 'success');
+                return;
+            }
+
+            const pluralError = invalidLines.length === 1 ? '' : 's';
+            specsHint.textContent = `Revisa ${invalidLines.length} línea${pluralError}: usa el formato Nombre: Valor.`;
+            setHintState(specsHint, 'error');
+        }
+
+        function setupPriceAssistants() {
+            const priceInput = document.getElementById('productPrice');
+            const categorySelect = document.getElementById('productCategory');
+
+            if (!priceInput) {
+                return null;
+            }
+
+            priceInput.addEventListener('input', updatePricePreview);
+            priceInput.addEventListener('blur', updatePricePreview);
+
+            if (categorySelect) {
+                categorySelect.addEventListener('change', updatePriceAssistantsState);
+            }
+
+            updatePriceAssistantsState();
+            return updatePriceAssistantsState;
+        }
+
+        function setupSpecsAssistant() {
+            const specsInput = document.getElementById('productSpecs');
+
+            if (!specsInput) {
+                return null;
+            }
+
+            specsInput.addEventListener('input', validateSpecsHint);
+            specsInput.addEventListener('blur', validateSpecsHint);
+
+            validateSpecsHint();
+            return () => {
+                validateSpecsHint();
+            };
+        }
+
+        function setupProductFormAssistants() {
+            if (productFormAssistantsInitialized) {
+                refreshProductFormAssistants();
+                return;
+            }
+
+            productFormAssistantsInitialized = true;
+            productFormAssistantRefreshers.length = 0;
+
+            const shortDescCounter = setupCharacterCounter(
+                'productShortDesc',
+                'shortDescCounter',
+                PRODUCT_FIELD_LIMITS.shortDesc
+            );
+            if (shortDescCounter) {
+                productFormAssistantRefreshers.push(shortDescCounter);
+            }
+
+            const longDescCounter = setupCharacterCounter(
+                'productLongDesc',
+                'longDescCounter',
+                PRODUCT_FIELD_LIMITS.longDesc
+            );
+            if (longDescCounter) {
+                productFormAssistantRefreshers.push(longDescCounter);
+            }
+
+            const specsCounter = setupCharacterCounter(
+                'productSpecs',
+                'specsCounter',
+                PRODUCT_FIELD_LIMITS.specs
+            );
+            if (specsCounter) {
+                productFormAssistantRefreshers.push(specsCounter);
+            }
+
+            const priceAssistant = setupPriceAssistants();
+            if (priceAssistant) {
+                productFormAssistantRefreshers.push(priceAssistant);
+            }
+
+            const specsAssistant = setupSpecsAssistant();
+            if (specsAssistant) {
+                productFormAssistantRefreshers.push(specsAssistant);
+            }
+        }
+
+        function refreshProductFormAssistants() {
+            if (productFormAssistantRefreshers.length === 0) {
+                if (!productFormAssistantsInitialized) {
+                    setupProductFormAssistants();
+                }
+                return;
+            }
+
+            productFormAssistantRefreshers.forEach(refreshFn => {
+                if (typeof refreshFn === 'function') {
+                    refreshFn();
+                }
+            });
         }
 
         function escapeForSvg(value) {
@@ -1091,6 +1576,14 @@
                 importDataButton.addEventListener('click', importData);
             }
 
+            const clearProcessStatusButton = document.getElementById('clearProcessStatusButton');
+            if (clearProcessStatusButton) {
+                clearProcessStatusButton.addEventListener('click', () => {
+                    clearProcessStatusEntries();
+                    showMessage('Historial de exportaciones limpiado.', 'info');
+                });
+            }
+
             const saveConfigButton = document.getElementById('saveConfigButton');
             if (saveConfigButton) {
                 saveConfigButton.addEventListener('click', saveConfig);
@@ -1186,8 +1679,11 @@
 
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', function() {
+            resolveProcessStatusElements();
+            toggleProcessStatusEmptyState();
             registerAdminEventHandlers();
             loadData();
+            setupProductFormAssistants();
             renderFeatureInputs();
             setupImageInput();
             setupLogoInput();
@@ -1545,18 +2041,45 @@
         }
 
         // Show section
-        function showSection(section) {
-            const sections = {
+        function getNavigationSections() {
+            return {
                 config: {
                     element: document.getElementById('configSection'),
-                    button: document.querySelector('button[data-section="config"]')
+                    button: document.querySelector('button[data-section="config"]'),
+                    label: 'Configuración general'
                 },
                 products: {
                     element: document.getElementById('productsSection'),
-                    button: document.querySelector('button[data-section="products"]')
+                    button: document.querySelector('button[data-section="products"]'),
+                    label: 'Gestión de productos'
                 }
             };
+        }
 
+        function announceSectionChange(sectionKey, sectionConfig) {
+            const liveRegion = document.getElementById('navigationStatus');
+            if (!liveRegion || !sectionConfig) {
+                return;
+            }
+
+            const announcement = `Sección "${sectionConfig.label}" activa.`;
+            if (liveRegion.textContent === announcement) {
+                liveRegion.textContent = '';
+            }
+
+            const updateLiveRegion = () => {
+                liveRegion.textContent = announcement;
+            };
+
+            if (typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(updateLiveRegion);
+            } else {
+                setTimeout(updateLiveRegion, 0);
+            }
+        }
+
+        function showSection(section) {
+            const sections = getNavigationSections();
             const targetSection = sections[section] ? section : 'config';
 
             Object.keys(sections).forEach(sectionKey => {
@@ -1579,6 +2102,8 @@
                     button.setAttribute('aria-expanded', isActive ? 'true' : 'false');
                 }
             });
+
+            announceSectionChange(targetSection, sections[targetSection]);
 
             if (targetSection === 'products') {
                 loadProducts();
@@ -1664,6 +2189,8 @@
                     const shortDescHtml = escapeHtml(rawShortDesc);
                     const formattedPrice = formatCurrencyCOP(product.price);
                     const priceHtml = escapeHtml(formattedPrice);
+                    const actionLabelSource = rawName.trim() ? rawName.trim() : 'este producto';
+                    const actionLabelAttr = escapeHtml(actionLabelSource);
                     const sanitizedFeatures = Array.isArray(product.features)
                         ? product.features
                             .map(feature => (typeof feature === 'string' ? feature : ''))
@@ -1676,8 +2203,8 @@
                     return `
                 <div class="product-item" data-product-id="${product.id}" data-short-desc="${shortDescHtml}" data-features="${featuresAttr}">
                     <div class="order-controls">
-                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="up" data-product-id="${product.id}" ${disableUp}>↑</button>
-                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="down" data-product-id="${product.id}" ${disableDown}>↓</button>
+                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="up" data-product-id="${product.id}" aria-label="Mover ${actionLabelAttr} hacia arriba" title="Mover ${actionLabelAttr} hacia arriba" ${disableUp}>↑</button>
+                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="down" data-product-id="${product.id}" aria-label="Mover ${actionLabelAttr} hacia abajo" title="Mover ${actionLabelAttr} hacia abajo" ${disableDown}>↓</button>
                     </div>
                     <div class="product-thumb">
                         <img src="${imageSrc}" alt="${imageAlt}">
@@ -1687,8 +2214,8 @@
                         <div class="product-price">${priceHtml}</div>
                     </div>
                     <div class="product-actions">
-                        <button type="button" class="icon-btn edit-btn" data-action="edit" data-product-id="${product.id}">✏️</button>
-                        <button type="button" class="icon-btn delete-btn" data-action="delete" data-product-id="${product.id}">🗑️</button>
+                        <button type="button" class="icon-btn edit-btn" data-action="edit" data-product-id="${product.id}" aria-label="Editar ${actionLabelAttr}" title="Editar ${actionLabelAttr}">✏️</button>
+                        <button type="button" class="icon-btn delete-btn" data-action="delete" data-product-id="${product.id}" aria-label="Eliminar ${actionLabelAttr}" title="Eliminar ${actionLabelAttr}">🗑️</button>
                     </div>
                 </div>`;
                 })
@@ -1801,6 +2328,8 @@
                 renderFeatureInputs();
             }
 
+            refreshProductFormAssistants();
+
             modal.classList.add('active');
             modal.setAttribute('aria-hidden', 'false');
 
@@ -1853,6 +2382,7 @@
             }
             updateProductImagePreview(null);
             renderFeatureInputs();
+            refreshProductFormAssistants();
 
             if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                 lastFocusedElement.focus();
@@ -2014,17 +2544,43 @@
 
         // Export data
         function exportData() {
-            const dataStr = JSON.stringify(catalogData, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = 'amazonia_datos_' + new Date().toISOString().split('T')[0] + '.json';
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            
-            showMessage('Datos exportados correctamente', 'success');
+            const processEntryId = createProcessStatusEntry('export-data', 'Preparando datos para exportar…');
+            setExportButtonDisabled(true);
+            showMessage('Preparando archivo de exportación...', 'info');
+
+            try {
+                updateProcessStatusEntry(processEntryId, {
+                    detail: 'Serializando catálogo y configuraciones…'
+                });
+                const dataStr = JSON.stringify(catalogData, null, 2);
+
+                updateProcessStatusEntry(processEntryId, {
+                    detail: 'Generando archivo descargable…'
+                });
+                const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+                const exportFileDefaultName = 'amazonia_datos_' + new Date().toISOString().split('T')[0] + '.json';
+
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+
+                updateProcessStatusEntry(processEntryId, {
+                    state: 'success',
+                    detail: 'Archivo JSON exportado correctamente.'
+                });
+                showMessage('Datos exportados correctamente', 'success');
+            } catch (error) {
+                console.error('No se pudieron exportar los datos', error);
+                updateProcessStatusEntry(processEntryId, {
+                    state: 'error',
+                    detail: 'No se pudo completar la exportación. Revisa la información y vuelve a intentarlo.'
+                });
+                showMessage('Error al exportar los datos', 'error');
+            } finally {
+                setExportButtonDisabled(false);
+            }
         }
 
         // Import data
@@ -2081,33 +2637,66 @@
 
         // Generate Catalog
         function generateCatalog() {
-            const validation = validateConfiguration({ forExport: true });
+            const processEntryId = createProcessStatusEntry('generate-catalog', 'Validando configuración antes de generar…');
+            setGenerateButtonsDisabled(true);
+            showMessage('Validando información del catálogo...', 'info');
 
-            if (!validation.valid) {
-                showValidationErrors(validation.errors);
-                return;
+            try {
+                const validation = validateConfiguration({ forExport: true });
+
+                if (!validation.valid) {
+                    updateProcessStatusEntry(processEntryId, {
+                        state: 'error',
+                        detail: 'Faltan datos obligatorios. Revisa la configuración y vuelve a intentarlo.'
+                    });
+                    showValidationErrors(validation.errors);
+                    showMessage('Corrige los campos obligatorios antes de generar el catálogo.', 'error');
+                    return;
+                }
+
+                updateProcessStatusEntry(processEntryId, {
+                    detail: 'Guardando configuración y preparando datos…'
+                });
+                catalogData.config = validation.values;
+
+                // First save current data
+                saveData();
+
+                updateProcessStatusEntry(processEntryId, {
+                    detail: 'Compilando catálogo con tus productos…'
+                });
+                // Generate the HTML content
+                const htmlContent = generateCatalogHTML();
+
+                updateProcessStatusEntry(processEntryId, {
+                    detail: 'Generando archivo para la descarga…'
+                });
+                // Create download link
+                const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'catalogo_amazonia_' + new Date().toISOString().split('T')[0] + '.html';
+                link.click();
+
+                // Clean up
+                URL.revokeObjectURL(url);
+
+                updateProcessStatusEntry(processEntryId, {
+                    state: 'success',
+                    detail: 'Descarga completada. El catálogo está listo.'
+                });
+                showMessage('¡Catálogo generado correctamente! Revisa tu carpeta de descargas.', 'success');
+            } catch (error) {
+                console.error('No se pudo generar el catálogo', error);
+                updateProcessStatusEntry(processEntryId, {
+                    state: 'error',
+                    detail: 'Ocurrió un error inesperado al generar el catálogo. Inténtalo nuevamente.'
+                });
+                showMessage('Error al generar el catálogo. Inténtalo de nuevo.', 'error');
+            } finally {
+                setGenerateButtonsDisabled(false);
             }
-
-            catalogData.config = validation.values;
-
-            // First save current data
-            saveData();
-
-            // Generate the HTML content
-            const htmlContent = generateCatalogHTML();
-            
-            // Create download link
-            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'catalogo_amazonia_' + new Date().toISOString().split('T')[0] + '.html';
-            link.click();
-            
-            // Clean up
-            URL.revokeObjectURL(url);
-
-            showMessage('¡Catálogo generado correctamente! Revisa tu carpeta de descargas.', 'success');
         }
 
         function updateCatalogPreview() {
