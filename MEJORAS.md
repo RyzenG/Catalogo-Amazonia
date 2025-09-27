@@ -2,7 +2,6 @@
 
 ## Experiencia de usuario
 
-- Añadir etiquetas de texto visibles o `aria-label` descriptivos a los botones con solo iconos en la lista de productos para que el flujo de edición y borrado sea comprensible sin depender de la iconografía.【F:admin.js†L1679-L1691】
 - Incluir ayudas en contexto dentro de los formularios (placeholders dinámicos, ejemplos validados, contadores de caracteres) para reducir la fricción al completar campos como precio o especificaciones técnicas.【F:admin.html†L181-L198】【F:admin.js†L1918-L1934】
 - Mostrar estados de carga persistentes cuando se exporta o genera el catálogo, indicando progreso y posibles errores en lugar de solo notificaciones temporales; esto ayuda cuando se trabaja con catálogos grandes.【F:admin.js†L2000-L2012】【F:admin.js†L2083-L2110】
 
@@ -18,4 +17,3 @@
 
 ## Fiabilidad de datos y exportaciones
 - Versionar la estructura guardada en `localStorage` (`amazoniaData`) para poder migrar o invalidar datos antiguos cuando cambie el esquema y evitar errores silenciosos al parsear configuraciones previas.【F:admin.js†L1245-L1253】
-- Validar el JSON importado contra un esquema explícito antes de aceptarlo, devolviendo errores detallados y evitando que datos corruptos dejen la aplicación en un estado inconsistente.【F:admin.js†L2035-L2078】
