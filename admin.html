@@ -144,6 +144,14 @@
                 <span>📥</span> Generar Catálogo Actualizado
             </button>
             <div id="statusMessage" class="status-message" style="margin-top: 1rem"></div>
+            <div id="exportStatusPanel" class="process-panel" role="region" aria-live="polite" aria-label="Estado de generación y exportación">
+                <div class="process-panel__header">
+                    <span class="process-panel__title">Historial de generación y exportación</span>
+                    <button type="button" class="process-panel__clear" id="clearProcessStatusButton">Limpiar historial</button>
+                </div>
+                <p class="process-panel__empty" id="exportStatusEmpty">Aún no has ejecutado exportaciones ni generado el catálogo.</p>
+                <ul class="process-panel__list" id="exportStatusList" role="log"></ul>
+            </div>
         </div>
     </div>
 

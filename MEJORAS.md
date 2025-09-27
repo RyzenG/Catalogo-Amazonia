@@ -2,7 +2,6 @@
 
 ## Experiencia de usuario
 
-- Mostrar estados de carga persistentes cuando se exporta o genera el catálogo, indicando progreso y posibles errores en lugar de solo notificaciones temporales; esto ayuda cuando se trabaja con catálogos grandes.【F:admin.js†L2000-L2012】【F:admin.js†L2083-L2110】
 
 ## Accesibilidad e internacionalización
 - Mantener sincronizados los atributos `aria-expanded` de los botones de navegación con el estado visual de las secciones, y comunicar el cambio en un `aria-live` dedicado para los lectores de pantalla.【F:admin.js†L1548-L1580】
@@ -15,3 +14,4 @@
 - Extraer las utilidades compartidas (normalización de IDs, formateo de moneda, sanitización) a un módulo independiente o carpeta `utils/` para promover su reutilización y disminuir duplicidades en validaciones.【F:admin.js†L34-L243】
 
 ## Fiabilidad de datos y exportaciones
+
