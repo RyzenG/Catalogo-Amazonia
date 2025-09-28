@@ -12,8 +12,8 @@ El panel de administración permite a Amazonia Concrete configurar su informaci�
 
 ## Manejo de imágenes
 - **Preferencia por URLs directas**: el formulario de productos incluye un campo para pegar enlaces a imágenes, recomendando explícitamente el uso de rutas de `raw.githubusercontent.com` para recursos alojados en GitHub, lo que evita redirecciones y facilita la carga desde el catálogo final.
-- **Entrada mediante enlaces**: todas las imágenes de productos se gestionan a través de URLs proporcionadas por el usuario. El panel guarda únicamente la cadena del enlace (`product.image`), por lo que no se almacena contenido binario ni representaciones en Base64 dentro del catálogo.
-- **Lógica de visualización**: `getProductImageSource()` utiliza la URL registrada en `product.image`; si no hay una imagen definida, genera un marcador SVG con el icono o emoji del producto para garantizar una presentación consistente.
+- **Entrada mediante enlaces**: las imágenes de cada producto se gestionan mediante un área de texto donde se ingresa una URL por línea. El sistema guarda todas las rutas válidas en `product.images` y toma la primera como principal, sin almacenar contenido binario ni cadenas en Base64.
+- **Lógica de visualización**: `getProductImageSource()` utiliza la primera URL disponible en `product.images`; si la lista está vacía, genera un marcador SVG con el icono o emoji correspondiente. En el catálogo público, el modal del producto habilita flechas de navegación y un contador para recorrer la galería cuando hay varias fotografías.
 
 ## Guardado, carga y portabilidad de datos
 - **Persistencia local**: `loadData()` intenta leer la clave `amazoniaData` desde `localStorage`, reconstruye la estructura de categorías/productos y refresca la interfaz. `saveData()` asegura la estructura interna, guarda el JSON serializado en la misma clave y refresca la vista previa.
