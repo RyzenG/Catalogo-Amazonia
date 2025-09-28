@@ -1,5 +1,6 @@
 import { createCategoriesModule } from './modules/categories.js';
 import { createProductTemplates } from './modules/productTemplates.js';
+import { createProcessStatusManager } from './modules/processStatus.js';
 import {
         escapeHtml,
         formatCurrencyCOP,
@@ -110,200 +111,21 @@ import {
             getProductImageSource
         });
 
-        const processStatusEntries = new Map();
-        let processStatusCounter = 0;
-        let processStatusListElement = null;
-        let processStatusEmptyElement = null;
-        let processStatusPanelElement = null;
-        let processStatusClearButton = null;
-        const PROCESS_LABELS = {
-            'generate-catalog': 'Generar catálogo',
-            'export-data': 'Exportar datos'
-        };
-        const PROCESS_STATE_CLASSES = [
-            'process-panel__item--running',
-            'process-panel__item--success',
-            'process-panel__item--error'
-        ];
+        const processStatusManager = createProcessStatusManager({
+            labels: {
+                'generate-catalog': 'Generar catálogo',
+                'export-data': 'Exportar datos'
+            }
+        });
+        const {
+            resolveElements: resolveProcessStatusElements,
+            toggleEmptyState: toggleProcessStatusEmptyState,
+            createEntry: createProcessStatusEntry,
+            updateEntry: updateProcessStatusEntry,
+            clearEntries: clearProcessStatusEntries,
+            setElementBusyState
+        } = processStatusManager;
         const MODAL_FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
-        function resolveProcessStatusElements() {
-            if (!processStatusPanelElement || !processStatusPanelElement.isConnected) {
-                processStatusPanelElement = document.getElementById('exportStatusPanel');
-            }
-
-            if (!processStatusListElement || !processStatusListElement.isConnected) {
-                processStatusListElement = document.getElementById('exportStatusList');
-            }
-
-            if (!processStatusEmptyElement || !processStatusEmptyElement.isConnected) {
-                processStatusEmptyElement = document.getElementById('exportStatusEmpty');
-            }
-
-            if (!processStatusClearButton || !processStatusClearButton.isConnected) {
-                processStatusClearButton = document.getElementById('clearProcessStatusButton');
-            }
-
-            if (!processStatusPanelElement || !processStatusListElement) {
-                return null;
-            }
-
-            return {
-                panel: processStatusPanelElement,
-                list: processStatusListElement,
-                empty: processStatusEmptyElement,
-                clearButton: processStatusClearButton
-            };
-        }
-
-        function toggleProcessStatusEmptyState() {
-            const elements = resolveProcessStatusElements();
-
-            if (!elements) {
-                return;
-            }
-
-            const hasItems = elements.list.children.length > 0;
-
-            if (elements.empty) {
-                elements.empty.hidden = hasItems;
-            }
-
-            if (elements.clearButton) {
-                elements.clearButton.disabled = !hasItems;
-            }
-        }
-
-        function formatProcessTime(date) {
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            return `${hours}:${minutes}`;
-        }
-
-        function createProcessStatusEntry(operation, initialDetail = 'Iniciando…') {
-            const elements = resolveProcessStatusElements();
-
-            if (!elements) {
-                return null;
-            }
-
-            const label = PROCESS_LABELS[operation] || 'Proceso';
-            const now = new Date();
-            processStatusCounter += 1;
-            const entryId = `${operation}-${now.getTime()}-${processStatusCounter}`;
-
-            const item = document.createElement('li');
-            item.className = 'process-panel__item process-panel__item--running';
-            item.setAttribute('data-operation', operation);
-            item.setAttribute('data-entry-id', entryId);
-            item.setAttribute('role', 'status');
-
-            const icon = document.createElement('span');
-            icon.className = 'process-panel__icon';
-            icon.setAttribute('aria-hidden', 'true');
-
-            const content = document.createElement('div');
-            content.className = 'process-panel__content';
-
-            const row = document.createElement('div');
-            row.className = 'process-panel__row';
-
-            const labelElement = document.createElement('span');
-            labelElement.className = 'process-panel__label';
-            labelElement.textContent = label;
-
-            const timeElement = document.createElement('time');
-            timeElement.className = 'process-panel__time';
-            timeElement.setAttribute('datetime', now.toISOString());
-            timeElement.textContent = formatProcessTime(now);
-
-            row.appendChild(labelElement);
-            row.appendChild(timeElement);
-
-            const detailElement = document.createElement('p');
-            detailElement.className = 'process-panel__detail';
-            detailElement.textContent = initialDetail;
-
-            content.appendChild(row);
-            content.appendChild(detailElement);
-
-            item.appendChild(icon);
-            item.appendChild(content);
-
-            elements.list.prepend(item);
-            processStatusEntries.set(entryId, {
-                element: item,
-                detail: detailElement,
-                icon
-            });
-
-            toggleProcessStatusEmptyState();
-
-            return entryId;
-        }
-
-        function updateProcessStatusEntry(entryId, options = {}) {
-            if (!entryId || !processStatusEntries.has(entryId)) {
-                return;
-            }
-
-            const entry = processStatusEntries.get(entryId);
-            const { element, detail, icon } = entry;
-            const { state, detail: detailText } = options;
-
-            if (typeof detailText === 'string') {
-                detail.textContent = detailText;
-            }
-
-            if (state) {
-                PROCESS_STATE_CLASSES.forEach(className => {
-                    element.classList.remove(className);
-                });
-
-                const targetClass = `process-panel__item--${state}`;
-                element.classList.add(targetClass);
-
-                if (state === 'success') {
-                    icon.textContent = '✓';
-                } else if (state === 'error') {
-                    icon.textContent = '!';
-                } else {
-                    icon.textContent = '';
-                }
-            }
-        }
-
-        function clearProcessStatusEntries() {
-            const elements = resolveProcessStatusElements();
-
-            processStatusEntries.forEach(entry => {
-                if (entry.element && entry.element.parentNode) {
-                    entry.element.parentNode.removeChild(entry.element);
-                }
-            });
-
-            processStatusEntries.clear();
-
-            if (elements && elements.list) {
-                elements.list.innerHTML = '';
-            }
-
-            toggleProcessStatusEmptyState();
-        }
-
-        function setElementBusyState(element, isBusy) {
-            if (!element) {
-                return;
-            }
-
-            element.disabled = !!isBusy;
-
-            if (isBusy) {
-                element.setAttribute('aria-busy', 'true');
-            } else {
-                element.removeAttribute('aria-busy');
-            }
-        }
 
         function setGenerateButtonsDisabled(isDisabled) {
             const generateButtons = document.querySelectorAll('button[data-action="generate-catalog"]');
