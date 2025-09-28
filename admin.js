@@ -1,3 +1,14 @@
+import { createCategoriesModule } from './modules/categories.js';
+import { createProductTemplates } from './modules/productTemplates.js';
+import {
+        escapeHtml,
+        formatCurrencyCOP,
+        generateCategoryId,
+        getProductImageSource,
+        isPlainObject,
+        stripLegacyImageData
+} from './modules/utils.js';
+
         // Default data structure
         const defaultConfig = {
             whatsapp: '573000000000',
@@ -67,6 +78,38 @@
         let currentIconFallback = '';
         let lastFocusedElement = null;
         let modalKeydownHandler = null;
+
+        const getCatalogData = () => catalogData;
+        const setCatalogData = (data) => {
+            catalogData = data;
+        };
+        const getCurrentCategory = () => currentCategory;
+        const setCurrentCategoryState = (value) => {
+            currentCategory = value;
+        };
+
+        const categories = createCategoriesModule({
+            getCatalogData,
+            setCatalogData,
+            getCurrentCategory,
+            setCurrentCategory: setCurrentCategoryState,
+            defaultConfig,
+            defaultCategories,
+            createDefaultProductsMap,
+            generateCategoryId,
+            loadProducts,
+            saveData,
+            showMessage,
+            isPlainObject,
+            stripLegacyImageData
+        });
+
+        const productTemplates = createProductTemplates({
+            escapeHtml,
+            formatCurrency: formatCurrencyCOP,
+            getProductImageSource
+        });
+
         const processStatusEntries = new Map();
         let processStatusCounter = 0;
         let processStatusListElement = null;
@@ -274,152 +317,6 @@
             setElementBusyState(exportButton, isDisabled);
         }
 
-        function generateCategoryId(value) {
-            if (!value) {
-                return 'categoria';
-            }
-
-            const normalized = value
-                .toString()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/(^-|-$)/g, '');
-
-            return normalized || 'categoria';
-        }
-
-        function ensureUniqueCategoryId(baseId, existingIds) {
-            const fallback = baseId || 'categoria';
-            let candidate = fallback;
-            let counter = 1;
-
-            while (existingIds.has(candidate)) {
-                candidate = `${fallback}-${counter}`;
-                counter += 1;
-            }
-
-            return candidate;
-        }
-
-        function formatCategoryLabel(id) {
-            if (!id) {
-                return 'Categoría';
-            }
-
-            return id
-                .replace(/[-_]+/g, ' ')
-                .replace(/^(.)/, (match, char) => char.toUpperCase());
-        }
-
-        function isPlainObject(value) {
-            return typeof value === 'object' && value !== null && !Array.isArray(value);
-        }
-
-        function createLegacyCategoryResolver(rawInfo) {
-            if (!isPlainObject(rawInfo)) {
-                return {
-                    lookup: () => null,
-                    fallbackCategories: []
-                };
-            }
-
-            const lookupMap = new Map();
-            const fallbackCategories = [];
-            const usedFallbackIds = new Set();
-
-            Object.entries(rawInfo).forEach(([key, value]) => {
-                if (value === null || typeof value === 'undefined') {
-                    return;
-                }
-
-                const normalizedEntry = isPlainObject(value) ? { ...value } : { title: value };
-                const rawTitle = (normalizedEntry.title || normalizedEntry.name || (typeof key === 'string' ? key : '') || '').toString().trim();
-                const rawDescription = (normalizedEntry.description || normalizedEntry.desc || '').toString();
-                const rawIcon = (normalizedEntry.icon || normalizedEntry.emoji || '').toString().trim();
-
-                const baseIdSource = typeof key === 'string' && key ? key : rawTitle;
-                let sanitizedId = generateCategoryId(baseIdSource || rawTitle || 'categoria');
-                sanitizedId = ensureUniqueCategoryId(sanitizedId, usedFallbackIds);
-                usedFallbackIds.add(sanitizedId);
-
-                const displayTitle = rawTitle || formatCategoryLabel(sanitizedId);
-                const displayIcon = rawIcon || '📦';
-
-                const metadata = {
-                    icon: displayIcon,
-                    title: displayTitle,
-                    description: rawDescription
-                };
-
-                const candidateKeys = new Set([
-                    typeof key === 'string' ? key : '',
-                    rawTitle,
-                    sanitizedId
-                ].filter(Boolean));
-
-                candidateKeys.forEach(candidate => {
-                    lookupMap.set(candidate, metadata);
-                    lookupMap.set(candidate.toLowerCase(), metadata);
-                });
-
-                fallbackCategories.push({
-                    id: sanitizedId,
-                    name: displayTitle,
-                    icon: displayIcon,
-                    description: rawDescription
-                });
-            });
-
-            return {
-                lookup: values => {
-                    const candidates = Array.isArray(values) ? values : [values];
-                    for (const candidate of candidates) {
-                        if (typeof candidate !== 'string' || !candidate) {
-                            continue;
-                        }
-
-                        if (lookupMap.has(candidate)) {
-                            return lookupMap.get(candidate);
-                        }
-
-                        const lowerCandidate = candidate.toLowerCase();
-                        if (lookupMap.has(lowerCandidate)) {
-                            return lookupMap.get(lowerCandidate);
-                        }
-
-                        const sanitizedCandidate = generateCategoryId(candidate);
-                        if (sanitizedCandidate) {
-                            if (lookupMap.has(sanitizedCandidate)) {
-                                return lookupMap.get(sanitizedCandidate);
-                            }
-
-                            const sanitizedLower = sanitizedCandidate.toLowerCase();
-                            if (lookupMap.has(sanitizedLower)) {
-                                return lookupMap.get(sanitizedLower);
-                            }
-                        }
-                    }
-
-                    return null;
-                },
-                fallbackCategories
-            };
-        }
-
-        function escapeHtml(value) {
-            if (typeof value !== 'string') {
-                return '';
-            }
-            return value
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
         const SOCIAL_ICON_SVGS = {
             whatsapp: `<svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>`,
             instagram: `<svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg>`,
@@ -429,67 +326,6 @@
 
         function getSocialIconSvg(name) {
             return SOCIAL_ICON_SVGS[name] || '';
-        }
-
-        const COP_CURRENCY_FORMATTER = new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-            currencyDisplay: 'code',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
-
-        function formatCurrencyCOP(value) {
-            if (value === null || typeof value === 'undefined') {
-                return '';
-            }
-
-            if (typeof value === 'number' && !Number.isFinite(value)) {
-                return '';
-            }
-
-            const stringValue = typeof value === 'number' ? String(value) : String(value);
-            if (!stringValue) {
-                return '';
-            }
-
-            const match = stringValue.match(/[\d][\d.,]*/);
-            if (!match) {
-                return '';
-            }
-
-            const numericChunk = match[0];
-            const digitsOnly = numericChunk.replace(/[^\d]/g, '');
-            if (!digitsOnly) {
-                return '';
-            }
-
-            const parsedValue = parseInt(digitsOnly, 10);
-            if (Number.isNaN(parsedValue)) {
-                return '';
-            }
-
-            const formatted = COP_CURRENCY_FORMATTER.format(parsedValue);
-            let prefix = stringValue.slice(0, match.index);
-            let suffix = stringValue.slice(match.index + numericChunk.length);
-
-            const prefixWithoutCop = prefix.replace(/\s*COP\s*$/i, '');
-            if (prefixWithoutCop !== prefix) {
-                prefix = prefixWithoutCop;
-                if (prefix && !/\s$/.test(prefix)) {
-                    prefix += ' ';
-                }
-            }
-
-            const suffixWithoutCop = suffix.replace(/^\s*COP\s*/i, '');
-            if (suffixWithoutCop !== suffix) {
-                suffix = suffixWithoutCop;
-                if (suffix && !/^\s/.test(suffix)) {
-                    suffix = ` ${suffix}`;
-                }
-            }
-
-            return `${prefix}${formatted}${suffix}`;
         }
 
         const PRODUCT_FIELD_LIMITS = {
@@ -772,653 +608,6 @@
             });
         }
 
-        function escapeForSvg(value) {
-            if (typeof value !== 'string') {
-                return '';
-            }
-            return value
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-
-        function createIconPlaceholder(icon, name) {
-            const displayIcon = escapeForSvg(icon || '🛠️');
-            const displayName = escapeForSvg(name || 'Producto Amazonia');
-            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
-                <defs>
-                    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-                        <stop offset="0%" stop-color="#f0f0f0" />
-                        <stop offset="100%" stop-color="#e0e0e0" />
-                    </linearGradient>
-                </defs>
-                <rect width="600" height="400" fill="url(#bg)" />
-                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="140">${displayIcon}</text>
-                <text x="50%" y="78%" dominant-baseline="middle" text-anchor="middle" font-size="36" fill="#4d4d4d">${displayName}</text>
-            </svg>`;
-            return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-        }
-
-        function getProductImageSource(product, fallbackIcon = '🛠️') {
-            if (!product) {
-                return createIconPlaceholder(fallbackIcon, 'Producto Amazonia');
-            }
-
-            if (product.image) {
-                return product.image;
-            }
-
-            const iconValue = product.icon || fallbackIcon;
-            const nameValue = product.name || 'Producto Amazonia';
-
-            if (!iconValue) {
-                return createIconPlaceholder('🛠️', nameValue);
-            }
-
-            return createIconPlaceholder(iconValue, nameValue);
-        }
-
-        function stripLegacyImageData(productsByCategory) {
-            if (!productsByCategory || typeof productsByCategory !== 'object') {
-                return;
-            }
-
-            Object.values(productsByCategory).forEach(productList => {
-                if (!Array.isArray(productList)) {
-                    return;
-                }
-
-                productList.forEach(product => {
-                    if (product && typeof product === 'object' && Object.prototype.hasOwnProperty.call(product, 'imageData')) {
-                        delete product.imageData;
-                    }
-                });
-            });
-        }
-
-        function ensureCategoryStructure() {
-            if (!catalogData || typeof catalogData !== 'object') {
-                catalogData = {
-                    config: { ...defaultConfig },
-                    categories: defaultCategories.map(category => ({ ...category })),
-                    products: createDefaultProductsMap(defaultCategories),
-                    categoryInfo: {}
-                };
-            }
-
-            if (!isPlainObject(catalogData.categoryInfo)) {
-                catalogData.categoryInfo = {};
-            }
-
-            const legacyCategoryResolver = createLegacyCategoryResolver(catalogData.categoryInfo);
-
-            let rawCategories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
-            if (rawCategories.length === 0) {
-                if (legacyCategoryResolver.fallbackCategories.length > 0) {
-                    rawCategories = legacyCategoryResolver.fallbackCategories.map(category => ({ ...category }));
-                } else {
-                    rawCategories = defaultCategories.map(category => ({ ...category }));
-                }
-            }
-
-            const categoryMappings = [];
-
-            catalogData.categories = rawCategories.map((category, index) => {
-                let normalized;
-                const candidateValues = [];
-
-                if (typeof category === 'string') {
-                    normalized = { name: category };
-                    candidateValues.push(category);
-                } else if (isPlainObject(category)) {
-                    normalized = { ...category };
-                    ['id', 'name', 'title', 'label', 'category'].forEach(key => {
-                        if (typeof normalized[key] === 'string' && normalized[key]) {
-                            candidateValues.push(normalized[key]);
-                        }
-                    });
-                } else {
-                    normalized = {};
-                }
-
-                const originalId = typeof normalized.id === 'string' ? normalized.id : null;
-                if (originalId) {
-                    candidateValues.push(originalId);
-                }
-
-                const legacyMeta = legacyCategoryResolver.lookup(candidateValues);
-
-                const nameCandidates = [
-                    typeof normalized.name === 'string' ? normalized.name.trim() : '',
-                    typeof normalized.title === 'string' ? normalized.title.trim() : '',
-                    typeof normalized.label === 'string' ? normalized.label.trim() : '',
-                    typeof normalized.category === 'string' ? normalized.category.trim() : '',
-                    legacyMeta && legacyMeta.title ? legacyMeta.title : ''
-                ].filter(Boolean);
-
-                let resolvedName = nameCandidates.length > 0 ? nameCandidates[0] : '';
-                if (!resolvedName && originalId) {
-                    resolvedName = formatCategoryLabel(originalId);
-                }
-                if (!resolvedName && candidateValues.length > 0) {
-                    const fallbackCandidate = candidateValues.find(value => typeof value === 'string' && value);
-                    if (fallbackCandidate) {
-                        resolvedName = formatCategoryLabel(fallbackCandidate);
-                    }
-                }
-                if (!resolvedName) {
-                    resolvedName = 'Nueva categoría';
-                }
-
-                const idCandidates = [
-                    originalId,
-                    typeof normalized.id === 'string' ? normalized.id : '',
-                    typeof normalized.category === 'string' ? normalized.category : '',
-                    resolvedName,
-                    legacyMeta && legacyMeta.title ? legacyMeta.title : ''
-                ];
-
-                let sanitizedId = null;
-                for (const candidate of idCandidates) {
-                    if (typeof candidate !== 'string' || !candidate) {
-                        continue;
-                    }
-
-                    const possible = generateCategoryId(candidate);
-                    if (possible) {
-                        sanitizedId = possible;
-                        break;
-                    }
-                }
-
-                if (!sanitizedId) {
-                    sanitizedId = generateCategoryId('categoria');
-                }
-
-                const iconCandidates = [
-                    typeof normalized.icon === 'string' ? normalized.icon.trim() : '',
-                    typeof normalized.emoji === 'string' ? normalized.emoji.trim() : '',
-                    legacyMeta && legacyMeta.icon ? legacyMeta.icon : ''
-                ].filter(Boolean);
-                const resolvedIcon = iconCandidates.length > 0 ? iconCandidates[0] : '📦';
-
-                const descriptionCandidates = [
-                    typeof normalized.description === 'string' ? normalized.description : '',
-                    typeof normalized.desc === 'string' ? normalized.desc : '',
-                    legacyMeta && legacyMeta.description ? legacyMeta.description : ''
-                ];
-                const resolvedDescription = descriptionCandidates.find(value => typeof value === 'string' && value.trim().length > 0) || '';
-
-                const mappingCandidates = new Set(candidateValues.filter(value => typeof value === 'string' && value));
-                mappingCandidates.add(resolvedName);
-                mappingCandidates.add(sanitizedId);
-                if (legacyMeta && legacyMeta.title) {
-                    mappingCandidates.add(legacyMeta.title);
-                }
-
-                categoryMappings[index] = {
-                    index,
-                    originalId,
-                    sanitizedId,
-                    finalId: sanitizedId,
-                    candidates: Array.from(mappingCandidates)
-                };
-
-                normalized.id = sanitizedId;
-                normalized.name = resolvedName;
-                normalized.icon = resolvedIcon;
-                normalized.description = resolvedDescription;
-
-                return normalized;
-            });
-
-            const existingIds = new Set();
-            catalogData.categories.forEach((category, index) => {
-                const uniqueId = ensureUniqueCategoryId(category.id, existingIds);
-                if (uniqueId !== category.id) {
-                    category.id = uniqueId;
-                }
-                categoryMappings[index].finalId = category.id;
-                existingIds.add(category.id);
-            });
-
-            if (!catalogData.products || typeof catalogData.products !== 'object') {
-                catalogData.products = {};
-            }
-
-            const currentProducts = catalogData.products;
-            const remappedProducts = {};
-
-            catalogData.categories.forEach((category, index) => {
-                const mapping = categoryMappings[index];
-                const candidateIds = [];
-
-                if (mapping.finalId) {
-                    candidateIds.push(mapping.finalId);
-                }
-
-                if (Array.isArray(mapping.candidates)) {
-                    mapping.candidates.forEach(value => {
-                        if (value && !candidateIds.includes(value)) {
-                            candidateIds.push(value);
-                        }
-                    });
-                }
-
-                if (mapping.originalId && !candidateIds.includes(mapping.originalId)) {
-                    candidateIds.push(mapping.originalId);
-                }
-
-                let assignedProducts = null;
-                candidateIds.some(id => {
-                    if (Array.isArray(currentProducts[id])) {
-                        assignedProducts = currentProducts[id];
-                        return true;
-                    }
-                    return false;
-                });
-
-                remappedProducts[category.id] = Array.isArray(assignedProducts) ? assignedProducts : [];
-            });
-
-            catalogData.products = remappedProducts;
-            stripLegacyImageData(catalogData.products);
-
-            const validIds = new Set(catalogData.categories.map(category => category.id));
-
-            if (!currentCategory || !validIds.has(currentCategory)) {
-                currentCategory = catalogData.categories[0] ? catalogData.categories[0].id : '';
-            }
-        }
-
-        function renderCategoryTabs() {
-            const tabsContainer = document.getElementById('categoryTabs');
-            if (!tabsContainer) {
-                return;
-            }
-
-            tabsContainer.innerHTML = '';
-
-            if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
-                const message = document.createElement('p');
-                message.className = 'category-empty-message';
-                message.textContent = 'Crea una categoría para comenzar a añadir productos.';
-                tabsContainer.appendChild(message);
-                return;
-            }
-
-            catalogData.categories.forEach(category => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'tab' + (category.id === currentCategory ? ' active' : '');
-                button.dataset.category = category.id;
-                const label = `${category.icon || '📦'} ${category.name || formatCategoryLabel(category.id)}`;
-                button.textContent = label;
-                button.addEventListener('click', () => {
-                    setCurrentCategory(category.id);
-                });
-                tabsContainer.appendChild(button);
-            });
-        }
-
-        function renderCategoryOptions(selectedId) {
-            const select = document.getElementById('productCategory');
-            if (!select) {
-                return;
-            }
-
-            const previousValue = typeof selectedId !== 'undefined' ? selectedId : select.value;
-            select.innerHTML = '';
-
-            if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Sin categorías disponibles';
-                select.appendChild(option);
-                select.disabled = true;
-                return;
-            }
-
-            select.disabled = false;
-
-            catalogData.categories.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category.id;
-                option.textContent = `${category.icon || '📦'} ${category.name || formatCategoryLabel(category.id)}`;
-                select.appendChild(option);
-            });
-
-            const availableIds = catalogData.categories.map(category => category.id);
-            const targetValue = availableIds.includes(previousValue) ? previousValue : (availableIds[0] || '');
-            select.value = targetValue;
-        }
-
-        function refreshCategoriesUI(options = {}) {
-            const { preserveCurrent = true, load = false } = options;
-
-            ensureCategoryStructure();
-
-            const availableIds = catalogData.categories.map(category => category.id);
-            if (!preserveCurrent || !availableIds.includes(currentCategory)) {
-                currentCategory = availableIds[0] || '';
-            }
-
-            renderCategoryTabs();
-            renderCategoryOptions(currentCategory);
-
-            const openProductButton = document.getElementById('openProductModalButton');
-            if (openProductButton) {
-                openProductButton.disabled = availableIds.length === 0;
-            }
-
-            if (load) {
-                loadProducts();
-            }
-        }
-
-        function setCurrentCategory(categoryId) {
-            ensureCategoryStructure();
-            const availableIds = catalogData.categories.map(category => category.id);
-            if (!availableIds.includes(categoryId)) {
-                categoryId = availableIds[0] || '';
-            }
-
-            currentCategory = categoryId;
-            renderCategoryTabs();
-            renderCategoryOptions(currentCategory);
-            loadProducts();
-        }
-
-        function resetNewCategoryForm() {
-            const nameInput = document.getElementById('newCategoryName');
-            const iconInput = document.getElementById('newCategoryIcon');
-            const descriptionInput = document.getElementById('newCategoryDescription');
-
-            if (nameInput) {
-                nameInput.value = '';
-            }
-
-            if (iconInput) {
-                iconInput.value = '';
-            }
-
-            if (descriptionInput) {
-                descriptionInput.value = '';
-            }
-        }
-
-        function renderCategoryManagerList() {
-            const list = document.getElementById('categoryManagerList');
-            if (!list) {
-                return;
-            }
-
-            list.innerHTML = '';
-
-            if (!Array.isArray(catalogData.categories) || catalogData.categories.length === 0) {
-                const message = document.createElement('p');
-                message.className = 'category-empty-message';
-                message.textContent = 'No hay categorías disponibles. Añade una nueva para comenzar.';
-                list.appendChild(message);
-                return;
-            }
-
-            const totalCategories = catalogData.categories.length;
-
-            catalogData.categories.forEach((category, index) => {
-                const item = document.createElement('div');
-                item.className = 'category-manager-item';
-                item.dataset.categoryId = category.id;
-
-                const grid = document.createElement('div');
-                grid.className = 'category-manager-grid';
-
-                const nameGroup = document.createElement('div');
-                nameGroup.className = 'form-group';
-                const nameLabel = document.createElement('label');
-                nameLabel.textContent = 'Nombre';
-                const nameInput = document.createElement('input');
-                nameInput.type = 'text';
-                nameInput.value = category.name || '';
-                nameInput.setAttribute('data-field', 'name');
-                nameGroup.appendChild(nameLabel);
-                nameGroup.appendChild(nameInput);
-
-                const iconGroup = document.createElement('div');
-                iconGroup.className = 'form-group';
-                const iconLabel = document.createElement('label');
-                iconLabel.textContent = 'Icono';
-                const iconInput = document.createElement('input');
-                iconInput.type = 'text';
-                iconInput.value = category.icon || '';
-                iconInput.setAttribute('data-field', 'icon');
-                iconGroup.appendChild(iconLabel);
-                iconGroup.appendChild(iconInput);
-
-                grid.appendChild(nameGroup);
-                grid.appendChild(iconGroup);
-
-                const descriptionGroup = document.createElement('div');
-                descriptionGroup.className = 'form-group';
-                const descriptionLabel = document.createElement('label');
-                descriptionLabel.textContent = 'Descripción';
-                const descriptionInput = document.createElement('textarea');
-                descriptionInput.rows = 3;
-                descriptionInput.value = category.description || '';
-                descriptionInput.setAttribute('data-field', 'description');
-                descriptionGroup.appendChild(descriptionLabel);
-                descriptionGroup.appendChild(descriptionInput);
-
-                const actions = document.createElement('div');
-                actions.className = 'category-manager-item-actions';
-
-                const moveUpButton = document.createElement('button');
-                moveUpButton.type = 'button';
-                moveUpButton.className = 'btn btn-secondary';
-                moveUpButton.textContent = '⬆️ Subir';
-                moveUpButton.title = 'Mover categoría hacia arriba';
-                moveUpButton.disabled = index === 0;
-                moveUpButton.addEventListener('click', () => moveCategory(category.id, -1));
-
-                const moveDownButton = document.createElement('button');
-                moveDownButton.type = 'button';
-                moveDownButton.className = 'btn btn-secondary';
-                moveDownButton.textContent = '⬇️ Bajar';
-                moveDownButton.title = 'Mover categoría hacia abajo';
-                moveDownButton.disabled = index === totalCategories - 1;
-                moveDownButton.addEventListener('click', () => moveCategory(category.id, 1));
-
-                const deleteButton = document.createElement('button');
-                deleteButton.type = 'button';
-                deleteButton.className = 'btn btn-danger';
-                deleteButton.textContent = 'Eliminar';
-                deleteButton.disabled = totalCategories <= 1;
-                if (deleteButton.disabled) {
-                    deleteButton.title = 'Debe existir al menos una categoría activa.';
-                }
-                deleteButton.addEventListener('click', () => deleteCategory(category.id));
-
-                actions.appendChild(moveUpButton);
-                actions.appendChild(moveDownButton);
-                actions.appendChild(deleteButton);
-
-                item.appendChild(grid);
-                item.appendChild(descriptionGroup);
-                item.appendChild(actions);
-
-                list.appendChild(item);
-            });
-        }
-
-        function captureCategoryManagerValues() {
-            const list = document.getElementById('categoryManagerList');
-            if (!list) {
-                return;
-            }
-
-            const items = Array.from(list.querySelectorAll('.category-manager-item'));
-            if (items.length === 0) {
-                return;
-            }
-
-            const updatedCategories = [];
-            const seenIds = new Set();
-
-            items.forEach(item => {
-                const categoryId = item.dataset.categoryId;
-                if (!categoryId) {
-                    return;
-                }
-
-                const category = catalogData.categories.find(cat => cat.id === categoryId);
-                if (!category) {
-                    return;
-                }
-
-                const nameInput = item.querySelector('[data-field="name"]');
-                const iconInput = item.querySelector('[data-field="icon"]');
-                const descriptionInput = item.querySelector('[data-field="description"]');
-
-                category.name = (nameInput && nameInput.value.trim()) || 'Nueva categoría';
-                category.icon = (iconInput && iconInput.value.trim()) || '📦';
-                category.description = descriptionInput ? descriptionInput.value : '';
-
-                updatedCategories.push(category);
-                seenIds.add(categoryId);
-            });
-
-            if (updatedCategories.length > 0) {
-                const remainingCategories = catalogData.categories.filter(category => !seenIds.has(category.id));
-                catalogData.categories = [...updatedCategories, ...remainingCategories];
-            }
-        }
-
-        function moveCategory(categoryId, direction) {
-            ensureCategoryStructure();
-            captureCategoryManagerValues();
-
-            const currentIndex = catalogData.categories.findIndex(category => category.id === categoryId);
-            if (currentIndex === -1) {
-                return;
-            }
-
-            const targetIndex = currentIndex + direction;
-            if (targetIndex < 0 || targetIndex >= catalogData.categories.length) {
-                return;
-            }
-
-            const [movedCategory] = catalogData.categories.splice(currentIndex, 1);
-            catalogData.categories.splice(targetIndex, 0, movedCategory);
-
-            refreshCategoriesUI({ preserveCurrent: true, load: true });
-            saveData({ silent: true });
-            renderCategoryManagerList();
-            showMessage('Orden de categorías actualizado', 'success');
-        }
-
-        function openCategoryModal() {
-            ensureCategoryStructure();
-            renderCategoryManagerList();
-            resetNewCategoryForm();
-
-            const modal = document.getElementById('categoryModal');
-            if (modal) {
-                modal.classList.add('active');
-            }
-        }
-
-        function closeCategoryModal() {
-            const modal = document.getElementById('categoryModal');
-            if (modal) {
-                modal.classList.remove('active');
-            }
-        }
-
-        function handleAddCategory() {
-            ensureCategoryStructure();
-            captureCategoryManagerValues();
-
-            const nameInput = document.getElementById('newCategoryName');
-            const iconInput = document.getElementById('newCategoryIcon');
-            const descriptionInput = document.getElementById('newCategoryDescription');
-
-            if (!nameInput) {
-                return;
-            }
-
-            const nameValue = nameInput.value.trim();
-            if (!nameValue) {
-                alert('Ingresa un nombre para la nueva categoría.');
-                return;
-            }
-
-            const iconValue = iconInput ? iconInput.value.trim() : '';
-            const descriptionValue = descriptionInput ? descriptionInput.value.trim() : '';
-
-            const existingIds = new Set(catalogData.categories.map(category => category.id));
-            const baseId = generateCategoryId(nameValue);
-            const newId = ensureUniqueCategoryId(baseId, existingIds);
-
-            const newCategory = {
-                id: newId,
-                name: nameValue,
-                icon: iconValue || '📦',
-                description: descriptionValue
-            };
-
-            catalogData.categories.push(newCategory);
-            catalogData.products[newCategory.id] = [];
-
-            currentCategory = newCategory.id;
-            refreshCategoriesUI({ preserveCurrent: true, load: true });
-            saveData();
-            showMessage('Categoría añadida correctamente', 'success');
-            renderCategoryManagerList();
-            resetNewCategoryForm();
-        }
-
-        function saveCategoryEdits() {
-            captureCategoryManagerValues();
-
-            refreshCategoriesUI({ preserveCurrent: true, load: true });
-            saveData();
-            showMessage('Categorías actualizadas correctamente', 'success');
-            renderCategoryManagerList();
-        }
-
-        function deleteCategory(categoryId) {
-            ensureCategoryStructure();
-            captureCategoryManagerValues();
-
-            if (!Array.isArray(catalogData.categories) || catalogData.categories.length <= 1) {
-                alert('Debe existir al menos una categoría en el catálogo.');
-                return;
-            }
-
-            const category = catalogData.categories.find(cat => cat.id === categoryId);
-            if (!category) {
-                return;
-            }
-
-            const productCount = (catalogData.products[categoryId] || []).length;
-            const confirmationMessage = productCount > 0
-                ? `¿Eliminar la categoría "${category.name}" y sus ${productCount} productos?`
-                : `¿Eliminar la categoría "${category.name}"?`;
-
-            if (!confirm(confirmationMessage)) {
-                return;
-            }
-
-            catalogData.categories = catalogData.categories.filter(cat => cat.id !== categoryId);
-            delete catalogData.products[categoryId];
-
-            refreshCategoriesUI({ preserveCurrent: false, load: true });
-            saveData();
-            showMessage('Categoría eliminada correctamente', 'success');
-            renderCategoryManagerList();
-        }
-
         function updateProductImagePreview(src, altText) {
             const previewImg = document.getElementById('productImagePreview');
             const placeholderEl = document.getElementById('productImagePlaceholder');
@@ -1505,7 +694,7 @@
             } else if (currentIconFallback) {
                 const nameInput = document.getElementById('productName');
                 const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
-                const placeholder = createIconPlaceholder(currentIconFallback, displayName);
+                const placeholder = getProductImageSource({ icon: currentIconFallback, name: displayName }, currentIconFallback);
                 updateProductImagePreview(placeholder, displayName);
             } else {
                 updateProductImagePreview(null);
@@ -1616,34 +805,34 @@
 
             const manageCategoriesButton = document.getElementById('manageCategoriesButton');
             if (manageCategoriesButton) {
-                manageCategoriesButton.addEventListener('click', openCategoryModal);
+                manageCategoriesButton.addEventListener('click', categories.openCategoryModal);
             }
 
             const closeCategoryModalButton = document.getElementById('closeCategoryModalButton');
             if (closeCategoryModalButton) {
-                closeCategoryModalButton.addEventListener('click', closeCategoryModal);
+                closeCategoryModalButton.addEventListener('click', categories.closeCategoryModal);
             }
 
             const cancelCategoryButton = document.getElementById('cancelCategoryButton');
             if (cancelCategoryButton) {
-                cancelCategoryButton.addEventListener('click', closeCategoryModal);
+                cancelCategoryButton.addEventListener('click', categories.closeCategoryModal);
             }
 
             const addCategoryButton = document.getElementById('addCategoryButton');
             if (addCategoryButton) {
-                addCategoryButton.addEventListener('click', handleAddCategory);
+                addCategoryButton.addEventListener('click', categories.handleAddCategory);
             }
 
             const saveCategoryChangesButton = document.getElementById('saveCategoryChangesButton');
             if (saveCategoryChangesButton) {
-                saveCategoryChangesButton.addEventListener('click', saveCategoryEdits);
+                saveCategoryChangesButton.addEventListener('click', categories.saveCategoryEdits);
             }
 
             const categoryModal = document.getElementById('categoryModal');
             if (categoryModal) {
                 categoryModal.addEventListener('click', event => {
                     if (event.target === categoryModal) {
-                        closeCategoryModal();
+                        categories.closeCategoryModal();
                     }
                 });
             }
@@ -1731,8 +920,8 @@
                 };
             }
 
-            refreshCategoriesUI({ preserveCurrent: false });
-            renderCategoryManagerList();
+            categories.refreshCategoriesUI({ preserveCurrent: false });
+            categories.renderCategoryManagerList();
             loadConfig();
             loadProducts();
         }
@@ -1740,7 +929,7 @@
         // Save data to localStorage
         function saveData(options = {}) {
             const { silent = false } = options;
-            ensureCategoryStructure();
+            categories.ensureCategoryStructure();
             stripLegacyImageData(catalogData.products);
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             if (!silent) {
@@ -1869,7 +1058,7 @@
             });
 
             if (forExport) {
-                ensureCategoryStructure();
+                categories.ensureCategoryStructure();
                 const productsWithoutImage = [];
 
                 if (catalogData && catalogData.products && typeof catalogData.products === 'object') {
@@ -2112,7 +1301,7 @@
 
         // Show category (backward compatibility)
         function showCategory(event, category) {
-            setCurrentCategory(category);
+            categories.updateCurrentCategory(category);
         }
 
         function createFeatureRow(value = '', placeholder = 'Ej: 30cm x 25cm') {
@@ -2157,7 +1346,7 @@
         // Load products
         function loadProducts() {
             const container = document.getElementById('productsList');
-            ensureCategoryStructure();
+            categories.ensureCategoryStructure();
 
             if (!container) {
                 return;
@@ -2177,55 +1366,14 @@
                 return;
             }
 
-            container.innerHTML = products
-                .map((product, index) => {
-                    const disableUp = index === 0 ? 'disabled' : '';
-                    const disableDown = index === products.length - 1 ? 'disabled' : '';
-                    const rawName = typeof product.name === 'string' && product.name.trim()
-                        ? product.name
-                        : 'Producto sin nombre';
-                    const productNameHtml = escapeHtml(rawName);
-                    const rawShortDesc = typeof product.shortDesc === 'string' ? product.shortDesc : '';
-                    const shortDescHtml = escapeHtml(rawShortDesc);
-                    const formattedPrice = formatCurrencyCOP(product.price);
-                    const priceHtml = escapeHtml(formattedPrice);
-                    const actionLabelSource = rawName.trim() ? rawName.trim() : 'este producto';
-                    const actionLabelAttr = escapeHtml(actionLabelSource);
-                    const sanitizedFeatures = Array.isArray(product.features)
-                        ? product.features
-                            .map(feature => (typeof feature === 'string' ? feature : ''))
-                            .filter(feature => feature.length > 0)
-                            .map(feature => escapeHtml(feature))
-                        : [];
-                    const featuresAttr = sanitizedFeatures.join('||');
-                    const imageSrc = getProductImageSource(product);
-                    const imageAlt = escapeHtml(`Vista previa de ${rawName}`);
-                    return `
-                <div class="product-item" data-product-id="${product.id}" data-short-desc="${shortDescHtml}" data-features="${featuresAttr}">
-                    <div class="order-controls">
-                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="up" data-product-id="${product.id}" aria-label="Mover ${actionLabelAttr} hacia arriba" title="Mover ${actionLabelAttr} hacia arriba" ${disableUp}>↑</button>
-                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="down" data-product-id="${product.id}" aria-label="Mover ${actionLabelAttr} hacia abajo" title="Mover ${actionLabelAttr} hacia abajo" ${disableDown}>↓</button>
-                    </div>
-                    <div class="product-thumb">
-                        <img src="${imageSrc}" alt="${imageAlt}">
-                    </div>
-                    <div class="product-info">
-                        <div class="product-name">${productNameHtml}</div>
-                        <div class="product-price">${priceHtml}</div>
-                    </div>
-                    <div class="product-actions">
-                        <button type="button" class="icon-btn edit-btn" data-action="edit" data-product-id="${product.id}" aria-label="Editar ${actionLabelAttr}" title="Editar ${actionLabelAttr}">✏️</button>
-                        <button type="button" class="icon-btn delete-btn" data-action="delete" data-product-id="${product.id}" aria-label="Eliminar ${actionLabelAttr}" title="Eliminar ${actionLabelAttr}">🗑️</button>
-                    </div>
-                </div>`;
-                })
-                .join('');
+            const productsMarkup = productTemplates.renderProductList(products);
+            container.innerHTML = productsMarkup;
 
             updateCatalogPreview();
         }
 
         function moveProduct(productId, direction) {
-            ensureCategoryStructure();
+            categories.ensureCategoryStructure();
             const products = catalogData.products[currentCategory] || [];
             const currentIndex = products.findIndex(product => product.id === productId);
 
@@ -2250,7 +1398,7 @@
 
         // Open product modal
         function openProductModal(productId = null) {
-            ensureCategoryStructure();
+            categories.ensureCategoryStructure();
             const modal = document.getElementById('productModal');
             const form = document.getElementById('productForm');
 
@@ -2421,7 +1569,7 @@
 
         // Delete product
         function deleteProduct(productId) {
-            ensureCategoryStructure();
+            categories.ensureCategoryStructure();
 
             if (!currentCategory) {
                 alert('No hay una categoría seleccionada para eliminar productos.');
@@ -2439,7 +1587,7 @@
         document.getElementById('productForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            ensureCategoryStructure();
+            categories.ensureCategoryStructure();
             const category = document.getElementById('productCategory').value;
             if (!category) {
                 alert('Selecciona una categoría válida para el producto.');
@@ -2613,8 +1761,8 @@
                             : createDefaultProductsMap(catalogData.categories);
                         catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
 
-                        refreshCategoriesUI({ preserveCurrent: false });
-                        renderCategoryManagerList();
+                        categories.refreshCategoriesUI({ preserveCurrent: false });
+                        categories.renderCategoryManagerList();
                         loadConfig();
                         loadProducts();
                         saveData();
@@ -2727,12 +1875,12 @@
         window.importData = importData;
         window.saveConfig = saveConfig;
         window.showCategory = showCategory;
-        window.setCurrentCategory = setCurrentCategory;
+        window.setCurrentCategory = categories.updateCurrentCategory;
         window.openProductModal = openProductModal;
         window.closeProductModal = closeProductModal;
         window.closeModal = closeProductModal;
-        window.openCategoryModal = openCategoryModal;
-        window.closeCategoryModal = closeCategoryModal;
+        window.openCategoryModal = categories.openCategoryModal;
+        window.closeCategoryModal = categories.closeCategoryModal;
         window.addFeature = addFeature;
         window.moveProduct = moveProduct;
         window.editProduct = editProduct;
@@ -2740,10 +1888,10 @@
 
         // Generate catalog HTML
         function generateCatalogHTML() {
-            ensureCategoryStructure();
+            categories.ensureCategoryStructure();
             const config = catalogData.config;
             const products = catalogData.products;
-            const categories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
+            const categoryList = Array.isArray(catalogData.categories) ? catalogData.categories : [];
             const serializeForScript = (value) => {
                 const jsonString = JSON.stringify(value);
 
@@ -2758,51 +1906,32 @@
                     .replace(/\u2028/g, '\\u2028')
                     .replace(/\u2029/g, '\\u2029');
             };
-            const legacyCategoryResolver = createLegacyCategoryResolver(catalogData.categoryInfo);
-            const resolvedCategories = categories.map((category, index) => {
+            const resolvedCategories = categoryList.map((category, index) => {
                 const normalized = isPlainObject(category)
                     ? category
                     : (typeof category === 'string'
                         ? { id: generateCategoryId(category), name: category }
                         : {});
 
-                const candidateValues = [
-                    typeof category === 'string' ? category : '',
-                    typeof normalized.id === 'string' ? normalized.id : '',
-                    typeof normalized.name === 'string' ? normalized.name : '',
-                    typeof normalized.title === 'string' ? normalized.title : '',
-                    typeof normalized.label === 'string' ? normalized.label : ''
-                ].filter(Boolean);
-
-                const metadata = legacyCategoryResolver.lookup(candidateValues) || {};
-
-                let categoryId = typeof normalized.id === 'string' && normalized.id
+                const categoryId = typeof normalized.id === 'string' && normalized.id
                     ? normalized.id
-                    : '';
-
-                if (!categoryId) {
-                    const fallbackSource = metadata.title || normalized.name || candidateValues[0] || `categoria-${index + 1}`;
-                    categoryId = generateCategoryId(fallbackSource) || `categoria-${index + 1}`;
-                }
+                    : `categoria-${index + 1}`;
 
                 const titleCandidates = [
                     typeof normalized.name === 'string' ? normalized.name.trim() : '',
-                    typeof normalized.title === 'string' ? normalized.title.trim() : '',
-                    metadata.title || ''
+                    typeof normalized.title === 'string' ? normalized.title.trim() : ''
                 ].filter(Boolean);
-                const title = titleCandidates.length > 0 ? titleCandidates[0] : formatCategoryLabel(categoryId);
+                const title = titleCandidates.length > 0 ? titleCandidates[0] : categories.formatCategoryLabel(categoryId);
 
                 const iconCandidates = [
                     typeof normalized.icon === 'string' ? normalized.icon.trim() : '',
-                    typeof normalized.emoji === 'string' ? normalized.emoji.trim() : '',
-                    metadata.icon || ''
+                    typeof normalized.emoji === 'string' ? normalized.emoji.trim() : ''
                 ].filter(Boolean);
                 const icon = iconCandidates.length > 0 ? iconCandidates[0] : '📦';
 
                 const descriptionCandidates = [
                     typeof normalized.description === 'string' ? normalized.description.trim() : '',
-                    typeof normalized.desc === 'string' ? normalized.desc.trim() : '',
-                    metadata.description || ''
+                    typeof normalized.desc === 'string' ? normalized.desc.trim() : ''
                 ].filter(value => typeof value === 'string');
                 const description = descriptionCandidates.find(value => value.trim().length > 0) || '';
 
@@ -2856,7 +1985,7 @@
             resolvedCategories.forEach(category => {
                 const categoryProducts = products && products[category.id] ? products[category.id] : [];
                 if (categoryProducts.length > 0) {
-                    const categoryTitle = escapeHtml(category.title || formatCategoryLabel(category.id));
+                    const categoryTitle = escapeHtml(category.title || categories.formatCategoryLabel(category.id));
                     const categoryDescription = escapeHtml(category.description || '');
                     const categoryIcon = category.icon || '🛠️';
                     const descriptionMarkup = categoryDescription ? `<p class="category-description">${categoryDescription}</p>` : '';
@@ -2937,7 +2066,7 @@
             const navButtonsHTML = categoriesWithProducts
                 .map(category => {
                     const isActive = category.id === firstCategoryWithProducts;
-                    const label = `${category.icon || '📦'} ${category.title || formatCategoryLabel(category.id)}`;
+                    const label = `${category.icon || '📦'} ${category.title || categories.formatCategoryLabel(category.id)}`;
                     return `<button class="nav-btn${isActive ? ' active' : ''}" data-category="${category.id}" onclick="showCategory(event, '${category.id}')">${escapeHtml(label)}</button>`;
                 })
                 .join('');
