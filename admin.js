@@ -620,6 +620,11 @@ import {
                 cancelProductButton.addEventListener('click', closeProductModal);
             }
 
+            const productForm = document.getElementById('productForm');
+            if (productForm) {
+                productForm.addEventListener('submit', handleProductFormSubmit);
+            }
+
             const addFeatureButton = document.getElementById('addFeatureButton');
             if (addFeatureButton) {
                 addFeatureButton.addEventListener('click', addFeature);
@@ -1405,9 +1410,8 @@ import {
             }
         }
 
-        // Handle product form submission
-        document.getElementById('productForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        function handleProductFormSubmit(event) {
+            event.preventDefault();
 
             categories.ensureCategoryStructure();
             const category = document.getElementById('productCategory').value;
@@ -1481,7 +1485,7 @@ import {
             closeProductModal();
             showMessage('Producto guardado correctamente', 'success');
             updateCatalogPreview();
-        });
+        }
 
         // Show message
         function showMessage(message, type = 'success') {
