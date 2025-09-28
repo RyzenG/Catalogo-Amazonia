@@ -1,8 +1,6 @@
 import { createCategoriesModule } from './modules/categories.js';
-codex/implement-first-code-quality-improvement
 import { createProductTemplates } from './modules/productTemplates.js';
 
- main
 
         // Default data structure
         const defaultConfig = {
@@ -99,14 +97,12 @@ import { createProductTemplates } from './modules/productTemplates.js';
             stripLegacyImageData
         });
 
-         codex/implement-first-code-quality-improvement
         const productTemplates = createProductTemplates({
             escapeHtml,
             formatCurrency: formatCurrencyCOP,
             getProductImageSource
         });
 
-         main
         const processStatusEntries = new Map();
         let processStatusCounter = 0;
         let processStatusListElement = null;
