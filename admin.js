@@ -3068,11 +3068,20 @@ import { createProductTemplates } from './modules/productTemplates.js';
 
             const modalElement = document.getElementById('productModal');
             if (modalElement) {
+                const handleModalKeydown = function(event) {
+                    if (event.key === 'Escape' && modalElement.classList.contains('active')) {
+                        event.preventDefault();
+                        closeModal();
+                    }
+                };
+
                 modalElement.addEventListener('click', function(e) {
                     if (e.target === this) {
                         closeModal();
                     }
                 });
+
+                document.addEventListener('keydown', handleModalKeydown);
             }
         });
 
