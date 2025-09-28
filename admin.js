@@ -1,6 +1,4 @@
 import { createCategoriesModule } from './modules/categories.js';
-import { createProductTemplates } from './modules/productTemplates.js';
-
 
         // Default data structure
         const defaultConfig = {
@@ -95,12 +93,6 @@ import { createProductTemplates } from './modules/productTemplates.js';
             showMessage,
             isPlainObject,
             stripLegacyImageData
-        });
-
-        const productTemplates = createProductTemplates({
-            escapeHtml,
-            formatCurrency: formatCurrencyCOP,
-            getProductImageSource
         });
 
         const processStatusEntries = new Map();
@@ -1517,8 +1509,49 @@ import { createProductTemplates } from './modules/productTemplates.js';
                 return;
             }
 
-            const productsMarkup = productTemplates.renderProductList(products);
-            container.innerHTML = productsMarkup;
+            container.innerHTML = products
+                .map((product, index) => {
+                    const disableUp = index === 0 ? 'disabled' : '';
+                    const disableDown = index === products.length - 1 ? 'disabled' : '';
+                    const rawName = typeof product.name === 'string' && product.name.trim()
+                        ? product.name
+                        : 'Producto sin nombre';
+                    const productNameHtml = escapeHtml(rawName);
+                    const rawShortDesc = typeof product.shortDesc === 'string' ? product.shortDesc : '';
+                    const shortDescHtml = escapeHtml(rawShortDesc);
+                    const formattedPrice = formatCurrencyCOP(product.price);
+                    const priceHtml = escapeHtml(formattedPrice);
+                    const actionLabelSource = rawName.trim() ? rawName.trim() : 'este producto';
+                    const actionLabelAttr = escapeHtml(actionLabelSource);
+                    const sanitizedFeatures = Array.isArray(product.features)
+                        ? product.features
+                            .map(feature => (typeof feature === 'string' ? feature : ''))
+                            .filter(feature => feature.length > 0)
+                            .map(feature => escapeHtml(feature))
+                        : [];
+                    const featuresAttr = sanitizedFeatures.join('||');
+                    const imageSrc = getProductImageSource(product);
+                    const imageAlt = escapeHtml(`Vista previa de ${rawName}`);
+                    return `
+                <div class="product-item" data-product-id="${product.id}" data-short-desc="${shortDescHtml}" data-features="${featuresAttr}">
+                    <div class="order-controls">
+                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="up" data-product-id="${product.id}" aria-label="Mover ${actionLabelAttr} hacia arriba" title="Mover ${actionLabelAttr} hacia arriba" ${disableUp}>↑</button>
+                        <button type="button" class="icon-btn move-btn" data-action="move" data-direction="down" data-product-id="${product.id}" aria-label="Mover ${actionLabelAttr} hacia abajo" title="Mover ${actionLabelAttr} hacia abajo" ${disableDown}>↓</button>
+                    </div>
+                    <div class="product-thumb">
+                        <img src="${imageSrc}" alt="${imageAlt}">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">${productNameHtml}</div>
+                        <div class="product-price">${priceHtml}</div>
+                    </div>
+                    <div class="product-actions">
+                        <button type="button" class="icon-btn edit-btn" data-action="edit" data-product-id="${product.id}" aria-label="Editar ${actionLabelAttr}" title="Editar ${actionLabelAttr}">✏️</button>
+                        <button type="button" class="icon-btn delete-btn" data-action="delete" data-product-id="${product.id}" aria-label="Eliminar ${actionLabelAttr}" title="Eliminar ${actionLabelAttr}">🗑️</button>
+                    </div>
+                </div>`;
+                })
+                .join('');
 
             updateCatalogPreview();
         }
