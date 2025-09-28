@@ -212,9 +212,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="productImageUrl">Imagen del producto:</label>
-                    <input type="url" id="productImageUrl" placeholder="https://raw.githubusercontent.com/...">
-                    <small style="display: block; margin-top: 0.5rem; color: #555;">Usa enlaces directos de <code>raw.githubusercontent.com</code> para imágenes alojadas en GitHub.</small>
+                    <label for="productImageUrls">Imágenes del producto:</label>
+                    <textarea id="productImageUrls" rows="3" placeholder="https://raw.githubusercontent.com/.../principal.jpg&#10;https://raw.githubusercontent.com/.../detalle.jpg"></textarea>
+                    <small style="display: block; margin-top: 0.5rem; color: #555;">Escribe una URL por línea. La primera se usará como imagen principal.</small>
+                    <small style="display: block; margin-top: 0.25rem; color: #555;">Usa enlaces directos de <code>raw.githubusercontent.com</code> para imágenes alojadas en GitHub.</small>
                     <div class="image-preview" id="productImagePreviewWrapper">
                         <img id="productImagePreview" alt="Vista previa del producto" src="" />
                         <span class="image-placeholder" id="productImagePlaceholder">Sin imagen seleccionada</span>
