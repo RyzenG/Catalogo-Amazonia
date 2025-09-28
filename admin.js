@@ -722,13 +722,60 @@ import { createProductTemplates } from './modules/productTemplates.js';
             return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
         }
 
+        function getNormalizedImageList(product) {
+            if (!product || typeof product !== 'object') {
+                return [];
+            }
+
+            const providedImages = Array.isArray(product.images)
+                ? product.images
+                : [];
+
+            const normalized = [];
+            const seen = new Set();
+
+            providedImages.forEach(imageUrl => {
+                const trimmed = typeof imageUrl === 'string' ? imageUrl.trim() : '';
+                if (!trimmed || seen.has(trimmed)) {
+                    return;
+                }
+                normalized.push(trimmed);
+                seen.add(trimmed);
+            });
+
+            const legacyImage = typeof product.image === 'string' ? product.image.trim() : '';
+            if (legacyImage && !seen.has(legacyImage)) {
+                normalized.unshift(legacyImage);
+                seen.add(legacyImage);
+            }
+
+            return normalized;
+        }
+
+        function applyNormalizedImages(product) {
+            if (!product || typeof product !== 'object') {
+                return;
+            }
+
+            const normalized = getNormalizedImageList(product);
+
+            if (normalized.length > 0) {
+                product.images = normalized;
+                product.image = normalized[0];
+            } else {
+                delete product.images;
+                delete product.image;
+            }
+        }
+
         function getProductImageSource(product, fallbackIcon = '🛠️') {
             if (!product) {
                 return createIconPlaceholder(fallbackIcon, 'Producto Amazonia');
             }
 
-            if (product.image) {
-                return product.image;
+            const normalizedImages = getNormalizedImageList(product);
+            if (normalizedImages.length > 0) {
+                return normalizedImages[0];
             }
 
             const iconValue = product.icon || fallbackIcon;
@@ -752,8 +799,11 @@ import { createProductTemplates } from './modules/productTemplates.js';
                 }
 
                 productList.forEach(product => {
-                    if (product && typeof product === 'object' && Object.prototype.hasOwnProperty.call(product, 'imageData')) {
-                        delete product.imageData;
+                    if (product && typeof product === 'object') {
+                        if (Object.prototype.hasOwnProperty.call(product, 'imageData')) {
+                            delete product.imageData;
+                        }
+                        applyNormalizedImages(product);
                     }
                 });
             });
@@ -805,9 +855,9 @@ import { createProductTemplates } from './modules/productTemplates.js';
             currentImageUrl = '';
             currentIconFallback = '';
             updateProductImagePreview(null);
-            const imageUrlInput = document.getElementById('productImageUrl');
-            if (imageUrlInput) {
-                imageUrlInput.value = '';
+            const imageUrlsInput = document.getElementById('productImageUrls');
+            if (imageUrlsInput) {
+                imageUrlsInput.value = '';
             }
             const logoData = catalogData && catalogData.config ? catalogData.config.logoData : '';
             updateLogoPreview(logoData || null);
@@ -818,10 +868,10 @@ import { createProductTemplates } from './modules/productTemplates.js';
         }
 
         function setupImageInput() {
-            const imageUrlInput = document.getElementById('productImageUrl');
+            const imageUrlsInput = document.getElementById('productImageUrls');
 
-            if (imageUrlInput) {
-                imageUrlInput.addEventListener('input', handleProductImageUrlChange);
+            if (imageUrlsInput) {
+                imageUrlsInput.addEventListener('input', handleProductImageUrlChange);
             }
         }
 
@@ -834,22 +884,37 @@ import { createProductTemplates } from './modules/productTemplates.js';
             logoUrlInput.addEventListener('input', handleCompanyLogoUrlChange);
         }
 
-        function handleProductImageUrlChange(event) {
-            const urlValue = event && event.target ? event.target.value.trim() : '';
-            currentImageUrl = urlValue;
+        function parseImageInputValue(value) {
+            if (typeof value !== 'string') {
+                return [];
+            }
 
-            if (urlValue) {
-                const nameInput = document.getElementById('productName');
-                const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
-                updateProductImagePreview(urlValue, displayName);
-            } else if (currentIconFallback) {
-                const nameInput = document.getElementById('productName');
-                const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
+            return value
+                .split(/\r?\n/)
+                .map(url => (typeof url === 'string' ? url.trim() : ''))
+                .filter(url => url.length > 0);
+        }
+
+        function handleProductImageUrlChange(event) {
+            const rawValue = event && event.target ? event.target.value : '';
+            const urls = parseImageInputValue(rawValue);
+            currentImageUrl = urls.length > 0 ? urls[0] : '';
+
+            const nameInput = document.getElementById('productName');
+            const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
+
+            if (currentImageUrl) {
+                updateProductImagePreview(currentImageUrl, displayName);
+                return;
+            }
+
+            if (currentIconFallback) {
                 const placeholder = createIconPlaceholder(currentIconFallback, displayName);
                 updateProductImagePreview(placeholder, displayName);
-            } else {
-                updateProductImagePreview(null);
+                return;
             }
+
+            updateProductImagePreview(null);
         }
 
         function handleCompanyLogoUrlChange(event) {
@@ -1223,7 +1288,7 @@ import { createProductTemplates } from './modules/productTemplates.js';
                                 return;
                             }
 
-                            const hasImageUrl = typeof product.image === 'string' && product.image.trim().length > 0;
+                            const hasImageUrl = getNormalizedImageList(product).length > 0;
 
                             if (!hasImageUrl) {
                                 const displayName = typeof product.name === 'string' && product.name.trim().length > 0
@@ -1596,14 +1661,14 @@ import { createProductTemplates } from './modules/productTemplates.js';
                     document.getElementById('productSpecs').value = product.specs || '';
                     document.getElementById('productId').value = productId;
 
-                    const imageUrlInput = document.getElementById('productImageUrl');
-                    const productImageUrl = typeof product.image === 'string' ? product.image : '';
+                    const imageUrlsInput = document.getElementById('productImageUrls');
+                    const normalizedImages = getNormalizedImageList(product);
 
-                    if (imageUrlInput) {
-                        imageUrlInput.value = productImageUrl;
+                    if (imageUrlsInput) {
+                        imageUrlsInput.value = normalizedImages.join('\n');
                     }
 
-                    currentImageUrl = productImageUrl;
+                    currentImageUrl = normalizedImages.length > 0 ? normalizedImages[0] : '';
                     currentIconFallback = product.icon || '';
                     const previewSource = currentImageUrl
                         || getProductImageSource(product, currentIconFallback || '🛠️');
@@ -1619,9 +1684,9 @@ import { createProductTemplates } from './modules/productTemplates.js';
                 document.getElementById('productId').value = '';
                 currentImageUrl = '';
                 currentIconFallback = '';
-                const imageUrlInput = document.getElementById('productImageUrl');
-                if (imageUrlInput) {
-                    imageUrlInput.value = '';
+                const imageUrlsInput = document.getElementById('productImageUrls');
+                if (imageUrlsInput) {
+                    imageUrlsInput.value = '';
                 }
                 updateProductImagePreview(null);
                 renderFeatureInputs();
@@ -1675,9 +1740,9 @@ import { createProductTemplates } from './modules/productTemplates.js';
             editingProductId = null;
             currentImageUrl = '';
             currentIconFallback = '';
-            const imageUrlInput = document.getElementById('productImageUrl');
-            if (imageUrlInput) {
-                imageUrlInput.value = '';
+            const imageUrlsInput = document.getElementById('productImageUrls');
+            if (imageUrlsInput) {
+                imageUrlsInput.value = '';
             }
             updateProductImagePreview(null);
             renderFeatureInputs();
@@ -1748,8 +1813,8 @@ import { createProductTemplates } from './modules/productTemplates.js';
                 .map(input => input.value)
                 .filter(value => value.trim() !== '');
 
-            const imageUrlInput = document.getElementById('productImageUrl');
-            const imageUrl = imageUrlInput ? imageUrlInput.value.trim() : '';
+            const imageUrlsInput = document.getElementById('productImageUrls');
+            const imageUrls = imageUrlsInput ? parseImageInputValue(imageUrlsInput.value) : [];
             const priceInput = document.getElementById('productPrice');
             const normalizedPrice = formatCurrencyCOP(priceInput ? priceInput.value : '');
 
@@ -1763,14 +1828,17 @@ import { createProductTemplates } from './modules/productTemplates.js';
                 specs: document.getElementById('productSpecs').value
             };
 
-            if (imageUrl) {
-                productData.image = imageUrl;
+            if (imageUrls.length > 0) {
+                productData.images = imageUrls;
+                productData.image = imageUrls[0];
             }
 
             if (currentIconFallback) {
                 productData.icon = currentIconFallback;
             }
-            
+
+            applyNormalizedImages(productData);
+
             if (!catalogData.products[category]) {
                 catalogData.products[category] = [];
             }
@@ -2036,6 +2104,8 @@ import { createProductTemplates } from './modules/productTemplates.js';
         window.moveProduct = moveProduct;
         window.editProduct = editProduct;
         window.deleteProduct = deleteProduct;
+        window.nextModalImage = nextModalImage;
+        window.previousModalImage = previousModalImage;
 
         // Generate catalog HTML
         function generateCatalogHTML() {
@@ -2165,6 +2235,7 @@ import { createProductTemplates } from './modules/productTemplates.js';
                             : [];
                         const featuresHtml = sanitizedFeatures.join('');
                         const imageSrc = getProductImageSource(product, categoryIcon);
+                        const normalizedImages = getNormalizedImageList(product);
                         const imageAlt = escapeHtml(`Imagen de ${rawName}`);
                         const formattedPrice = formatCurrencyCOP(product.price);
                         const productPriceHtml = escapeHtml(formattedPrice);
@@ -2200,6 +2271,7 @@ import { createProductTemplates } from './modules/productTemplates.js';
                         productDataJS[product.id] = {
                             title: rawName,
                             image: imageSrc,
+                            images: normalizedImages,
                             alt: `Imagen de ${rawName}`,
                             description: typeof product.longDesc === 'string' && product.longDesc.trim()
                                 ? product.longDesc
@@ -2324,7 +2396,12 @@ import { createProductTemplates } from './modules/productTemplates.js';
             <div class="modal-body">
                 <div class="modal-grid">
                     <div class="modal-image">
-                        <img id="modalImage" src="" alt="Imagen del producto seleccionado">
+                        <button class="modal-image__nav modal-image__nav--prev" id="modalImagePrev" onclick="previousModalImage()" aria-label="Ver imagen anterior">‹</button>
+                        <div class="modal-image__viewport">
+                            <img id="modalImage" src="" alt="Imagen del producto seleccionado">
+                        </div>
+                        <button class="modal-image__nav modal-image__nav--next" id="modalImageNext" onclick="nextModalImage()" aria-label="Ver imagen siguiente">›</button>
+                        <div class="modal-image__counter" id="modalImageCounter" aria-live="polite">1 / 1</div>
                     </div>
                     <div class="modal-details">
                         <h3>Descripción Detallada</h3>
@@ -2779,12 +2856,24 @@ import { createProductTemplates } from './modules/productTemplates.js';
         }
 
         .modal-image {
+            position: relative;
             width: 100%;
-            max-height: 320px;
+            max-height: 360px;
             background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
-            border-radius: 10px;
+            border-radius: 16px;
             overflow: hidden;
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-image__viewport {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
 
         .modal-image img {
@@ -2792,6 +2881,66 @@ import { createProductTemplates } from './modules/productTemplates.js';
             height: 100%;
             object-fit: cover;
             display: block;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        .modal-image__nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(45, 74, 43, 0.85);
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .modal-image__nav:hover,
+        .modal-image__nav:focus {
+            background: rgba(45, 74, 43, 1);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .modal-image__nav:focus {
+            outline: 3px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .modal-image__nav--prev {
+            left: 1rem;
+        }
+
+        .modal-image__nav--next {
+            right: 1rem;
+        }
+
+        .modal-image__nav.is-hidden,
+        .modal-image__nav[hidden] {
+            display: none;
+        }
+
+        .modal-image__counter {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        .modal-image__counter.is-hidden,
+        .modal-image__counter[hidden] {
+            display: none;
         }
 
         .modal-details h3 {
@@ -3030,6 +3179,9 @@ import { createProductTemplates } from './modules/productTemplates.js';
 
             return `
         let currentProduct = null;
+        let currentProductImages = [];
+        let currentImageIndex = 0;
+        let currentProductData = null;
         const productData = ${serialize(productData)};
         const catalogConfig = ${serialize(config || {})};
 
@@ -3084,6 +3236,142 @@ import { createProductTemplates } from './modules/productTemplates.js';
                 document.addEventListener('keydown', handleModalKeydown);
             }
         });
+
+        function toggleElementVisibility(element, shouldShow) {
+            if (!element) {
+                return;
+            }
+
+            if (shouldShow) {
+                element.removeAttribute('hidden');
+                element.classList.remove('is-hidden');
+                return;
+            }
+
+            element.setAttribute('hidden', 'hidden');
+            element.classList.add('is-hidden');
+        }
+
+        function getModalImageElements() {
+            return {
+                imageEl: document.getElementById('modalImage'),
+                counterEl: document.getElementById('modalImageCounter'),
+                prevButton: document.getElementById('modalImagePrev'),
+                nextButton: document.getElementById('modalImageNext')
+            };
+        }
+
+        function updateModalImageDisplay() {
+            if (!currentProductData) {
+                return;
+            }
+
+            const { imageEl, counterEl, prevButton, nextButton } = getModalImageElements();
+
+            if (!imageEl) {
+                return;
+            }
+
+            const images = Array.isArray(currentProductImages) ? currentProductImages : [];
+            const totalImages = images.length;
+
+            if (totalImages === 0) {
+                currentImageIndex = 0;
+            } else if (currentImageIndex < 0) {
+                currentImageIndex = 0;
+            } else if (currentImageIndex >= totalImages) {
+                currentImageIndex = totalImages - 1;
+            }
+
+            const fallbackSrc = typeof currentProductData.image === 'string' ? currentProductData.image : '';
+            const baseAlt = typeof currentProductData.alt === 'string' && currentProductData.alt.trim().length > 0
+                ? currentProductData.alt
+                : `Imagen de ${currentProductData.title || 'Producto Amazonia'}`;
+            const hasMultiple = totalImages > 1;
+            const hasAtLeastOne = totalImages > 0;
+            const currentSrc = hasAtLeastOne ? images[currentImageIndex] : fallbackSrc;
+            const altText = hasMultiple
+                ? `${baseAlt} (${currentImageIndex + 1} de ${totalImages})`
+                : baseAlt;
+
+            if (currentSrc) {
+                imageEl.src = currentSrc;
+            } else {
+                imageEl.removeAttribute('src');
+            }
+            imageEl.alt = altText;
+
+            toggleElementVisibility(prevButton, hasMultiple);
+            toggleElementVisibility(nextButton, hasMultiple);
+
+            if (prevButton) {
+                prevButton.disabled = currentImageIndex <= 0;
+            }
+
+            if (nextButton) {
+                nextButton.disabled = currentImageIndex >= totalImages - 1;
+            }
+
+            if (counterEl) {
+                if (hasMultiple) {
+                    counterEl.textContent = `${currentImageIndex + 1} / ${totalImages}`;
+                    toggleElementVisibility(counterEl, true);
+                } else {
+                    counterEl.textContent = '';
+                    toggleElementVisibility(counterEl, false);
+                }
+            }
+        }
+
+        function showModalImage(index) {
+            const images = Array.isArray(currentProductImages) ? currentProductImages : [];
+
+            if (images.length === 0) {
+                currentImageIndex = 0;
+                updateModalImageDisplay();
+                return;
+            }
+
+            const targetIndex = Math.min(Math.max(index, 0), images.length - 1);
+
+            if (targetIndex === currentImageIndex) {
+                updateModalImageDisplay();
+                return;
+            }
+
+            currentImageIndex = targetIndex;
+            updateModalImageDisplay();
+        }
+
+        function nextModalImage() {
+            const images = Array.isArray(currentProductImages) ? currentProductImages : [];
+
+            if (images.length <= 1) {
+                return;
+            }
+
+            const nextIndex = Math.min(images.length - 1, currentImageIndex + 1);
+
+            if (nextIndex !== currentImageIndex) {
+                currentImageIndex = nextIndex;
+                updateModalImageDisplay();
+            }
+        }
+
+        function previousModalImage() {
+            const images = Array.isArray(currentProductImages) ? currentProductImages : [];
+
+            if (images.length <= 1) {
+                return;
+            }
+
+            const prevIndex = Math.max(0, currentImageIndex - 1);
+
+            if (prevIndex !== currentImageIndex) {
+                currentImageIndex = prevIndex;
+                updateModalImageDisplay();
+            }
+        }
 
         function configureFooterLink(element, url) {
             if (!element) {
@@ -3280,8 +3568,14 @@ import { createProductTemplates } from './modules/productTemplates.js';
             }
 
             currentProduct = product.title;
+            currentProductData = product;
+            currentProductImages = Array.isArray(product.images)
+                ? product.images
+                    .map(url => (typeof url === 'string' ? url.trim() : ''))
+                    .filter(url => url.length > 0)
+                : [];
+            currentImageIndex = 0;
             const titleEl = document.getElementById('modalTitle');
-            const imageEl = document.getElementById('modalImage');
             const descriptionEl = document.getElementById('modalDescription');
             const specsList = document.getElementById('modalSpecs');
 
@@ -3289,10 +3583,7 @@ import { createProductTemplates } from './modules/productTemplates.js';
                 titleEl.textContent = product.title;
             }
 
-            if (imageEl) {
-                imageEl.src = product.image || '';
-                imageEl.alt = product.alt || \`Imagen de \${product.title}\`;
-            }
+            updateModalImageDisplay();
 
             if (descriptionEl) {
                 descriptionEl.textContent = product.description;
@@ -3318,6 +3609,9 @@ import { createProductTemplates } from './modules/productTemplates.js';
                 modal.classList.remove('active');
             }
             document.body.style.overflow = 'auto';
+            currentProductImages = [];
+            currentImageIndex = 0;
+            currentProductData = null;
         }
 
         function contactWhatsApp() {
