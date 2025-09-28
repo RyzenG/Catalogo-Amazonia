@@ -212,9 +212,18 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="productImageUrl">Imagen del producto:</label>
-                    <input type="url" id="productImageUrl" placeholder="https://raw.githubusercontent.com/...">
-                    <small style="display: block; margin-top: 0.5rem; color: #555;">Usa enlaces directos de <code>raw.githubusercontent.com</code> para imágenes alojadas en GitHub.</small>
+                    <label for="productImageUrl">Imágenes del producto:</label>
+                    <div class="field-hint field-hint--muted">
+                        Usa enlaces directos (por ejemplo, de <code>raw.githubusercontent.com</code>) y añade todas las tomas que necesites.
+                        El catálogo mostrará flechas para avanzar entre ellas.
+                    </div>
+                    <div id="productImagesList" class="image-url-list">
+                        <div class="image-url-item">
+                            <input type="url" class="product-image-url-input" id="productImageUrl" placeholder="https://raw.githubusercontent.com/...">
+                            <button type="button" class="icon-btn remove-image-button" data-action="remove-image" aria-label="Eliminar imagen" title="Eliminar imagen">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" id="addProductImageButton" class="btn btn-secondary image-add-button">➕ Añadir imagen</button>
                     <div class="image-preview" id="productImagePreviewWrapper">
                         <img id="productImagePreview" alt="Vista previa del producto" src="" />
                         <span class="image-placeholder" id="productImagePlaceholder">Sin imagen seleccionada</span>
