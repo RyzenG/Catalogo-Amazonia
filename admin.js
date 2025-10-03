@@ -156,6 +156,17 @@
             return `rgba(${r}, ${g}, ${b}, ${clampedAlpha.toFixed(2)})`;
         }
 
+        function getReadableTextColor(backgroundHex, lightColor = '#ffffff', darkColor = '#1a1a1a') {
+            const normalized = normalizeColorValue(backgroundHex, '#000000').slice(1);
+            const value = parseInt(normalized, 16);
+            const r = (value >> 16) & 255;
+            const g = (value >> 8) & 255;
+            const b = value & 255;
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+            return luminance > 0.6 ? darkColor : lightColor;
+        }
+
         function buildThemeTokens(appearance) {
             const normalized = normalizeAppearance(appearance);
 
@@ -187,6 +198,9 @@
             const imagePlaceholderEnd = adjustColorBrightness(normalized.background, -16);
             const priceColor = adjustColorBrightness(normalized.primary, -5);
             const specBorderColor = hexToRgba(normalized.text, 0.12);
+            const textOnDark = '#ffffff';
+            const headerText = getReadableTextColor(normalized.header, textOnDark, normalized.text);
+            const footerText = getReadableTextColor(normalized.header, textOnDark, normalized.text);
 
             return {
                 appearance: normalized,
@@ -195,6 +209,8 @@
                 headerStart,
                 headerEnd,
                 headerOverlay: hexToRgba(normalized.header, 0.1),
+                headerText,
+                footerText,
                 loaderPrimary,
                 loaderSecondary,
                 navButtonStart,
@@ -219,7 +235,7 @@
                 borderColor,
                 indicatorActive,
                 textSecondary,
-                textOnDark: '#ffffff',
+                textOnDark,
                 accentSoft: hexToRgba(normalized.accent, 0.15),
                 accentStrong: normalized.accent,
                 cardOverlayStart,
@@ -2060,6 +2076,7 @@
             setupImageInput();
             setupLogoInput();
             resetImagePreview();
+            updateCatalogPreview();
         });
 
         // Load saved data from localStorage
@@ -3591,7 +3608,7 @@
         /* Header */
         header {
             background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
-            color: ${theme.textOnDark};
+            color: ${theme.headerText};
             padding: 2rem 0;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             position: relative;
@@ -4099,7 +4116,7 @@
         /* Footer */
         footer {
             background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
-            color: ${theme.textOnDark};
+            color: ${theme.footerText};
             padding: 3rem 0 2rem;
             margin-top: 4rem;
         }
