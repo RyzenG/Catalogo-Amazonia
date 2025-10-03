@@ -5,7 +5,10 @@
             header: '#2d4a2b',
             primary: '#6b8e68',
             accent: '#8fa68c',
-            text: '#2d4a2b'
+            text: '#2d4a2b',
+            backgroundImage: '',
+            headerImage: '',
+            footerImage: ''
         };
 
         const APPEARANCE_FIELDS = [
@@ -15,6 +18,16 @@
             { id: 'appearanceAccent', key: 'accent' },
             { id: 'appearanceText', key: 'text' }
         ];
+
+        const APPEARANCE_COLOR_KEYS = APPEARANCE_FIELDS.map(field => field.key);
+
+        const APPEARANCE_IMAGE_FIELDS = [
+            { id: 'appearanceBackgroundImage', key: 'backgroundImage' },
+            { id: 'appearanceHeaderImage', key: 'headerImage' },
+            { id: 'appearanceFooterImage', key: 'footerImage' }
+        ];
+
+        const APPEARANCE_IMAGE_KEYS = APPEARANCE_IMAGE_FIELDS.map(field => field.key);
 
         const APPEARANCE_FIELD_MAP = new Map(APPEARANCE_FIELDS.map(field => [field.id, field]));
 
@@ -100,8 +113,15 @@
             const normalized = { ...defaultAppearance };
 
             if (isPlainObject(candidate)) {
-                Object.keys(normalized).forEach(key => {
+                APPEARANCE_COLOR_KEYS.forEach(key => {
                     normalized[key] = normalizeColorValue(candidate[key], normalized[key]);
+                });
+
+                APPEARANCE_IMAGE_KEYS.forEach(key => {
+                    const value = candidate[key];
+                    normalized[key] = typeof value === 'string'
+                        ? value.trim()
+                        : defaultAppearance[key];
                 });
             }
 
@@ -171,8 +191,11 @@
             const normalized = normalizeAppearance(appearance);
 
             const backgroundEnd = adjustColorBrightness(normalized.background, -10);
+            const backgroundImage = typeof normalized.backgroundImage === 'string' ? normalized.backgroundImage : '';
             const headerStart = adjustColorBrightness(normalized.header, -8);
             const headerEnd = adjustColorBrightness(normalized.header, 12);
+            const headerImage = typeof normalized.headerImage === 'string' ? normalized.headerImage : '';
+            const footerImage = typeof normalized.footerImage === 'string' ? normalized.footerImage : '';
             const loaderPrimary = adjustColorBrightness(normalized.header, 10);
             const loaderSecondary = adjustColorBrightness(normalized.accent, 10);
             const navButtonStart = adjustColorBrightness(normalized.primary, 8);
@@ -201,15 +224,30 @@
             const textOnDark = '#ffffff';
             const headerText = getReadableTextColor(normalized.header, textOnDark, normalized.text);
             const footerText = getReadableTextColor(normalized.header, textOnDark, normalized.text);
+            const backgroundOverlayStart = hexToRgba(normalized.background, 0.85);
+            const backgroundOverlayEnd = hexToRgba(backgroundEnd, 0.85);
+            const headerImageOverlayStart = hexToRgba(headerStart, 0.85);
+            const headerImageOverlayEnd = hexToRgba(headerEnd, 0.85);
+            const footerImageOverlayStart = hexToRgba(headerStart, 0.85);
+            const footerImageOverlayEnd = hexToRgba(headerEnd, 0.85);
 
             return {
                 appearance: normalized,
                 backgroundStart: normalized.background,
                 backgroundEnd,
+                backgroundImage,
+                backgroundOverlayStart,
+                backgroundOverlayEnd,
                 headerStart,
                 headerEnd,
+                headerImage,
+                headerImageOverlayStart,
+                headerImageOverlayEnd,
                 headerOverlay: hexToRgba(normalized.header, 0.1),
                 headerText,
+                footerImage,
+                footerImageOverlayStart,
+                footerImageOverlayEnd,
                 footerText,
                 loaderPrimary,
                 loaderSecondary,
@@ -611,6 +649,19 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        function escapeCssUrl(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+
+            return value
+                .trim()
+                .replace(/\\/g, '\\\\')
+                .replace(/"/g, '\\"')
+                .replace(/\n|\r|\f|\0/g, '')
+                .replace(/\)/g, '\\)');
         }
 
         const SOCIAL_ICON_SVGS = {
@@ -2208,7 +2259,10 @@
                     header: readColor('appearanceHeader'),
                     primary: readColor('appearancePrimary'),
                     accent: readColor('appearanceAccent'),
-                    text: readColor('appearanceText')
+                    text: readColor('appearanceText'),
+                    backgroundImage: readValue('appearanceBackgroundImage'),
+                    headerImage: readValue('appearanceHeaderImage'),
+                    footerImage: readValue('appearanceFooterImage')
                 })
             };
         }
@@ -2248,6 +2302,15 @@
                 input.value = value;
                 updateAppearanceValueDisplay(id, value);
             });
+
+            APPEARANCE_IMAGE_FIELDS.forEach(({ id, key }) => {
+                const input = document.getElementById(id);
+                if (!input) {
+                    return;
+                }
+
+                input.value = normalized[key] || '';
+            });
         }
 
         function setupAppearanceControls() {
@@ -2259,6 +2322,17 @@
 
                 input.addEventListener('input', () => {
                     updateAppearanceValueDisplay(id, input.value);
+                    updateCatalogPreview();
+                });
+            });
+
+            APPEARANCE_IMAGE_FIELDS.forEach(({ id }) => {
+                const input = document.getElementById(id);
+                if (!input) {
+                    return;
+                }
+
+                input.addEventListener('input', () => {
                     updateCatalogPreview();
                 });
             });
@@ -2329,6 +2403,33 @@
                 setFieldValidationState(input, isValid);
 
                 if (!isValid) {
+                    errors.push(`Ingresa un enlace válido para ${label} (asegúrate de incluir http:// o https://).`);
+                }
+            });
+
+            const appearanceValues = isPlainObject(configValues.appearance)
+                ? configValues.appearance
+                : {};
+
+            const appearanceImageFields = [
+                { id: 'appearanceBackgroundImage', key: 'backgroundImage', label: 'la imagen de fondo del catálogo' },
+                { id: 'appearanceHeaderImage', key: 'headerImage', label: 'la imagen del encabezado' },
+                { id: 'appearanceFooterImage', key: 'footerImage', label: 'la imagen del pie de página' }
+            ];
+
+            appearanceImageFields.forEach(({ id, key, label }) => {
+                const rawValue = appearanceValues[key] || '';
+                const input = document.getElementById(id);
+
+                if (!rawValue) {
+                    setFieldValidationState(input, true);
+                    return;
+                }
+
+                const valid = isValidUrl(rawValue);
+                setFieldValidationState(input, valid);
+
+                if (!valid) {
                     errors.push(`Ingresa un enlace válido para ${label} (asegúrate de incluir http:// o https://).`);
                 }
             });
@@ -3561,7 +3662,56 @@
         // Get catalog styles
         function getCatalogStyles(themeTokens) {
             const theme = themeTokens || buildThemeTokens(defaultAppearance);
+            const formatCssBlock = (value) => {
+                if (typeof value !== 'string' || value.length === 0) {
+                    return '';
+                }
+
+                return value
+                    .split('\n')
+                    .map(line => line ? `            ${line}` : '')
+                    .join('\n');
+            };
+
+            const bodyBackground = theme.backgroundImage
+                ? [
+                    `background-color: ${theme.backgroundStart};`,
+                    'background-image:',
+                    `    linear-gradient(135deg, ${theme.backgroundOverlayStart} 0%, ${theme.backgroundOverlayEnd} 100%),`,
+                    `    url("${escapeCssUrl(theme.backgroundImage)}");`,
+                    'background-size: cover;',
+                    'background-position: center;',
+                    'background-repeat: no-repeat;',
+                    'background-attachment: fixed;'
+                ].join('\n')
+                : `background: linear-gradient(135deg, ${theme.backgroundStart} 0%, ${theme.backgroundEnd} 100%);`;
+
+            const headerBackground = theme.headerImage
+                ? [
+                    `background-color: ${theme.headerStart};`,
+                    'background-image:',
+                    `    linear-gradient(135deg, ${theme.headerImageOverlayStart} 0%, ${theme.headerImageOverlayEnd} 100%),`,
+                    `    url("${escapeCssUrl(theme.headerImage)}");`,
+                    'background-size: cover;',
+                    'background-position: center;',
+                    'background-repeat: no-repeat;'
+                ].join('\n')
+                : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`;
+
+            const footerBackground = theme.footerImage
+                ? [
+                    `background-color: ${theme.headerStart};`,
+                    'background-image:',
+                    `    linear-gradient(135deg, ${theme.footerImageOverlayStart} 0%, ${theme.footerImageOverlayEnd} 100%),`,
+                    `    url("${escapeCssUrl(theme.footerImage)}");`,
+                    'background-size: cover;',
+                    'background-position: center;',
+                    'background-repeat: no-repeat;'
+                ].join('\n')
+                : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`;
+
             return `
+
         * {
             margin: 0;
             padding: 0;
@@ -3570,7 +3720,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, ${theme.backgroundStart} 0%, ${theme.backgroundEnd} 100%);
+${formatCssBlock(bodyBackground)}
             overflow-x: hidden;
         }
 
@@ -3607,7 +3757,7 @@
 
         /* Header */
         header {
-            background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
+${formatCssBlock(headerBackground)}
             color: ${theme.headerText};
             padding: 2rem 0;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -4115,7 +4265,7 @@
 
         /* Footer */
         footer {
-            background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
+${formatCssBlock(footerBackground)}
             color: ${theme.footerText};
             padding: 3rem 0 2rem;
             margin-top: 4rem;
