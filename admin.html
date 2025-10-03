@@ -111,6 +111,49 @@
                         </div>
                     </div>
 
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Apariencia del catálogo</h3>
+                        <p class="section-description">Personaliza los colores principales de tu catálogo digital. Los cambios se reflejarán en la vista previa y se guardan en este navegador.</p>
+                        <div class="appearance-grid" role="group" aria-label="Selector de colores del catálogo">
+                            <div class="appearance-item">
+                                <label for="appearanceBackground">Color de fondo</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="appearanceBackground" name="appearanceBackground" value="#f5f5f5">
+                                    <span class="color-value" data-color-for="appearanceBackground">#f5f5f5</span>
+                                </div>
+                            </div>
+                            <div class="appearance-item">
+                                <label for="appearanceHeader">Color de encabezado y pie</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="appearanceHeader" name="appearanceHeader" value="#2d4a2b">
+                                    <span class="color-value" data-color-for="appearanceHeader">#2d4a2b</span>
+                                </div>
+                            </div>
+                            <div class="appearance-item">
+                                <label for="appearancePrimary">Color de botones principales</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="appearancePrimary" name="appearancePrimary" value="#6b8e68">
+                                    <span class="color-value" data-color-for="appearancePrimary">#6b8e68</span>
+                                </div>
+                            </div>
+                            <div class="appearance-item">
+                                <label for="appearanceAccent">Color de elementos destacados</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="appearanceAccent" name="appearanceAccent" value="#8fa68c">
+                                    <span class="color-value" data-color-for="appearanceAccent">#8fa68c</span>
+                                </div>
+                            </div>
+                            <div class="appearance-item">
+                                <label for="appearanceText">Color de títulos y textos</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="appearanceText" name="appearanceText" value="#2d4a2b">
+                                    <span class="color-value" data-color-for="appearanceText">#2d4a2b</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="resetAppearanceButton">Restaurar colores de fábrica</button>
+                    </div>
+
                     <button class="btn btn-primary" id="saveConfigButton">Guardar Configuración</button>
                 </div>
 

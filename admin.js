@@ -1,3 +1,23 @@
+        const HEX_COLOR_PATTERN = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+        const defaultAppearance = {
+            background: '#f5f5f5',
+            header: '#2d4a2b',
+            primary: '#6b8e68',
+            accent: '#8fa68c',
+            text: '#2d4a2b'
+        };
+
+        const APPEARANCE_FIELDS = [
+            { id: 'appearanceBackground', key: 'background' },
+            { id: 'appearanceHeader', key: 'header' },
+            { id: 'appearancePrimary', key: 'primary' },
+            { id: 'appearanceAccent', key: 'accent' },
+            { id: 'appearanceText', key: 'text' }
+        ];
+
+        const APPEARANCE_FIELD_MAP = new Map(APPEARANCE_FIELDS.map(field => [field.id, field]));
+
         // Default data structure
         const defaultConfig = {
             whatsapp: '573000000000',
@@ -10,7 +30,8 @@
             companyName: 'AMAZONIA CONCRETE',
             tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
             footerMessage: 'Creando espacios únicos con concreto sostenible',
-            logoData: ''
+            logoData: '',
+            appearance: { ...defaultAppearance }
         };
 
         const defaultCategories = [
@@ -54,8 +75,164 @@
             }, {});
         }
 
+        function normalizeColorValue(value, fallback) {
+            if (typeof value !== 'string') {
+                return fallback;
+            }
+
+            const trimmed = value.trim();
+
+            if (!HEX_COLOR_PATTERN.test(trimmed)) {
+                return fallback;
+            }
+
+            if (trimmed.length === 4) {
+                const r = trimmed.charAt(1);
+                const g = trimmed.charAt(2);
+                const b = trimmed.charAt(3);
+                return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+            }
+
+            return trimmed.length === 7 ? trimmed.toLowerCase() : fallback;
+        }
+
+        function normalizeAppearance(candidate) {
+            const normalized = { ...defaultAppearance };
+
+            if (isPlainObject(candidate)) {
+                Object.keys(normalized).forEach(key => {
+                    normalized[key] = normalizeColorValue(candidate[key], normalized[key]);
+                });
+            }
+
+            return normalized;
+        }
+
+        function getNormalizedConfig(rawConfig) {
+            const base = isPlainObject(rawConfig)
+                ? { ...defaultConfig, ...rawConfig }
+                : { ...defaultConfig };
+
+            base.appearance = normalizeAppearance(base.appearance);
+            return base;
+        }
+
+        function clampColorComponent(value) {
+            return Math.min(255, Math.max(0, Math.round(value)));
+        }
+
+        function adjustColorBrightness(hex, percent) {
+            const normalized = normalizeColorValue(hex, '#000000').slice(1);
+            const value = parseInt(normalized, 16);
+            const r = (value >> 16) & 255;
+            const g = (value >> 8) & 255;
+            const b = value & 255;
+            const factor = percent / 100;
+
+            const adjustChannel = (channel) => {
+                if (factor >= 0) {
+                    return clampColorComponent(channel + (255 - channel) * factor);
+                }
+
+                return clampColorComponent(channel + channel * factor);
+            };
+
+            const adjustedR = adjustChannel(r);
+            const adjustedG = adjustChannel(g);
+            const adjustedB = adjustChannel(b);
+
+            const hexString = ((1 << 24) + (adjustedR << 16) + (adjustedG << 8) + adjustedB).toString(16).slice(1);
+            return `#${hexString}`;
+        }
+
+        function hexToRgba(hex, alpha) {
+            const normalized = normalizeColorValue(hex, '#000000').slice(1);
+            const value = parseInt(normalized, 16);
+            const r = (value >> 16) & 255;
+            const g = (value >> 8) & 255;
+            const b = value & 255;
+            const clampedAlpha = Math.min(1, Math.max(0, Number(alpha)));
+
+            return `rgba(${r}, ${g}, ${b}, ${clampedAlpha.toFixed(2)})`;
+        }
+
+        function buildThemeTokens(appearance) {
+            const normalized = normalizeAppearance(appearance);
+
+            const backgroundEnd = adjustColorBrightness(normalized.background, -10);
+            const headerStart = adjustColorBrightness(normalized.header, -8);
+            const headerEnd = adjustColorBrightness(normalized.header, 12);
+            const loaderPrimary = adjustColorBrightness(normalized.header, 10);
+            const loaderSecondary = adjustColorBrightness(normalized.accent, 10);
+            const navButtonStart = adjustColorBrightness(normalized.primary, 8);
+            const navButtonEnd = adjustColorBrightness(normalized.primary, -8);
+            const navButtonActiveStart = adjustColorBrightness(normalized.header, -5);
+            const navButtonActiveEnd = adjustColorBrightness(normalized.header, 15);
+            const categoryUnderline = adjustColorBrightness(normalized.accent, -15);
+            const featureBackground = hexToRgba(normalized.accent, 0.18);
+            const featureText = adjustColorBrightness(normalized.accent, -25);
+            const ctaBackgroundStart = adjustColorBrightness(normalized.primary, 6);
+            const ctaBackgroundEnd = adjustColorBrightness(normalized.primary, -6);
+            const ctaShadow = hexToRgba(normalized.primary, 0.3);
+            const ctaSectionBackground = hexToRgba(normalized.accent, 0.12);
+            const modalAccent = adjustColorBrightness(normalized.primary, -12);
+            const cardShadow = hexToRgba(normalized.text, 0.12);
+            const cardHoverShadow = hexToRgba(normalized.text, 0.18);
+            const borderColor = hexToRgba(normalized.text, 0.08);
+            const indicatorActive = adjustColorBrightness(normalized.primary, -10);
+            const textSecondary = adjustColorBrightness(normalized.text, 35);
+            const cardOverlayStart = hexToRgba(normalized.primary, 0.12);
+            const cardOverlayEnd = hexToRgba(normalized.header, 0.12);
+            const imagePlaceholderStart = adjustColorBrightness(normalized.background, -6);
+            const imagePlaceholderEnd = adjustColorBrightness(normalized.background, -16);
+            const priceColor = adjustColorBrightness(normalized.primary, -5);
+            const specBorderColor = hexToRgba(normalized.text, 0.12);
+
+            return {
+                appearance: normalized,
+                backgroundStart: normalized.background,
+                backgroundEnd,
+                headerStart,
+                headerEnd,
+                headerOverlay: hexToRgba(normalized.header, 0.1),
+                loaderPrimary,
+                loaderSecondary,
+                navButtonStart,
+                navButtonEnd,
+                navButtonActiveStart,
+                navButtonActiveEnd,
+                navButtonShadow: hexToRgba(normalized.primary, 0.28),
+                categoryTitle: normalized.text,
+                categoryDescription: textSecondary,
+                categoryUnderline,
+                featureBackground,
+                featureText,
+                ctaBackgroundStart,
+                ctaBackgroundEnd,
+                ctaShadow,
+                ctaSectionBackground,
+                modalAccent,
+                modalHeaderStart: headerStart,
+                modalHeaderEnd: headerEnd,
+                cardShadow,
+                cardHoverShadow,
+                borderColor,
+                indicatorActive,
+                textSecondary,
+                textOnDark: '#ffffff',
+                accentSoft: hexToRgba(normalized.accent, 0.15),
+                accentStrong: normalized.accent,
+                cardOverlayStart,
+                cardOverlayEnd,
+                imagePlaceholderStart,
+                imagePlaceholderEnd,
+                priceColor,
+                specBorderColor
+            };
+        }
+
         let catalogData = {
-            config: { ...defaultConfig },
+            config: getNormalizedConfig(),
             categories: defaultCategories.map(category => ({ ...category })),
             products: createDefaultProductsMap(defaultCategories),
             categoryInfo: {}
@@ -881,7 +1058,7 @@
         function ensureCategoryStructure() {
             if (!catalogData || typeof catalogData !== 'object') {
                 catalogData = {
-                    config: { ...defaultConfig },
+                    config: getNormalizedConfig(),
                     categories: defaultCategories.map(category => ({ ...category })),
                     products: createDefaultProductsMap(defaultCategories),
                     categoryInfo: {}
@@ -1787,6 +1964,8 @@
                 removeLogoButton.addEventListener('click', handleRemoveLogoClick);
             }
 
+            setupAppearanceControls();
+
             const openProductModalButton = document.getElementById('openProductModalButton');
             if (openProductModalButton) {
                 openProductModalButton.addEventListener('click', () => openProductModal());
@@ -1893,7 +2072,7 @@
                     console.log('Datos cargados correctamente');
 
                     if (parsed && typeof parsed === 'object') {
-                        catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                        catalogData.config = getNormalizedConfig(parsed.config);
                         if (catalogData.config.logoUrl && !catalogData.config.logoData) {
                             catalogData.config.logoData = catalogData.config.logoUrl;
                         }
@@ -1909,7 +2088,7 @@
                 } catch (error) {
                     console.error('No se pudieron leer los datos guardados', error);
                     catalogData = {
-                        config: { ...defaultConfig },
+                        config: getNormalizedConfig(),
                         categories: defaultCategories.map(category => ({ ...category })),
                         products: createDefaultProductsMap(defaultCategories),
                         categoryInfo: {}
@@ -1917,7 +2096,7 @@
                 }
             } else {
                 catalogData = {
-                    config: { ...defaultConfig },
+                    config: getNormalizedConfig(),
                     categories: defaultCategories.map(category => ({ ...category })),
                     products: createDefaultProductsMap(defaultCategories),
                     categoryInfo: {}
@@ -1934,6 +2113,7 @@
         function saveData(options = {}) {
             const { silent = false } = options;
             ensureCategoryStructure();
+            catalogData.config = getNormalizedConfig(catalogData.config);
             stripLegacyImageData(catalogData.products);
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             if (!silent) {
@@ -1985,6 +2165,15 @@
                 return element.value.trim();
             };
 
+            const readColor = (id) => {
+                const element = document.getElementById(id);
+                if (!element || typeof element.value !== 'string') {
+                    return '';
+                }
+
+                return element.value;
+            };
+
             return {
                 whatsapp: readValue('whatsapp'),
                 email: readValue('email'),
@@ -1996,8 +2185,74 @@
                 companyName: readValue('companyName'),
                 tagline: readValue('tagline'),
                 footerMessage: readValue('footerMessage'),
-                logoData: readValue('companyLogoUrl')
+                logoData: readValue('companyLogoUrl'),
+                appearance: normalizeAppearance({
+                    background: readColor('appearanceBackground'),
+                    header: readColor('appearanceHeader'),
+                    primary: readColor('appearancePrimary'),
+                    accent: readColor('appearanceAccent'),
+                    text: readColor('appearanceText')
+                })
             };
+        }
+
+        function getAppearanceDefaultValue(fieldId) {
+            const field = APPEARANCE_FIELD_MAP.get(fieldId);
+            if (!field) {
+                return '#000000';
+            }
+
+            return defaultAppearance[field.key];
+        }
+
+        function updateAppearanceValueDisplay(fieldId, value) {
+            const field = APPEARANCE_FIELD_MAP.get(fieldId);
+            if (!field) {
+                return;
+            }
+
+            const normalizedValue = normalizeColorValue(value, defaultAppearance[field.key]);
+            const displayElement = document.querySelector(`.color-value[data-color-for="${fieldId}"]`);
+            if (displayElement) {
+                displayElement.textContent = normalizedValue.toUpperCase();
+            }
+        }
+
+        function applyAppearanceToInputs(appearance) {
+            const normalized = normalizeAppearance(appearance);
+
+            APPEARANCE_FIELDS.forEach(({ id, key }) => {
+                const input = document.getElementById(id);
+                if (!input) {
+                    return;
+                }
+
+                const value = normalized[key] || getAppearanceDefaultValue(id);
+                input.value = value;
+                updateAppearanceValueDisplay(id, value);
+            });
+        }
+
+        function setupAppearanceControls() {
+            APPEARANCE_FIELDS.forEach(({ id }) => {
+                const input = document.getElementById(id);
+                if (!input) {
+                    return;
+                }
+
+                input.addEventListener('input', () => {
+                    updateAppearanceValueDisplay(id, input.value);
+                    updateCatalogPreview();
+                });
+            });
+
+            const resetButton = document.getElementById('resetAppearanceButton');
+            if (resetButton) {
+                resetButton.addEventListener('click', () => {
+                    applyAppearanceToInputs(defaultAppearance);
+                    updateCatalogPreview();
+                });
+            }
         }
 
         function validateConfiguration({ values, forExport = false } = {}) {
@@ -2097,6 +2352,8 @@
                 }
             }
 
+            configValues.appearance = normalizeAppearance(configValues.appearance);
+
             return {
                 valid: errors.length === 0,
                 errors,
@@ -2120,6 +2377,7 @@
 
         // Load configuration
         function loadConfig() {
+            catalogData.config = getNormalizedConfig(catalogData.config);
             document.getElementById('whatsapp').value = catalogData.config.whatsapp || '';
             document.getElementById('email').value = catalogData.config.email || '';
             document.getElementById('phone').value = catalogData.config.phone || '';
@@ -2135,6 +2393,7 @@
             if (logoUrlInput) {
                 logoUrlInput.value = logoValue;
             }
+            applyAppearanceToInputs(catalogData.config.appearance);
             updateLogoPreview(logoValue || null);
             updateCatalogPreview();
         }
@@ -2153,7 +2412,7 @@
                 return;
             }
 
-            catalogData.config = validation.values;
+            catalogData.config = getNormalizedConfig(validation.values);
             saveData();
         }
 
@@ -2787,7 +3046,7 @@
                     const parsed = JSON.parse(event.target.result);
 
                     if (parsed && typeof parsed === 'object') {
-                        catalogData.config = { ...defaultConfig, ...(parsed.config || {}) };
+                        catalogData.config = getNormalizedConfig(parsed.config);
                         catalogData.categories = Array.isArray(parsed.categories)
                             ? parsed.categories
                             : defaultCategories.map(category => ({ ...category }));
@@ -2840,7 +3099,7 @@
                 updateProcessStatusEntry(processEntryId, {
                     detail: 'Guardando configuración y preparando datos…'
                 });
-                catalogData.config = validation.values;
+                catalogData.config = getNormalizedConfig(validation.values);
 
                 // First save current data
                 saveData();
@@ -2849,7 +3108,7 @@
                     detail: 'Compilando catálogo con tus productos…'
                 });
                 // Generate the HTML content
-                const htmlContent = generateCatalogHTML();
+                const htmlContent = generateCatalogHTML(catalogData.config);
 
                 updateProcessStatusEntry(processEntryId, {
                     detail: 'Generando archivo para la descarga…'
@@ -2889,7 +3148,12 @@
             }
 
             try {
-                const htmlContent = generateCatalogHTML();
+                const hasConfigForm = Boolean(document.getElementById('companyName'));
+                const previewSource = hasConfigForm
+                    ? { ...catalogData.config, ...collectConfigValues() }
+                    : catalogData.config;
+                const previewConfig = getNormalizedConfig(previewSource);
+                const htmlContent = generateCatalogHTML(previewConfig);
                 if ('srcdoc' in previewFrame) {
                     previewFrame.srcdoc = htmlContent;
                 } else {
@@ -2922,9 +3186,9 @@
         window.deleteProduct = deleteProduct;
 
         // Generate catalog HTML
-        function generateCatalogHTML() {
+        function generateCatalogHTML(configOverride) {
             ensureCategoryStructure();
-            const config = catalogData.config;
+            const config = getNormalizedConfig(configOverride || catalogData.config);
             const products = catalogData.products;
             const categories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
             const serializeForScript = (value) => {
@@ -2996,6 +3260,8 @@
                     description
                 };
             });
+
+            const theme = buildThemeTokens(config.appearance);
 
             const trimmedConfig = {
                 whatsapp: (config.whatsapp || '').trim(),
@@ -3183,15 +3449,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${companyNameHtml || defaultCompanyNameHtml} - Catálogo Digital</title>
     <style>
-        ${getCatalogStyles()}
+        ${getCatalogStyles(theme)}
     </style>
 </head>
 <body>
     <!-- Loading Screen -->
     <div class="loader" id="loader">
         <svg class="leaf-spinner" viewBox="0 0 100 100">
-            <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="#6b8e68"/>
-            <path d="M50 40 Q30 60 50 80 Q70 60 50 40" fill="#8fa68c"/>
+            <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="${theme.loaderPrimary}"/>
+            <path d="M50 40 Q30 60 50 80 Q70 60 50 40" fill="${theme.loaderSecondary}"/>
         </svg>
     </div>
 
@@ -3276,7 +3542,8 @@
         }
 
         // Get catalog styles
-        function getCatalogStyles() {
+        function getCatalogStyles(themeTokens) {
+            const theme = themeTokens || buildThemeTokens(defaultAppearance);
             return `
         * {
             margin: 0;
@@ -3286,7 +3553,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            background: linear-gradient(135deg, ${theme.backgroundStart} 0%, ${theme.backgroundEnd} 100%);
             overflow-x: hidden;
         }
 
@@ -3297,7 +3564,7 @@
             left: 0;
             width: 100%;
             height: 100vh;
-            background: #2d4a2b;
+            background: ${theme.headerStart};
             display: flex;
             justify-content: center;
             align-items: center;
@@ -3323,8 +3590,8 @@
 
         /* Header */
         header {
-            background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
-            color: white;
+            background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
+            color: ${theme.textOnDark};
             padding: 2rem 0;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             position: relative;
@@ -3338,7 +3605,7 @@
             right: -10%;
             width: 500px;
             height: 500px;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            background: radial-gradient(circle, ${theme.headerOverlay} 0%, transparent 70%);
             animation: float 20s ease-in-out infinite;
         }
 
@@ -3420,8 +3687,8 @@
 
         .nav-btn {
             padding: 0.7rem 1.5rem;
-            background: linear-gradient(135deg, #6b8e68 0%, #8fa68c 100%);
-            color: white;
+            background: linear-gradient(135deg, ${theme.navButtonStart} 0%, ${theme.navButtonEnd} 100%);
+            color: ${theme.textOnDark};
             border: none;
             border-radius: 25px;
             cursor: pointer;
@@ -3451,11 +3718,11 @@
 
         .nav-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(107,142,104,0.3);
+            box-shadow: 0 5px 15px ${theme.navButtonShadow};
         }
 
         .nav-btn.active {
-            background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
+            background: linear-gradient(135deg, ${theme.navButtonActiveStart} 0%, ${theme.navButtonActiveEnd} 100%);
         }
 
         /* Main Container */
@@ -3477,7 +3744,7 @@
 
         .category-title {
             font-size: 2.5rem;
-            color: #2d4a2b;
+            color: ${theme.categoryTitle};
             margin-bottom: 1rem;
             text-align: center;
             position: relative;
@@ -3492,12 +3759,12 @@
             transform: translateX(-50%);
             width: 100px;
             height: 3px;
-            background: linear-gradient(90deg, transparent, #6b8e68, transparent);
+            background: linear-gradient(90deg, transparent, ${theme.accentStrong}, transparent);
         }
 
         .category-description {
             text-align: center;
-            color: #666;
+            color: ${theme.categoryDescription};
             margin-bottom: 2rem;
             font-size: 1.1rem;
         }
@@ -3514,7 +3781,7 @@
             background: white;
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px ${theme.cardShadow};
             transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
@@ -3527,7 +3794,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(107,142,104,0.1) 0%, rgba(45,74,43,0.1) 100%);
+            background: linear-gradient(135deg, ${theme.cardOverlayStart} 0%, ${theme.cardOverlayEnd} 100%);
             opacity: 0;
             transition: opacity 0.3s ease;
             pointer-events: none;
@@ -3539,13 +3806,13 @@
 
         .product-card:hover {
             transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 15px 40px ${theme.cardHoverShadow};
         }
 
         .product-image {
             width: 100%;
             height: 250px;
-            background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+            background: linear-gradient(135deg, ${theme.imagePlaceholderStart} 0%, ${theme.imagePlaceholderEnd} 100%);
             position: relative;
             overflow: hidden;
         }
@@ -3579,13 +3846,13 @@
 
         .product-name {
             font-size: 1.3rem;
-            color: #2d4a2b;
+            color: ${theme.categoryTitle};
             margin-bottom: 0.5rem;
             font-weight: 600;
         }
 
         .product-description {
-            color: #666;
+            color: ${theme.categoryDescription};
             font-size: 0.95rem;
             line-height: 1.5;
             margin-bottom: 1rem;
@@ -3599,8 +3866,8 @@
         }
 
         .feature-tag {
-            background: rgba(107,142,104,0.1);
-            color: #2d4a2b;
+            background: ${theme.featureBackground};
+            color: ${theme.featureText};
             padding: 0.3rem 0.8rem;
             border-radius: 15px;
             font-size: 0.85rem;
@@ -3608,7 +3875,7 @@
 
         .product-price {
             font-size: 1.5rem;
-            color: #6b8e68;
+            color: ${theme.priceColor};
             font-weight: bold;
         }
 
@@ -3667,8 +3934,8 @@
         }
 
         .modal-header {
-            background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
-            color: white;
+            background: linear-gradient(135deg, ${theme.modalHeaderStart} 0%, ${theme.modalHeaderEnd} 100%);
+            color: ${theme.textOnDark};
             padding: 2rem;
             border-radius: 20px 20px 0 0;
         }
@@ -3694,7 +3961,7 @@
             position: relative;
             width: 100%;
             max-height: 320px;
-            background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+            background: linear-gradient(135deg, ${theme.imagePlaceholderStart} 0%, ${theme.imagePlaceholderEnd} 100%);
             border-radius: 10px;
             overflow: hidden;
             display: flex;
@@ -3779,16 +4046,16 @@
         }
 
         .carousel-indicator.active {
-            background: #6b8e68;
+            background: ${theme.indicatorActive};
         }
 
         .modal-details h3 {
-            color: #2d4a2b;
+            color: ${theme.modalAccent};
             margin-bottom: 1rem;
         }
 
         .modal-details p {
-            color: #666;
+            color: ${theme.categoryDescription};
             line-height: 1.6;
             margin-bottom: 1rem;
         }
@@ -3800,21 +4067,21 @@
 
         .specs-list li {
             padding: 0.5rem 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid ${theme.specBorderColor};
             display: flex;
             justify-content: space-between;
         }
 
         .cta-section {
-            background: rgba(107,142,104,0.1);
+            background: ${theme.ctaSectionBackground};
             padding: 1.5rem;
             border-radius: 10px;
             text-align: center;
         }
 
         .cta-button {
-            background: linear-gradient(135deg, #6b8e68 0%, #8fa68c 100%);
-            color: white;
+            background: linear-gradient(135deg, ${theme.ctaBackgroundStart} 0%, ${theme.ctaBackgroundEnd} 100%);
+            color: ${theme.textOnDark};
             padding: 1rem 2rem;
             border: none;
             border-radius: 25px;
@@ -3826,13 +4093,13 @@
 
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(107,142,104,0.3);
+            box-shadow: 0 5px 15px ${theme.ctaShadow};
         }
 
         /* Footer */
         footer {
-            background: #2d4a2b;
-            color: white;
+            background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
+            color: ${theme.textOnDark};
             padding: 3rem 0 2rem;
             margin-top: 4rem;
         }
