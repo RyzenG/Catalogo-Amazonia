@@ -192,10 +192,13 @@
 
             const backgroundEnd = adjustColorBrightness(normalized.background, -10);
             const backgroundImage = typeof normalized.backgroundImage === 'string' ? normalized.backgroundImage : '';
+            const hasBackgroundImage = backgroundImage.length > 0;
             const headerStart = adjustColorBrightness(normalized.header, -8);
             const headerEnd = adjustColorBrightness(normalized.header, 12);
             const headerImage = typeof normalized.headerImage === 'string' ? normalized.headerImage : '';
+            const hasHeaderImage = headerImage.length > 0;
             const footerImage = typeof normalized.footerImage === 'string' ? normalized.footerImage : '';
+            const hasFooterImage = footerImage.length > 0;
             const loaderPrimary = adjustColorBrightness(normalized.header, 10);
             const loaderSecondary = adjustColorBrightness(normalized.accent, 10);
             const navButtonStart = adjustColorBrightness(normalized.primary, 8);
@@ -224,28 +227,31 @@
             const textOnDark = '#ffffff';
             const headerText = getReadableTextColor(normalized.header, textOnDark, normalized.text);
             const footerText = getReadableTextColor(normalized.header, textOnDark, normalized.text);
-            const backgroundOverlayStart = hexToRgba(normalized.background, 0.85);
-            const backgroundOverlayEnd = hexToRgba(backgroundEnd, 0.85);
-            const headerImageOverlayStart = hexToRgba(headerStart, 0.85);
-            const headerImageOverlayEnd = hexToRgba(headerEnd, 0.85);
-            const footerImageOverlayStart = hexToRgba(headerStart, 0.85);
-            const footerImageOverlayEnd = hexToRgba(headerEnd, 0.85);
+            const backgroundOverlayStart = hasBackgroundImage ? null : hexToRgba(normalized.background, 0.85);
+            const backgroundOverlayEnd = hasBackgroundImage ? null : hexToRgba(backgroundEnd, 0.85);
+            const headerImageOverlayStart = hasHeaderImage ? null : hexToRgba(headerStart, 0.85);
+            const headerImageOverlayEnd = hasHeaderImage ? null : hexToRgba(headerEnd, 0.85);
+            const footerImageOverlayStart = hasFooterImage ? null : hexToRgba(headerStart, 0.85);
+            const footerImageOverlayEnd = hasFooterImage ? null : hexToRgba(headerEnd, 0.85);
 
             return {
                 appearance: normalized,
                 backgroundStart: normalized.background,
                 backgroundEnd,
                 backgroundImage,
+                hasBackgroundImage,
                 backgroundOverlayStart,
                 backgroundOverlayEnd,
                 headerStart,
                 headerEnd,
                 headerImage,
+                hasHeaderImage,
                 headerImageOverlayStart,
                 headerImageOverlayEnd,
                 headerOverlay: hexToRgba(normalized.header, 0.1),
                 headerText,
                 footerImage,
+                hasFooterImage,
                 footerImageOverlayStart,
                 footerImageOverlayEnd,
                 footerText,
@@ -3673,42 +3679,75 @@
                     .join('\n');
             };
 
-            const bodyBackground = theme.backgroundImage
+            const backgroundImageValue = typeof theme.backgroundImage === 'string' ? theme.backgroundImage : '';
+            const headerImageValue = typeof theme.headerImage === 'string' ? theme.headerImage : '';
+            const footerImageValue = typeof theme.footerImage === 'string' ? theme.footerImage : '';
+
+            const hasBackgroundImage = Boolean(theme.hasBackgroundImage && backgroundImageValue);
+            const hasHeaderImage = Boolean(theme.hasHeaderImage && headerImageValue);
+            const hasFooterImage = Boolean(theme.hasFooterImage && footerImageValue);
+
+            const bodyBackground = hasBackgroundImage
                 ? [
                     `background-color: ${theme.backgroundStart};`,
-                    'background-image:',
-                    `    linear-gradient(135deg, ${theme.backgroundOverlayStart} 0%, ${theme.backgroundOverlayEnd} 100%),`,
-                    `    url("${escapeCssUrl(theme.backgroundImage)}");`,
+                    `background-image: url("${escapeCssUrl(backgroundImageValue)}");`,
                     'background-size: cover;',
                     'background-position: center;',
                     'background-repeat: no-repeat;',
                     'background-attachment: fixed;'
                 ].join('\n')
-                : `background: linear-gradient(135deg, ${theme.backgroundStart} 0%, ${theme.backgroundEnd} 100%);`;
+                : (backgroundImageValue
+                    ? [
+                        `background-color: ${theme.backgroundStart};`,
+                        'background-image:',
+                        `    linear-gradient(135deg, ${theme.backgroundOverlayStart} 0%, ${theme.backgroundOverlayEnd} 100%),`,
+                        `    url("${escapeCssUrl(backgroundImageValue)}");`,
+                        'background-size: cover;',
+                        'background-position: center;',
+                        'background-repeat: no-repeat;',
+                        'background-attachment: fixed;'
+                    ].join('\n')
+                    : `background: linear-gradient(135deg, ${theme.backgroundStart} 0%, ${theme.backgroundEnd} 100%);`);
 
-            const headerBackground = theme.headerImage
+            const headerBackground = hasHeaderImage
                 ? [
                     `background-color: ${theme.headerStart};`,
-                    'background-image:',
-                    `    linear-gradient(135deg, ${theme.headerImageOverlayStart} 0%, ${theme.headerImageOverlayEnd} 100%),`,
-                    `    url("${escapeCssUrl(theme.headerImage)}");`,
+                    `background-image: url("${escapeCssUrl(headerImageValue)}");`,
                     'background-size: cover;',
                     'background-position: center;',
                     'background-repeat: no-repeat;'
                 ].join('\n')
-                : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`;
+                : (headerImageValue
+                    ? [
+                        `background-color: ${theme.headerStart};`,
+                        'background-image:',
+                        `    linear-gradient(135deg, ${theme.headerImageOverlayStart} 0%, ${theme.headerImageOverlayEnd} 100%),`,
+                        `    url("${escapeCssUrl(headerImageValue)}");`,
+                        'background-size: cover;',
+                        'background-position: center;',
+                        'background-repeat: no-repeat;'
+                    ].join('\n')
+                    : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`);
 
-            const footerBackground = theme.footerImage
+            const footerBackground = hasFooterImage
                 ? [
                     `background-color: ${theme.headerStart};`,
-                    'background-image:',
-                    `    linear-gradient(135deg, ${theme.footerImageOverlayStart} 0%, ${theme.footerImageOverlayEnd} 100%),`,
-                    `    url("${escapeCssUrl(theme.footerImage)}");`,
+                    `background-image: url("${escapeCssUrl(footerImageValue)}");`,
                     'background-size: cover;',
                     'background-position: center;',
                     'background-repeat: no-repeat;'
                 ].join('\n')
-                : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`;
+                : (footerImageValue
+                    ? [
+                        `background-color: ${theme.headerStart};`,
+                        'background-image:',
+                        `    linear-gradient(135deg, ${theme.footerImageOverlayStart} 0%, ${theme.footerImageOverlayEnd} 100%),`,
+                        `    url("${escapeCssUrl(footerImageValue)}");`,
+                        'background-size: cover;',
+                        'background-position: center;',
+                        'background-repeat: no-repeat;'
+                    ].join('\n')
+                    : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`);
 
             return `
 
