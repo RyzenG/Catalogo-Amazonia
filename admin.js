@@ -5113,33 +5113,6 @@ ${formatCssBlock(footerBackground)}
         const selectionStorage = getPersistentStorage();
         let selectedProducts = [];
 
-        function getRemoveButtonAriaLabel(productName) {
-            const safeName = typeof productName === 'string' && productName.trim()
-                ? productName.trim()
-                : 'producto seleccionado';
-            return 'Quitar ' + safeName + ' de la lista';
-        }
-
-        function getSelectionSummaryText(uniqueCount, totalUnits) {
-            if (uniqueCount === 0) {
-                return 'Sin productos seleccionados';
-            }
-
-            if (uniqueCount === 1) {
-                return totalUnits === 1
-                    ? '1 producto en la lista'
-                    : '1 producto, ' + totalUnits + ' unidades';
-            }
-
-            return uniqueCount + ' productos, ' + totalUnits + ' unidades';
-        }
-
-        function getToggleAriaLabel(isExpanded, uniqueCount) {
-            const labelBase = uniqueCount === 1 ? 'producto seleccionado' : 'productos seleccionados';
-            const action = isExpanded ? 'Cerrar' : 'Abrir';
-            return action + ' lista de ' + labelBase + ' (' + uniqueCount + ')';
-        }
-
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -5810,7 +5783,7 @@ ${formatCssBlock(footerBackground)}
                 removeButton.type = 'button';
                 removeButton.className = 'selected-products-item__remove';
                 removeButton.textContent = 'Quitar';
-                removeButton.setAttribute('aria-label', getRemoveButtonAriaLabel(nameElement.textContent));
+                removeButton.setAttribute('aria-label', `Quitar ${nameElement.textContent} de la lista`);
                 removeButton.addEventListener('click', function() {
                     removeProductFromSelection(item.id);
                 });
@@ -5892,7 +5865,15 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (summaryElement) {
-                summaryElement.textContent = getSelectionSummaryText(uniqueCount, totalUnits);
+                if (uniqueCount === 0) {
+                    summaryElement.textContent = 'Sin productos seleccionados';
+                } else if (uniqueCount === 1) {
+                    summaryElement.textContent = totalUnits === 1
+                        ? '1 producto en la lista'
+                        : `1 producto, ${totalUnits} unidades`;
+                } else {
+                    summaryElement.textContent = `${uniqueCount} productos, ${totalUnits} unidades`;
+                }
             }
 
             if (clearButton) {
@@ -5905,7 +5886,8 @@ ${formatCssBlock(footerBackground)}
 
             if (toggle) {
                 const expanded = toggle.getAttribute('aria-expanded') === 'true';
-                toggle.setAttribute('aria-label', getToggleAriaLabel(expanded, uniqueCount));
+                const labelBase = uniqueCount === 1 ? 'producto seleccionado' : 'productos seleccionados';
+                toggle.setAttribute('aria-label', `${expanded ? 'Cerrar' : 'Abrir'} lista de ${labelBase} (${uniqueCount})`);
             }
         }
 
