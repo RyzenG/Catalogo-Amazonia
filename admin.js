@@ -5315,7 +5315,7 @@ ${formatCssBlock(footerBackground)}
             const facebookValue = (config.facebook || '').trim();
             const tiktokValue = (config.tiktok || '').trim();
 
-            document.title = companyName ? \`${companyName} - Catálogo Digital\` : 'Catálogo Digital';
+            document.title = companyName ? \`\${companyName} - Catálogo Digital\` : 'Catálogo Digital';
 
             const headerTitle = document.getElementById('headerTitle');
             if (headerTitle) {
@@ -5338,7 +5338,7 @@ ${formatCssBlock(footerBackground)}
             if (logoContainer && logoImage) {
                 if (logoData) {
                     logoImage.src = logoData;
-                    logoImage.alt = \`Logo de ${companyName || 'la empresa'}\`;
+                    logoImage.alt = \`Logo de \${companyName || 'la empresa'}\`;
                     logoContainer.style.display = 'flex';
                 } else {
                     logoImage.removeAttribute('src');
