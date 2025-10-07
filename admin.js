@@ -3545,6 +3545,8 @@
             // Generate products HTML for each category
             let productsHTML = '';
             let productDataJS = {};
+            const featureSet = new Set();
+            const priceValues = [];
 
             resolvedCategories.forEach(category => {
                 const categoryProducts = products && products[category.id] ? products[category.id] : [];
@@ -3570,12 +3572,13 @@
                             ? product.shortDesc
                             : 'Información disponible próximamente.';
                         const productShortDescHtml = escapeHtml(rawShortDesc);
-                        const sanitizedFeatures = Array.isArray(product.features)
+                        const featureValues = Array.isArray(product.features)
                             ? product.features
-                                .map(feature => (typeof feature === 'string' ? feature : ''))
+                                .map(feature => (typeof feature === 'string' ? feature.trim() : ''))
                                 .filter(feature => feature.length > 0)
-                                .map(feature => `<span class="feature-tag">${escapeHtml(feature)}</span>`)
                             : [];
+                        featureValues.forEach(value => featureSet.add(value));
+                        const sanitizedFeatures = featureValues.map(feature => `<span class="feature-tag">${escapeHtml(feature)}</span>`);
                         const featuresHtml = sanitizedFeatures.join('');
                         const imageList = getNormalizedProductImages(product);
                         const imageSrc = imageList.length > 0
@@ -3583,9 +3586,33 @@
                             : getProductImageSource(product, categoryIcon);
                         const imageAlt = escapeHtml(`Imagen de ${rawName}`);
                         const formattedPrice = formatCurrencyCOP(product.price);
+                        let numericPrice = Number.NaN;
+                        if (typeof product.price === 'number') {
+                            numericPrice = product.price;
+                        } else if (typeof product.price === 'string') {
+                            const priceDigits = product.price
+                                .replace(/[^0-9,.-]/g, '')
+                                .replace(/\./g, '')
+                                .replace(',', '.');
+                            const parsedPrice = Number.parseFloat(priceDigits);
+                            numericPrice = Number.isFinite(parsedPrice) ? parsedPrice : Number.NaN;
+                        }
+                        if (Number.isFinite(numericPrice)) {
+                            priceValues.push(numericPrice);
+                        }
                         const productPriceHtml = escapeHtml(formattedPrice);
+                        const featuresAttr = featureValues.map(feature => escapeHtml(feature)).join('||');
+                        const descriptionAttrSource = [
+                            rawShortDesc,
+                            typeof product.longDesc === 'string' ? product.longDesc : ''
+                        ]
+                            .filter(value => typeof value === 'string' && value.trim().length > 0)
+                            .map(value => value.trim())
+                            .join(' ');
+                        const productDescriptionAttr = escapeHtml(descriptionAttrSource);
+                        const priceAttr = Number.isFinite(numericPrice) ? numericPrice : '';
                         productsHTML += `
-                <div class="product-card" onclick="openModal('${product.id}')">
+                <div class="product-card" data-category="${category.id}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${product.id}')">
                     <div class="product-image">
                         <img src="${imageSrc}" alt="${imageAlt}">
                     </div>
@@ -3627,15 +3654,69 @@
 
                     productsHTML += `
             </div>
+            <p class="no-results-message" data-category-empty style="display: none;">No se encontraron productos que coincidan con los filtros seleccionados.</p>
         </div>`;
                 }
             });
+
+            const featureOptions = Array.from(featureSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+            const featureOptionsMarkup = featureOptions
+                .map(feature => `<option value="${escapeHtml(feature)}">${escapeHtml(feature)}</option>`)
+                .join('');
+
+            const uniquePriceValues = Array.from(new Set(priceValues.filter(value => Number.isFinite(value) && value >= 0)))
+                .sort((a, b) => a - b);
+            let priceOptionsMarkup = '';
+
+            if (uniquePriceValues.length > 0) {
+                const minPrice = uniquePriceValues[0];
+                const medianPrice = uniquePriceValues[Math.floor(uniquePriceValues.length / 2)];
+                const upperPrice = uniquePriceValues[Math.floor(uniquePriceValues.length * 0.75)];
+                const maxPrice = uniquePriceValues[uniquePriceValues.length - 1];
+
+                const formattedMedian = escapeHtml(formatCurrencyCOP(medianPrice));
+                const formattedUpper = escapeHtml(formatCurrencyCOP(upperPrice));
+                const formattedMax = escapeHtml(formatCurrencyCOP(maxPrice));
+
+                const ranges = [];
+
+                if (minPrice === maxPrice) {
+                    ranges.push({ value: `${minPrice}+`, label: `Precio: ${formattedMax}` });
+                } else {
+                    if (medianPrice > minPrice) {
+                        ranges.push({ value: `${Math.max(0, Math.floor(minPrice))}-${Math.ceil(medianPrice)}`, label: `Hasta ${formattedMedian}` });
+                    }
+
+                    if (upperPrice > medianPrice) {
+                        ranges.push({ value: `${Math.ceil(medianPrice)}-${Math.ceil(upperPrice)}`, label: `${formattedMedian} - ${formattedUpper}` });
+                    }
+
+                    ranges.push({ value: `${Math.ceil(upperPrice)}+`, label: `Desde ${formattedUpper}` });
+                }
+
+                priceOptionsMarkup = ranges
+                    .filter((range, index, array) => range && range.value && array.findIndex(candidate => candidate.value === range.value) === index)
+                    .map(range => `<option value="${range.value}">${range.label}</option>`)
+                    .join('');
+            }
+
+            const filtersMarkup = `
+        <div class="catalog-filters" id="catalogFilters">
+            <label class="filter-field" for="catalogSearchInput">
+                <span class="filter-label">Buscar</span>
+                <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre, descripción o etiqueta">
+            </label>
+            ${featureOptionsMarkup ? `<label class="filter-field" for="catalogFeatureFilter"><span class="filter-label">Etiqueta</span><select id="catalogFeatureFilter"><option value="">Todas las etiquetas</option>${featureOptionsMarkup}</select></label>` : ''}
+            ${priceOptionsMarkup ? `<label class="filter-field" for="catalogPriceFilter"><span class="filter-label">Precio</span><select id="catalogPriceFilter"><option value="">Todos los precios</option>${priceOptionsMarkup}</select></label>` : ''}
+        </div>`;
 
             const navButtonsHTML = categoriesWithProducts
                 .map(category => {
                     const isActive = category.id === firstCategoryWithProducts;
                     const label = `${category.icon || '📦'} ${category.title || formatCategoryLabel(category.id)}`;
-                    return `<button class="nav-btn${isActive ? ' active' : ''}" data-category="${category.id}" onclick="showCategory(event, '${category.id}')">${escapeHtml(label)}</button>`;
+                    const labelAttr = escapeHtml(label);
+                    const descriptionAttr = escapeHtml(category.description || '');
+                    return `<button class="nav-btn${isActive ? ' active' : ''}" data-category="${category.id}" data-label="${labelAttr}" data-description="${descriptionAttr}" onclick="showCategory(event, '${category.id}')">${escapeHtml(label)}</button>`;
                 })
                 .join('');
 
@@ -3723,12 +3804,13 @@
                 ${navButtonsHTML}
             </div>
         </nav>
+        ${filtersMarkup}
     </div>
 
     <!-- Main Container -->
     <div class="container">
         ${productsHTML}
-        <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">No hay productos disponibles en este momento. Vuelve pronto para descubrir las novedades.</p>
+        <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">Aún no hay productos publicados. Estamos preparando nuevas colecciones para ti, ¡vuelve pronto!</p>
     </div>
 
     <!-- Modal -->
@@ -4001,7 +4083,7 @@ ${formatCssBlock(headerBackground)}
         nav {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 1rem 2rem;
+            padding: 1rem 2rem 0.5rem;
         }
 
         .nav-buttons {
@@ -4009,6 +4091,70 @@ ${formatCssBlock(headerBackground)}
             justify-content: center;
             gap: 1rem;
             flex-wrap: wrap;
+        }
+
+        .catalog-filters {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            flex: 1 1 220px;
+        }
+
+        .filter-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: ${theme.categoryDescription};
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .catalog-filters input,
+        .catalog-filters select {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 12px;
+            background: #ffffff;
+            color: ${theme.categoryTitle};
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .catalog-filters input::placeholder {
+            color: ${theme.textSecondary};
+        }
+
+        .catalog-filters input:focus,
+        .catalog-filters select:focus {
+            outline: none;
+            border-color: ${theme.accentStrong};
+            box-shadow: 0 0 0 3px ${theme.accentSoft};
+            transform: translateY(-1px);
+        }
+
+        .catalog-filters select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image:
+                linear-gradient(45deg, transparent 50%, ${theme.accentStrong} 50%),
+                linear-gradient(135deg, ${theme.accentStrong} 50%, transparent 50%);
+            background-position:
+                calc(100% - 18px) calc(50% - 3px),
+                calc(100% - 12px) calc(50% - 3px);
+            background-size: 6px 6px, 6px 6px;
+            background-repeat: no-repeat;
+            padding-right: 2.5rem;
         }
 
         .nav-btn {
@@ -4093,6 +4239,28 @@ ${formatCssBlock(headerBackground)}
             color: ${theme.categoryDescription};
             margin-bottom: 2rem;
             font-size: 1.1rem;
+        }
+
+        .no-results-message {
+            margin: 1.5rem auto 0;
+            text-align: center;
+            font-size: 1rem;
+            color: ${theme.categoryDescription};
+            max-width: 680px;
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px dashed ${theme.borderColor};
+            background: rgba(255,255,255,0.75);
+            line-height: 1.6;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        .no-results-message::before {
+            content: '🔍';
+            display: block;
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.85;
         }
 
         /* Product Grid */
@@ -4565,7 +4733,7 @@ ${formatCssBlock(footerBackground)}
             h1 {
                 font-size: 2rem;
             }
-            
+
             .header-inner {
                 gap: 1.5rem;
             }
@@ -4579,10 +4747,24 @@ ${formatCssBlock(footerBackground)}
                 box-shadow: none;
             }
 
+            nav {
+                padding: 1rem 1.5rem 0.5rem;
+            }
+
+            .catalog-filters {
+                padding: 0 1.5rem 1.5rem;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-field {
+                flex: 1 1 auto;
+            }
+
             .category-title {
                 font-size: 1.8rem;
             }
-            
+
             .products-grid {
                 grid-template-columns: 1fr;
             }
@@ -4614,6 +4796,7 @@ ${formatCssBlock(footerBackground)}
         let modalProduct = null;
         let modalImages = [];
         let currentImageIndex = 0;
+        let searchFilterTimeout = null;
         const productData = ${serialize(productData)};
         const catalogConfig = ${serialize(config || {})};
 
@@ -4642,7 +4825,9 @@ ${formatCssBlock(footerBackground)}
 
         document.addEventListener('DOMContentLoaded', function() {
             applyConfig();
+            setupFilters();
             initializeCatalogState();
+            filterCatalog();
 
             const cards = document.querySelectorAll('.product-card');
             cards.forEach(card => {
@@ -4889,6 +5074,124 @@ ${formatCssBlock(footerBackground)}
             }
         }
 
+        function setupFilters() {
+            const searchInput = document.getElementById('catalogSearchInput');
+            const featureSelect = document.getElementById('catalogFeatureFilter');
+            const priceSelect = document.getElementById('catalogPriceFilter');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    if (searchFilterTimeout) {
+                        window.clearTimeout(searchFilterTimeout);
+                    }
+
+                    searchFilterTimeout = window.setTimeout(filterCatalog, 180);
+                });
+            }
+
+            if (featureSelect) {
+                featureSelect.addEventListener('change', filterCatalog);
+            }
+
+            if (priceSelect) {
+                priceSelect.addEventListener('change', filterCatalog);
+            }
+        }
+
+        function parsePriceFilter(value) {
+            if (typeof value !== 'string' || value.trim().length === 0) {
+                return null;
+            }
+
+            const trimmed = value.trim();
+
+            if (trimmed.endsWith('+')) {
+                const minValue = Number.parseFloat(trimmed.slice(0, -1));
+                return Number.isFinite(minValue)
+                    ? { min: minValue, max: Infinity }
+                    : null;
+            }
+
+            const [minPart, maxPart] = trimmed.split('-');
+            if (typeof minPart === 'undefined' || typeof maxPart === 'undefined') {
+                return null;
+            }
+
+            const minValue = Number.parseFloat(minPart);
+            const maxValue = Number.parseFloat(maxPart);
+
+            if (!Number.isFinite(minValue) && !Number.isFinite(maxValue)) {
+                return null;
+            }
+
+            const normalizedMin = Number.isFinite(minValue) ? minValue : 0;
+            const normalizedMax = Number.isFinite(maxValue) ? maxValue : Infinity;
+
+            return { min: normalizedMin, max: normalizedMax };
+        }
+
+        function filterCatalog() {
+            const searchInput = document.getElementById('catalogSearchInput');
+            const featureSelect = document.getElementById('catalogFeatureFilter');
+            const priceSelect = document.getElementById('catalogPriceFilter');
+
+            const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            const featureTerm = featureSelect ? featureSelect.value.trim().toLowerCase() : '';
+            const priceFilter = priceSelect ? priceSelect.value.trim() : '';
+            const priceRange = parsePriceFilter(priceFilter);
+            const searchTokens = searchTerm.length > 0
+                ? searchTerm.split(/\s+/).filter(Boolean)
+                : [];
+
+            const categories = Array.from(document.querySelectorAll('.category'));
+
+            categories.forEach(category => {
+                const cards = Array.from(category.querySelectorAll('.product-card'));
+                let visibleInCategory = 0;
+
+                cards.forEach(card => {
+                    const name = (card.dataset.name || '').toLowerCase();
+                    const description = (card.dataset.description || '').toLowerCase();
+                    const features = (card.dataset.features || '').toLowerCase();
+                    const priceValue = Number.parseFloat(card.dataset.price);
+
+                    const matchesSearch = searchTokens.length === 0
+                        ? true
+                        : searchTokens.every(token =>
+                            [name, description, features].some(field => field.includes(token))
+                        );
+
+                    let matchesFeature = true;
+                    if (featureTerm) {
+                        matchesFeature = features.split('||').some(feature => feature.trim().includes(featureTerm));
+                    }
+
+                    let matchesPrice = true;
+                    if (priceRange) {
+                        if (!Number.isFinite(priceValue)) {
+                            matchesPrice = false;
+                        } else {
+                            const min = Number.isFinite(priceRange.min) ? priceRange.min : 0;
+                            const max = Number.isFinite(priceRange.max) ? priceRange.max : Infinity;
+                            matchesPrice = priceValue >= min && priceValue <= max;
+                        }
+                    }
+
+                    const matchesAll = matchesSearch && matchesFeature && matchesPrice;
+                    card.style.display = matchesAll ? '' : 'none';
+
+                    if (matchesAll) {
+                        visibleInCategory += 1;
+                    }
+                });
+
+                const emptyMessage = category.querySelector('[data-category-empty]');
+                if (emptyMessage) {
+                    emptyMessage.style.display = visibleInCategory === 0 ? 'block' : 'none';
+                }
+            });
+        }
+
         function initializeCatalogState() {
             const categories = Array.from(document.querySelectorAll('.category'));
             const navWrapper = document.querySelector('.nav-container');
@@ -4969,6 +5272,8 @@ ${formatCssBlock(footerBackground)}
                     behavior: 'smooth'
                 });
             }
+
+            filterCatalog();
         }
 
         function openModal(productId) {
