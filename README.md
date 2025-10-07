@@ -9,6 +9,12 @@ El panel de administración permite a Amazonia Concrete configurar su informaci�
 3. **Gestionar categorías y productos**: cambie al apartado **📦 Gestión de Productos** desde el menú lateral. Allí encontrará las pestañas de categoría, controles para abrir el modal de categorías y el formulario para crear o editar productos con campos de precio, descripciones, características y especificaciones técnicas.
 4. **Actualizar la vista previa**: utilice el botón **🔄 Actualizar vista previa** o cualquier acción de guardado para regenerar el iframe con el catálogo actual, gracias a `updateCatalogPreview()` en `admin.js` que reconstruye el HTML con los datos vigentes.
 5. **Generar el catálogo final**: cuando todo esté listo, pulse **📥 Generar Catálogo** (en el menú o en la sección inferior). El script invoca `generateCatalog()`, guarda los datos y descarga un archivo HTML autónomo con fecha en el nombre.
+6. **Crear una lista compartible**: en la vista previa del catálogo, cada tarjeta incluye un botón **➕ Agregar a lista** que alimenta un panel flotante accesible desde el control "Lista" ubicado en la esquina inferior derecha. La selección se guarda automáticamente en `localStorage`, permite ajustar cantidades, escribir notas por producto y vaciar la lista con un clic.
+
+### Panel flotante de productos seleccionados
+- **Persistencia automática**: la lista usa la clave `amazoniaCatalogSelectedProducts` en `localStorage`. Si el visitante vuelve al catálogo desde el mismo navegador, encontrará sus productos previos con cantidades y anotaciones intactas.
+- **Controles accesibles**: el panel cuenta con roles ARIA, se abre/cierra mediante teclado, muestra un contador dinámico en el botón flotante y ofrece un atajo para "Vaciar lista".
+- **Sincronización con contactos**: las acciones **💬 WhatsApp** y **📋 Solicitar Cotización** generan mensajes/correos que incluyen todos los productos seleccionados, sus cantidades y notas, listos para enviar.
 
 ## Manejo de imágenes
 - **Preferencia por URLs directas**: el formulario de productos incluye un campo para pegar enlaces a imágenes, recomendando explícitamente el uso de rutas de `raw.githubusercontent.com` para recursos alojados en GitHub, lo que evita redirecciones y facilita la carga desde el catálogo final.
@@ -58,6 +64,7 @@ Realice las siguientes verificaciones antes de liberar un nuevo catálogo o fusi
 3. **Gestión de productos**
    - Crear, editar y eliminar un producto con todos los campos completos; asegurar que los íconos y las imágenes se muestran correctamente.
    - Validar la importación y exportación del JSON, confirmando que los campos obligatorios se mantienen intactos.
+   - Probar la lista flotante: agregar varios productos, ajustar cantidades/notas, recargar el HTML generado para confirmar la persistencia y verificar que los botones de WhatsApp/correo utilizan el resumen completo.
 4. **Generación de catálogo**
    - Ejecutar `Generar Catálogo` y abrir el HTML resultante en un navegador distinto para comprobar estilos, imágenes y enlaces.
    - Simular un catálogo sin conexión a Internet para verificar que los recursos embebidos siguen operativos.
