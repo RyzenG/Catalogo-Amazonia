@@ -3611,8 +3611,8 @@
                             .join(' ');
                         const productDescriptionAttr = escapeHtml(descriptionAttrSource);
                         const priceAttr = Number.isFinite(numericPrice) ? numericPrice : '';
-                        productsHTML += `
-                <div class="product-card" data-category="${category.id}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${product.id}')">
+                    productsHTML += `
+                <div class="product-card" data-category="${category.id}" data-product-id="${product.id}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${product.id}')">
                     <div class="product-image">
                         <img src="${imageSrc}" alt="${imageAlt}">
                     </div>
@@ -3621,6 +3621,9 @@
                         <p class="product-description">${productShortDescHtml}</p>
                         <div class="product-features">${featuresHtml}</div>
                         <p class="product-price">${productPriceHtml}</p>
+                        <div class="product-actions">
+                            <button type="button" class="product-card__select" data-product-id="${product.id}" aria-pressed="false" aria-label="Agregar ${productNameHtml} a la lista">➕ Agregar a lista</button>
+                        </div>
                     </div>
                 </div>`;
 
@@ -3709,6 +3712,26 @@
             ${featureOptionsMarkup ? `<label class="filter-field" for="catalogFeatureFilter"><span class="filter-label">Etiqueta</span><select id="catalogFeatureFilter"><option value="">Todas las etiquetas</option>${featureOptionsMarkup}</select></label>` : ''}
             ${priceOptionsMarkup ? `<label class="filter-field" for="catalogPriceFilter"><span class="filter-label">Precio</span><select id="catalogPriceFilter"><option value="">Todos los precios</option>${priceOptionsMarkup}</select></label>` : ''}
         </div>`;
+
+            const selectionPanelMarkup = `
+    <button type="button" class="selected-products-toggle" id="selectedPanelToggle" aria-controls="selectedProductsPanel" aria-expanded="false" aria-haspopup="dialog">
+        <span class="selected-products-toggle__label">Lista</span>
+        <span class="selected-products-toggle__badge" id="selectedProductsCount" aria-hidden="true">0</span>
+    </button>
+    <aside class="selected-products-panel" id="selectedProductsPanel" role="region" aria-live="polite" aria-labelledby="selectedProductsTitle" aria-hidden="true" tabindex="-1">
+        <div class="selected-products-panel__header">
+            <h2 class="selected-products-panel__title" id="selectedProductsTitle">Lista de productos</h2>
+            <div class="selected-products-panel__header-actions">
+                <span class="selected-products-panel__summary" id="selectedProductsSummary">Sin productos seleccionados</span>
+                <button type="button" class="selected-products-panel__clear" id="clearSelectedProductsButton" disabled>Vaciar lista</button>
+                <button type="button" class="selected-products-panel__close" id="selectedPanelClose" aria-label="Cerrar panel">✕</button>
+            </div>
+        </div>
+        <div class="selected-products-panel__body">
+            <p class="selected-products-panel__empty" id="selectedProductsEmpty">Aún no has agregado productos a tu lista.</p>
+            <ul class="selected-products-panel__list" id="selectedProductsList" aria-describedby="selectedProductsTitle"></ul>
+        </div>
+    </aside>`;
 
             const navButtonsHTML = categoriesWithProducts
                 .map(category => {
@@ -3812,6 +3835,8 @@
         ${productsHTML}
         <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">Aún no hay productos publicados. Estamos preparando nuevas colecciones para ti, ¡vuelve pronto!</p>
     </div>
+
+    ${selectionPanelMarkup}
 
     <!-- Modal -->
     <div class="modal" id="productModal">
@@ -4373,6 +4398,44 @@ ${formatCssBlock(headerBackground)}
             font-weight: bold;
         }
 
+        .product-actions {
+            margin-top: 1.2rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .product-card__select {
+            appearance: none;
+            border: none;
+            border-radius: 999px;
+            background: ${theme.accentStrong};
+            color: ${theme.textOnDark};
+            font-weight: 600;
+            padding: 0.55rem 1.4rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: 0 10px 20px ${theme.accentSoft};
+        }
+
+        .product-card__select:hover,
+        .product-card__select:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px ${theme.accentSoft};
+        }
+
+        .product-card__select:focus-visible {
+            outline: 3px solid ${theme.accentStrong};
+            outline-offset: 2px;
+        }
+
+        .product-card__select[aria-pressed="true"] {
+            background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
+            box-shadow: 0 8px 18px ${theme.accentSoft};
+        }
+
         /* Modal */
         .modal {
             display: none;
@@ -4728,6 +4791,253 @@ ${formatCssBlock(footerBackground)}
             }
         }
 
+        /* Selected products panel */
+        .selected-products-toggle {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1100;
+            background: ${theme.accentStrong};
+            color: ${theme.textOnDark};
+            border: none;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.65rem 1.2rem;
+            font-weight: 600;
+            box-shadow: 0 18px 35px ${theme.accentSoft};
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .selected-products-toggle:hover,
+        .selected-products-toggle:focus {
+            transform: translateY(-3px);
+            box-shadow: 0 22px 40px ${theme.accentSoft};
+        }
+
+        .selected-products-toggle:focus-visible {
+            outline: 3px solid ${theme.textOnDark};
+            outline-offset: 3px;
+        }
+
+        .selected-products-toggle__badge {
+            min-width: 1.8rem;
+            height: 1.8rem;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.15);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+        }
+
+        .selected-products-panel {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: min(420px, calc(100% - 3rem));
+            max-height: min(75vh, 520px);
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 25px 55px rgba(0,0,0,0.18);
+            transform: translateY(calc(100% + 2rem));
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            z-index: 1200;
+            border: 1px solid ${theme.borderColor};
+        }
+
+        .selected-products-panel--open {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .selected-products-panel:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px ${theme.accentSoft};
+        }
+
+        .selected-products-panel__header {
+            padding: 1.1rem 1.4rem 0.9rem;
+            border-bottom: 1px solid ${theme.borderColor};
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .selected-products-panel__title {
+            font-size: 1.2rem;
+            color: ${theme.categoryTitle};
+        }
+
+        .selected-products-panel__header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .selected-products-panel__summary {
+            color: ${theme.categoryDescription};
+            font-size: 0.95rem;
+        }
+
+        .selected-products-panel__clear {
+            margin-left: auto;
+            background: transparent;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 999px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+        }
+
+        .selected-products-panel__clear:not(:disabled):hover,
+        .selected-products-panel__clear:not(:disabled):focus {
+            background: ${theme.accentSoft};
+            border-color: ${theme.accentStrong};
+            color: ${theme.categoryTitle};
+        }
+
+        .selected-products-panel__clear:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .selected-products-panel__close {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            color: ${theme.categoryDescription};
+        }
+
+        .selected-products-panel__close:hover,
+        .selected-products-panel__close:focus {
+            color: ${theme.categoryTitle};
+        }
+
+        .selected-products-panel__body {
+            padding: 1rem 1.4rem 1.4rem;
+            overflow-y: auto;
+            flex: 1 1 auto;
+        }
+
+        .selected-products-panel__empty {
+            color: ${theme.categoryDescription};
+            font-size: 0.95rem;
+        }
+
+        .selected-products-panel__list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .selected-products-item {
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid ${theme.borderColor};
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,1) 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .selected-products-item__header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .selected-products-item__name {
+            font-weight: 600;
+            color: ${theme.categoryTitle};
+            flex: 1 1 auto;
+        }
+
+        .selected-products-item__remove {
+            border: none;
+            background: transparent;
+            color: ${theme.categoryDescription};
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .selected-products-item__remove:hover,
+        .selected-products-item__remove:focus {
+            color: ${theme.accentStrong};
+            text-decoration: underline;
+        }
+
+        .selected-products-item__fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .selected-products-item__field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            font-size: 0.9rem;
+            color: ${theme.categoryDescription};
+        }
+
+        .selected-products-item__field input,
+        .selected-products-item__field textarea {
+            width: 100%;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 10px;
+            padding: 0.55rem 0.7rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 2.3rem;
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .selected-products-item__field input:focus,
+        .selected-products-item__field textarea:focus {
+            border-color: ${theme.accentStrong};
+            box-shadow: 0 0 0 3px ${theme.accentSoft};
+            outline: none;
+        }
+
+        .selected-products-panel[data-empty="true"] .selected-products-panel__list {
+            display: none;
+        }
+
+        .selected-products-panel[data-empty="false"] .selected-products-panel__empty {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .selected-products-toggle {
+                right: 1rem;
+                left: 1rem;
+                width: calc(100% - 2rem);
+                justify-content: center;
+                border-radius: 14px;
+            }
+
+            .selected-products-panel {
+                right: 1rem;
+                left: 1rem;
+                width: auto;
+                max-width: none;
+                max-height: 80vh;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             h1 {
@@ -4799,6 +5109,9 @@ ${formatCssBlock(footerBackground)}
         let searchFilterTimeout = null;
         const productData = ${serialize(productData)};
         const catalogConfig = ${serialize(config || {})};
+        const selectionStorageKey = 'amazoniaCatalogSelectedProducts';
+        const selectionStorage = getPersistentStorage();
+        let selectedProducts = [];
 
         const observerOptions = {
             threshold: 0.1,
@@ -4828,6 +5141,11 @@ ${formatCssBlock(footerBackground)}
             setupFilters();
             initializeCatalogState();
             filterCatalog();
+
+            setupSelectionPanel();
+            attachProductSelectionHandlers();
+            restoreSelectionFromStorage();
+            renderSelectedProductsList();
 
             const cards = document.querySelectorAll('.product-card');
             cards.forEach(card => {
@@ -5192,6 +5510,465 @@ ${formatCssBlock(footerBackground)}
             });
         }
 
+        function getPersistentStorage() {
+            try {
+                if (typeof window === 'undefined') {
+                    return null;
+                }
+
+                const storage = window.localStorage || window.sessionStorage;
+                const testKey = '__amazoniaSelectionTest__';
+                storage.setItem(testKey, '1');
+                storage.removeItem(testKey);
+                return storage;
+            } catch (error) {
+                console.warn('El almacenamiento local no está disponible', error);
+                return null;
+            }
+        }
+
+        function sanitizeQuantity(value) {
+            const parsed = Number.parseInt(value, 10);
+            return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+        }
+
+        function sanitizeNotes(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+
+            const trimmed = value.trim();
+            return trimmed.length > 240 ? trimmed.slice(0, 240) : trimmed;
+        }
+
+        function sanitizeSelectionItem(rawItem) {
+            if (!rawItem || typeof rawItem !== 'object') {
+                return null;
+            }
+
+            const productId = typeof rawItem.id === 'string' ? rawItem.id : '';
+
+            if (!productId) {
+                return null;
+            }
+
+            return {
+                id: productId,
+                quantity: sanitizeQuantity(rawItem.quantity),
+                notes: sanitizeNotes(rawItem.notes)
+            };
+        }
+
+        function restoreSelectionFromStorage() {
+            if (!selectionStorage) {
+                selectedProducts = [];
+                return;
+            }
+
+            try {
+                const storedValue = selectionStorage.getItem(selectionStorageKey);
+
+                if (!storedValue) {
+                    selectedProducts = [];
+                    return;
+                }
+
+                const parsed = JSON.parse(storedValue);
+                if (!Array.isArray(parsed)) {
+                    selectedProducts = [];
+                    return;
+                }
+
+                const sanitized = parsed
+                    .map(sanitizeSelectionItem)
+                    .filter(item => item && productData[item.id]);
+
+                selectedProducts = sanitized;
+            } catch (error) {
+                console.warn('No se pudo restaurar la selección de productos', error);
+                selectedProducts = [];
+            }
+        }
+
+        function persistSelection() {
+            if (!selectionStorage) {
+                return;
+            }
+
+            try {
+                selectionStorage.setItem(selectionStorageKey, JSON.stringify(selectedProducts));
+            } catch (error) {
+                console.warn('No se pudo guardar la selección de productos', error);
+            }
+        }
+
+        function setupSelectionPanel() {
+            const toggle = document.getElementById('selectedPanelToggle');
+            const panel = document.getElementById('selectedProductsPanel');
+            const closeButton = document.getElementById('selectedPanelClose');
+            const clearButton = document.getElementById('clearSelectedProductsButton');
+
+            if (toggle) {
+                toggle.addEventListener('click', function() {
+                    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                    if (expanded) {
+                        closeSelectionPanel();
+                    } else {
+                        openSelectionPanel();
+                    }
+                });
+            }
+
+            if (closeButton) {
+                closeButton.addEventListener('click', function() {
+                    closeSelectionPanel();
+                    if (toggle) {
+                        toggle.focus();
+                    }
+                });
+            }
+
+            if (panel) {
+                panel.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape') {
+                        closeSelectionPanel();
+                        if (toggle) {
+                            toggle.focus();
+                        }
+                    }
+                });
+            }
+
+            if (clearButton) {
+                clearButton.addEventListener('click', function() {
+                    clearSelectedProducts();
+                });
+            }
+        }
+
+        function attachProductSelectionHandlers() {
+            const buttons = document.querySelectorAll('.product-card__select');
+
+            buttons.forEach(button => {
+                const productId = button.getAttribute('data-product-id');
+
+                if (!productId) {
+                    return;
+                }
+
+                button.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    addProductToSelection(productId);
+                });
+            });
+        }
+
+        function addProductToSelection(productId) {
+            if (!productId || !productData[productId]) {
+                return;
+            }
+
+            const existingIndex = selectedProducts.findIndex(item => item.id === productId);
+
+            if (existingIndex >= 0) {
+                const existing = selectedProducts[existingIndex];
+                const updatedQuantity = sanitizeQuantity((existing && existing.quantity) || 0) + 1;
+                selectedProducts.splice(existingIndex, 1, {
+                    ...existing,
+                    quantity: sanitizeQuantity(updatedQuantity)
+                });
+            } else {
+                selectedProducts.push({ id: productId, quantity: 1, notes: '' });
+            }
+
+            persistSelection();
+            renderSelectedProductsList();
+            openSelectionPanel();
+        }
+
+        function removeProductFromSelection(productId) {
+            const previousLength = selectedProducts.length;
+            selectedProducts = selectedProducts.filter(item => item.id !== productId);
+
+            if (selectedProducts.length !== previousLength) {
+                persistSelection();
+                renderSelectedProductsList();
+            }
+        }
+
+        function clearSelectedProducts() {
+            if (!selectedProducts.length) {
+                return;
+            }
+
+            selectedProducts = [];
+            persistSelection();
+            renderSelectedProductsList();
+        }
+
+        function updateSelectionItem(productId, updates, options) {
+            const opts = options || {};
+            const index = selectedProducts.findIndex(item => item.id === productId);
+
+            if (index === -1) {
+                return;
+            }
+
+            const current = selectedProducts[index];
+            const next = {
+                ...current
+            };
+
+            if (Object.prototype.hasOwnProperty.call(updates, 'quantity')) {
+                next.quantity = sanitizeQuantity(updates.quantity);
+            }
+
+            if (Object.prototype.hasOwnProperty.call(updates, 'notes')) {
+                next.notes = sanitizeNotes(updates.notes);
+            }
+
+            selectedProducts.splice(index, 1, next);
+            persistSelection();
+
+            if (opts.reRender) {
+                renderSelectedProductsList();
+                return;
+            }
+
+            if (!opts.skipSummary) {
+                updateSelectionSummaryUI();
+            }
+        }
+
+        function renderSelectedProductsList() {
+            const list = document.getElementById('selectedProductsList');
+            const filtered = selectedProducts.filter(item => productData[item.id]);
+
+            if (filtered.length !== selectedProducts.length) {
+                selectedProducts = filtered;
+                persistSelection();
+            } else {
+                selectedProducts = filtered;
+            }
+
+            if (!list) {
+                updateSelectionSummaryUI();
+                updateProductSelectionButtons();
+                return;
+            }
+
+            list.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            selectedProducts.forEach(item => {
+                const product = productData[item.id];
+
+                if (!product) {
+                    return;
+                }
+
+                const listItem = document.createElement('li');
+                listItem.className = 'selected-products-item';
+                listItem.setAttribute('data-product-id', item.id);
+
+                const header = document.createElement('div');
+                header.className = 'selected-products-item__header';
+
+                const nameElement = document.createElement('span');
+                nameElement.className = 'selected-products-item__name';
+                nameElement.textContent = product.title || 'Producto Amazonia';
+                header.appendChild(nameElement);
+
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'selected-products-item__remove';
+                removeButton.textContent = 'Quitar';
+                removeButton.setAttribute('aria-label', 'Quitar ' + nameElement.textContent + ' de la lista');
+                removeButton.addEventListener('click', function() {
+                    removeProductFromSelection(item.id);
+                });
+                header.appendChild(removeButton);
+
+                listItem.appendChild(header);
+
+                const fieldsWrapper = document.createElement('div');
+                fieldsWrapper.className = 'selected-products-item__fields';
+
+                const quantityField = document.createElement('label');
+                quantityField.className = 'selected-products-item__field';
+
+                const quantityLabel = document.createElement('span');
+                quantityLabel.textContent = 'Cantidad';
+                quantityField.appendChild(quantityLabel);
+
+                const quantityInput = document.createElement('input');
+                quantityInput.type = 'number';
+                quantityInput.min = '1';
+                quantityInput.step = '1';
+                quantityInput.inputMode = 'numeric';
+                quantityInput.value = sanitizeQuantity(item.quantity).toString();
+                quantityInput.addEventListener('change', function() {
+                    const value = sanitizeQuantity(quantityInput.value);
+                    quantityInput.value = value.toString();
+                    updateSelectionItem(item.id, { quantity: value }, { reRender: false });
+                });
+                quantityInput.addEventListener('blur', function() {
+                    const value = sanitizeQuantity(quantityInput.value);
+                    quantityInput.value = value.toString();
+                    updateSelectionItem(item.id, { quantity: value }, { reRender: false });
+                });
+                quantityField.appendChild(quantityInput);
+
+                fieldsWrapper.appendChild(quantityField);
+
+                const notesField = document.createElement('label');
+                notesField.className = 'selected-products-item__field';
+
+                const notesLabel = document.createElement('span');
+                notesLabel.textContent = 'Notas';
+                notesField.appendChild(notesLabel);
+
+                const notesInput = document.createElement('textarea');
+                notesInput.rows = 2;
+                notesInput.maxLength = 240;
+                notesInput.placeholder = 'Agrega detalles, medidas o preferencias';
+                notesInput.value = sanitizeNotes(item.notes);
+                notesInput.addEventListener('change', function() {
+                    updateSelectionItem(item.id, { notes: notesInput.value }, { reRender: false, skipSummary: true });
+                });
+                notesField.appendChild(notesInput);
+
+                fieldsWrapper.appendChild(notesField);
+
+                listItem.appendChild(fieldsWrapper);
+                fragment.appendChild(listItem);
+            });
+
+            list.appendChild(fragment);
+            updateSelectionSummaryUI();
+            updateProductSelectionButtons();
+        }
+
+        function updateSelectionSummaryUI() {
+            const countElement = document.getElementById('selectedProductsCount');
+            const summaryElement = document.getElementById('selectedProductsSummary');
+            const clearButton = document.getElementById('clearSelectedProductsButton');
+            const panel = document.getElementById('selectedProductsPanel');
+            const toggle = document.getElementById('selectedPanelToggle');
+
+            const validItems = selectedProducts.filter(item => productData[item.id]);
+            const uniqueCount = validItems.length;
+            const totalUnits = validItems.reduce((sum, item) => sum + sanitizeQuantity(item.quantity), 0);
+
+            if (countElement) {
+                countElement.textContent = String(uniqueCount);
+            }
+
+            if (summaryElement) {
+                if (uniqueCount === 0) {
+                    summaryElement.textContent = 'Sin productos seleccionados';
+                } else if (uniqueCount === 1) {
+                    summaryElement.textContent = totalUnits === 1
+                        ? '1 producto en la lista'
+                        : '1 producto, ' + totalUnits + ' unidades';
+                } else {
+                    summaryElement.textContent = uniqueCount + ' productos, ' + totalUnits + ' unidades';
+                }
+            }
+
+            if (clearButton) {
+                clearButton.disabled = uniqueCount === 0;
+            }
+
+            if (panel) {
+                panel.setAttribute('data-empty', uniqueCount === 0 ? 'true' : 'false');
+            }
+
+            if (toggle) {
+                const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                const labelBase = uniqueCount === 1 ? 'producto seleccionado' : 'productos seleccionados';
+                const toggleLabel = (expanded ? 'Cerrar' : 'Abrir') + ' lista de ' + labelBase + ' (' + uniqueCount + ')';
+                toggle.setAttribute('aria-label', toggleLabel);
+            }
+        }
+
+        function updateProductSelectionButtons() {
+            const buttons = document.querySelectorAll('.product-card__select');
+            const selectedIds = new Set(selectedProducts.map(item => item.id));
+
+            buttons.forEach(button => {
+                const productId = button.getAttribute('data-product-id');
+
+                if (!productId) {
+                    return;
+                }
+
+                const isSelected = selectedIds.has(productId);
+                button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+                button.textContent = isSelected ? '✔ En la lista' : '➕ Agregar a lista';
+            });
+        }
+
+        function openSelectionPanel() {
+            const panel = document.getElementById('selectedProductsPanel');
+            const toggle = document.getElementById('selectedPanelToggle');
+
+            if (!panel || !toggle) {
+                return;
+            }
+
+            panel.classList.add('selected-products-panel--open');
+            panel.setAttribute('aria-hidden', 'false');
+            toggle.setAttribute('aria-expanded', 'true');
+            updateSelectionSummaryUI();
+
+            window.requestAnimationFrame(() => {
+                if (typeof panel.focus === 'function') {
+                    panel.focus({ preventScroll: true });
+                }
+            });
+        }
+
+        function closeSelectionPanel() {
+            const panel = document.getElementById('selectedProductsPanel');
+            const toggle = document.getElementById('selectedPanelToggle');
+
+            if (!panel || !toggle) {
+                return;
+            }
+
+            panel.classList.remove('selected-products-panel--open');
+            panel.setAttribute('aria-hidden', 'true');
+            toggle.setAttribute('aria-expanded', 'false');
+            updateSelectionSummaryUI();
+        }
+
+        function getSelectedProductsDetails() {
+            return selectedProducts
+                .map(item => {
+                    const product = productData[item.id];
+
+                    if (!product) {
+                        return null;
+                    }
+
+                    return {
+                        id: item.id,
+                        name: product.title || 'Producto Amazonia',
+                        quantity: sanitizeQuantity(item.quantity),
+                        notes: sanitizeNotes(item.notes)
+                    };
+                })
+                .filter(Boolean);
+        }
+
+        window.addEventListener('storage', function(event) {
+            if (event.key === selectionStorageKey) {
+                restoreSelectionFromStorage();
+                renderSelectedProductsList();
+            }
+        });
+
         function initializeCatalogState() {
             const categories = Array.from(document.querySelectorAll('.category'));
             const navWrapper = document.querySelector('.nav-container');
@@ -5343,8 +6120,21 @@ ${formatCssBlock(footerBackground)}
                 return;
             }
 
-            const productName = currentProduct || 'Producto Amazonia';
-            const message = \`Hola! Me interesa el producto: \${productName}. ¿Podrían darme más información?\`;
+            const selectedDetails = getSelectedProductsDetails();
+            let message = '';
+
+            if (selectedDetails.length > 0) {
+                const lines = selectedDetails.map((detail, index) => {
+                    const notesPart = detail.notes ? \` - Notas: \${detail.notes}\` : '';
+                    return \`\${index + 1}. \${detail.name} - Cantidad: \${detail.quantity}\${notesPart}\`;
+                }).join('\\n');
+
+                message = \`Hola! Me interesan los siguientes productos:\n\n\${lines}\n\n¿Podrían brindarme más información?\`;
+            } else {
+                const productName = currentProduct || 'Producto Amazonia';
+                message = \`Hola! Me interesa el producto: \${productName}. ¿Podrían darme más información?\`;
+            }
+
             const url = \`https://wa.me/\${whatsappNumber}?text=\${encodeURIComponent(message)}\`;
             window.open(url, '_blank');
         }
@@ -5357,10 +6147,54 @@ ${formatCssBlock(footerBackground)}
                 return;
             }
 
-            const productName = currentProduct || 'Producto Amazonia';
-            const subject = \`Cotización - \${productName}\`;
+            const selectedDetails = getSelectedProductsDetails();
             const phoneLine = config.phone ? \`Teléfono de contacto preferido: \${config.phone}\` : 'Teléfono de contacto:';
-            const body = \`Hola,\\n\\nMe gustaría recibir una cotización para el producto: \${productName}.\\n\\n\${phoneLine}\\nCantidad requerida:\\n\\nGracias!\`;
+
+            let subject = '';
+            let body = '';
+
+            if (selectedDetails.length > 0) {
+                subject = selectedDetails.length === 1
+                    ? \`Cotización - \${selectedDetails[0].name}\`
+                    : \`Cotización - \${selectedDetails.length} productos\`;
+
+                const productLines = selectedDetails.map(detail => {
+                    const baseLine = \`- \${detail.name} (Cantidad: \${detail.quantity})\`;
+                    return detail.notes
+                        ? \`\${baseLine}\\n  Notas: \${detail.notes}\`
+                        : baseLine;
+                }).join('\\n');
+
+                const totalUnits = selectedDetails.reduce((sum, detail) => sum + detail.quantity, 0);
+
+                body = [
+                    'Hola,',
+                    '',
+                    'Me gustaría recibir una cotización para los siguientes productos:',
+                    '',
+                    productLines,
+                    '',
+                    \`Total de unidades solicitadas: \${totalUnits}\`,
+                    '',
+                    phoneLine,
+                    '',
+                    'Gracias.'
+                ].join('\\n');
+            } else {
+                const productName = currentProduct || 'Producto Amazonia';
+                subject = \`Cotización - \${productName}\`;
+                body = [
+                    'Hola,',
+                    '',
+                    \`Me gustaría recibir una cotización para el producto: \${productName}.\`,
+                    '',
+                    phoneLine,
+                    'Cantidad requerida:',
+                    '',
+                    'Gracias!'
+                ].join('\\n');
+            }
+
             const url = \`mailto:\${emailValue}?subject=\${encodeURIComponent(subject)}&body=\${encodeURIComponent(body)}\`;
             window.location.href = url;
         }
