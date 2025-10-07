@@ -444,6 +444,32 @@ textarea {
     padding: 1rem 0;
 }
 
+.product-search-bar {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+#productSearch {
+    padding: 0.75rem 1rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#productSearch:focus {
+    outline: none;
+    border-color: #6b8e68;
+    box-shadow: 0 0 0 3px rgba(107, 142, 104, 0.2);
+}
+
+.product-search-summary {
+    font-size: 0.9rem;
+    color: #555;
+}
+
 .product-list {
     display: grid;
     gap: 1rem;
@@ -490,6 +516,12 @@ textarea {
     flex: 1;
 }
 
+.product-short-desc {
+    color: #555;
+    font-size: 0.95rem;
+    margin-bottom: 0.35rem;
+}
+
 .order-controls {
     display: flex;
     flex-direction: column;
@@ -504,6 +536,30 @@ textarea {
 
 .product-price {
     color: #6b8e68;
+}
+
+.product-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+}
+
+.product-tag {
+    background: #eef5ee;
+    color: #2d4a2b;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.product-info mark,
+.product-tag mark {
+    background: #fff3b0;
+    color: inherit;
+    padding: 0 0.1rem;
+    border-radius: 3px;
 }
 
 .product-actions {

@@ -291,6 +291,9 @@
             };
         }
 
+        const PRODUCT_SEARCH_STORAGE_KEY = 'amazoniaProductSearch';
+        let productSearchTerm = '';
+
         let catalogData = {
             config: getNormalizedConfig(),
             categories: defaultCategories.map(category => ({ ...category })),
@@ -655,6 +658,28 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        function escapeRegExp(value) {
+            return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function highlightSearchMatches(text, regex) {
+            const source = typeof text === 'string' ? text : '';
+
+            if (!regex) {
+                return escapeHtml(source);
+            }
+
+            return source
+                .split(regex)
+                .map((part, index) => {
+                    if (index % 2 === 1) {
+                        return `<mark>${escapeHtml(part)}</mark>`;
+                    }
+                    return escapeHtml(part);
+                })
+                .join('');
         }
 
         function escapeCssUrl(value) {
@@ -2039,6 +2064,15 @@
 
             setupAppearanceControls();
 
+            const productSearchInput = document.getElementById('productSearch');
+            if (productSearchInput) {
+                productSearchInput.addEventListener('input', event => {
+                    productSearchTerm = event && event.target ? event.target.value : '';
+                    localStorage.setItem(PRODUCT_SEARCH_STORAGE_KEY, productSearchTerm || '');
+                    loadProducts();
+                });
+            }
+
             const openProductModalButton = document.getElementById('openProductModalButton');
             if (openProductModalButton) {
                 openProductModalButton.addEventListener('click', () => openProductModal());
@@ -2177,6 +2211,9 @@
                 };
             }
 
+            const storedSearch = localStorage.getItem(PRODUCT_SEARCH_STORAGE_KEY);
+            productSearchTerm = typeof storedSearch === 'string' ? storedSearch : '';
+
             refreshCategoriesUI({ preserveCurrent: false });
             renderCategoryManagerList();
             loadConfig();
@@ -2190,6 +2227,7 @@
             catalogData.config = getNormalizedConfig(catalogData.config);
             stripLegacyImageData(catalogData.products);
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
+            localStorage.setItem(PRODUCT_SEARCH_STORAGE_KEY, productSearchTerm || '');
             if (!silent) {
                 showMessage('Datos guardados correctamente', 'success');
             }
@@ -2734,51 +2772,132 @@
         // Load products
         function loadProducts() {
             const container = document.getElementById('productsList');
+            const summaryElement = document.getElementById('productSearchSummary');
+            const searchInput = document.getElementById('productSearch');
             ensureCategoryStructure();
 
+            if (searchInput && searchInput.value !== productSearchTerm) {
+                searchInput.value = productSearchTerm;
+            }
+
             if (!container) {
+                if (summaryElement) {
+                    summaryElement.textContent = '';
+                }
                 return;
             }
 
             if (!currentCategory) {
                 container.innerHTML = '<p style="text-align: center; color: #999">Crea una categoría para comenzar a añadir productos.</p>';
+                if (summaryElement) {
+                    summaryElement.textContent = 'Crea una categoría para comenzar a añadir productos.';
+                }
                 updateCatalogPreview();
                 return;
             }
 
             const products = catalogData.products[currentCategory] || [];
+            const totalProducts = products.length;
 
-            if (products.length === 0) {
+            if (totalProducts === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #999">No hay productos en esta categoría. Haz clic en "Añadir Producto" para comenzar.</p>';
+                if (summaryElement) {
+                    summaryElement.textContent = 'No hay productos en esta categoría.';
+                }
                 updateCatalogPreview();
                 return;
             }
 
-            container.innerHTML = products
-                .map((product, index) => {
-                    const disableUp = index === 0 ? 'disabled' : '';
-                    const disableDown = index === products.length - 1 ? 'disabled' : '';
+            const trimmedSearch = typeof productSearchTerm === 'string' ? productSearchTerm.trim() : '';
+            const searchTokens = trimmedSearch.length > 0
+                ? trimmedSearch.split(/\s+/).filter(Boolean)
+                : [];
+            const normalizedTokens = searchTokens.map(token => token.toLowerCase());
+            const highlightRegex = searchTokens.length > 0
+                ? new RegExp(`(${searchTokens.map(token => escapeRegExp(token)).join('|')})`, 'gi')
+                : null;
+
+            const productIndexMap = new Map(products.map((product, index) => [product.id, index]));
+
+            const filteredProducts = normalizedTokens.length === 0
+                ? products
+                : products.filter(product => {
+                    const fields = [];
+
+                    if (typeof product.name === 'string') {
+                        fields.push(product.name);
+                    }
+                    if (typeof product.shortDesc === 'string') {
+                        fields.push(product.shortDesc);
+                    }
+                    if (Array.isArray(product.features)) {
+                        product.features.forEach(feature => {
+                            if (typeof feature === 'string') {
+                                fields.push(feature);
+                            }
+                        });
+                    }
+
+                    if (fields.length === 0) {
+                        return false;
+                    }
+
+                    const normalizedFields = fields.map(field => field.toLowerCase());
+                    return normalizedTokens.every(token =>
+                        normalizedFields.some(field => field.includes(token))
+                    );
+                });
+
+            if (summaryElement) {
+                if (trimmedSearch.length === 0) {
+                    const productLabel = totalProducts === 1 ? 'producto' : 'productos';
+                    summaryElement.textContent = `Mostrando ${totalProducts} ${productLabel}.`;
+                } else {
+                    const matchLabel = filteredProducts.length === 1 ? 'coincidencia' : 'coincidencias';
+                    const productLabel = totalProducts === 1 ? 'producto' : 'productos';
+                    summaryElement.textContent = `${filteredProducts.length} ${matchLabel} de ${totalProducts} ${productLabel}.`;
+                }
+            }
+
+            if (filteredProducts.length === 0) {
+                const sanitizedQuery = escapeHtml(trimmedSearch);
+                container.innerHTML = `<p style="text-align: center; color: #999">No se encontraron productos que coincidan con <mark>${sanitizedQuery}</mark>.</p>`;
+                updateCatalogPreview();
+                return;
+            }
+
+            container.innerHTML = filteredProducts
+                .map(product => {
+                    const originalIndex = productIndexMap.has(product.id) ? productIndexMap.get(product.id) : 0;
+                    const disableUp = originalIndex === 0 ? 'disabled' : '';
+                    const disableDown = originalIndex === totalProducts - 1 ? 'disabled' : '';
                     const rawName = typeof product.name === 'string' && product.name.trim()
                         ? product.name
                         : 'Producto sin nombre';
-                    const productNameHtml = escapeHtml(rawName);
+                    const productNameHtml = highlightSearchMatches(rawName, highlightRegex);
                     const rawShortDesc = typeof product.shortDesc === 'string' ? product.shortDesc : '';
-                    const shortDescHtml = escapeHtml(rawShortDesc);
+                    const shortDescAttr = escapeHtml(rawShortDesc);
+                    const shortDescMarkup = rawShortDesc.trim()
+                        ? `<div class="product-short-desc">${highlightSearchMatches(rawShortDesc, highlightRegex)}</div>`
+                        : '';
                     const formattedPrice = formatCurrencyCOP(product.price);
                     const priceHtml = escapeHtml(formattedPrice);
                     const actionLabelSource = rawName.trim() ? rawName.trim() : 'este producto';
                     const actionLabelAttr = escapeHtml(actionLabelSource);
-                    const sanitizedFeatures = Array.isArray(product.features)
+                    const featureValues = Array.isArray(product.features)
                         ? product.features
                             .map(feature => (typeof feature === 'string' ? feature : ''))
                             .filter(feature => feature.length > 0)
-                            .map(feature => escapeHtml(feature))
                         : [];
-                    const featuresAttr = sanitizedFeatures.join('||');
+                    const featuresAttr = featureValues.map(feature => escapeHtml(feature)).join('||');
+                    const highlightedFeatures = featureValues.map(feature => highlightSearchMatches(feature, highlightRegex));
+                    const featuresMarkup = highlightedFeatures.length > 0
+                        ? `<div class="product-tags">${highlightedFeatures.map(feature => `<span class="product-tag">${feature}</span>`).join('')}</div>`
+                        : '';
                     const imageSrc = getProductImageSource(product);
                     const imageAlt = escapeHtml(`Vista previa de ${rawName}`);
                     return `
-                <div class="product-item" data-product-id="${product.id}" data-short-desc="${shortDescHtml}" data-features="${featuresAttr}">
+                <div class="product-item" data-product-id="${product.id}" data-short-desc="${shortDescAttr}" data-features="${featuresAttr}">
                     <div class="order-controls">
                         <button type="button" class="icon-btn move-btn" data-action="move" data-direction="up" data-product-id="${product.id}" aria-label="Mover ${actionLabelAttr} hacia arriba" title="Mover ${actionLabelAttr} hacia arriba" ${disableUp}>↑</button>
                         <button type="button" class="icon-btn move-btn" data-action="move" data-direction="down" data-product-id="${product.id}" aria-label="Mover ${actionLabelAttr} hacia abajo" title="Mover ${actionLabelAttr} hacia abajo" ${disableDown}>↓</button>
@@ -2788,6 +2907,8 @@
                     </div>
                     <div class="product-info">
                         <div class="product-name">${productNameHtml}</div>
+                        ${shortDescMarkup}
+                        ${featuresMarkup}
                         <div class="product-price">${priceHtml}</div>
                     </div>
                     <div class="product-actions">
@@ -2800,7 +2921,6 @@
 
             updateCatalogPreview();
         }
-
         function moveProduct(productId, direction) {
             ensureCategoryStructure();
             const products = catalogData.products[currentCategory] || [];
