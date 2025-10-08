@@ -5783,7 +5783,7 @@ ${formatCssBlock(footerBackground)}
                 removeButton.type = 'button';
                 removeButton.className = 'selected-products-item__remove';
                 removeButton.textContent = 'Quitar';
-                removeButton.setAttribute('aria-label', `Quitar ${nameElement.textContent} de la lista`);
+                removeButton.setAttribute('aria-label', \`Quitar \${nameElement.textContent} de la lista\`);
                 removeButton.addEventListener('click', function() {
                     removeProductFromSelection(item.id);
                 });
@@ -5870,9 +5870,9 @@ ${formatCssBlock(footerBackground)}
                 } else if (uniqueCount === 1) {
                     summaryElement.textContent = totalUnits === 1
                         ? '1 producto en la lista'
-                        : `1 producto, ${totalUnits} unidades`;
+                        : \`1 producto, \${totalUnits} unidades\`;
                 } else {
-                    summaryElement.textContent = `${uniqueCount} productos, ${totalUnits} unidades`;
+                    summaryElement.textContent = \`\${uniqueCount} productos, \${totalUnits} unidades\`;
                 }
             }
 
@@ -5887,7 +5887,7 @@ ${formatCssBlock(footerBackground)}
             if (toggle) {
                 const expanded = toggle.getAttribute('aria-expanded') === 'true';
                 const labelBase = uniqueCount === 1 ? 'producto seleccionado' : 'productos seleccionados';
-                toggle.setAttribute('aria-label', `${expanded ? 'Cerrar' : 'Abrir'} lista de ${labelBase} (${uniqueCount})`);
+                toggle.setAttribute('aria-label', \`\${expanded ? 'Cerrar' : 'Abrir'} lista de \${labelBase} (\${uniqueCount})\`);
             }
         }
 
