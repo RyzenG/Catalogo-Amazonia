@@ -5876,7 +5876,7 @@ ${formatCssBlock(footerBackground)}
                 if (rawImage) {
                     const imageElement = document.createElement('img');
                     imageElement.src = rawImage;
-                    imageElement.setAttribute("alt", "Miniatura de ".concat(normalizedName));
+                    imageElement.alt = `Miniatura de ${normalizedName}`;
                     thumbnailContainer.appendChild(imageElement);
                 } else {
                     const fallback = document.createElement('span');
@@ -5897,7 +5897,7 @@ ${formatCssBlock(footerBackground)}
                 removeButton.type = 'button';
                 removeButton.className = 'selected-products-item__remove';
                 removeButton.textContent = 'Quitar';
-                removeButton.setAttribute('aria-label', 'Quitar ' + nameElement.textContent + ' del carrito');
+                removeButton.setAttribute('aria-label', \`Quitar \${nameElement.textContent} del carrito\`);
                 removeButton.addEventListener('click', function() {
                     removeProductFromSelection(item.id);
                 });
