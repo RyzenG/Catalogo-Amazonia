@@ -5009,6 +5009,32 @@ ${formatCssBlock(footerBackground)}
             gap: 0.75rem;
         }
 
+        .selected-products-item__thumbnail {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,1) 100%);
+            border: 1px solid ${theme.borderColor};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selected-products-item__thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .selected-products-item__thumbnail-fallback {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: ${theme.accentStrong};
+        }
+
         .selected-products-item__name {
             font-weight: 600;
             color: ${theme.categoryTitle};
@@ -5840,9 +5866,31 @@ ${formatCssBlock(footerBackground)}
                 const header = document.createElement('div');
                 header.className = 'selected-products-item__header';
 
+                const thumbnailContainer = document.createElement('div');
+                thumbnailContainer.className = 'selected-products-item__thumbnail';
+
+                const rawImage = typeof product.image === 'string' ? product.image.trim() : '';
+                const fallbackSource = typeof product.title === 'string' ? product.title : 'Producto Amazonia';
+                const normalizedName = fallbackSource.trim() || 'Producto Amazonia';
+
+                if (rawImage) {
+                    const imageElement = document.createElement('img');
+                    imageElement.src = rawImage;
+                    imageElement.alt = `Miniatura de ${normalizedName}`;
+                    thumbnailContainer.appendChild(imageElement);
+                } else {
+                    const fallback = document.createElement('span');
+                    fallback.className = 'selected-products-item__thumbnail-fallback';
+                    const fallbackLabel = normalizedName.charAt(0).toUpperCase() || 'A';
+                    fallback.textContent = fallbackLabel;
+                    thumbnailContainer.appendChild(fallback);
+                }
+
+                header.appendChild(thumbnailContainer);
+
                 const nameElement = document.createElement('span');
                 nameElement.className = 'selected-products-item__name';
-                nameElement.textContent = product.title || 'Producto Amazonia';
+                nameElement.textContent = normalizedName;
                 header.appendChild(nameElement);
 
                 const removeButton = document.createElement('button');
