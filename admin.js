@@ -3622,7 +3622,7 @@
                         <div class="product-features">${featuresHtml}</div>
                         <p class="product-price">${productPriceHtml}</p>
                         <div class="product-actions">
-                            <button type="button" class="product-card__select" data-product-id="${product.id}" aria-pressed="false" aria-label="Agregar ${productNameHtml} a la lista">➕ Agregar a lista</button>
+                            <button type="button" class="product-card__select" data-product-id="${product.id}" aria-pressed="false" aria-label="Agregar ${productNameHtml} al carrito">➕ Añadir al carrito</button>
                         </div>
                     </div>
                 </div>`;
@@ -3715,21 +3715,25 @@
 
             const selectionPanelMarkup = `
     <button type="button" class="selected-products-toggle" id="selectedPanelToggle" aria-controls="selectedProductsPanel" aria-expanded="false" aria-haspopup="dialog">
-        <span class="selected-products-toggle__label">Lista</span>
+        <span class="selected-products-toggle__label">Carrito</span>
         <span class="selected-products-toggle__badge" id="selectedProductsCount" aria-hidden="true">0</span>
     </button>
     <aside class="selected-products-panel" id="selectedProductsPanel" role="region" aria-live="polite" aria-labelledby="selectedProductsTitle" aria-hidden="true" tabindex="-1">
         <div class="selected-products-panel__header">
-            <h2 class="selected-products-panel__title" id="selectedProductsTitle">Lista de productos</h2>
+            <h2 class="selected-products-panel__title" id="selectedProductsTitle">Carrito de compras</h2>
             <div class="selected-products-panel__header-actions">
-                <span class="selected-products-panel__summary" id="selectedProductsSummary">Sin productos seleccionados</span>
-                <button type="button" class="selected-products-panel__clear" id="clearSelectedProductsButton" disabled>Vaciar lista</button>
+                <span class="selected-products-panel__summary" id="selectedProductsSummary">Carrito vacío</span>
+                <button type="button" class="selected-products-panel__clear" id="clearSelectedProductsButton" disabled>Vaciar carrito</button>
                 <button type="button" class="selected-products-panel__close" id="selectedPanelClose" aria-label="Cerrar panel">✕</button>
             </div>
         </div>
         <div class="selected-products-panel__body">
-            <p class="selected-products-panel__empty" id="selectedProductsEmpty">Aún no has agregado productos a tu lista.</p>
+            <p class="selected-products-panel__empty" id="selectedProductsEmpty">Tu carrito está vacío. Agrega productos para comenzar tu pedido.</p>
             <ul class="selected-products-panel__list" id="selectedProductsList" aria-describedby="selectedProductsTitle"></ul>
+        </div>
+        <div class="selected-products-panel__footer">
+            <p class="selected-products-panel__hint">Revisa los productos seleccionados y finaliza tu compra por WhatsApp.</p>
+            <button type="button" class="selected-products-panel__checkout" id="checkoutButton" disabled>Finalizar compra</button>
         </div>
     </aside>`;
 
@@ -4931,6 +4935,52 @@ ${formatCssBlock(footerBackground)}
             flex: 1 1 auto;
         }
 
+        .selected-products-panel__footer {
+            padding: 0.9rem 1.4rem 1.4rem;
+            border-top: 1px solid ${theme.borderColor};
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background: #ffffff;
+        }
+
+        .selected-products-panel__hint {
+            margin: 0;
+            font-size: 0.9rem;
+            color: ${theme.categoryDescription};
+        }
+
+        .selected-products-panel__checkout {
+            background: ${theme.accentStrong};
+            color: ${theme.textOnDark};
+            border: none;
+            border-radius: 14px;
+            padding: 0.85rem 1.1rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            box-shadow: 0 18px 35px ${theme.accentSoft};
+        }
+
+        .selected-products-panel__checkout:hover,
+        .selected-products-panel__checkout:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 24px 40px ${theme.accentSoft};
+        }
+
+        .selected-products-panel__checkout:focus-visible {
+            outline: 3px solid ${theme.textOnDark};
+            outline-offset: 2px;
+        }
+
+        .selected-products-panel__checkout:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
         .selected-products-panel__empty {
             color: ${theme.categoryDescription};
             font-size: 0.95rem;
@@ -4957,6 +5007,32 @@ ${formatCssBlock(footerBackground)}
             display: flex;
             align-items: center;
             gap: 0.75rem;
+        }
+
+        .selected-products-item__thumbnail {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,1) 100%);
+            border: 1px solid ${theme.borderColor};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selected-products-item__thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .selected-products-item__thumbnail-fallback {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: ${theme.accentStrong};
         }
 
         .selected-products-item__name {
@@ -5017,6 +5093,10 @@ ${formatCssBlock(footerBackground)}
         }
 
         .selected-products-panel[data-empty="false"] .selected-products-panel__empty {
+            display: none;
+        }
+
+        .selected-products-panel[data-empty="true"] .selected-products-panel__hint {
             display: none;
         }
 
@@ -5607,6 +5687,7 @@ ${formatCssBlock(footerBackground)}
             const panel = document.getElementById('selectedProductsPanel');
             const closeButton = document.getElementById('selectedPanelClose');
             const clearButton = document.getElementById('clearSelectedProductsButton');
+            const checkoutButton = document.getElementById('checkoutButton');
 
             if (toggle) {
                 toggle.addEventListener('click', function() {
@@ -5642,6 +5723,17 @@ ${formatCssBlock(footerBackground)}
             if (clearButton) {
                 clearButton.addEventListener('click', function() {
                     clearSelectedProducts();
+                });
+            }
+
+            if (checkoutButton) {
+                checkoutButton.addEventListener('click', function() {
+                    if (checkoutButton.disabled) {
+                        return;
+                    }
+
+                    closeSelectionPanel();
+                    contactWhatsApp();
                 });
             }
         }
@@ -5774,16 +5866,38 @@ ${formatCssBlock(footerBackground)}
                 const header = document.createElement('div');
                 header.className = 'selected-products-item__header';
 
+                const thumbnailContainer = document.createElement('div');
+                thumbnailContainer.className = 'selected-products-item__thumbnail';
+
+                const rawImage = typeof product.image === 'string' ? product.image.trim() : '';
+                const fallbackSource = typeof product.title === 'string' ? product.title : 'Producto Amazonia';
+                const normalizedName = fallbackSource.trim() || 'Producto Amazonia';
+
+                if (rawImage) {
+                    const imageElement = document.createElement('img');
+                    imageElement.src = rawImage;
+                    imageElement.alt = `Miniatura de ${normalizedName}`;
+                    thumbnailContainer.appendChild(imageElement);
+                } else {
+                    const fallback = document.createElement('span');
+                    fallback.className = 'selected-products-item__thumbnail-fallback';
+                    const fallbackLabel = normalizedName.charAt(0).toUpperCase() || 'A';
+                    fallback.textContent = fallbackLabel;
+                    thumbnailContainer.appendChild(fallback);
+                }
+
+                header.appendChild(thumbnailContainer);
+
                 const nameElement = document.createElement('span');
                 nameElement.className = 'selected-products-item__name';
-                nameElement.textContent = product.title || 'Producto Amazonia';
+                nameElement.textContent = normalizedName;
                 header.appendChild(nameElement);
 
                 const removeButton = document.createElement('button');
                 removeButton.type = 'button';
                 removeButton.className = 'selected-products-item__remove';
                 removeButton.textContent = 'Quitar';
-                removeButton.setAttribute('aria-label', \`Quitar \${nameElement.textContent} de la lista\`);
+                removeButton.setAttribute('aria-label', \`Quitar \${nameElement.textContent} del carrito\`);
                 removeButton.addEventListener('click', function() {
                     removeProductFromSelection(item.id);
                 });
@@ -5855,6 +5969,7 @@ ${formatCssBlock(footerBackground)}
             const clearButton = document.getElementById('clearSelectedProductsButton');
             const panel = document.getElementById('selectedProductsPanel');
             const toggle = document.getElementById('selectedPanelToggle');
+            const checkoutButton = document.getElementById('checkoutButton');
 
             const validItems = selectedProducts.filter(item => productData[item.id]);
             const uniqueCount = validItems.length;
@@ -5866,10 +5981,10 @@ ${formatCssBlock(footerBackground)}
 
             if (summaryElement) {
                 if (uniqueCount === 0) {
-                    summaryElement.textContent = 'Sin productos seleccionados';
+                    summaryElement.textContent = 'Carrito vacío';
                 } else if (uniqueCount === 1) {
                     summaryElement.textContent = totalUnits === 1
-                        ? '1 producto en la lista'
+                        ? '1 producto en el carrito'
                         : \`1 producto, \${totalUnits} unidades\`;
                 } else {
                     summaryElement.textContent = \`\${uniqueCount} productos, \${totalUnits} unidades\`;
@@ -5880,14 +5995,20 @@ ${formatCssBlock(footerBackground)}
                 clearButton.disabled = uniqueCount === 0;
             }
 
+            if (checkoutButton) {
+                checkoutButton.disabled = uniqueCount === 0;
+            }
+
             if (panel) {
                 panel.setAttribute('data-empty', uniqueCount === 0 ? 'true' : 'false');
             }
 
             if (toggle) {
                 const expanded = toggle.getAttribute('aria-expanded') === 'true';
-                const labelBase = uniqueCount === 1 ? 'producto seleccionado' : 'productos seleccionados';
-                toggle.setAttribute('aria-label', \`\${expanded ? 'Cerrar' : 'Abrir'} lista de \${labelBase} (\${uniqueCount})\`);
+                const labelDescriptor = uniqueCount === 0
+                    ? 'sin productos'
+                    : \`\${uniqueCount} \${uniqueCount === 1 ? 'producto en el carrito' : 'productos en el carrito'}\`;
+                toggle.setAttribute('aria-label', \`\${expanded ? 'Cerrar' : 'Abrir'} carrito (\${labelDescriptor})\`);
             }
         }
 
@@ -5904,7 +6025,7 @@ ${formatCssBlock(footerBackground)}
 
                 const isSelected = selectedIds.has(productId);
                 button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-                button.textContent = isSelected ? '✔ En la lista' : '➕ Agregar a lista';
+                button.textContent = isSelected ? '✔ En el carrito' : '➕ Añadir al carrito';
             });
         }
 
@@ -6128,10 +6249,11 @@ ${formatCssBlock(footerBackground)}
                     return \`\${index + 1}. \${detail.name} - Cantidad: \${detail.quantity}\${notesPart}\`;
                 }).join('\\n');
 
-                message = \`Hola! Me interesan los siguientes productos:\n\n\${lines}\n\n¿Podrían brindarme más información?\`;
+                const totalUnits = selectedDetails.reduce((sum, detail) => sum + detail.quantity, 0);
+                message = \`Hola! Quiero finalizar mi compra con este pedido:\n\n\${lines}\n\nTotal de unidades: \${totalUnits}\n\n¿Me ayudas a completar la compra?\`;
             } else {
                 const productName = currentProduct || 'Producto Amazonia';
-                message = \`Hola! Me interesa el producto: \${productName}. ¿Podrían darme más información?\`;
+                message = \`Hola! Me interesa el producto: \${productName}. ¿Podríamos avanzar con la compra?\`;
             }
 
             const url = \`https://wa.me/\${whatsappNumber}?text=\${encodeURIComponent(message)}\`;
