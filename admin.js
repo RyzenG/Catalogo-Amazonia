@@ -5876,7 +5876,7 @@ ${formatCssBlock(footerBackground)}
                 if (rawImage) {
                     const imageElement = document.createElement('img');
                     imageElement.src = rawImage;
-                    imageElement.alt = `Miniatura de ${normalizedName}`;
+                    imageElement.alt = \`Miniatura de \${normalizedName}\`;
                     thumbnailContainer.appendChild(imageElement);
                 } else {
                     const fallback = document.createElement('span');
