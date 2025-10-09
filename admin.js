@@ -3715,7 +3715,12 @@
 
             const selectionPanelMarkup = `
     <button type="button" class="selected-products-toggle" id="selectedPanelToggle" aria-controls="selectedProductsPanel" aria-expanded="false" aria-haspopup="dialog">
-        <span class="selected-products-toggle__label">Carrito</span>
+        <span class="selected-products-toggle__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" focusable="false">
+                <path d="M7 5h-2l-1 2v2h2l3.6 7.59-1.35 2.41c-.16.28-.25.61-.25.95 0 1.1.9 2 2 2h10v-2h-9.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.58h6.74c.75 0 1.41-.41 1.75-1.03l3.58-6.49-1.74-1-3.58 6.49h-6.12l-.32-.59 8.05-1.28-.31-1.96-9.42 1.49-.95-1.76h9.65v-2h-10z" fill="currentColor"/>
+            </svg>
+        </span>
+        <span class="sr-only">Abrir carrito</span>
         <span class="selected-products-toggle__badge" id="selectedProductsCount" aria-hidden="true">0</span>
     </button>
     <aside class="selected-products-panel" id="selectedProductsPanel" role="region" aria-live="polite" aria-labelledby="selectedProductsTitle" aria-hidden="true" tabindex="-1">
