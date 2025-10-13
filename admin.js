@@ -3719,13 +3719,12 @@
 
             const selectionPanelMarkup = `
     <button type="button" class="selected-products-toggle" id="selectedPanelToggle" aria-controls="selectedProductsPanel" aria-expanded="false" aria-haspopup="dialog">
+        <span class="selected-products-toggle__badge" id="selectedProductsCount" aria-hidden="true">0</span>
         <span class="selected-products-toggle__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" focusable="false">
                 <path d="M7 5h-2l-1 2v2h2l3.6 7.59-1.35 2.41c-.16.28-.25.61-.25.95 0 1.1.9 2 2 2h10v-2h-9.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.58h6.74c.75 0 1.41-.41 1.75-1.03l3.58-6.49-1.74-1-3.58 6.49h-6.12l-.32-.59 8.05-1.28-.31-1.96-9.42 1.49-.95-1.76h9.65v-2h-10z" fill="currentColor"/>
             </svg>
-            <span class="selected-products-toggle__badge" id="selectedProductsCount" aria-hidden="true">0</span>
         </span>
-        <span class="selected-products-toggle__label">Carrito</span>
         <span class="sr-only">Abrir carrito</span>
     </button>
     <aside class="selected-products-panel" id="selectedProductsPanel" role="region" aria-live="polite" aria-labelledby="selectedProductsTitle" aria-hidden="true" tabindex="-1">
@@ -4811,40 +4810,31 @@ ${formatCssBlock(footerBackground)}
             bottom: 1.5rem;
             right: 1.5rem;
             z-index: 1100;
+            width: 4rem;
+            height: 4rem;
             background: ${theme.appearance.header};
             color: ${theme.textOnDark};
             border: none;
-            border-radius: 18px;
+            border-radius: 50%;
             display: inline-flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 0.35rem;
-            padding: 0.85rem 1rem 0.75rem;
+            padding: 0;
             font-weight: 600;
-            min-width: 4.5rem;
             box-shadow: 0 18px 35px ${theme.headerShadow};
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .selected-products-toggle__icon {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 2.2rem;
-            height: 2.2rem;
+            width: 1.9rem;
+            height: 1.9rem;
+            color: currentColor;
         }
 
         .selected-products-toggle__icon svg {
             width: 100%;
             height: 100%;
-        }
-
-        .selected-products-toggle__label {
-            font-size: 0.85rem;
-            letter-spacing: 0.3px;
         }
 
         .selected-products-toggle:hover,
@@ -4860,10 +4850,11 @@ ${formatCssBlock(footerBackground)}
 
         .selected-products-toggle__badge {
             position: absolute;
-            top: -0.3rem;
-            right: -0.3rem;
-            min-width: 1.6rem;
-            height: 1.6rem;
+            top: -0.55rem;
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 1.75rem;
+            height: 1.75rem;
             border-radius: 999px;
             background: ${theme.textOnDark};
             color: ${theme.appearance.header};
@@ -4872,7 +4863,8 @@ ${formatCssBlock(footerBackground)}
             justify-content: center;
             font-size: 0.85rem;
             font-weight: 700;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            padding: 0 0.35rem;
+            box-shadow: 0 8px 18px ${theme.headerShadowHover};
         }
 
         .selected-products-panel {
@@ -5141,12 +5133,7 @@ ${formatCssBlock(footerBackground)}
         @media (max-width: 768px) {
             .selected-products-toggle {
                 right: 1rem;
-                left: 1rem;
-                width: calc(100% - 2rem);
-                flex-direction: row;
-                justify-content: center;
-                gap: 0.75rem;
-                border-radius: 14px;
+                bottom: 1rem;
             }
 
             .selected-products-panel {
