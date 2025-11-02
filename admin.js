@@ -1775,8 +1775,17 @@
         }
 
         function collectProductImageValues() {
-            return getProductImageInputs()
-                .map(input => sanitizeImageValue(input.value))
+            const container = getProductImagesContainer();
+
+            if (!container) {
+                return [];
+            }
+
+            return Array.from(container.querySelectorAll('.image-url-item'))
+                .map(item => {
+                    const input = item.querySelector('.product-image-url-input');
+                    return input ? sanitizeImageValue(input.value) : '';
+                })
                 .filter(url => url.length > 0);
         }
 
@@ -1797,19 +1806,55 @@
                 }
 
                 const removeButton = item.querySelector('.remove-image-button');
-                if (!removeButton) {
-                    return;
+                const shouldDisable = total <= 1;
+
+                if (removeButton) {
+                    removeButton.disabled = shouldDisable;
+                    removeButton.hidden = shouldDisable;
                 }
 
-                const shouldDisable = total <= 1;
-                removeButton.disabled = shouldDisable;
-                removeButton.hidden = shouldDisable;
+                const moveUpButton = item.querySelector('.move-image-button[data-direction="up"]');
+                const moveDownButton = item.querySelector('.move-image-button[data-direction="down"]');
+
+                if (moveUpButton) {
+                    moveUpButton.disabled = index === 0;
+                }
+
+                if (moveDownButton) {
+                    moveDownButton.disabled = index === total - 1;
+                }
             });
         }
 
         function createProductImageInput(value = '') {
             const item = document.createElement('div');
             item.className = 'image-url-item';
+
+            const orderControls = document.createElement('div');
+            orderControls.className = 'image-order-controls';
+
+            const moveUpButton = document.createElement('button');
+            moveUpButton.type = 'button';
+            moveUpButton.className = 'icon-btn move-image-button';
+            moveUpButton.setAttribute('aria-label', 'Mover imagen hacia arriba');
+            moveUpButton.title = 'Mover imagen hacia arriba';
+            moveUpButton.textContent = '↑';
+            moveUpButton.dataset.action = 'move';
+            moveUpButton.dataset.direction = 'up';
+            moveUpButton.addEventListener('click', () => moveProductImageInput(item, 'up'));
+
+            const moveDownButton = document.createElement('button');
+            moveDownButton.type = 'button';
+            moveDownButton.className = 'icon-btn move-image-button';
+            moveDownButton.setAttribute('aria-label', 'Mover imagen hacia abajo');
+            moveDownButton.title = 'Mover imagen hacia abajo';
+            moveDownButton.textContent = '↓';
+            moveDownButton.dataset.action = 'move';
+            moveDownButton.dataset.direction = 'down';
+            moveDownButton.addEventListener('click', () => moveProductImageInput(item, 'down'));
+
+            orderControls.appendChild(moveUpButton);
+            orderControls.appendChild(moveDownButton);
 
             const input = document.createElement('input');
             input.type = 'url';
@@ -1826,6 +1871,7 @@
             removeButton.textContent = '✕';
             removeButton.addEventListener('click', () => removeProductImageInput(item));
 
+            item.appendChild(orderControls);
             item.appendChild(input);
             item.appendChild(removeButton);
 
@@ -1848,6 +1894,7 @@
 
             container.appendChild(item);
             updateProductImageInputsRemoveState();
+            syncProductImagePreviewFromInputs();
 
             if (input && typeof input.focus === 'function') {
                 input.focus();
@@ -1896,6 +1943,39 @@
                 }
             } else {
                 container.removeChild(item);
+            }
+
+            updateProductImageInputsRemoveState();
+            syncProductImagePreviewFromInputs();
+        }
+
+        function moveProductImageInput(item, direction) {
+            const container = getProductImagesContainer();
+
+            if (!container || !item) {
+                return;
+            }
+
+            const items = Array.from(container.querySelectorAll('.image-url-item'));
+            const currentIndex = items.indexOf(item);
+
+            if (currentIndex === -1) {
+                return;
+            }
+
+            const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+            if (targetIndex < 0 || targetIndex >= items.length) {
+                return;
+            }
+
+            const referenceItem = items[targetIndex];
+
+            if (direction === 'up') {
+                container.insertBefore(item, referenceItem);
+            } else {
+                const nextSibling = referenceItem.nextElementSibling;
+                container.insertBefore(item, nextSibling);
             }
 
             updateProductImageInputsRemoveState();
