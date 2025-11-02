@@ -3934,6 +3934,14 @@
             </label>
             ${featureOptionsMarkup ? `<label class="filter-field" for="catalogFeatureFilter"><span class="filter-label">Etiqueta</span><select id="catalogFeatureFilter"><option value="">Todas las etiquetas</option>${featureOptionsMarkup}</select></label>` : ''}
             ${priceOptionsMarkup ? `<label class="filter-field" for="catalogPriceFilter"><span class="filter-label">Precio</span><select id="catalogPriceFilter"><option value="">Todos los precios</option>${priceOptionsMarkup}</select></label>` : ''}
+            <label class="filter-field" for="catalogSortFilter">
+                <span class="filter-label">Ordenar</span>
+                <select id="catalogSortFilter">
+                    <option value="">Predeterminado</option>
+                    <option value="price-asc">Precio: menor a mayor</option>
+                    <option value="name-asc">Nombre: A–Z</option>
+                </select>
+            </label>
         </div>`;
 
             const selectionPanelMarkup = `
@@ -5706,6 +5714,7 @@ ${formatCssBlock(footerBackground)}
             const searchInput = document.getElementById('catalogSearchInput');
             const featureSelect = document.getElementById('catalogFeatureFilter');
             const priceSelect = document.getElementById('catalogPriceFilter');
+            const sortSelect = document.getElementById('catalogSortFilter');
 
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
@@ -5723,6 +5732,10 @@ ${formatCssBlock(footerBackground)}
 
             if (priceSelect) {
                 priceSelect.addEventListener('change', filterCatalog);
+            }
+
+            if (sortSelect) {
+                sortSelect.addEventListener('change', filterCatalog);
             }
         }
 
@@ -5762,10 +5775,12 @@ ${formatCssBlock(footerBackground)}
             const searchInput = document.getElementById('catalogSearchInput');
             const featureSelect = document.getElementById('catalogFeatureFilter');
             const priceSelect = document.getElementById('catalogPriceFilter');
+            const sortSelect = document.getElementById('catalogSortFilter');
 
             const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
             const featureTerm = featureSelect ? featureSelect.value.trim().toLowerCase() : '';
             const priceFilter = priceSelect ? priceSelect.value.trim() : '';
+            const sortOption = sortSelect ? sortSelect.value : '';
             const priceRange = parsePriceFilter(priceFilter);
             const searchTokens = searchTerm.length > 0
                 ? searchTerm.split(/\s+/).filter(Boolean)
@@ -5775,9 +5790,82 @@ ${formatCssBlock(footerBackground)}
 
             categories.forEach(category => {
                 const cards = Array.from(category.querySelectorAll('.product-card'));
-                let visibleInCategory = 0;
+                const productsGrid = category.querySelector('.products-grid');
 
-                cards.forEach(card => {
+                if (!productsGrid || cards.length === 0) {
+                    const emptyMessage = category.querySelector('[data-category-empty]');
+                    if (emptyMessage) {
+                        emptyMessage.style.display = cards.length === 0 ? 'block' : 'none';
+                    }
+                    return;
+                }
+
+                cards.forEach((card, index) => {
+                    if (!card.dataset.originalIndex) {
+                        card.dataset.originalIndex = String(index);
+                    }
+                });
+
+                const getOriginalIndex = (card) => {
+                    const value = Number.parseInt(card.dataset.originalIndex, 10);
+                    if (Number.isFinite(value)) {
+                        return value;
+                    }
+
+                    return cards.indexOf(card);
+                };
+
+                const compareByOriginalIndex = (a, b) => getOriginalIndex(a) - getOriginalIndex(b);
+                const sortedCards = cards.slice();
+
+                if (!sortOption) {
+                    sortedCards.sort(compareByOriginalIndex);
+                } else if (sortOption === 'price-asc') {
+                    sortedCards.sort((a, b) => {
+                        const priceA = Number.parseFloat(a.dataset.price);
+                        const priceB = Number.parseFloat(b.dataset.price);
+                        const hasPriceA = Number.isFinite(priceA);
+                        const hasPriceB = Number.isFinite(priceB);
+
+                        if (hasPriceA && hasPriceB) {
+                            if (priceA === priceB) {
+                                const nameA = a.dataset.name || '';
+                                const nameB = b.dataset.name || '';
+                                const nameComparison = nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+                                return nameComparison !== 0 ? nameComparison : compareByOriginalIndex(a, b);
+                            }
+
+                            return priceA - priceB;
+                        }
+
+                        if (hasPriceA) {
+                            return -1;
+                        }
+
+                        if (hasPriceB) {
+                            return 1;
+                        }
+
+                        return compareByOriginalIndex(a, b);
+                    });
+                } else if (sortOption === 'name-asc') {
+                    sortedCards.sort((a, b) => {
+                        const nameA = a.dataset.name || '';
+                        const nameB = b.dataset.name || '';
+                        const comparison = nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+
+                        if (comparison !== 0) {
+                            return comparison;
+                        }
+
+                        return compareByOriginalIndex(a, b);
+                    });
+                }
+
+                let visibleInCategory = 0;
+                const fragment = document.createDocumentFragment();
+
+                sortedCards.forEach(card => {
                     const name = (card.dataset.name || '').toLowerCase();
                     const description = (card.dataset.description || '').toLowerCase();
                     const features = (card.dataset.features || '').toLowerCase();
@@ -5811,7 +5899,11 @@ ${formatCssBlock(footerBackground)}
                     if (matchesAll) {
                         visibleInCategory += 1;
                     }
+
+                    fragment.appendChild(card);
                 });
+
+                productsGrid.appendChild(fragment);
 
                 const emptyMessage = category.querySelector('[data-category-empty]');
                 if (emptyMessage) {
