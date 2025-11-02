@@ -2003,6 +2003,60 @@
             showMessage('Logo eliminado correctamente', 'success');
         }
 
+        function clearStatusMessage() {
+            const statusMessage = document.getElementById('statusMessage');
+            if (!statusMessage) {
+                return;
+            }
+
+            statusMessage.textContent = '';
+            statusMessage.className = 'status-message';
+        }
+
+        function setupConfigValidationWatchers() {
+            const configFieldIds = [
+                'whatsapp',
+                'email',
+                'phone',
+                'address',
+                'instagram',
+                'facebook',
+                'tiktok',
+                'companyName'
+            ];
+
+            const appearanceFieldIds = APPEARANCE_FIELDS.map(field => field.id);
+            const appearanceImageFieldIds = APPEARANCE_IMAGE_FIELDS.map(field => field.id);
+            const fieldsToWatch = [
+                ...configFieldIds,
+                ...appearanceFieldIds,
+                ...appearanceImageFieldIds
+            ];
+
+            const attachValidationHandlers = (element) => {
+                if (!element) {
+                    return;
+                }
+
+                const runValidation = () => {
+                    const values = collectConfigValues();
+                    const validation = validateConfiguration({ values, forExport: false });
+
+                    if (validation.valid) {
+                        clearStatusMessage();
+                    }
+                };
+
+                element.addEventListener('input', runValidation);
+                element.addEventListener('blur', runValidation);
+            };
+
+            fieldsToWatch.forEach(id => {
+                const element = document.getElementById(id);
+                attachValidationHandlers(element);
+            });
+        }
+
         function registerAdminEventHandlers() {
             const sectionButtons = document.querySelectorAll('button[data-section]');
             sectionButtons.forEach(button => {
@@ -2063,6 +2117,7 @@
             }
 
             setupAppearanceControls();
+            setupConfigValidationWatchers();
 
             const productSearchInput = document.getElementById('productSearch');
             if (productSearchInput) {
