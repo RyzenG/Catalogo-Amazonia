@@ -5435,20 +5435,22 @@ ${formatCssBlock(footerBackground)}
             });
         }, observerOptions);
 
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                const loader = document.getElementById('loader');
-                if (loader) {
-                    loader.classList.add('hidden');
-                }
-            }, 1500);
-        });
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.classList.add('hidden');
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             applyConfig();
             setupFilters();
             initializeCatalogState();
             filterCatalog();
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(hideLoader);
+            });
 
             setupSelectionPanel();
             attachProductSelectionHandlers();
