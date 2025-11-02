@@ -2903,40 +2903,105 @@
                     );
                 });
 
-            if (summaryElement) {
+            const updateSummaryText = (visibleCount, issuesCount) => {
+                if (!summaryElement) {
+                    return;
+                }
+
                 if (trimmedSearch.length === 0) {
                     const productLabel = totalProducts === 1 ? 'producto' : 'productos';
-                    summaryElement.textContent = `Mostrando ${totalProducts} ${productLabel}.`;
-                } else {
-                    const matchLabel = filteredProducts.length === 1 ? 'coincidencia' : 'coincidencias';
-                    const productLabel = totalProducts === 1 ? 'producto' : 'productos';
-                    summaryElement.textContent = `${filteredProducts.length} ${matchLabel} de ${totalProducts} ${productLabel}.`;
+                    let summaryText = `Mostrando ${visibleCount} ${productLabel}.`;
+
+                    if (issuesCount > 0) {
+                        const issueLabel = issuesCount === 1
+                            ? 'producto con incidencias'
+                            : 'productos con incidencias';
+                        summaryText += ` ${issuesCount} ${issueLabel}.`;
+                    }
+
+                    summaryElement.textContent = summaryText;
+                    return;
                 }
-            }
+
+                const matchLabel = visibleCount === 1 ? 'coincidencia' : 'coincidencias';
+                const productLabel = totalProducts === 1 ? 'producto' : 'productos';
+                let summaryText = `${visibleCount} ${matchLabel} de ${totalProducts} ${productLabel}.`;
+
+                if (issuesCount > 0) {
+                    const issueLabel = issuesCount === 1
+                        ? 'coincidencia con incidencias'
+                        : 'coincidencias con incidencias';
+                    summaryText += ` ${issuesCount} ${issueLabel}.`;
+                }
+
+                summaryElement.textContent = summaryText;
+            };
 
             if (filteredProducts.length === 0) {
                 const sanitizedQuery = escapeHtml(trimmedSearch);
                 container.innerHTML = `<p style="text-align: center; color: #999">No se encontraron productos que coincidan con <mark>${sanitizedQuery}</mark>.</p>`;
+                updateSummaryText(0, 0);
                 updateCatalogPreview();
                 return;
             }
 
-            container.innerHTML = filteredProducts
+            let productsWithIssuesCount = 0;
+
+            const productMarkup = filteredProducts
                 .map(product => {
                     const originalIndex = productIndexMap.has(product.id) ? productIndexMap.get(product.id) : 0;
                     const disableUp = originalIndex === 0 ? 'disabled' : '';
                     const disableDown = originalIndex === totalProducts - 1 ? 'disabled' : '';
+                    const normalizedImages = getNormalizedProductImages(product);
+                    const missingImage = normalizedImages.length === 0;
                     const rawName = typeof product.name === 'string' && product.name.trim()
                         ? product.name
                         : 'Producto sin nombre';
                     const productNameHtml = highlightSearchMatches(rawName, highlightRegex);
                     const rawShortDesc = typeof product.shortDesc === 'string' ? product.shortDesc : '';
+                    const trimmedShortDesc = rawShortDesc.trim();
                     const shortDescAttr = escapeHtml(rawShortDesc);
-                    const shortDescMarkup = rawShortDesc.trim()
+                    const shortDescMarkup = trimmedShortDesc
                         ? `<div class="product-short-desc">${highlightSearchMatches(rawShortDesc, highlightRegex)}</div>`
                         : '';
                     const formattedPrice = formatCurrencyCOP(product.price);
+                    const missingPrice = !formattedPrice;
                     const priceHtml = escapeHtml(formattedPrice);
+                    const missingShortDesc = trimmedShortDesc.length === 0;
+                    const issueMessages = [];
+
+                    if (missingImage) {
+                        issueMessages.push({
+                            badgeText: 'Sin imagen',
+                            ariaLabel: 'Este producto no tiene imagen disponible'
+                        });
+                    }
+
+                    if (missingPrice) {
+                        issueMessages.push({
+                            badgeText: 'Sin precio',
+                            ariaLabel: 'Este producto no tiene precio asignado'
+                        });
+                    }
+
+                    if (missingShortDesc) {
+                        issueMessages.push({
+                            badgeText: 'Sin descripción breve',
+                            ariaLabel: 'Este producto no tiene descripción breve'
+                        });
+                    }
+
+                    const hasIssues = issueMessages.length > 0;
+                    if (hasIssues) {
+                        productsWithIssuesCount += 1;
+                    }
+
+                    const issueSummary = issueMessages.map(issue => issue.ariaLabel).join('. ');
+                    const issueBadgesMarkup = hasIssues
+                        ? `<div class="product-issues" role="status" aria-label="${escapeHtml(issueSummary)}">${issueMessages
+                            .map(issue => `<span class="product-issue" role="img" aria-label="${escapeHtml(issue.ariaLabel)}" title="${escapeHtml(issue.ariaLabel)}">${escapeHtml(issue.badgeText)}</span>`)
+                            .join('')}</div>`
+                        : '';
                     const actionLabelSource = rawName.trim() ? rawName.trim() : 'este producto';
                     const actionLabelAttr = escapeHtml(actionLabelSource);
                     const featureValues = Array.isArray(product.features)
@@ -2949,7 +3014,8 @@
                     const featuresMarkup = highlightedFeatures.length > 0
                         ? `<div class="product-tags">${highlightedFeatures.map(feature => `<span class="product-tag">${feature}</span>`).join('')}</div>`
                         : '';
-                    const imageSrc = getProductImageSource(product);
+                    const primaryImageSrc = normalizedImages.length > 0 ? normalizedImages[0] : '';
+                    const imageSrc = primaryImageSrc || getProductImageSource(product);
                     const imageAlt = escapeHtml(`Vista previa de ${rawName}`);
                     return `
                 <div class="product-item" data-product-id="${product.id}" data-short-desc="${shortDescAttr}" data-features="${featuresAttr}">
@@ -2962,6 +3028,7 @@
                     </div>
                     <div class="product-info">
                         <div class="product-name">${productNameHtml}</div>
+                        ${issueBadgesMarkup}
                         ${shortDescMarkup}
                         ${featuresMarkup}
                         <div class="product-price">${priceHtml}</div>
@@ -2971,8 +3038,11 @@
                         <button type="button" class="icon-btn delete-btn" data-action="delete" data-product-id="${product.id}" aria-label="Eliminar ${actionLabelAttr}" title="Eliminar ${actionLabelAttr}">🗑️</button>
                     </div>
                 </div>`;
-                })
-                .join('');
+                });
+
+            updateSummaryText(filteredProducts.length, productsWithIssuesCount);
+
+            container.innerHTML = productMarkup.join('');
 
             updateCatalogPreview();
         }
