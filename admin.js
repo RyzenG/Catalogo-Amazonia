@@ -2279,7 +2279,25 @@
         function saveData(options = {}) {
             const { silent = false } = options;
             ensureCategoryStructure();
-            catalogData.config = getNormalizedConfig(catalogData.config);
+            let configSource = catalogData.config;
+
+            const canAccessDocument = typeof document !== 'undefined'
+                && document !== null
+                && typeof document.getElementById === 'function';
+
+            if (canAccessDocument) {
+                const sampleNodes = ['whatsapp', 'email', 'companyName'];
+                const hasConfigNodes = sampleNodes.some(id => document.getElementById(id));
+
+                if (hasConfigNodes) {
+                    configSource = {
+                        ...configSource,
+                        ...collectConfigValues(),
+                    };
+                }
+            }
+
+            catalogData.config = getNormalizedConfig(configSource);
             stripLegacyImageData(catalogData.products);
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             localStorage.setItem(PRODUCT_SEARCH_STORAGE_KEY, productSearchTerm || '');
