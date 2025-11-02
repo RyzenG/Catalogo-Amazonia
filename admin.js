@@ -3928,20 +3928,63 @@
 
             const filtersMarkup = `
         <div class="catalog-filters" id="catalogFilters">
-            <label class="filter-field" for="catalogSearchInput">
+            <label class="filter-field filter-field--search" for="catalogSearchInput">
                 <span class="filter-label">Buscar</span>
                 <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre, descripción o etiqueta">
             </label>
-            ${featureOptionsMarkup ? `<label class="filter-field" for="catalogFeatureFilter"><span class="filter-label">Etiqueta</span><select id="catalogFeatureFilter"><option value="">Todas las etiquetas</option>${featureOptionsMarkup}</select></label>` : ''}
-            ${priceOptionsMarkup ? `<label class="filter-field" for="catalogPriceFilter"><span class="filter-label">Precio</span><select id="catalogPriceFilter"><option value="">Todos los precios</option>${priceOptionsMarkup}</select></label>` : ''}
-            <label class="filter-field" for="catalogSortFilter">
-                <span class="filter-label">Ordenar</span>
-                <select id="catalogSortFilter">
-                    <option value="">Predeterminado</option>
-                    <option value="price-asc">Precio: menor a mayor</option>
-                    <option value="name-asc">Nombre: A–Z</option>
-                </select>
-            </label>
+            <div class="filter-chip-row" role="group" aria-label="Filtros del catálogo">
+                ${featureOptionsMarkup ? `
+                <div class="filter-chip">
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogFeatureFilter" aria-controls="catalogFeatureFilterPopover" aria-expanded="false" aria-haspopup="dialog">
+                        <span class="filter-chip__text">Etiqueta</span>
+                    </button>
+                    <div class="filter-popover" id="catalogFeatureFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogFeatureFilterLabel" hidden>
+                        <div class="filter-popover__content">
+                            <label class="filter-field filter-field--popover" for="catalogFeatureFilter" id="catalogFeatureFilterLabel">
+                                <span class="filter-label">Etiqueta</span>
+                                <select id="catalogFeatureFilter">
+                                    <option value="">Todas las etiquetas</option>
+                                    ${featureOptionsMarkup}
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                </div>` : ''}
+                ${priceOptionsMarkup ? `
+                <div class="filter-chip">
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogPriceFilter" aria-controls="catalogPriceFilterPopover" aria-expanded="false" aria-haspopup="dialog">
+                        <span class="filter-chip__text">Precio</span>
+                    </button>
+                    <div class="filter-popover" id="catalogPriceFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogPriceFilterLabel" hidden>
+                        <div class="filter-popover__content">
+                            <label class="filter-field filter-field--popover" for="catalogPriceFilter" id="catalogPriceFilterLabel">
+                                <span class="filter-label">Precio</span>
+                                <select id="catalogPriceFilter">
+                                    <option value="">Todos los precios</option>
+                                    ${priceOptionsMarkup}
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                </div>` : ''}
+                <div class="filter-chip">
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogSortFilter" aria-controls="catalogSortFilterPopover" aria-expanded="false" aria-haspopup="dialog">
+                        <span class="filter-chip__text">Ordenar</span>
+                    </button>
+                    <div class="filter-popover" id="catalogSortFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogSortFilterLabel" hidden>
+                        <div class="filter-popover__content">
+                            <label class="filter-field filter-field--popover" for="catalogSortFilter" id="catalogSortFilterLabel">
+                                <span class="filter-label">Ordenar</span>
+                                <select id="catalogSortFilter">
+                                    <option value="">Predeterminado</option>
+                                    <option value="price-asc">Precio: menor a mayor</option>
+                                    <option value="name-asc">Nombre: A–Z</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>`;
 
             const selectionPanelMarkup = `
@@ -4364,15 +4407,116 @@ ${formatCssBlock(headerBackground)}
             padding: 0 2rem 1.5rem;
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
-            align-items: flex-end;
+            gap: 1rem 1.25rem;
+            align-items: flex-start;
+            position: relative;
+            z-index: 1;
         }
 
         .filter-field {
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
-            flex: 1 1 220px;
+        }
+
+        .filter-field--search {
+            flex: 1 1 320px;
+            min-width: 240px;
+        }
+
+        .filter-chip-row {
+            display: flex;
+            flex: 2 1 360px;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+            position: relative;
+        }
+
+        .filter-chip {
+            position: relative;
+            flex: 0 0 auto;
+        }
+
+        .filter-chip__button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.95rem;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.95);
+            color: ${theme.categoryTitle};
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .filter-chip__button::after {
+            content: '';
+            display: inline-block;
+            width: 0.45rem;
+            height: 0.45rem;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: rotate(45deg);
+            transition: transform 0.2s ease;
+            margin-left: 0.35rem;
+        }
+
+        .filter-chip__button:hover,
+        .filter-chip__button[aria-expanded="true"] {
+            border-color: ${theme.accentStrong};
+            color: ${theme.accentStrong};
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+        }
+
+        .filter-chip__button[aria-expanded="true"]::after {
+            transform: rotate(-135deg);
+        }
+
+        .filter-chip__button:focus-visible {
+            outline: none;
+            border-color: ${theme.accentStrong};
+            box-shadow: 0 0 0 3px ${theme.accentSoft}, 0 10px 20px rgba(15, 23, 42, 0.12);
+        }
+
+        .filter-chip__text {
+            white-space: nowrap;
+        }
+
+        .filter-popover {
+            position: absolute;
+            top: calc(100% + 0.55rem);
+            inset-inline-start: 0;
+            min-width: 240px;
+            max-width: min(320px, 90vw);
+            padding: 1rem;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+            z-index: 20;
+        }
+
+        .filter-chip:last-child .filter-popover {
+            inset-inline-start: auto;
+            inset-inline-end: 0;
+        }
+
+        .filter-popover__content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .filter-field--popover {
+            min-width: 0;
         }
 
         .filter-label {
@@ -4420,6 +4564,49 @@ ${formatCssBlock(headerBackground)}
             background-size: 6px 6px, 6px 6px;
             background-repeat: no-repeat;
             padding-right: 2.5rem;
+        }
+
+        .filter-popover select {
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .catalog-filters {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0 1.25rem 1.25rem;
+            }
+
+            .filter-chip-row {
+                width: 100%;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                gap: 0.65rem;
+                padding-bottom: 0.35rem;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .filter-chip {
+                flex: 0 0 auto;
+                scroll-snap-align: start;
+            }
+
+            .filter-chip-row {
+                scroll-snap-type: x proximity;
+            }
+
+            .filter-chip__button {
+                white-space: nowrap;
+            }
+
+            .filter-chip:last-child .filter-popover {
+                inset-inline-start: 0;
+                inset-inline-end: auto;
+            }
+
+            .filter-popover {
+                max-width: min(360px, 95vw);
+            }
         }
 
         .nav-btn {
@@ -5710,11 +5897,180 @@ ${formatCssBlock(footerBackground)}
             }
         }
 
+        const filterPopoverControllers = new Map();
+
+        function getFocusableElements(container) {
+            if (!container) {
+                return [];
+            }
+
+            const focusableSelectors = [
+                'a[href]',
+                'button:not([disabled])',
+                'input:not([disabled])',
+                'select:not([disabled])',
+                'textarea:not([disabled])',
+                '[tabindex]:not([tabindex="-1"])'
+            ].join(',');
+
+            return Array.from(container.querySelectorAll(focusableSelectors)).filter(element => {
+                return element.closest('[hidden]') === null && element.getAttribute('aria-hidden') !== 'true';
+            });
+        }
+
+        function closeFilterPopoverById(selectId, options = {}) {
+            const controller = filterPopoverControllers.get(selectId);
+            if (!controller) {
+                return;
+            }
+
+            controller.close(options);
+        }
+
+        function initializeFilterPopovers() {
+            const triggers = Array.from(document.querySelectorAll('[data-filter-toggle]'));
+
+            triggers.forEach(trigger => {
+                if (!trigger || trigger.dataset.filterPopoverInitialized === 'true') {
+                    return;
+                }
+
+                const selectId = trigger.getAttribute('data-filter-toggle');
+                const popover = trigger.nextElementSibling;
+
+                if (!selectId || !popover || !popover.classList.contains('filter-popover')) {
+                    return;
+                }
+
+                trigger.dataset.filterPopoverInitialized = 'true';
+
+                const controller = createFilterPopoverController(trigger, popover, selectId);
+                filterPopoverControllers.set(selectId, controller);
+            });
+        }
+
+        function createFilterPopoverController(trigger, popover, selectId) {
+            let isOpen = false;
+            let controller;
+
+            function close({ focusTrigger = false } = {}) {
+                if (!isOpen) {
+                    return;
+                }
+
+                isOpen = false;
+                popover.hidden = true;
+                popover.removeAttribute('data-open');
+                trigger.setAttribute('aria-expanded', 'false');
+                document.removeEventListener('pointerdown', handlePointerDown, true);
+                document.removeEventListener('keydown', handleKeyDown, true);
+
+                if (focusTrigger) {
+                    trigger.focus();
+                }
+            }
+
+            function open() {
+                if (isOpen) {
+                    return;
+                }
+
+                filterPopoverControllers.forEach(existingController => {
+                    if (existingController !== controller) {
+                        existingController.close({ focusTrigger: false });
+                    }
+                });
+
+                isOpen = true;
+                popover.hidden = false;
+                popover.setAttribute('data-open', 'true');
+                trigger.setAttribute('aria-expanded', 'true');
+
+                const focusableElements = getFocusableElements(popover);
+                const elementToFocus = focusableElements.length > 0 ? focusableElements[0] : popover;
+
+                window.requestAnimationFrame(() => {
+                    elementToFocus.focus();
+                });
+
+                document.addEventListener('pointerdown', handlePointerDown, true);
+                document.addEventListener('keydown', handleKeyDown, true);
+            }
+
+            function handlePointerDown(event) {
+                if (popover.contains(event.target) || trigger.contains(event.target)) {
+                    return;
+                }
+
+                close({ focusTrigger: false });
+            }
+
+            function handleKeyDown(event) {
+                if (!isOpen) {
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    close({ focusTrigger: true });
+                    return;
+                }
+
+                if (event.key !== 'Tab') {
+                    return;
+                }
+
+                const focusableElements = getFocusableElements(popover);
+
+                if (!focusableElements.length) {
+                    event.preventDefault();
+                    trigger.focus();
+                    return;
+                }
+
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+                const isShiftPressed = event.shiftKey === true;
+                const activeElement = document.activeElement;
+
+                if (!isShiftPressed && activeElement === lastElement) {
+                    event.preventDefault();
+                    firstElement.focus();
+                } else if (isShiftPressed && activeElement === firstElement) {
+                    event.preventDefault();
+                    lastElement.focus();
+                }
+            }
+
+            function toggle() {
+                if (isOpen) {
+                    close({ focusTrigger: true });
+                } else {
+                    open();
+                }
+            }
+
+            trigger.addEventListener('click', toggle);
+
+            controller = {
+                close,
+                open,
+                toggle,
+                trigger,
+                popover,
+                selectId
+            };
+
+            return controller;
+        }
+
         function setupFilters() {
             const searchInput = document.getElementById('catalogSearchInput');
             const featureSelect = document.getElementById('catalogFeatureFilter');
             const priceSelect = document.getElementById('catalogPriceFilter');
             const sortSelect = document.getElementById('catalogSortFilter');
+
+            initializeFilterPopovers();
 
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
@@ -5727,15 +6083,24 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (featureSelect) {
-                featureSelect.addEventListener('change', filterCatalog);
+                featureSelect.addEventListener('change', function() {
+                    filterCatalog();
+                    closeFilterPopoverById('catalogFeatureFilter', { focusTrigger: true });
+                });
             }
 
             if (priceSelect) {
-                priceSelect.addEventListener('change', filterCatalog);
+                priceSelect.addEventListener('change', function() {
+                    filterCatalog();
+                    closeFilterPopoverById('catalogPriceFilter', { focusTrigger: true });
+                });
             }
 
             if (sortSelect) {
-                sortSelect.addEventListener('change', filterCatalog);
+                sortSelect.addEventListener('change', function() {
+                    filterCatalog();
+                    closeFilterPopoverById('catalogSortFilter', { focusTrigger: true });
+                });
             }
         }
 
