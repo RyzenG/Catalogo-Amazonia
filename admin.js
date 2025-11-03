@@ -5906,14 +5906,17 @@ ${formatCssBlock(footerBackground)}
             rootMargin: '0px 0px -50px 0px'
         };
 
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
+        let observer = null;
+        if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+            observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+        }
 
         function normalizeAboutSection(rawAbout) {
             if (!rawAbout || typeof rawAbout !== 'object') {
@@ -6081,8 +6084,13 @@ ${formatCssBlock(footerBackground)}
 
             const cards = document.querySelectorAll('.product-card');
             cards.forEach(card => {
-                card.style.opacity = '0';
-                observer.observe(card);
+                if (observer) {
+                    card.style.opacity = '0';
+                    observer.observe(card);
+                } else {
+                    card.style.opacity = '1';
+                    card.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                }
             });
 
             const modalElement = document.getElementById('productModal');
