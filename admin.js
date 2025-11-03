@@ -5982,23 +5982,35 @@ ${formatCssBlock(footerBackground)}
             const valuesCard = document.getElementById('aboutValuesCard');
             const valuesList = document.getElementById('aboutValuesList');
             const aboutSection = document.getElementById('aboutSection');
+            const aboutGrid = document.getElementById('aboutGrid');
+
+            // Se espera soportar catálogos exportados sin la sección "Nosotros".
+            if (!aboutSection || !aboutGrid || !missionCard || !visionCard || !valuesCard) {
+                return aboutData;
+            }
 
             const hasMission = aboutData.mission.length > 0;
             const hasVision = aboutData.vision.length > 0;
             const hasValues = Array.isArray(aboutData.values) && aboutData.values.length > 0;
             const hasContent = hasMission || hasVision || hasValues;
 
-            setSectionVisibility(missionCard, hasMission);
+            if (missionCard) {
+                setSectionVisibility(missionCard, hasMission);
+            }
             if (missionText) {
                 missionText.textContent = hasMission ? aboutData.mission : '';
             }
 
-            setSectionVisibility(visionCard, hasVision);
+            if (visionCard) {
+                setSectionVisibility(visionCard, hasVision);
+            }
             if (visionText) {
                 visionText.textContent = hasVision ? aboutData.vision : '';
             }
 
-            setSectionVisibility(valuesCard, hasValues);
+            if (valuesCard) {
+                setSectionVisibility(valuesCard, hasValues);
+            }
             if (valuesList) {
                 valuesList.innerHTML = '';
                 if (hasValues) {
@@ -6010,7 +6022,9 @@ ${formatCssBlock(footerBackground)}
                 }
             }
 
-            setSectionVisibility(aboutSection, hasContent);
+            if (aboutSection) {
+                setSectionVisibility(aboutSection, hasContent);
+            }
 
             return aboutData;
         }
