@@ -11,6 +11,12 @@
             footerImage: ''
         };
 
+        const defaultAbout = {
+            mission: '',
+            vision: '',
+            values: []
+        };
+
         const APPEARANCE_FIELDS = [
             { id: 'appearanceBackground', key: 'background' },
             { id: 'appearanceHeader', key: 'header' },
@@ -31,6 +37,38 @@
 
         const APPEARANCE_FIELD_MAP = new Map(APPEARANCE_FIELDS.map(field => [field.id, field]));
 
+        function normalizeAbout(candidate) {
+            const normalized = {
+                mission: defaultAbout.mission,
+                vision: defaultAbout.vision,
+                values: []
+            };
+
+            if (isPlainObject(candidate)) {
+                if (typeof candidate.mission === 'string') {
+                    normalized.mission = candidate.mission.trim();
+                }
+
+                if (typeof candidate.vision === 'string') {
+                    normalized.vision = candidate.vision.trim();
+                }
+
+                let valuesSource = [];
+
+                if (Array.isArray(candidate.values)) {
+                    valuesSource = candidate.values;
+                } else if (typeof candidate.values === 'string') {
+                    valuesSource = candidate.values.split(/\r?\n/);
+                }
+
+                normalized.values = valuesSource
+                    .map(value => typeof value === 'string' ? value.trim() : '')
+                    .filter(value => value.length > 0);
+            }
+
+            return normalized;
+        }
+
         // Default data structure
         const defaultConfig = {
             whatsapp: '573000000000',
@@ -44,7 +82,8 @@
             tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
             footerMessage: 'Creando espacios únicos con concreto sostenible',
             logoData: '',
-            appearance: { ...defaultAppearance }
+            appearance: { ...defaultAppearance },
+            about: normalizeAbout(defaultAbout)
         };
 
         const defaultCategories = [
@@ -134,6 +173,7 @@
                 : { ...defaultConfig };
 
             base.appearance = normalizeAppearance(base.appearance);
+            base.about = normalizeAbout(base.about);
             return base;
         }
 
@@ -2430,6 +2470,18 @@
                 return element.value.trim();
             };
 
+            const readMultilineList = (id) => {
+                const value = readValue(id);
+                if (!value) {
+                    return [];
+                }
+
+                return value
+                    .split(/\r?\n/)
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+            };
+
             const readColor = (id) => {
                 const element = document.getElementById(id);
                 if (!element || typeof element.value !== 'string') {
@@ -2451,6 +2503,11 @@
                 tagline: readValue('tagline'),
                 footerMessage: readValue('footerMessage'),
                 logoData: readValue('companyLogoUrl'),
+                about: normalizeAbout({
+                    mission: readValue('aboutMission'),
+                    vision: readValue('aboutVision'),
+                    values: readMultilineList('aboutValues')
+                }),
                 appearance: normalizeAppearance({
                     background: readColor('appearanceBackground'),
                     header: readColor('appearanceHeader'),
@@ -2668,6 +2725,7 @@
             }
 
             configValues.appearance = normalizeAppearance(configValues.appearance);
+            configValues.about = normalizeAbout(configValues.about);
 
             return {
                 valid: errors.length === 0,
@@ -2703,6 +2761,21 @@
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
+            const aboutValues = normalizeAbout(catalogData.config.about);
+            const aboutMissionInput = document.getElementById('aboutMission');
+            if (aboutMissionInput) {
+                aboutMissionInput.value = aboutValues.mission || '';
+            }
+
+            const aboutVisionInput = document.getElementById('aboutVision');
+            if (aboutVisionInput) {
+                aboutVisionInput.value = aboutValues.vision || '';
+            }
+
+            const aboutValuesInput = document.getElementById('aboutValues');
+            if (aboutValuesInput) {
+                aboutValuesInput.value = aboutValues.values.join('\n');
+            }
             const logoValue = catalogData.config.logoData || '';
             const logoUrlInput = document.getElementById('companyLogoUrl');
             if (logoUrlInput) {
@@ -3744,6 +3817,48 @@
                 logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
             };
 
+            const about = normalizeAbout(config.about);
+            const aboutMissionText = about.mission || '';
+            const aboutVisionText = about.vision || '';
+            const aboutValues = Array.isArray(about.values) ? about.values : [];
+            const hasMission = aboutMissionText.length > 0;
+            const hasVision = aboutVisionText.length > 0;
+            const hasValues = aboutValues.length > 0;
+            const shouldShowAboutSection = hasMission || hasVision || hasValues;
+            const missionCardAttributes = hasMission ? '' : ' style="display: none;" aria-hidden="true"';
+            const visionCardAttributes = hasVision ? '' : ' style="display: none;" aria-hidden="true"';
+            const valuesCardAttributes = hasValues ? '' : ' style="display: none;" aria-hidden="true"';
+            const aboutSectionAttributes = shouldShowAboutSection ? '' : ' style="display: none;" aria-hidden="true"';
+            const missionCardMarkup = `
+                <article class="about-card about-card--mission" id="aboutMissionCard"${missionCardAttributes}>
+                    <h3 class="about-card__title">Nuestra misión</h3>
+                    <p class="about-card__text" id="aboutMissionText">${escapeHtml(aboutMissionText)}</p>
+                </article>`;
+            const visionCardMarkup = `
+                <article class="about-card about-card--vision" id="aboutVisionCard"${visionCardAttributes}>
+                    <h3 class="about-card__title">Nuestra visión</h3>
+                    <p class="about-card__text" id="aboutVisionText">${escapeHtml(aboutVisionText)}</p>
+                </article>`;
+            const valuesListMarkup = aboutValues
+                .map(value => `<li>${escapeHtml(value)}</li>`)
+                .join('');
+            const valuesCardMarkup = `
+                <article class="about-card about-card--values" id="aboutValuesCard"${valuesCardAttributes}>
+                    <h3 class="about-card__title">Nuestros valores</h3>
+                    <ul class="about-values-list" id="aboutValuesList">${valuesListMarkup}</ul>
+                </article>`;
+            const aboutSectionMarkup = `
+        <section id="aboutSection" class="about-section" aria-labelledby="aboutSectionTitle"${aboutSectionAttributes}>
+            <div class="about-section__inner">
+                <h2 class="about-section__title" id="aboutSectionTitle">Nosotros</h2>
+                <div class="about-grid" id="aboutGrid">
+                    ${missionCardMarkup}
+                    ${visionCardMarkup}
+                    ${valuesCardMarkup}
+                </div>
+            </div>
+        </section>`;
+
             const companyNameHtml = escapeHtml(trimmedConfig.companyName);
             const taglineHtml = escapeHtml(trimmedConfig.tagline);
             const footerMessageHtml = escapeHtml(trimmedConfig.footerMessage);
@@ -4016,6 +4131,7 @@
         </div>
     </aside>`;
 
+            const hasProductNavigation = categoriesWithProducts.length > 0;
             const navButtonsHTML = categoriesWithProducts
                 .map(category => {
                     const isActive = category.id === firstCategoryWithProducts;
@@ -4023,6 +4139,20 @@
                     const labelAttr = escapeHtml(label);
                     const descriptionAttr = escapeHtml(category.description || '');
                     return `<button class="nav-btn${isActive ? ' active' : ''}" data-category="${category.id}" data-label="${labelAttr}" data-description="${descriptionAttr}" onclick="showCategory(event, '${category.id}')">${escapeHtml(label)}</button>`;
+                })
+                .join('');
+
+            const primaryNavItems = [
+                { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true },
+                { id: 'primaryNavProducts', label: 'Productos', target: 'catalogProducts', visible: hasProductNavigation },
+                { id: 'primaryNavAbout', label: 'Nosotros', target: 'aboutSection', visible: shouldShowAboutSection }
+            ];
+
+            const primaryNavLinksMarkup = primaryNavItems
+                .map(item => {
+                    const styleAttr = item.visible ? '' : ' style="display: none;"';
+                    const hiddenAttr = item.visible ? '' : ' aria-hidden="true" tabindex="-1"';
+                    return `<a class="primary-nav__link" id="${item.id}" href="#${item.target}" data-scroll-target="${item.target}"${styleAttr}${hiddenAttr}>${escapeHtml(item.label)}</a>`;
                 })
                 .join('');
 
@@ -4093,7 +4223,7 @@
     </div>
 
     <!-- Header -->
-    <header>
+    <header id="pageTop">
         <div class="header-inner">
             ${headerLogoMarkup}
             <div class="header-content">
@@ -4101,23 +4231,30 @@
                 ${taglineMarkup}
             </div>
         </div>
+        <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
+            ${primaryNavLinksMarkup}
+        </nav>
     </header>
 
-    <!-- Navigation -->
-    <div class="nav-container">
-        <nav>
-            <div class="nav-buttons" id="navButtons">
-                ${navButtonsHTML}
-            </div>
-        </nav>
-        ${filtersMarkup}
-    </div>
+    <main id="mainContent">
+        <!-- Navigation -->
+        <div class="nav-container" id="productsNavigation">
+            <nav>
+                <div class="nav-buttons" id="navButtons">
+                    ${navButtonsHTML}
+                </div>
+            </nav>
+            ${filtersMarkup}
+        </div>
 
-    <!-- Main Container -->
-    <div class="container">
-        ${productsHTML}
-        <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">Aún no hay productos publicados. Estamos preparando nuevas colecciones para ti, ¡vuelve pronto!</p>
-    </div>
+        <!-- Main Container -->
+        <div class="container" id="catalogProducts">
+            ${productsHTML}
+            <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">Aún no hay productos publicados. Estamos preparando nuevas colecciones para ti, ¡vuelve pronto!</p>
+        </div>
+
+        ${aboutSectionMarkup}
+    </main>
 
     ${selectionPanelMarkup}
 
@@ -4159,7 +4296,7 @@
     <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <div class="contact-info">
+            <div class="contact-info" id="contactSection">
                 <h3>${footerCompanyName}</h3>
                 ${socialLinksMarkup}
                 <p>${footerMessageHtml}</p>
@@ -4267,6 +4404,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 ${formatCssBlock(bodyBackground)}
@@ -4347,6 +4488,49 @@ ${formatCssBlock(headerBackground)}
             text-align: center;
         }
 
+        .primary-nav {
+            max-width: 1200px;
+            margin: 1.5rem auto 0;
+            padding: 0 2rem 1rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .primary-nav__link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.65rem 1.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.15);
+            color: ${theme.textOnDark};
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .primary-nav__link:hover,
+        .primary-nav__link:focus-visible {
+            background: rgba(255, 255, 255, 0.35);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
+            color: ${theme.textOnDark};
+            outline: none;
+        }
+
+        .primary-nav__link:focus-visible {
+            box-shadow: 0 0 0 3px ${theme.accentSoft}, 0 12px 24px rgba(15, 23, 42, 0.18);
+        }
+
         .logo-container {
             max-width: 140px;
             max-height: 140px;
@@ -4388,7 +4572,7 @@ ${formatCssBlock(headerBackground)}
             animation: slideDown 0.5s ease-out 0.5s both;
         }
 
-        nav {
+        .nav-container nav {
             max-width: 1200px;
             margin: 0 auto;
             padding: 1rem 2rem 0.5rem;
@@ -4654,6 +4838,89 @@ ${formatCssBlock(headerBackground)}
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 2rem;
+        }
+
+        .about-section {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .about-section__inner {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 28px;
+            border: 1px solid ${theme.borderColor};
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+            padding: 2.5rem 2.5rem 2rem;
+            backdrop-filter: blur(6px);
+        }
+
+        .about-section__title {
+            font-size: 2.3rem;
+            color: ${theme.categoryTitle};
+            text-align: center;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.75rem;
+        }
+
+        .about-card {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid ${theme.borderColor};
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .about-card__title {
+            font-size: 1.4rem;
+            color: ${theme.categoryTitle};
+            letter-spacing: 0.6px;
+        }
+
+        .about-card__text {
+            color: ${theme.categoryDescription};
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .about-values-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            color: ${theme.categoryDescription};
+            font-size: 1rem;
+        }
+
+        .about-values-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            line-height: 1.6;
+            background: rgba(249, 250, 251, 0.9);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            position: relative;
+        }
+
+        .about-values-list li::before {
+            content: '✔';
+            color: ${theme.accentStrong};
+            font-weight: 700;
+            flex: 0 0 auto;
+            transform: translateY(2px);
         }
 
         /* Category Sections */
@@ -5560,8 +5827,26 @@ ${formatCssBlock(footerBackground)}
                 box-shadow: none;
             }
 
-            nav {
+            .primary-nav {
+                padding: 0 1.5rem 1rem;
+            }
+
+            .nav-container nav {
                 padding: 1rem 1.5rem 0.5rem;
+            }
+
+            .about-section {
+                margin: 3rem auto;
+                padding: 0 1.5rem;
+            }
+
+            .about-section__inner {
+                padding: 2rem 1.5rem;
+            }
+
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
             }
 
             .catalog-filters {
@@ -5630,6 +5915,147 @@ ${formatCssBlock(footerBackground)}
             });
         }, observerOptions);
 
+        function normalizeAboutSection(rawAbout) {
+            if (!rawAbout || typeof rawAbout !== 'object') {
+                return { mission: '', vision: '', values: [] };
+            }
+
+            const mission = typeof rawAbout.mission === 'string' ? rawAbout.mission.trim() : '';
+            const vision = typeof rawAbout.vision === 'string' ? rawAbout.vision.trim() : '';
+
+            let values = [];
+            if (Array.isArray(rawAbout.values)) {
+                values = rawAbout.values;
+            } else if (typeof rawAbout.values === 'string') {
+                values = rawAbout.values.split(/\r?\n/);
+            }
+
+            const sanitizedValues = values
+                .map(value => typeof value === 'string' ? value.trim() : '')
+                .filter(value => value.length > 0);
+
+            return { mission, vision, values: sanitizedValues };
+        }
+
+        function updateLinkVisibility(link, shouldShow) {
+            if (!link) {
+                return;
+            }
+
+            if (shouldShow) {
+                link.style.display = '';
+                link.removeAttribute('aria-hidden');
+                if (link.getAttribute('tabindex') === '-1') {
+                    link.removeAttribute('tabindex');
+                }
+                return;
+            }
+
+            link.style.display = 'none';
+            link.setAttribute('aria-hidden', 'true');
+            link.setAttribute('tabindex', '-1');
+        }
+
+        function setSectionVisibility(element, shouldShow) {
+            if (!element) {
+                return;
+            }
+
+            if (shouldShow) {
+                element.style.display = '';
+                element.removeAttribute('aria-hidden');
+            } else {
+                element.style.display = 'none';
+                element.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        function updateAboutSection(rawAbout) {
+            const aboutData = normalizeAboutSection(rawAbout);
+            const missionCard = document.getElementById('aboutMissionCard');
+            const missionText = document.getElementById('aboutMissionText');
+            const visionCard = document.getElementById('aboutVisionCard');
+            const visionText = document.getElementById('aboutVisionText');
+            const valuesCard = document.getElementById('aboutValuesCard');
+            const valuesList = document.getElementById('aboutValuesList');
+            const aboutSection = document.getElementById('aboutSection');
+
+            const hasMission = aboutData.mission.length > 0;
+            const hasVision = aboutData.vision.length > 0;
+            const hasValues = Array.isArray(aboutData.values) && aboutData.values.length > 0;
+            const hasContent = hasMission || hasVision || hasValues;
+
+            setSectionVisibility(missionCard, hasMission);
+            if (missionText) {
+                missionText.textContent = hasMission ? aboutData.mission : '';
+            }
+
+            setSectionVisibility(visionCard, hasVision);
+            if (visionText) {
+                visionText.textContent = hasVision ? aboutData.vision : '';
+            }
+
+            setSectionVisibility(valuesCard, hasValues);
+            if (valuesList) {
+                valuesList.innerHTML = '';
+                if (hasValues) {
+                    aboutData.values.forEach(value => {
+                        const item = document.createElement('li');
+                        item.textContent = value;
+                        valuesList.appendChild(item);
+                    });
+                }
+            }
+
+            setSectionVisibility(aboutSection, hasContent);
+
+            return aboutData;
+        }
+
+        function setupPrimaryNav() {
+            const nav = document.getElementById('primaryNav');
+            if (!nav || nav.dataset.primaryNavInitialized === 'true') {
+                return;
+            }
+
+            nav.dataset.primaryNavInitialized = 'true';
+
+            nav.addEventListener('click', function(event) {
+                const link = event.target.closest('.primary-nav__link');
+                if (!link || link.getAttribute('aria-hidden') === 'true') {
+                    return;
+                }
+
+                const targetId = link.getAttribute('data-scroll-target');
+                if (!targetId) {
+                    return;
+                }
+
+                const targetElement = document.getElementById(targetId);
+                if (!targetElement) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                if (typeof targetElement.scrollIntoView === 'function') {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    window.location.hash = '#' + targetId;
+                }
+            });
+        }
+
+        function updatePrimaryNavVisibility(state) {
+            const navHome = document.getElementById('primaryNavHome');
+            const navProducts = document.getElementById('primaryNavProducts');
+            const navAbout = document.getElementById('primaryNavAbout');
+
+            updateLinkVisibility(navHome, true);
+            updateLinkVisibility(navProducts, Boolean(state && state.hasProducts));
+            updateLinkVisibility(navAbout, Boolean(state && state.hasAbout));
+        }
+
         function hideLoader() {
             const loader = document.getElementById('loader');
             if (loader) {
@@ -5639,6 +6065,7 @@ ${formatCssBlock(footerBackground)}
 
         document.addEventListener('DOMContentLoaded', function() {
             applyConfig();
+            setupPrimaryNav();
             setupFilters();
             initializeCatalogState();
             filterCatalog();
@@ -5895,6 +6322,21 @@ ${formatCssBlock(footerBackground)}
             if (footerSocialContainer) {
                 footerSocialContainer.style.display = hasFooterSocial ? '' : 'none';
             }
+
+            const aboutData = updateAboutSection(config.about);
+            const hasAboutContent = Boolean(
+                (aboutData && aboutData.mission) ||
+                (aboutData && aboutData.vision) ||
+                (aboutData && Array.isArray(aboutData.values) && aboutData.values.length > 0)
+            );
+            const productKeys = productData && typeof productData === 'object'
+                ? Object.keys(productData)
+                : [];
+
+            updatePrimaryNavVisibility({
+                hasProducts: productKeys.length > 0,
+                hasAbout: hasAboutContent
+            });
         }
 
         const filterPopoverControllers = new Map();
