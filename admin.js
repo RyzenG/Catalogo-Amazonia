@@ -4307,7 +4307,7 @@
 
     <script>
         ${getCatalogScript(productDataJS, config, serializeForScript)}
-    <\/script>
+    </script>
 </body>
 </html>`;
         }
@@ -5930,7 +5930,7 @@ ${formatCssBlock(footerBackground)}
             if (Array.isArray(rawAbout.values)) {
                 values = rawAbout.values;
             } else if (typeof rawAbout.values === 'string') {
-                values = rawAbout.values.split(/\r?\n/);
+                values = rawAbout.values.split(/\\r?\\n/);
             }
 
             const sanitizedValues = values
