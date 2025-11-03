@@ -6067,67 +6067,74 @@ ${formatCssBlock(footerBackground)}
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            applyConfig();
-            setupPrimaryNav();
-            setupFilters();
-            initializeCatalogState();
-            filterCatalog();
+            try {
+                applyConfig();
+                setupPrimaryNav();
+                setupFilters();
+                initializeCatalogState();
+                filterCatalog();
 
-            requestAnimationFrame(() => {
-                requestAnimationFrame(hideLoader);
-            });
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(hideLoader);
+                });
 
-            setupSelectionPanel();
-            attachProductSelectionHandlers();
-            restoreSelectionFromStorage();
-            renderSelectedProductsList();
+                setupSelectionPanel();
+                attachProductSelectionHandlers();
+                restoreSelectionFromStorage();
+                renderSelectedProductsList();
 
-            const cards = document.querySelectorAll('.product-card');
-            cards.forEach(card => {
-                if (observer) {
-                    card.style.opacity = '0';
-                    observer.observe(card);
-                } else {
-                    card.style.opacity = '1';
-                    card.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                const cards = document.querySelectorAll('.product-card');
+                cards.forEach(card => {
+                    if (observer) {
+                        card.style.opacity = '0';
+                        observer.observe(card);
+                    } else {
+                        card.style.opacity = '1';
+                        card.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                    }
+                });
+
+                const modalElement = document.getElementById('productModal');
+                if (modalElement) {
+                    modalElement.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            closeModal();
+                        }
+                    });
                 }
-            });
 
-            const modalElement = document.getElementById('productModal');
-            if (modalElement) {
-                modalElement.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        closeModal();
-                    }
-                });
+                const prevButton = document.getElementById('modalPrevButton');
+                if (prevButton) {
+                    prevButton.addEventListener('click', showPrevModalImage);
+                }
+
+                const nextButton = document.getElementById('modalNextButton');
+                if (nextButton) {
+                    nextButton.addEventListener('click', showNextModalImage);
+                }
+
+                const indicators = document.getElementById('modalIndicators');
+                if (indicators) {
+                    indicators.addEventListener('click', function(event) {
+                        const button = event.target.closest('.carousel-indicator');
+                        if (!button) {
+                            return;
+                        }
+
+                        const index = parseInt(button.getAttribute('data-index'), 10);
+                        if (!Number.isNaN(index)) {
+                            showModalImage(index);
+                        }
+                    });
+                }
+
+                updateModalCarouselControls();
+            } catch (error) {
+                console.error('Error during DOMContentLoaded initialization:', error);
+                hideLoader();
+            } finally {
+                hideLoader();
             }
-
-            const prevButton = document.getElementById('modalPrevButton');
-            if (prevButton) {
-                prevButton.addEventListener('click', showPrevModalImage);
-            }
-
-            const nextButton = document.getElementById('modalNextButton');
-            if (nextButton) {
-                nextButton.addEventListener('click', showNextModalImage);
-            }
-
-            const indicators = document.getElementById('modalIndicators');
-            if (indicators) {
-                indicators.addEventListener('click', function(event) {
-                    const button = event.target.closest('.carousel-indicator');
-                    if (!button) {
-                        return;
-                    }
-
-                    const index = parseInt(button.getAttribute('data-index'), 10);
-                    if (!Number.isNaN(index)) {
-                        showModalImage(index);
-                    }
-                });
-            }
-
-            updateModalCarouselControls();
         });
 
         function updateModalImage() {
