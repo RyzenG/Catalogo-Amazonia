@@ -3883,7 +3883,6 @@
             // Generate products HTML for each category
             let productsHTML = '';
             let productDataJS = {};
-            const featureSet = new Set();
             const priceValues = [];
 
             resolvedCategories.forEach(category => {
@@ -3915,7 +3914,6 @@
                                 .map(feature => (typeof feature === 'string' ? feature.trim() : ''))
                                 .filter(feature => feature.length > 0)
                             : [];
-                        featureValues.forEach(value => featureSet.add(value));
                         const sanitizedFeatures = featureValues.map(feature => `<span class="feature-tag">${escapeHtml(feature)}</span>`);
                         const featuresHtml = sanitizedFeatures.join('');
                         const imageList = getNormalizedProductImages(product);
@@ -4000,11 +3998,6 @@
                 }
             });
 
-            const featureOptions = Array.from(featureSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-            const featureOptionsMarkup = featureOptions
-                .map(feature => `<option value="${escapeHtml(feature)}">${escapeHtml(feature)}</option>`)
-                .join('');
-
             const uniquePriceValues = Array.from(new Set(priceValues.filter(value => Number.isFinite(value) && value >= 0)))
                 .sort((a, b) => a - b);
             let priceOptionsMarkup = '';
@@ -4043,32 +4036,21 @@
 
             const filtersMarkup = `
         <div class="catalog-filters" id="catalogFilters">
-            <label class="filter-field filter-field--search" for="catalogSearchInput">
-                <span class="filter-label">
-                    <span class="filter-label__icon" aria-hidden="true">🔍</span>
-                    <span class="filter-label__text">Buscar</span>
-                </span>
-                <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre, descripción o etiqueta">
-            </label>
-            <div class="filter-chip-row" role="group" aria-label="Filtros del catálogo">
-                ${featureOptionsMarkup ? `
-                <div class="filter-chip">
-                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogFeatureFilter" aria-controls="catalogFeatureFilterPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Filtrar por etiqueta">
-                        <span class="filter-chip__icon" aria-hidden="true">🏷️</span>
-                        <span class="filter-chip__text">Etiqueta</span>
+            <div class="filter-chip-row" role="group" aria-label="Acciones de filtrado del catálogo">
+                <div class="filter-chip filter-chip--search">
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogSearchInput" aria-controls="catalogSearchPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Buscar en el catálogo">
+                        <span class="filter-chip__icon" aria-hidden="true">🔍</span>
+                        <span class="filter-chip__text">Buscar</span>
                     </button>
-                    <div class="filter-popover" id="catalogFeatureFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogFeatureFilterLabel" hidden>
+                    <div class="filter-popover filter-popover--search" id="catalogSearchPopover" role="dialog" aria-modal="false" aria-labelledby="catalogSearchLabel" hidden>
                         <div class="filter-popover__content">
-                            <label class="filter-field filter-field--popover" for="catalogFeatureFilter" id="catalogFeatureFilterLabel">
-                                <span class="filter-label">Etiqueta</span>
-                                <select id="catalogFeatureFilter">
-                                    <option value="">Todas las etiquetas</option>
-                                    ${featureOptionsMarkup}
-                                </select>
+                            <label class="filter-field filter-field--popover" for="catalogSearchInput" id="catalogSearchLabel">
+                                <span class="filter-label">Buscar</span>
+                                <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre o descripción">
                             </label>
                         </div>
                     </div>
-                </div>` : ''}
+                </div>
                 ${priceOptionsMarkup ? `
                 <div class="filter-chip">
                     <button type="button" class="filter-chip__button" data-filter-toggle="catalogPriceFilter" aria-controls="catalogPriceFilterPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Filtrar por precio">
@@ -4601,9 +4583,10 @@ ${formatCssBlock(headerBackground)}
             margin: 0 auto;
             padding: 0 2rem 1.5rem;
             display: flex;
+            justify-content: flex-end;
             flex-wrap: wrap;
-            gap: 1rem 1.25rem;
-            align-items: flex-start;
+            gap: 0.75rem;
+            align-items: center;
             position: relative;
             z-index: 1;
         }
@@ -4614,18 +4597,12 @@ ${formatCssBlock(headerBackground)}
             gap: 0.35rem;
         }
 
-        .filter-field--search {
-            flex: 1 1 320px;
-            min-width: 240px;
-        }
-
         .filter-chip-row {
-            display: flex;
-            flex: 2 1 360px;
+            display: inline-flex;
             gap: 0.75rem;
             flex-wrap: wrap;
             align-items: center;
-            position: relative;
+            justify-content: flex-end;
         }
 
         .filter-chip {
@@ -4782,7 +4759,12 @@ ${formatCssBlock(headerBackground)}
             padding-right: 2.5rem;
         }
 
-        .filter-popover select {
+        .filter-popover--search {
+            min-width: 260px;
+        }
+
+        .filter-popover select,
+        .filter-popover input[type="search"] {
             margin-top: 0.25rem;
         }
 
@@ -4796,11 +4778,7 @@ ${formatCssBlock(headerBackground)}
 
         .nav-container--compact .catalog-filters {
             padding: 0.35rem 1.5rem 0.85rem;
-            gap: 0.65rem 0.75rem;
-        }
-
-        .nav-container--compact .filter-field--search {
-            flex: 1 1 260px;
+            gap: 0.65rem;
         }
 
         .nav-container--compact .catalog-filters input,
@@ -6675,7 +6653,6 @@ ${formatCssBlock(footerBackground)}
 
         function setupFilters() {
             const searchInput = document.getElementById('catalogSearchInput');
-            const featureSelect = document.getElementById('catalogFeatureFilter');
             const priceSelect = document.getElementById('catalogPriceFilter');
             const sortSelect = document.getElementById('catalogSortFilter');
 
@@ -6688,13 +6665,6 @@ ${formatCssBlock(footerBackground)}
                     }
 
                     searchFilterTimeout = window.setTimeout(filterCatalog, 180);
-                });
-            }
-
-            if (featureSelect) {
-                featureSelect.addEventListener('change', function() {
-                    filterCatalog();
-                    closeFilterPopoverById('catalogFeatureFilter', { focusTrigger: true });
                 });
             }
 
@@ -6747,12 +6717,10 @@ ${formatCssBlock(footerBackground)}
 
         function filterCatalog() {
             const searchInput = document.getElementById('catalogSearchInput');
-            const featureSelect = document.getElementById('catalogFeatureFilter');
             const priceSelect = document.getElementById('catalogPriceFilter');
             const sortSelect = document.getElementById('catalogSortFilter');
 
             const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
-            const featureTerm = featureSelect ? featureSelect.value.trim().toLowerCase() : '';
             const priceFilter = priceSelect ? priceSelect.value.trim() : '';
             const sortOption = sortSelect ? sortSelect.value : '';
             const priceRange = parsePriceFilter(priceFilter);
@@ -6851,11 +6819,6 @@ ${formatCssBlock(footerBackground)}
                             [name, description, features].some(field => field.includes(token))
                         );
 
-                    let matchesFeature = true;
-                    if (featureTerm) {
-                        matchesFeature = features.split('||').some(feature => feature.trim().includes(featureTerm));
-                    }
-
                     let matchesPrice = true;
                     if (priceRange) {
                         if (!Number.isFinite(priceValue)) {
@@ -6867,7 +6830,7 @@ ${formatCssBlock(footerBackground)}
                         }
                     }
 
-                    const matchesAll = matchesSearch && matchesFeature && matchesPrice;
+                    const matchesAll = matchesSearch && matchesPrice;
                     card.style.display = matchesAll ? '' : 'none';
 
                     if (matchesAll) {
