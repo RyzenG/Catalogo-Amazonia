@@ -4044,13 +4044,17 @@
             const filtersMarkup = `
         <div class="catalog-filters" id="catalogFilters">
             <label class="filter-field filter-field--search" for="catalogSearchInput">
-                <span class="filter-label">Buscar</span>
+                <span class="filter-label">
+                    <span class="filter-label__icon" aria-hidden="true">🔍</span>
+                    <span class="filter-label__text">Buscar</span>
+                </span>
                 <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre, descripción o etiqueta">
             </label>
             <div class="filter-chip-row" role="group" aria-label="Filtros del catálogo">
                 ${featureOptionsMarkup ? `
                 <div class="filter-chip">
-                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogFeatureFilter" aria-controls="catalogFeatureFilterPopover" aria-expanded="false" aria-haspopup="dialog">
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogFeatureFilter" aria-controls="catalogFeatureFilterPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Filtrar por etiqueta">
+                        <span class="filter-chip__icon" aria-hidden="true">🏷️</span>
                         <span class="filter-chip__text">Etiqueta</span>
                     </button>
                     <div class="filter-popover" id="catalogFeatureFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogFeatureFilterLabel" hidden>
@@ -4067,7 +4071,8 @@
                 </div>` : ''}
                 ${priceOptionsMarkup ? `
                 <div class="filter-chip">
-                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogPriceFilter" aria-controls="catalogPriceFilterPopover" aria-expanded="false" aria-haspopup="dialog">
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogPriceFilter" aria-controls="catalogPriceFilterPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Filtrar por precio">
+                        <span class="filter-chip__icon" aria-hidden="true">💰</span>
                         <span class="filter-chip__text">Precio</span>
                     </button>
                     <div class="filter-popover" id="catalogPriceFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogPriceFilterLabel" hidden>
@@ -4083,7 +4088,8 @@
                     </div>
                 </div>` : ''}
                 <div class="filter-chip">
-                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogSortFilter" aria-controls="catalogSortFilterPopover" aria-expanded="false" aria-haspopup="dialog">
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogSortFilter" aria-controls="catalogSortFilterPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Ordenar catálogo">
+                        <span class="filter-chip__icon" aria-hidden="true">↕️</span>
                         <span class="filter-chip__text">Ordenar</span>
                     </button>
                     <div class="filter-popover" id="catalogSortFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogSortFilterLabel" hidden>
@@ -4246,6 +4252,11 @@
             </nav>
             ${filtersMarkup}
         </div>
+
+        <button type="button" class="scroll-to-top" id="scrollToTopButton" aria-label="Volver al inicio" aria-hidden="true" tabindex="-1">
+            <span aria-hidden="true">⬆️</span>
+            <span class="sr-only">Volver al inicio</span>
+        </button>
 
         <!-- Main Container -->
         <div class="container" id="catalogProducts">
@@ -4639,6 +4650,13 @@ ${formatCssBlock(headerBackground)}
             cursor: pointer;
         }
 
+        .filter-chip__icon {
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .filter-chip__button::after {
             content: '';
             display: inline-block;
@@ -4704,11 +4722,25 @@ ${formatCssBlock(headerBackground)}
         }
 
         .filter-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
             font-size: 0.9rem;
             font-weight: 600;
             color: ${theme.categoryDescription};
             letter-spacing: 0.5px;
             text-transform: uppercase;
+        }
+
+        .filter-label__icon {
+            font-size: 1.05rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .filter-label__text {
+            display: inline-block;
         }
 
         .catalog-filters input,
@@ -4754,6 +4786,95 @@ ${formatCssBlock(headerBackground)}
             margin-top: 0.25rem;
         }
 
+        .nav-container--compact {
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        }
+
+        .nav-container--compact nav {
+            padding: 0.65rem 1.5rem 0.3rem;
+        }
+
+        .nav-container--compact .catalog-filters {
+            padding: 0.35rem 1.5rem 0.85rem;
+            gap: 0.65rem 0.75rem;
+        }
+
+        .nav-container--compact .filter-field--search {
+            flex: 1 1 260px;
+        }
+
+        .nav-container--compact .catalog-filters input,
+        .nav-container--compact .catalog-filters select {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .nav-container--compact .filter-chip__button {
+            padding: 0.4rem 0.6rem;
+            gap: 0.3rem;
+        }
+
+        .nav-container--compact .filter-chip__icon,
+        .nav-container--compact .filter-label__icon {
+            font-size: 1.15rem;
+        }
+
+        .nav-container--compact .filter-chip__text,
+        .nav-container--compact .filter-label__text {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .nav-container--compact .filter-chip__button::after {
+            margin-left: 0.25rem;
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            inset-inline-end: 2rem;
+            bottom: 2.5rem;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 999px;
+            border: none;
+            background: ${theme.accentStrong};
+            color: ${theme.textOnDark};
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.25);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(18px);
+            transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            z-index: 120;
+        }
+
+        .scroll-to-top--visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .scroll-to-top:hover,
+        .scroll-to-top:focus-visible {
+            box-shadow: 0 22px 40px rgba(15, 23, 42, 0.3);
+        }
+
+        .scroll-to-top:focus-visible {
+            outline: 3px solid ${theme.textOnDark};
+            outline-offset: 3px;
+        }
+
         @media (max-width: 768px) {
             .catalog-filters {
                 flex-direction: column;
@@ -4790,6 +4911,22 @@ ${formatCssBlock(headerBackground)}
 
             .filter-popover {
                 max-width: min(360px, 95vw);
+            }
+
+            .nav-container--compact nav {
+                padding: 0.5rem 1.1rem 0.2rem;
+            }
+
+            .nav-container--compact .catalog-filters {
+                padding: 0.35rem 1.1rem 0.75rem;
+            }
+
+            .scroll-to-top {
+                inset-inline-end: 1.25rem;
+                bottom: 1.5rem;
+                width: 2.75rem;
+                height: 2.75rem;
+                font-size: 1.2rem;
             }
         }
 
@@ -6085,6 +6222,7 @@ ${formatCssBlock(footerBackground)}
                 applyConfig();
                 setupPrimaryNav();
                 setupFilters();
+                setupStickyNavigation();
                 initializeCatalogState();
                 filterCatalog();
 
@@ -7288,6 +7426,66 @@ ${formatCssBlock(footerBackground)}
                         button.classList.toggle('active', button.dataset.category === firstCategoryId);
                     });
                 }
+            }
+        }
+
+        function setupStickyNavigation() {
+            const navContainer = document.querySelector('.nav-container');
+            const scrollButton = document.getElementById('scrollToTopButton');
+
+            if (!navContainer && !scrollButton) {
+                return;
+            }
+
+            const compactClass = 'nav-container--compact';
+            const visibleClass = 'scroll-to-top--visible';
+            let lastCompactState = null;
+            let lastButtonState = null;
+
+            function applyCompactState(shouldCompact) {
+                if (!navContainer || shouldCompact === lastCompactState) {
+                    return;
+                }
+
+                navContainer.classList.toggle(compactClass, shouldCompact);
+                lastCompactState = shouldCompact;
+            }
+
+            function applyScrollButtonState(shouldShow) {
+                if (!scrollButton || shouldShow === lastButtonState) {
+                    return;
+                }
+
+                scrollButton.classList.toggle(visibleClass, shouldShow);
+
+                if (shouldShow) {
+                    scrollButton.removeAttribute('aria-hidden');
+                    scrollButton.removeAttribute('tabindex');
+                } else {
+                    scrollButton.setAttribute('aria-hidden', 'true');
+                    scrollButton.setAttribute('tabindex', '-1');
+                }
+
+                lastButtonState = shouldShow;
+            }
+
+            const handleScroll = () => {
+                const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+                applyCompactState(scrollY > 140);
+                applyScrollButtonState(scrollY > 320);
+            };
+
+            handleScroll();
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
+
+            if (scrollButton) {
+                scrollButton.addEventListener('click', function() {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
             }
         }
 
