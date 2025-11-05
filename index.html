@@ -450,7 +450,7 @@
             pointer-events: none;
             transform: translateY(18px);
             transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            z-index: 120;
+            z-index: 1400;
         }
 
         .scroll-to-top--visible {
@@ -517,7 +517,7 @@
 
             .scroll-to-top {
                 inset-inline-end: 1.25rem;
-                bottom: 1.5rem;
+                bottom: 6.25rem;
                 width: 2.75rem;
                 height: 2.75rem;
                 font-size: 1.2rem;
@@ -1221,7 +1221,7 @@
             position: fixed;
             bottom: 1.5rem;
             right: 1.5rem;
-            z-index: 1100;
+            z-index: 1300;
             background: #8fa68c;
             color: #ffffff;
             border: none;
@@ -1524,10 +1524,36 @@
         @media (max-width: 768px) {
             .selected-products-toggle {
                 right: 1rem;
-                left: 1rem;
-                width: calc(100% - 2rem);
+                left: auto;
+                width: 3.25rem;
+                height: 3.25rem;
+                padding: 0;
+                border-radius: 50%;
                 justify-content: center;
-                border-radius: 14px;
+                gap: 0;
+                box-shadow: 0 16px 28px rgba(143, 166, 140, 0.2);
+            }
+
+            .selected-products-toggle__icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .selected-products-toggle__icon svg {
+                width: 1.6rem;
+                height: 1.6rem;
+            }
+
+            .selected-products-toggle__badge {
+                position: absolute;
+                top: -0.2rem;
+                right: -0.2rem;
+                min-width: 1.35rem;
+                height: 1.35rem;
+                font-size: 0.75rem;
+                border: 2px solid #ffffff;
+                background: #294428;
             }
 
             .selected-products-panel {
