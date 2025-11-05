@@ -4834,7 +4834,7 @@ ${formatCssBlock(headerBackground)}
             pointer-events: none;
             transform: translateY(18px);
             transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            z-index: 120;
+            z-index: 1300;
         }
 
         .scroll-to-top--visible {
@@ -4900,8 +4900,8 @@ ${formatCssBlock(headerBackground)}
             }
 
             .scroll-to-top {
-                inset-inline-end: 1.25rem;
-                bottom: 1.5rem;
+                inset-inline-end: 1rem;
+                bottom: 5.25rem;
                 width: 2.75rem;
                 height: 2.75rem;
                 font-size: 1.2rem;
@@ -5908,10 +5908,31 @@ ${formatCssBlock(footerBackground)}
         @media (max-width: 768px) {
             .selected-products-toggle {
                 right: 1rem;
-                left: 1rem;
-                width: calc(100% - 2rem);
+                left: auto;
+                bottom: 1rem;
+                width: 3.25rem;
+                height: 3.25rem;
+                padding: 0.75rem;
                 justify-content: center;
-                border-radius: 14px;
+                border-radius: 999px;
+                gap: 0;
+            }
+
+            .selected-products-toggle__icon svg {
+                width: 1.6rem;
+                height: 1.6rem;
+            }
+
+            .selected-products-toggle__badge {
+                position: absolute;
+                top: -0.35rem;
+                right: -0.35rem;
+                min-width: 1.5rem;
+                height: 1.5rem;
+                font-size: 0.85rem;
+                background: ${theme.textOnDark};
+                color: ${theme.accentStrong};
+                border: 2px solid ${theme.accentStrong};
             }
 
             .selected-products-panel {
