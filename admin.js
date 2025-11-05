@@ -5254,7 +5254,7 @@ ${formatCssBlock(headerBackground)}
             width: 100%;
             height: 100vh;
             background: rgba(0,0,0,0.8);
-            z-index: 1000;
+            z-index: 1600;
             align-items: center;
             justify-content: center;
             padding: 2rem;
@@ -7241,6 +7241,7 @@ ${formatCssBlock(footerBackground)}
             list.appendChild(fragment);
             updateSelectionSummaryUI();
             updateProductSelectionButtons();
+            adjustScrollButtonForPanel();
         }
 
         function updateSelectionSummaryUI() {
@@ -7309,6 +7310,37 @@ ${formatCssBlock(footerBackground)}
             });
         }
 
+        function adjustScrollButtonForPanel() {
+            const panel = document.getElementById('selectedProductsPanel');
+            const scrollButton = document.getElementById('scrollToTopButton');
+
+            if (!scrollButton) {
+                return;
+            }
+
+            const panelIsOpen = Boolean(panel && panel.classList.contains('selected-products-panel--open'));
+
+            if (!panelIsOpen) {
+                scrollButton.style.bottom = '';
+                return;
+            }
+
+            const panelRect = panel.getBoundingClientRect();
+            const panelHeight = panelRect ? panelRect.height : 0;
+            const gap = 24;
+            const buttonHeight = scrollButton.offsetHeight || 0;
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+
+            let desiredBottom = panelHeight + gap;
+
+            if (viewportHeight > 0 && buttonHeight > 0) {
+                const maxBottom = Math.max(viewportHeight - buttonHeight - gap, gap);
+                desiredBottom = Math.min(desiredBottom, maxBottom);
+            }
+
+            scrollButton.style.bottom = `${Math.max(desiredBottom, gap)}px`;
+        }
+
         function openSelectionPanel() {
             const panel = document.getElementById('selectedProductsPanel');
             const toggle = document.getElementById('selectedPanelToggle');
@@ -7323,6 +7355,8 @@ ${formatCssBlock(footerBackground)}
             updateSelectionSummaryUI();
 
             window.requestAnimationFrame(() => {
+                adjustScrollButtonForPanel();
+
                 if (typeof panel.focus === 'function') {
                     panel.focus({ preventScroll: true });
                 }
@@ -7341,6 +7375,7 @@ ${formatCssBlock(footerBackground)}
             panel.setAttribute('aria-hidden', 'true');
             toggle.setAttribute('aria-expanded', 'false');
             updateSelectionSummaryUI();
+            adjustScrollButtonForPanel();
         }
 
         function getSelectedProductsDetails() {
@@ -7368,6 +7403,8 @@ ${formatCssBlock(footerBackground)}
                 renderSelectedProductsList();
             }
         });
+
+        window.addEventListener('resize', adjustScrollButtonForPanel);
 
         function initializeCatalogState() {
             const categories = Array.from(document.querySelectorAll('.category'));
@@ -7520,6 +7557,8 @@ ${formatCssBlock(footerBackground)}
             if (!modal || !product) {
                 return;
             }
+
+            closeSelectionPanel();
 
             currentProduct = product.title;
             modalProduct = product;
