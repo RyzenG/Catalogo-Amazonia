@@ -3883,6 +3883,7 @@
             // Generate products HTML for each category
             let productsHTML = '';
             let productDataJS = {};
+            const featureSet = new Set();
             const priceValues = [];
 
             resolvedCategories.forEach(category => {
@@ -3914,6 +3915,7 @@
                                 .map(feature => (typeof feature === 'string' ? feature.trim() : ''))
                                 .filter(feature => feature.length > 0)
                             : [];
+                        featureValues.forEach(value => featureSet.add(value));
                         const sanitizedFeatures = featureValues.map(feature => `<span class="feature-tag">${escapeHtml(feature)}</span>`);
                         const featuresHtml = sanitizedFeatures.join('');
                         const imageList = getNormalizedProductImages(product);
@@ -3998,6 +4000,11 @@
                 }
             });
 
+            const featureOptions = Array.from(featureSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+            const featureOptionsMarkup = featureOptions
+                .map(feature => `<option value="${escapeHtml(feature)}">${escapeHtml(feature)}</option>`)
+                .join('');
+
             const uniquePriceValues = Array.from(new Set(priceValues.filter(value => Number.isFinite(value) && value >= 0)))
                 .sort((a, b) => a - b);
             let priceOptionsMarkup = '';
@@ -4036,25 +4043,31 @@
 
             const filtersMarkup = `
         <div class="catalog-filters" id="catalogFilters">
-            <div class="filter-chip-row" role="group" aria-label="Acciones de filtrado del catálogo">
-                <div class="filter-chip filter-chip--search">
-                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogSearchInput" aria-controls="catalogSearchPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Buscar en el catálogo">
-                        <span class="filter-chip__icon" aria-hidden="true">🔍</span>
-                        <span class="filter-chip__text">Buscar</span>
+            <label class="filter-field filter-field--search" for="catalogSearchInput">
+                <span class="filter-label">Buscar</span>
+                <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre, descripción o etiqueta">
+            </label>
+            <div class="filter-chip-row" role="group" aria-label="Filtros del catálogo">
+                ${featureOptionsMarkup ? `
+                <div class="filter-chip">
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogFeatureFilter" aria-controls="catalogFeatureFilterPopover" aria-expanded="false" aria-haspopup="dialog">
+                        <span class="filter-chip__text">Etiqueta</span>
                     </button>
-                    <div class="filter-popover filter-popover--search" id="catalogSearchPopover" role="dialog" aria-modal="false" aria-labelledby="catalogSearchLabel" hidden>
+                    <div class="filter-popover" id="catalogFeatureFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogFeatureFilterLabel" hidden>
                         <div class="filter-popover__content">
-                            <label class="filter-field filter-field--popover" for="catalogSearchInput" id="catalogSearchLabel">
-                                <span class="filter-label">Buscar</span>
-                                <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre o descripción">
+                            <label class="filter-field filter-field--popover" for="catalogFeatureFilter" id="catalogFeatureFilterLabel">
+                                <span class="filter-label">Etiqueta</span>
+                                <select id="catalogFeatureFilter">
+                                    <option value="">Todas las etiquetas</option>
+                                    ${featureOptionsMarkup}
+                                </select>
                             </label>
                         </div>
                     </div>
-                </div>
+                </div>` : ''}
                 ${priceOptionsMarkup ? `
                 <div class="filter-chip">
-                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogPriceFilter" aria-controls="catalogPriceFilterPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Filtrar por precio">
-                        <span class="filter-chip__icon" aria-hidden="true">💰</span>
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogPriceFilter" aria-controls="catalogPriceFilterPopover" aria-expanded="false" aria-haspopup="dialog">
                         <span class="filter-chip__text">Precio</span>
                     </button>
                     <div class="filter-popover" id="catalogPriceFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogPriceFilterLabel" hidden>
@@ -4070,8 +4083,7 @@
                     </div>
                 </div>` : ''}
                 <div class="filter-chip">
-                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogSortFilter" aria-controls="catalogSortFilterPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Ordenar catálogo">
-                        <span class="filter-chip__icon" aria-hidden="true">↕️</span>
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogSortFilter" aria-controls="catalogSortFilterPopover" aria-expanded="false" aria-haspopup="dialog">
                         <span class="filter-chip__text">Ordenar</span>
                     </button>
                     <div class="filter-popover" id="catalogSortFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogSortFilterLabel" hidden>
@@ -4234,11 +4246,6 @@
             </nav>
             ${filtersMarkup}
         </div>
-
-        <button type="button" class="scroll-to-top" id="scrollToTopButton" aria-label="Volver al inicio" aria-hidden="true" tabindex="-1">
-            <span aria-hidden="true">⬆️</span>
-            <span class="sr-only">Volver al inicio</span>
-        </button>
 
         <!-- Main Container -->
         <div class="container" id="catalogProducts">
@@ -4469,10 +4476,10 @@ ${formatCssBlock(headerBackground)}
             margin: 0 auto;
             padding: 0 2rem;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2.5rem;
+            gap: 2rem;
+            flex-wrap: wrap;
             position: relative;
             z-index: 1;
         }
@@ -4525,8 +4532,8 @@ ${formatCssBlock(headerBackground)}
         }
 
         .logo-container {
-            width: clamp(160px, 18vw, 240px);
-            max-height: 240px;
+            max-width: 140px;
+            max-height: 140px;
             background: transparent;
             border: none;
             box-shadow: none;
@@ -4583,10 +4590,9 @@ ${formatCssBlock(headerBackground)}
             margin: 0 auto;
             padding: 0 2rem 1.5rem;
             display: flex;
-            justify-content: flex-end;
             flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
+            gap: 1rem 1.25rem;
+            align-items: flex-start;
             position: relative;
             z-index: 1;
         }
@@ -4597,12 +4603,18 @@ ${formatCssBlock(headerBackground)}
             gap: 0.35rem;
         }
 
+        .filter-field--search {
+            flex: 1 1 320px;
+            min-width: 240px;
+        }
+
         .filter-chip-row {
-            display: inline-flex;
+            display: flex;
+            flex: 2 1 360px;
             gap: 0.75rem;
             flex-wrap: wrap;
             align-items: center;
-            justify-content: flex-end;
+            position: relative;
         }
 
         .filter-chip {
@@ -4625,13 +4637,6 @@ ${formatCssBlock(headerBackground)}
             text-transform: uppercase;
             transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, transform 0.2s ease;
             cursor: pointer;
-        }
-
-        .filter-chip__icon {
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .filter-chip__button::after {
@@ -4699,25 +4704,11 @@ ${formatCssBlock(headerBackground)}
         }
 
         .filter-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
             font-size: 0.9rem;
             font-weight: 600;
             color: ${theme.categoryDescription};
             letter-spacing: 0.5px;
             text-transform: uppercase;
-        }
-
-        .filter-label__icon {
-            font-size: 1.05rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .filter-label__text {
-            display: inline-block;
         }
 
         .catalog-filters input,
@@ -4759,98 +4750,8 @@ ${formatCssBlock(headerBackground)}
             padding-right: 2.5rem;
         }
 
-        .filter-popover--search {
-            min-width: 260px;
-        }
-
-        .filter-popover select,
-        .filter-popover input[type="search"] {
+        .filter-popover select {
             margin-top: 0.25rem;
-        }
-
-        .nav-container--compact {
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-        }
-
-        .nav-container--compact nav {
-            padding: 0.65rem 1.5rem 0.3rem;
-        }
-
-        .nav-container--compact .catalog-filters {
-            padding: 0.35rem 1.5rem 0.85rem;
-            gap: 0.65rem;
-        }
-
-        .nav-container--compact .catalog-filters input,
-        .nav-container--compact .catalog-filters select {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.95rem;
-        }
-
-        .nav-container--compact .filter-chip__button {
-            padding: 0.4rem 0.6rem;
-            gap: 0.3rem;
-        }
-
-        .nav-container--compact .filter-chip__icon,
-        .nav-container--compact .filter-label__icon {
-            font-size: 1.15rem;
-        }
-
-        .nav-container--compact .filter-chip__text,
-        .nav-container--compact .filter-label__text {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        .nav-container--compact .filter-chip__button::after {
-            margin-left: 0.25rem;
-        }
-
-        .scroll-to-top {
-            position: fixed;
-            inset-inline-end: 2rem;
-            bottom: 2.5rem;
-            width: 3rem;
-            height: 3rem;
-            border-radius: 999px;
-            border: none;
-            background: ${theme.accentStrong};
-            color: ${theme.textOnDark};
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.35rem;
-            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.25);
-            cursor: pointer;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(18px);
-            transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            z-index: 1300;
-        }
-
-        .scroll-to-top--visible {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
-
-        .scroll-to-top:hover,
-        .scroll-to-top:focus-visible {
-            box-shadow: 0 22px 40px rgba(15, 23, 42, 0.3);
-        }
-
-        .scroll-to-top:focus-visible {
-            outline: 3px solid ${theme.textOnDark};
-            outline-offset: 3px;
         }
 
         @media (max-width: 768px) {
@@ -4889,22 +4790,6 @@ ${formatCssBlock(headerBackground)}
 
             .filter-popover {
                 max-width: min(360px, 95vw);
-            }
-
-            .nav-container--compact nav {
-                padding: 0.5rem 1.1rem 0.2rem;
-            }
-
-            .nav-container--compact .catalog-filters {
-                padding: 0.35rem 1.1rem 0.75rem;
-            }
-
-            .scroll-to-top {
-                inset-inline-end: 1rem;
-                bottom: 5.25rem;
-                width: 2.75rem;
-                height: 2.75rem;
-                font-size: 1.2rem;
             }
         }
 
@@ -5254,7 +5139,7 @@ ${formatCssBlock(headerBackground)}
             width: 100%;
             height: 100vh;
             background: rgba(0,0,0,0.8);
-            z-index: 1600;
+            z-index: 1000;
             align-items: center;
             justify-content: center;
             padding: 2rem;
@@ -5908,31 +5793,10 @@ ${formatCssBlock(footerBackground)}
         @media (max-width: 768px) {
             .selected-products-toggle {
                 right: 1rem;
-                left: auto;
-                bottom: 1rem;
-                width: 3.25rem;
-                height: 3.25rem;
-                padding: 0.75rem;
+                left: 1rem;
+                width: calc(100% - 2rem);
                 justify-content: center;
-                border-radius: 999px;
-                gap: 0;
-            }
-
-            .selected-products-toggle__icon svg {
-                width: 1.6rem;
-                height: 1.6rem;
-            }
-
-            .selected-products-toggle__badge {
-                position: absolute;
-                top: -0.35rem;
-                right: -0.35rem;
-                min-width: 1.5rem;
-                height: 1.5rem;
-                font-size: 0.85rem;
-                background: ${theme.textOnDark};
-                color: ${theme.accentStrong};
-                border: 2px solid ${theme.accentStrong};
+                border-radius: 14px;
             }
 
             .selected-products-panel {
@@ -5951,12 +5815,12 @@ ${formatCssBlock(footerBackground)}
             }
 
             .header-inner {
-                gap: 2rem;
+                gap: 1.5rem;
             }
 
             .logo-container {
-                width: clamp(140px, 45vw, 200px);
-                max-height: 200px;
+                max-width: 110px;
+                max-height: 110px;
                 padding: 0;
                 background: transparent;
                 border: none;
@@ -6221,7 +6085,6 @@ ${formatCssBlock(footerBackground)}
                 applyConfig();
                 setupPrimaryNav();
                 setupFilters();
-                setupStickyNavigation();
                 initializeCatalogState();
                 filterCatalog();
 
@@ -6674,6 +6537,7 @@ ${formatCssBlock(footerBackground)}
 
         function setupFilters() {
             const searchInput = document.getElementById('catalogSearchInput');
+            const featureSelect = document.getElementById('catalogFeatureFilter');
             const priceSelect = document.getElementById('catalogPriceFilter');
             const sortSelect = document.getElementById('catalogSortFilter');
 
@@ -6686,6 +6550,13 @@ ${formatCssBlock(footerBackground)}
                     }
 
                     searchFilterTimeout = window.setTimeout(filterCatalog, 180);
+                });
+            }
+
+            if (featureSelect) {
+                featureSelect.addEventListener('change', function() {
+                    filterCatalog();
+                    closeFilterPopoverById('catalogFeatureFilter', { focusTrigger: true });
                 });
             }
 
@@ -6738,10 +6609,12 @@ ${formatCssBlock(footerBackground)}
 
         function filterCatalog() {
             const searchInput = document.getElementById('catalogSearchInput');
+            const featureSelect = document.getElementById('catalogFeatureFilter');
             const priceSelect = document.getElementById('catalogPriceFilter');
             const sortSelect = document.getElementById('catalogSortFilter');
 
             const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            const featureTerm = featureSelect ? featureSelect.value.trim().toLowerCase() : '';
             const priceFilter = priceSelect ? priceSelect.value.trim() : '';
             const sortOption = sortSelect ? sortSelect.value : '';
             const priceRange = parsePriceFilter(priceFilter);
@@ -6840,6 +6713,11 @@ ${formatCssBlock(footerBackground)}
                             [name, description, features].some(field => field.includes(token))
                         );
 
+                    let matchesFeature = true;
+                    if (featureTerm) {
+                        matchesFeature = features.split('||').some(feature => feature.trim().includes(featureTerm));
+                    }
+
                     let matchesPrice = true;
                     if (priceRange) {
                         if (!Number.isFinite(priceValue)) {
@@ -6851,7 +6729,7 @@ ${formatCssBlock(footerBackground)}
                         }
                     }
 
-                    const matchesAll = matchesSearch && matchesPrice;
+                    const matchesAll = matchesSearch && matchesFeature && matchesPrice;
                     card.style.display = matchesAll ? '' : 'none';
 
                     if (matchesAll) {
@@ -7241,7 +7119,6 @@ ${formatCssBlock(footerBackground)}
             list.appendChild(fragment);
             updateSelectionSummaryUI();
             updateProductSelectionButtons();
-            adjustScrollButtonForPanel();
         }
 
         function updateSelectionSummaryUI() {
@@ -7310,37 +7187,6 @@ ${formatCssBlock(footerBackground)}
             });
         }
 
-        function adjustScrollButtonForPanel() {
-            const panel = document.getElementById('selectedProductsPanel');
-            const scrollButton = document.getElementById('scrollToTopButton');
-
-            if (!scrollButton) {
-                return;
-            }
-
-            const panelIsOpen = Boolean(panel && panel.classList.contains('selected-products-panel--open'));
-
-            if (!panelIsOpen) {
-                scrollButton.style.bottom = '';
-                return;
-            }
-
-            const panelRect = panel.getBoundingClientRect();
-            const panelHeight = panelRect ? panelRect.height : 0;
-            const gap = 24;
-            const buttonHeight = scrollButton.offsetHeight || 0;
-            const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-
-            let desiredBottom = panelHeight + gap;
-
-            if (viewportHeight > 0 && buttonHeight > 0) {
-                const maxBottom = Math.max(viewportHeight - buttonHeight - gap, gap);
-                desiredBottom = Math.min(desiredBottom, maxBottom);
-            }
-
-            scrollButton.style.bottom = `${Math.max(desiredBottom, gap)}px`;
-        }
-
         function openSelectionPanel() {
             const panel = document.getElementById('selectedProductsPanel');
             const toggle = document.getElementById('selectedPanelToggle');
@@ -7355,8 +7201,6 @@ ${formatCssBlock(footerBackground)}
             updateSelectionSummaryUI();
 
             window.requestAnimationFrame(() => {
-                adjustScrollButtonForPanel();
-
                 if (typeof panel.focus === 'function') {
                     panel.focus({ preventScroll: true });
                 }
@@ -7375,7 +7219,6 @@ ${formatCssBlock(footerBackground)}
             panel.setAttribute('aria-hidden', 'true');
             toggle.setAttribute('aria-expanded', 'false');
             updateSelectionSummaryUI();
-            adjustScrollButtonForPanel();
         }
 
         function getSelectedProductsDetails() {
@@ -7403,8 +7246,6 @@ ${formatCssBlock(footerBackground)}
                 renderSelectedProductsList();
             }
         });
-
-        window.addEventListener('resize', adjustScrollButtonForPanel);
 
         function initializeCatalogState() {
             const categories = Array.from(document.querySelectorAll('.category'));
@@ -7447,66 +7288,6 @@ ${formatCssBlock(footerBackground)}
                         button.classList.toggle('active', button.dataset.category === firstCategoryId);
                     });
                 }
-            }
-        }
-
-        function setupStickyNavigation() {
-            const navContainer = document.querySelector('.nav-container');
-            const scrollButton = document.getElementById('scrollToTopButton');
-
-            if (!navContainer && !scrollButton) {
-                return;
-            }
-
-            const compactClass = 'nav-container--compact';
-            const visibleClass = 'scroll-to-top--visible';
-            let lastCompactState = null;
-            let lastButtonState = null;
-
-            function applyCompactState(shouldCompact) {
-                if (!navContainer || shouldCompact === lastCompactState) {
-                    return;
-                }
-
-                navContainer.classList.toggle(compactClass, shouldCompact);
-                lastCompactState = shouldCompact;
-            }
-
-            function applyScrollButtonState(shouldShow) {
-                if (!scrollButton || shouldShow === lastButtonState) {
-                    return;
-                }
-
-                scrollButton.classList.toggle(visibleClass, shouldShow);
-
-                if (shouldShow) {
-                    scrollButton.removeAttribute('aria-hidden');
-                    scrollButton.removeAttribute('tabindex');
-                } else {
-                    scrollButton.setAttribute('aria-hidden', 'true');
-                    scrollButton.setAttribute('tabindex', '-1');
-                }
-
-                lastButtonState = shouldShow;
-            }
-
-            const handleScroll = () => {
-                const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-                applyCompactState(scrollY > 140);
-                applyScrollButtonState(scrollY > 320);
-            };
-
-            handleScroll();
-
-            window.addEventListener('scroll', handleScroll, { passive: true });
-
-            if (scrollButton) {
-                scrollButton.addEventListener('click', function() {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                });
             }
         }
 
@@ -7557,8 +7338,6 @@ ${formatCssBlock(footerBackground)}
             if (!modal || !product) {
                 return;
             }
-
-            closeSelectionPanel();
 
             currentProduct = product.title;
             modalProduct = product;
