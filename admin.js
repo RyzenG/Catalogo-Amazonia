@@ -4469,10 +4469,10 @@ ${formatCssBlock(headerBackground)}
             margin: 0 auto;
             padding: 0 2rem;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2rem;
-            flex-wrap: wrap;
+            gap: 2.5rem;
             position: relative;
             z-index: 1;
         }
@@ -4525,8 +4525,8 @@ ${formatCssBlock(headerBackground)}
         }
 
         .logo-container {
-            max-width: 140px;
-            max-height: 140px;
+            width: clamp(160px, 18vw, 240px);
+            max-height: 240px;
             background: transparent;
             border: none;
             box-shadow: none;
@@ -5930,12 +5930,12 @@ ${formatCssBlock(footerBackground)}
             }
 
             .header-inner {
-                gap: 1.5rem;
+                gap: 2rem;
             }
 
             .logo-container {
-                max-width: 110px;
-                max-height: 110px;
+                width: clamp(140px, 45vw, 200px);
+                max-height: 200px;
                 padding: 0;
                 background: transparent;
                 border: none;
