@@ -517,7 +517,7 @@
 
             .scroll-to-top {
                 inset-inline-end: 1.25rem;
-                bottom: 1.5rem;
+                bottom: 5.5rem;
                 width: 2.75rem;
                 height: 2.75rem;
                 font-size: 1.2rem;
@@ -1524,10 +1524,27 @@
         @media (max-width: 768px) {
             .selected-products-toggle {
                 right: 1rem;
-                left: 1rem;
-                width: calc(100% - 2rem);
-                justify-content: center;
-                border-radius: 14px;
+                left: auto;
+                width: auto;
+                padding: 0.75rem;
+                border-radius: 999px;
+                gap: 0;
+                box-shadow: 0 16px 28px rgba(143, 166, 140, 0.2);
+            }
+
+            .selected-products-toggle__icon svg {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+
+            .selected-products-toggle__badge {
+                position: absolute;
+                top: -0.35rem;
+                right: -0.35rem;
+                min-width: 1.5rem;
+                height: 1.5rem;
+                font-size: 0.8rem;
+                background: #294428;
             }
 
             .selected-products-panel {
