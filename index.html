@@ -1802,7 +1802,9 @@
         <div class="nav-container" id="productsNavigation">
             <nav>
                 <div class="nav-buttons" id="navButtons">
-                    
+                    <button class="nav-btn active" data-category="macetas" data-label="🪴 Macetas de Concreto" data-description="Macetas artesanales reforzadas para interior y exterior" onclick="showCategory(event, 'macetas')">🪴 Macetas de Concreto</button>
+                    <button class="nav-btn" data-category="mobiliario" data-label="🪑 Mobiliario de Concreto" data-description="Bancas y mesas de concreto reforzado para proyectos premium" onclick="showCategory(event, 'mobiliario')">🪑 Mobiliario de Concreto</button>
+                    <button class="nav-btn" data-category="revestimientos" data-label="🗿 Revestimientos" data-description="Paneles y losetas texturizadas inspiradas en la Amazonia" onclick="showCategory(event, 'revestimientos')">🗿 Revestimientos</button>
                 </div>
             </nav>
             
@@ -1852,7 +1854,133 @@
 
         <!-- Main Container -->
         <div class="container" id="catalogProducts">
-            
+
+        <!-- Macetas Category -->
+        <div class="category active" id="macetas">
+            <h2 class="category-title">Macetas de Concreto</h2>
+            <p class="category-description">Macetas artesanales inspiradas en la biodiversidad amazónica.</p>
+            <div class="products-grid">
+                <div class="product-card" data-category="macetas" data-product-id="maceta-selva" data-name="Maceta Selva Profunda" data-description="Maceta cilíndrica pigmentada en tonos selva con acabado mate. Moldeada a mano con concreto reforzado y pigmentos minerales resistentes a la intemperie." data-features="Pigmentos minerales||Drenaje incluido||Base antideslizante" data-price="95000" onclick="openModal('maceta-selva')">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Imagen de Maceta Selva Profunda">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">Maceta Selva Profunda</h3>
+                        <p class="product-description">Maceta cilíndrica pigmentada en tonos selva con acabado mate.</p>
+                        <div class="product-features">
+                            <span class="feature-tag">Pigmentos minerales</span><span class="feature-tag">Drenaje incluido</span><span class="feature-tag">Base antideslizante</span>
+                        </div>
+                        <p class="product-price">$95.000 COP</p>
+                        <div class="product-actions">
+                            <button type="button" class="product-card__select" data-product-id="maceta-selva" aria-pressed="false" aria-label="Agregar Maceta Selva Profunda al carrito">➕ Añadir al carrito</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="macetas" data-product-id="maceta-bruma" data-name="Jardinera Bruma Andina" data-description="Jardinera rectangular de concreto pulido con bordes biselados. Ideal para balcones y terrazas gracias a su mezcla ligera que protege las raíces." data-features="Pulido satinado||Ligera||Uso exterior" data-price="145000" onclick="openModal('maceta-bruma')">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1523419409543-0c1df022bddc?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Imagen de Jardinera Bruma Andina">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">Jardinera Bruma Andina</h3>
+                        <p class="product-description">Jardinera rectangular de concreto pulido con bordes biselados.</p>
+                        <div class="product-features">
+                            <span class="feature-tag">Pulido satinado</span><span class="feature-tag">Ligera</span><span class="feature-tag">Uso exterior</span>
+                        </div>
+                        <p class="product-price">$145.000 COP</p>
+                        <div class="product-actions">
+                            <button type="button" class="product-card__select" data-product-id="maceta-bruma" aria-pressed="false" aria-label="Agregar Jardinera Bruma Andina al carrito">➕ Añadir al carrito</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="no-results-message" data-category-empty style="display: none;">No se encontraron productos que coincidan con los filtros seleccionados.</p>
+        </div>
+
+        <!-- Mobiliario Category -->
+        <div class="category" id="mobiliario">
+            <h2 class="category-title">Mobiliario de Concreto</h2>
+            <p class="category-description">Bancas y mesas resistentes para proyectos residenciales y corporativos.</p>
+            <div class="products-grid">
+                <div class="product-card" data-category="mobiliario" data-product-id="banca-rio" data-name="Banca Río Esmeralda" data-description="Banca monolítica con incrustaciones de piedra verde. Fundida en una sola pieza con refuerzo de fibra para exteriores exigentes." data-features="Refuerzo en fibra||Acabado hidrofugado||Uso exterior" data-price="1250000" onclick="openModal('banca-rio')">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Imagen de Banca Río Esmeralda">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">Banca Río Esmeralda</h3>
+                        <p class="product-description">Banca monolítica de concreto con incrustaciones de piedra verde.</p>
+                        <div class="product-features">
+                            <span class="feature-tag">Refuerzo en fibra</span><span class="feature-tag">Acabado hidrofugado</span><span class="feature-tag">Uso exterior</span>
+                        </div>
+                        <p class="product-price">$1.250.000 COP</p>
+                        <div class="product-actions">
+                            <button type="button" class="product-card__select" data-product-id="banca-rio" aria-pressed="false" aria-label="Agregar Banca Río Esmeralda al carrito">➕ Añadir al carrito</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="mobiliario" data-product-id="mesa-lenga" data-name="Mesa Lenga Amazónica" data-description="Mesa auxiliar de concreto pigmentado y madera certificada. Sellado alimentario ideal para espacios de hospitalidad." data-features="Pigmento natural||Madera certificada||Sellado alimentario" data-price="690000" onclick="openModal('mesa-lenga')">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1487017159836-4e23ece2e4cf?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Imagen de Mesa Lenga Amazónica">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">Mesa Lenga Amazónica</h3>
+                        <p class="product-description">Mesa auxiliar de concreto y madera certificada.</p>
+                        <div class="product-features">
+                            <span class="feature-tag">Pigmento natural</span><span class="feature-tag">Madera certificada</span><span class="feature-tag">Sellado alimentario</span>
+                        </div>
+                        <p class="product-price">$690.000 COP</p>
+                        <div class="product-actions">
+                            <button type="button" class="product-card__select" data-product-id="mesa-lenga" aria-pressed="false" aria-label="Agregar Mesa Lenga Amazónica al carrito">➕ Añadir al carrito</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="no-results-message" data-category-empty style="display: none;">No se encontraron productos que coincidan con los filtros seleccionados.</p>
+        </div>
+
+        <!-- Revestimientos Category -->
+        <div class="category" id="revestimientos">
+            <h2 class="category-title">Revestimientos</h2>
+            <p class="category-description">Paneles y losetas texturizadas que llevan la Amazonia a tus espacios.</p>
+            <div class="products-grid">
+                <div class="product-card" data-category="revestimientos" data-product-id="panel-guadua" data-name="Panel Texturizado Guadua" data-description="Panel decorativo con textura inspirada en guadua. Fabricación bajo pedido con sistema de anclaje oculto para muros interiores." data-features="Textura orgánica||Instalación rápida||Peso liviano" data-price="320000" onclick="openModal('panel-guadua')">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1481277542470-605612bd2d61?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Imagen de Panel Texturizado Guadua">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">Panel Texturizado Guadua</h3>
+                        <p class="product-description">Panel decorativo con textura inspirada en guadua.</p>
+                        <div class="product-features">
+                            <span class="feature-tag">Textura orgánica</span><span class="feature-tag">Instalación rápida</span><span class="feature-tag">Peso liviano</span>
+                        </div>
+                        <p class="product-price">$320.000/m² COP</p>
+                        <div class="product-actions">
+                            <button type="button" class="product-card__select" data-product-id="panel-guadua" aria-pressed="false" aria-label="Agregar Panel Texturizado Guadua al carrito">➕ Añadir al carrito</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="revestimientos" data-product-id="loseta-amazonas" data-name="Loseta Amazonas" data-description="Loseta hexagonal pigmentada en tonos verdes. Tratamiento antideslizante ideal para zonas húmedas." data-features="Formato hexagonal||Antideslizante||Pigmentos minerales" data-price="185000" onclick="openModal('loseta-amazonas')">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Imagen de Loseta Amazonas">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">Loseta Amazonas</h3>
+                        <p class="product-description">Loseta poligonal de concreto pigmentado en tonos verdes.</p>
+                        <div class="product-features">
+                            <span class="feature-tag">Formato hexagonal</span><span class="feature-tag">Antideslizante</span><span class="feature-tag">Pigmentos minerales</span>
+                        </div>
+                        <p class="product-price">$185.000/m² COP</p>
+                        <div class="product-actions">
+                            <button type="button" class="product-card__select" data-product-id="loseta-amazonas" aria-pressed="false" aria-label="Agregar Loseta Amazonas al carrito">➕ Añadir al carrito</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="no-results-message" data-category-empty style="display: none;">No se encontraron productos que coincidan con los filtros seleccionados.</p>
+        </div>
+
             <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">Aún no hay productos publicados. Estamos preparando nuevas colecciones para ti, ¡vuelve pronto!</p>
         </div>
 
@@ -1982,8 +2110,99 @@
         let modalImages = [];
         let currentImageIndex = 0;
         let searchFilterTimeout = null;
-        const productData = {};
-        const catalogConfig = {"whatsapp":"573000000000","email":"info@amazoniaconcrete.com","phone":"+57 300 000 0000","address":"","instagram":"","facebook":"","tiktok":"","companyName":"AMAZONIA CONCRETE","tagline":"Naturaleza y Modernidad en Perfecta Armonía","footerMessage":"Creando espacios únicos con concreto sostenible","logoData":"","appearance":{"background":"#f5f5f5","header":"#2d4a2b","primary":"#6b8e68","accent":"#8fa68c","text":"#2d4a2b","backgroundImage":"","headerImage":"","footerImage":""},"about":{"mission":"","vision":"","values":[]},"shippingPolicy":{"heroTitle":"Política de envíos","heroDescription":"Coordinamos entregas seguras y puntuales para cada uno de tus proyectos en Colombia.","sections":[{"id":"coverage","title":"Cobertura y tiempos de entrega","description":"Planificamos cada despacho según la ciudad y la complejidad del pedido.","items":["Envíos en Bogotá y municipios aledaños con logística propia.","Despachos nacionales con aliados estratégicos especializados.","Tiempo estimado entre 5 y 10 días hábiles después de confirmar el pedido."],"note":"Los tiempos pueden variar en temporadas de alta demanda o para piezas personalizadas."},{"id":"packaging","title":"Empaque y manipulación especializada","description":"Protegemos cada pieza para que llegue en perfecto estado.","items":["Revisamos cada producto antes del despacho.","Utilizamos empaques reforzados y materiales reutilizables.","Coordinamos cargue y descargue con personal capacitado."],"note":"Si detectas alguna novedad en la entrega, repórtala en las primeras 24 horas."},{"id":"coordination","title":"Costos y coordinación","description":"Te acompañamos para elegir la opción de transporte ideal.","items":["Cotizamos el envío según volumen, peso y destino.","Ofrecemos recogida en taller sin costo adicional.","Puedes programar entregas especiales para proyectos corporativos."],"note":"Nuestro equipo confirmará los detalles logísticos antes de despachar tu pedido."}],"closingTitle":"¿Listo para coordinar tu envío?","closingDescription":"Escríbenos y recibe asesoría personalizada para definir la mejor opción de entrega.","closingNote":"Atendemos solicitudes de lunes a viernes de 8:00 a.m. a 6:00 p.m."}};
+        const productData = {
+            'maceta-selva': {
+                title: 'Maceta Selva Profunda',
+                image: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80',
+                images: [
+                    'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80',
+                    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80'
+                ],
+                alt: 'Imagen de Maceta Selva Profunda',
+                description: 'Moldeada a mano con concreto reforzado y pigmentos minerales resistentes a la intemperie. Incluye canal de drenaje y base antideslizante para proteger tus superficies.',
+                specs: [
+                    ['Dimensiones', 'Ø 25 cm x 23 cm alto'],
+                    ['Peso', '4.2 kg'],
+                    ['Terminación', 'Sellador mate hidrófugo']
+                ]
+            },
+            'maceta-bruma': {
+                title: 'Jardinera Bruma Andina',
+                image: 'https://images.unsplash.com/photo-1523419409543-0c1df022bddc?auto=format&fit=crop&w=800&q=80',
+                images: [
+                    'https://images.unsplash.com/photo-1523419409543-0c1df022bddc?auto=format&fit=crop&w=800&q=80',
+                    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80'
+                ],
+                alt: 'Imagen de Jardinera Bruma Andina',
+                description: 'Ideal para balcones y terrazas. Su mezcla ligera conserva la humedad adecuada y evita sobrecargar estructuras elevadas.',
+                specs: [
+                    ['Dimensiones', '60 cm x 20 cm x 25 cm'],
+                    ['Peso', '6.8 kg'],
+                    ['Incluye', 'Drenajes modulares y fieltro geotextil']
+                ]
+            },
+            'banca-rio': {
+                title: 'Banca Río Esmeralda',
+                image: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80',
+                images: [
+                    'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80',
+                    'https://images.unsplash.com/photo-1549187774-b4e9b0445b06?auto=format&fit=crop&w=800&q=80'
+                ],
+                alt: 'Imagen de Banca Río Esmeralda',
+                description: 'Fundida en una sola pieza con refuerzo de fibra y sellado hidrofugado. Pensada para zonas comunes, plazas y terrazas con alto tráfico.',
+                specs: [
+                    ['Medidas', '150 cm x 45 cm x 45 cm'],
+                    ['Peso', '68 kg'],
+                    ['Capacidad', 'Hasta 3 personas']
+                ]
+            },
+            'mesa-lenga': {
+                title: 'Mesa Lenga Amazónica',
+                image: 'https://images.unsplash.com/photo-1487017159836-4e23ece2e4cf?auto=format&fit=crop&w=800&q=80',
+                images: [
+                    'https://images.unsplash.com/photo-1487017159836-4e23ece2e4cf?auto=format&fit=crop&w=800&q=80',
+                    'https://images.unsplash.com/photo-1484100356142-db6ab6244067?auto=format&fit=crop&w=800&q=80'
+                ],
+                alt: 'Imagen de Mesa Lenga Amazónica',
+                description: 'Tablero superior en concreto pigmentado con sellado alimentario y base en madera inmunizada certificada de bosques controlados.',
+                specs: [
+                    ['Medidas', '60 cm x 60 cm x 45 cm'],
+                    ['Peso', '18 kg'],
+                    ['Base', 'Madera inmunizada certificada']
+                ]
+            },
+            'panel-guadua': {
+                title: 'Panel Texturizado Guadua',
+                image: 'https://images.unsplash.com/photo-1481277542470-605612bd2d61?auto=format&fit=crop&w=800&q=80',
+                images: [
+                    'https://images.unsplash.com/photo-1481277542470-605612bd2d61?auto=format&fit=crop&w=800&q=80',
+                    'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=800&q=80'
+                ],
+                alt: 'Imagen de Panel Texturizado Guadua',
+                description: 'Panel decorativo inspirado en la guadua amazónica. Se instala con anclaje oculto y ofrece textura orgánica para muros interiores.',
+                specs: [
+                    ['Espesor', '18 mm'],
+                    ['Peso', '28 kg/m²'],
+                    ['Acabado', 'Sellador satinado con protección UV']
+                ]
+            },
+            'loseta-amazonas': {
+                title: 'Loseta Amazonas',
+                image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80',
+                images: [
+                    'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80',
+                    'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=800&q=80'
+                ],
+                alt: 'Imagen de Loseta Amazonas',
+                description: 'Loseta hexagonal pigmentada con tonos verdes minerales y tratamiento antideslizante para spas y zonas húmedas.',
+                specs: [
+                    ['Espesor', '14 mm'],
+                    ['Peso', '24 kg/m²'],
+                    ['Uso', 'Interior y exterior']
+                ]
+            }
+        };
+        const catalogConfig = {"whatsapp":"573002345678","email":"contacto@amazoniaconcrete.com","phone":"+57 300 234 5678","address":"Cra. 12 #34-56, Bogotá D.C.","instagram":"https://www.instagram.com/amazoniaconcrete","facebook":"https://www.facebook.com/amazoniaconcrete","tiktok":"https://www.tiktok.com/@amazoniaconcrete","companyName":"AMAZONIA CONCRETE","tagline":"Naturaleza y Modernidad en Perfecta Armonía","footerMessage":"Creando espacios únicos con concreto sostenible","logoData":"images/logo.webp","appearance":{"background":"#f5f5f5","header":"#2d4a2b","primary":"#6b8e68","accent":"#8fa68c","text":"#2d4a2b","backgroundImage":"","headerImage":"","footerImage":""},"about":{"mission":"Diseñamos piezas de concreto que celebran la riqueza material y cultural de la Amazonia.","vision":"Liderar proyectos arquitectónicos sostenibles que conecten la naturaleza con la vida urbana.","values":["Sostenibilidad consciente","Innovación artesanal","Calidad durable"]},"shippingPolicy":{"heroTitle":"Política de envíos","heroDescription":"Coordinamos entregas seguras y puntuales para cada uno de tus proyectos en Colombia.","sections":[{"id":"coverage","title":"Cobertura y tiempos de entrega","description":"Planificamos cada despacho según la ciudad y la complejidad del pedido.","items":["Envíos en Bogotá y municipios aledaños con logística propia.","Despachos nacionales con aliados estratégicos especializados.","Tiempo estimado entre 5 y 10 días hábiles después de confirmar el pedido."],"note":"Los tiempos pueden variar en temporadas de alta demanda o para piezas personalizadas."},{"id":"packaging","title":"Empaque y manipulación especializada","description":"Protegemos cada pieza para que llegue en perfecto estado.","items":["Revisamos cada producto antes del despacho.","Utilizamos empaques reforzados y materiales reutilizables.","Coordinamos cargue y descargue con personal capacitado."],"note":"Si detectas alguna novedad en la entrega, repórtala en las primeras 24 horas."},{"id":"coordination","title":"Costos y coordinación","description":"Te acompañamos para elegir la opción de transporte ideal.","items":["Cotizamos el envío según volumen, peso y destino.","Ofrecemos recogida en taller sin costo adicional.","Puedes programar entregas especiales para proyectos corporativos."],"note":"Nuestro equipo confirmará los detalles logísticos antes de despachar tu pedido."}],"closingTitle":"¿Listo para coordinar tu envío?","closingDescription":"Escríbenos y recibe asesoría personalizada para definir la mejor opción de entrega.","closingNote":"Atendemos solicitudes de lunes a viernes de 8:00 a.m. a 6:00 p.m."}};
         const selectionStorageKey = 'amazoniaCatalogSelectedProducts';
         const selectionStorage = getPersistentStorage();
         let selectedProducts = [];
