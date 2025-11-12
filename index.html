@@ -2077,7 +2077,7 @@
     <footer>
         <div class="footer-content">
             <div class="contact-info" id="contactSection">
-                <h3>AMAZONIA CONCRETE</h3>
+                <h3 id="footerCompanyName">AMAZONIA CONCRETE</h3>
                 
                 <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="">
                     <a id="footerSocialWhatsApp" class="social-link social-link--whatsapp" href="https://wa.me/573000000000" target="_blank" rel="noopener noreferrer" style="">
@@ -2097,9 +2097,9 @@
                         <span class="sr-only">TikTok</span>
                     </a>
                 </div>
-                <p>Creando espacios únicos con concreto sostenible</p>
+                <p id="footerMessage">Creando espacios únicos con concreto sostenible</p>
             </div>
-            <p style="margin-top: 2rem; opacity: 0.7;">© 2025 AMAZONIA CONCRETE - Todos los derechos reservados</p>
+            <p id="footerCopyright" style="margin-top: 2rem; opacity: 0.7;">© 2025 AMAZONIA CONCRETE - Todos los derechos reservados</p>
         </div>
     </footer>
 
@@ -2110,7 +2110,32 @@
         let modalImages = [];
         let currentImageIndex = 0;
         let searchFilterTimeout = null;
-        const productData = {
+
+        function cloneData(source) {
+            if (typeof structuredClone === 'function') {
+                try {
+                    return structuredClone(source);
+                } catch (error) {
+                    // Fallback to JSON cloning below
+                }
+            }
+
+            try {
+                return JSON.parse(JSON.stringify(source));
+            } catch (error) {
+                if (Array.isArray(source)) {
+                    return source.slice();
+                }
+
+                if (source && typeof source === 'object') {
+                    return { ...source };
+                }
+
+                return source;
+            }
+        }
+
+        const defaultProductData = {
             'maceta-selva': {
                 title: 'Maceta Selva Profunda',
                 image: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80',
@@ -2202,10 +2227,1048 @@
                 ]
             }
         };
-        const catalogConfig = {"whatsapp":"573002345678","email":"contacto@amazoniaconcrete.com","phone":"+57 300 234 5678","address":"Cra. 12 #34-56, Bogotá D.C.","instagram":"https://www.instagram.com/amazoniaconcrete","facebook":"https://www.facebook.com/amazoniaconcrete","tiktok":"https://www.tiktok.com/@amazoniaconcrete","companyName":"AMAZONIA CONCRETE","tagline":"Naturaleza y Modernidad en Perfecta Armonía","footerMessage":"Creando espacios únicos con concreto sostenible","logoData":"images/logo.webp","appearance":{"background":"#f5f5f5","header":"#2d4a2b","primary":"#6b8e68","accent":"#8fa68c","text":"#2d4a2b","backgroundImage":"","headerImage":"","footerImage":""},"about":{"mission":"Diseñamos piezas de concreto que celebran la riqueza material y cultural de la Amazonia.","vision":"Liderar proyectos arquitectónicos sostenibles que conecten la naturaleza con la vida urbana.","values":["Sostenibilidad consciente","Innovación artesanal","Calidad durable"]},"shippingPolicy":{"heroTitle":"Política de envíos","heroDescription":"Coordinamos entregas seguras y puntuales para cada uno de tus proyectos en Colombia.","sections":[{"id":"coverage","title":"Cobertura y tiempos de entrega","description":"Planificamos cada despacho según la ciudad y la complejidad del pedido.","items":["Envíos en Bogotá y municipios aledaños con logística propia.","Despachos nacionales con aliados estratégicos especializados.","Tiempo estimado entre 5 y 10 días hábiles después de confirmar el pedido."],"note":"Los tiempos pueden variar en temporadas de alta demanda o para piezas personalizadas."},{"id":"packaging","title":"Empaque y manipulación especializada","description":"Protegemos cada pieza para que llegue en perfecto estado.","items":["Revisamos cada producto antes del despacho.","Utilizamos empaques reforzados y materiales reutilizables.","Coordinamos cargue y descargue con personal capacitado."],"note":"Si detectas alguna novedad en la entrega, repórtala en las primeras 24 horas."},{"id":"coordination","title":"Costos y coordinación","description":"Te acompañamos para elegir la opción de transporte ideal.","items":["Cotizamos el envío según volumen, peso y destino.","Ofrecemos recogida en taller sin costo adicional.","Puedes programar entregas especiales para proyectos corporativos."],"note":"Nuestro equipo confirmará los detalles logísticos antes de despachar tu pedido."}],"closingTitle":"¿Listo para coordinar tu envío?","closingDescription":"Escríbenos y recibe asesoría personalizada para definir la mejor opción de entrega.","closingNote":"Atendemos solicitudes de lunes a viernes de 8:00 a.m. a 6:00 p.m."}};
+
+        let productData = cloneData(defaultProductData);
+
+        const defaultCatalogConfig = {"whatsapp":"573002345678","email":"contacto@amazoniaconcrete.com","phone":"+57 300 234 5678","address":"Cra. 12 #34-56, Bogotá D.C.","instagram":"https://www.instagram.com/amazoniaconcrete","facebook":"https://www.facebook.com/amazoniaconcrete","tiktok":"https://www.tiktok.com/@amazoniaconcrete","companyName":"AMAZONIA CONCRETE","tagline":"Naturaleza y Modernidad en Perfecta Armonía","footerMessage":"Creando espacios únicos con concreto sostenible","logoData":"images/logo.webp","appearance":{"background":"#f5f5f5","header":"#2d4a2b","primary":"#6b8e68","accent":"#8fa68c","text":"#2d4a2b","backgroundImage":"","headerImage":"","footerImage":""},"about":{"mission":"Diseñamos piezas de concreto que celebran la riqueza material y cultural de la Amazonia.","vision":"Liderar proyectos arquitectónicos sostenibles que conecten la naturaleza con la vida urbana.","values":["Sostenibilidad consciente","Innovación artesanal","Calidad durable"]},"shippingPolicy":{"heroTitle":"Política de envíos","heroDescription":"Coordinamos entregas seguras y puntuales para cada uno de tus proyectos en Colombia.","sections":[{"id":"coverage","title":"Cobertura y tiempos de entrega","description":"Planificamos cada despacho según la ciudad y la complejidad del pedido.","items":["Envíos en Bogotá y municipios aledaños con logística propia.","Despachos nacionales con aliados estratégicos especializados.","Tiempo estimado entre 5 y 10 días hábiles después de confirmar el pedido."],"note":"Los tiempos pueden variar en temporadas de alta demanda o para piezas personalizadas."},{"id":"packaging","title":"Empaque y manipulación especializada","description":"Protegemos cada pieza para que llegue en perfecto estado.","items":["Revisamos cada producto antes del despacho.","Utilizamos empaques reforzados y materiales reutilizables.","Coordinamos cargue y descargue con personal capacitado."],"note":"Si detectas alguna novedad en la entrega, repórtala en las primeras 24 horas."},{"id":"coordination","title":"Costos y coordinación","description":"Te acompañamos para elegir la opción de transporte ideal.","items":["Cotizamos el envío según volumen, peso y destino.","Ofrecemos recogida en taller sin costo adicional.","Puedes programar entregas especiales para proyectos corporativos."],"note":"Nuestro equipo confirmará los detalles logísticos antes de despachar tu pedido."}],"closingTitle":"¿Listo para coordinar tu envío?","closingDescription":"Escríbenos y recibe asesoría personalizada para definir la mejor opción de entrega.","closingNote":"Atendemos solicitudes de lunes a viernes de 8:00 a.m. a 6:00 p.m."}};
+
+        let catalogConfig = cloneData(defaultCatalogConfig);
+
+        const selectionStorageKey = 'amazoniaCatalogSelectedProducts';
         const selectionStorageKey = 'amazoniaCatalogSelectedProducts';
         const selectionStorage = getPersistentStorage();
         let selectedProducts = [];
+
+        function sanitizeImageValue(value) {
+            return typeof value === 'string' ? value.trim() : '';
+        }
+
+        function escapeForSvg(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function createIconPlaceholder(icon, name) {
+            const displayIcon = escapeForSvg(icon || '🛠️');
+            const displayName = escapeForSvg(name || 'Producto Amazonia');
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">` +
+                '<defs>' +
+                '<linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">' +
+                '<stop offset="0%" stop-color="#f0f0f0" />' +
+                '<stop offset="100%" stop-color="#e0e0e0" />' +
+                '</linearGradient>' +
+                '</defs>' +
+                '<rect width="600" height="400" fill="url(#bg)" />' +
+                `<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="140">${displayIcon}</text>` +
+                `<text x="50%" y="78%" dominant-baseline="middle" text-anchor="middle" font-size="36" fill="#4d4d4d">${displayName}</text>` +
+                '</svg>';
+            return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }
+
+        function getNormalizedProductImages(product) {
+            if (!product || typeof product !== 'object') {
+                return [];
+            }
+
+            const fromArray = Array.isArray(product.images) ? product.images : [];
+            const fallback = typeof product.image === 'string' ? product.image : '';
+
+            const combined = fromArray.slice();
+
+            if (fallback && combined.length === 0) {
+                combined.push(fallback);
+            }
+
+            return combined
+                .map(sanitizeImageValue)
+                .filter(url => url.length > 0);
+        }
+
+        function getProductImageSource(product, fallbackIcon = '🛠️') {
+            if (!product) {
+                return createIconPlaceholder(fallbackIcon, 'Producto Amazonia');
+            }
+
+            const normalizedImages = getNormalizedProductImages(product);
+
+            if (normalizedImages.length > 0) {
+                return normalizedImages[0];
+            }
+
+            const iconValue = product.icon || fallbackIcon;
+            const nameValue = product.name || 'Producto Amazonia';
+
+            if (!iconValue) {
+                return createIconPlaceholder('🛠️', nameValue);
+            }
+
+            return createIconPlaceholder(iconValue, nameValue);
+        }
+
+        const COP_CURRENCY_FORMATTER = new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            currencyDisplay: 'code',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+
+        function formatCurrencyCOP(value) {
+            if (value === null || typeof value === 'undefined') {
+                return '';
+            }
+
+            if (typeof value === 'number' && !Number.isFinite(value)) {
+                return '';
+            }
+
+            const stringValue = typeof value === 'number' ? String(value) : String(value);
+            if (!stringValue) {
+                return '';
+            }
+
+            const match = stringValue.match(/[\d][\d.,]*/);
+            if (!match) {
+                return '';
+            }
+
+            const numericChunk = match[0];
+            const digitsOnly = numericChunk.replace(/[^\d]/g, '');
+            if (!digitsOnly) {
+                return '';
+            }
+
+            const parsedValue = parseInt(digitsOnly, 10);
+            if (Number.isNaN(parsedValue)) {
+                return '';
+            }
+
+            const formatted = COP_CURRENCY_FORMATTER.format(parsedValue);
+            let prefix = stringValue.slice(0, match.index);
+            let suffix = stringValue.slice(match.index + numericChunk.length);
+
+            const prefixWithoutCop = prefix.replace(/\s*COP\s*$/i, '');
+            if (prefixWithoutCop !== prefix) {
+                prefix = prefixWithoutCop;
+                if (prefix && !/\s$/.test(prefix)) {
+                    prefix += ' ';
+                }
+            }
+
+            const suffixWithoutCop = suffix.replace(/^\s*COP\s*/i, '');
+            if (suffixWithoutCop !== suffix) {
+                suffix = suffixWithoutCop;
+                if (suffix && !/^\s/.test(suffix)) {
+                    suffix = ' ' + suffix;
+                }
+            }
+
+            return `${prefix}${formatted}${suffix}`.trim();
+        }
+
+        function slugify(value, fallback = '') {
+            if (typeof value !== 'string') {
+                return fallback;
+            }
+
+            const normalized = value
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+            return normalized || fallback;
+        }
+
+        function ensureUniqueId(baseId, usedIds) {
+            let candidate = baseId;
+            let counter = 2;
+
+            while (usedIds.has(candidate)) {
+                candidate = `${baseId}-${counter}`;
+                counter += 1;
+            }
+
+            return candidate;
+        }
+
+        function formatCategoryTitleFromId(id) {
+            if (typeof id !== 'string' || id.trim().length === 0) {
+                return 'Categoría';
+            }
+
+            return id
+                .replace(/[-_]+/g, ' ')
+                .trim()
+                .replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        function createCategoryInfoLookup(categoryInfo) {
+            const map = new Map();
+
+            if (!categoryInfo || typeof categoryInfo !== 'object') {
+                return map;
+            }
+
+            Object.entries(categoryInfo).forEach(([key, value]) => {
+                if (!value || typeof value !== 'object') {
+                    return;
+                }
+
+                if (typeof key !== 'string' || key.trim().length === 0) {
+                    return;
+                }
+
+                const trimmedKey = key.trim();
+                map.set(trimmedKey, value);
+                map.set(trimmedKey.toLowerCase(), value);
+
+                const slugKey = slugify(trimmedKey, trimmedKey);
+                map.set(slugKey, value);
+                map.set(slugKey.toLowerCase(), value);
+            });
+
+            return map;
+        }
+
+        function normalizeCatalogConfig(rawConfig) {
+            const normalized = cloneData(defaultCatalogConfig);
+
+            if (!rawConfig || typeof rawConfig !== 'object') {
+                return normalized;
+            }
+
+            const stringFields = [
+                'whatsapp',
+                'email',
+                'phone',
+                'address',
+                'instagram',
+                'facebook',
+                'tiktok',
+                'companyName',
+                'tagline',
+                'footerMessage'
+            ];
+
+            stringFields.forEach(field => {
+                if (typeof rawConfig[field] === 'string') {
+                    normalized[field] = rawConfig[field].trim();
+                }
+            });
+
+            if (typeof rawConfig.logoData === 'string' && rawConfig.logoData.trim()) {
+                normalized.logoData = rawConfig.logoData.trim();
+            } else if (typeof rawConfig.logoUrl === 'string' && rawConfig.logoUrl.trim()) {
+                normalized.logoData = rawConfig.logoUrl.trim();
+            }
+
+            if (rawConfig.appearance && typeof rawConfig.appearance === 'object') {
+                normalized.appearance = { ...normalized.appearance };
+                Object.entries(rawConfig.appearance).forEach(([key, value]) => {
+                    if (typeof value === 'string') {
+                        normalized.appearance[key] = value.trim();
+                    }
+                });
+            }
+
+            if (rawConfig.about && typeof rawConfig.about === 'object') {
+                normalized.about = cloneData(rawConfig.about);
+            }
+
+            if (rawConfig.shippingPolicy && typeof rawConfig.shippingPolicy === 'object') {
+                normalized.shippingPolicy = cloneData(rawConfig.shippingPolicy);
+            }
+
+            return normalized;
+        }
+
+        function normalizeCategories(rawCategories, categoryInfo, rawProducts) {
+            const infoLookup = createCategoryInfoLookup(categoryInfo);
+            const normalized = [];
+            const usedIds = new Set();
+
+            const findInfo = (candidates) => {
+                for (const candidate of candidates) {
+                    if (typeof candidate !== 'string' || candidate.length === 0) {
+                        continue;
+                    }
+
+                    if (infoLookup.has(candidate)) {
+                        return infoLookup.get(candidate);
+                    }
+
+                    const lowerCandidate = candidate.toLowerCase();
+                    if (infoLookup.has(lowerCandidate)) {
+                        return infoLookup.get(lowerCandidate);
+                    }
+
+                    const slugCandidate = slugify(candidate, candidate);
+                    if (infoLookup.has(slugCandidate)) {
+                        return infoLookup.get(slugCandidate);
+                    }
+
+                    const slugLower = slugCandidate.toLowerCase();
+                    if (infoLookup.has(slugLower)) {
+                        return infoLookup.get(slugLower);
+                    }
+                }
+
+                return null;
+            };
+
+            const source = Array.isArray(rawCategories) ? rawCategories : [];
+
+            source.forEach((entry, index) => {
+                const nameCandidates = [];
+                let idCandidate = '';
+                let descriptionCandidate = '';
+                let iconCandidate = '';
+
+                if (typeof entry === 'string') {
+                    nameCandidates.push(entry.trim());
+                } else if (entry && typeof entry === 'object') {
+                    ['name', 'title', 'label', 'category'].forEach(key => {
+                        if (typeof entry[key] === 'string' && entry[key].trim()) {
+                            nameCandidates.push(entry[key].trim());
+                        }
+                    });
+
+                    if (typeof entry.id === 'string' && entry.id.trim()) {
+                        idCandidate = entry.id.trim();
+                    }
+
+                    if (typeof entry.description === 'string' && entry.description.trim()) {
+                        descriptionCandidate = entry.description.trim();
+                    } else if (typeof entry.desc === 'string' && entry.desc.trim()) {
+                        descriptionCandidate = entry.desc.trim();
+                    }
+
+                    if (typeof entry.icon === 'string' && entry.icon.trim()) {
+                        iconCandidate = entry.icon.trim();
+                    } else if (typeof entry.emoji === 'string' && entry.emoji.trim()) {
+                        iconCandidate = entry.emoji.trim();
+                    }
+                } else {
+                    return;
+                }
+
+                const info = findInfo([idCandidate, ...nameCandidates]);
+
+                let resolvedId = idCandidate || slugify(nameCandidates[0], '');
+                if (!resolvedId) {
+                    resolvedId = `categoria-${index + 1}`;
+                }
+                resolvedId = slugify(resolvedId, `categoria-${index + 1}`);
+
+                if (usedIds.has(resolvedId)) {
+                    resolvedId = ensureUniqueId(resolvedId, usedIds);
+                }
+                usedIds.add(resolvedId);
+
+                const resolvedName = (() => {
+                    const candidate = nameCandidates.find(value => value.length > 0);
+                    if (candidate) {
+                        return candidate;
+                    }
+                    if (info && typeof info.title === 'string' && info.title.trim()) {
+                        return info.title.trim();
+                    }
+                    return formatCategoryTitleFromId(resolvedId);
+                })();
+
+                const resolvedDescription = (() => {
+                    if (descriptionCandidate) {
+                        return descriptionCandidate;
+                    }
+                    if (info && typeof info.description === 'string') {
+                        return info.description.trim();
+                    }
+                    return '';
+                })();
+
+                const resolvedIcon = (() => {
+                    if (iconCandidate) {
+                        return iconCandidate;
+                    }
+                    if (info && typeof info.icon === 'string' && info.icon.trim()) {
+                        return info.icon.trim();
+                    }
+                    return '📦';
+                })();
+
+                normalized.push({
+                    id: resolvedId,
+                    name: resolvedName,
+                    description: resolvedDescription,
+                    icon: resolvedIcon
+                });
+            });
+
+            if (rawProducts && typeof rawProducts === 'object') {
+                Object.keys(rawProducts).forEach(key => {
+                    const trimmedKey = typeof key === 'string' ? key.trim() : '';
+                    if (!trimmedKey) {
+                        return;
+                    }
+
+                    const slugKey = slugify(trimmedKey, trimmedKey);
+                    const hasProducts = Array.isArray(rawProducts[key]) && rawProducts[key].length > 0;
+                    if (!hasProducts) {
+                        return;
+                    }
+
+                    if (normalized.some(category => category.id === trimmedKey || category.id === slugKey)) {
+                        return;
+                    }
+
+                    const info = findInfo([trimmedKey, slugKey]);
+                    const resolvedId = usedIds.has(slugKey) ? ensureUniqueId(slugKey, usedIds) : slugKey;
+                    usedIds.add(resolvedId);
+
+                    normalized.push({
+                        id: resolvedId,
+                        name: info && typeof info.title === 'string' && info.title.trim()
+                            ? info.title.trim()
+                            : formatCategoryTitleFromId(resolvedId),
+                        description: info && typeof info.description === 'string'
+                            ? info.description.trim()
+                            : '',
+                        icon: info && typeof info.icon === 'string' && info.icon.trim()
+                            ? info.icon.trim()
+                            : '📦'
+                    });
+                });
+            }
+
+            return normalized;
+        }
+
+        function normalizeProducts(rawProducts, categories) {
+            const normalized = {};
+            const categoryMap = new Map();
+
+            categories.forEach(category => {
+                if (!category || typeof category.id !== 'string') {
+                    return;
+                }
+
+                const id = category.id;
+                categoryMap.set(id, id);
+                categoryMap.set(id.toLowerCase(), id);
+
+                const slugName = slugify(category.name || id, id);
+                categoryMap.set(slugName, id);
+                categoryMap.set(slugName.toLowerCase(), id);
+            });
+
+            if (!rawProducts || typeof rawProducts !== 'object') {
+                return normalized;
+            }
+
+            const seenProductIds = new Set();
+
+            Object.entries(rawProducts).forEach(([rawKey, productList]) => {
+                if (!Array.isArray(productList)) {
+                    return;
+                }
+
+                const trimmedKey = typeof rawKey === 'string' ? rawKey.trim() : '';
+                const slugKey = slugify(trimmedKey, trimmedKey);
+                const mappedCategoryId = categoryMap.get(trimmedKey)
+                    || categoryMap.get(trimmedKey.toLowerCase())
+                    || categoryMap.get(slugKey)
+                    || categoryMap.get(slugKey.toLowerCase())
+                    || slugKey;
+
+                const normalizedProducts = [];
+
+                productList.forEach((product, index) => {
+                    if (!product || typeof product !== 'object') {
+                        return;
+                    }
+
+                    let id = typeof product.id === 'string' ? product.id.trim() : '';
+                    const fallbackBase = slugify(
+                        id || product.name || `${mappedCategoryId}-producto-${index + 1}`,
+                        `${mappedCategoryId}-producto-${index + 1}`
+                    );
+                    id = fallbackBase || `${mappedCategoryId}-producto-${index + 1}`;
+
+                    if (seenProductIds.has(id)) {
+                        id = ensureUniqueId(id, seenProductIds);
+                    }
+                    seenProductIds.add(id);
+
+                    const name = typeof product.name === 'string' && product.name.trim()
+                        ? product.name.trim()
+                        : formatCategoryTitleFromId(id);
+                    const shortDesc = typeof product.shortDesc === 'string' ? product.shortDesc.trim() : '';
+                    const longDesc = typeof product.longDesc === 'string' ? product.longDesc.trim() : '';
+                    const price = typeof product.price === 'string' || typeof product.price === 'number'
+                        ? product.price
+                        : '';
+                    const customPrice = typeof product.customPrice === 'string' ? product.customPrice.trim() : '';
+                    const priceUnit = typeof product.priceUnit === 'string' ? product.priceUnit.trim() : '';
+                    const featuresSource = Array.isArray(product.features)
+                        ? product.features
+                        : Array.isArray(product.tags)
+                            ? product.tags
+                            : [];
+                    const features = featuresSource
+                        .map(feature => typeof feature === 'string' ? feature.trim() : '')
+                        .filter(feature => feature.length > 0);
+
+                    let specs = product.specs;
+                    if (specs && typeof specs === 'object' && !Array.isArray(specs)) {
+                        specs = Object.entries(specs)
+                            .map(([label, value]) => `${label}: ${value}`);
+                    }
+
+                    const images = Array.isArray(product.images)
+                        ? product.images.map(sanitizeImageValue).filter(Boolean)
+                        : [];
+                    const image = typeof product.image === 'string' ? product.image.trim() : '';
+                    if (image && images.length === 0) {
+                        images.push(image);
+                    }
+
+                    normalizedProducts.push({
+                        id,
+                        name,
+                        shortDesc,
+                        longDesc,
+                        price,
+                        customPrice,
+                        priceUnit,
+                        features,
+                        specs,
+                        images,
+                        icon: typeof product.icon === 'string' ? product.icon.trim() : ''
+                    });
+                });
+
+                if (normalizedProducts.length > 0) {
+                    normalized[mappedCategoryId] = normalizedProducts;
+                }
+            });
+
+            return normalized;
+        }
+
+        function parseProductSpecs(specs) {
+            if (!specs) {
+                return [];
+            }
+
+            if (Array.isArray(specs)) {
+                return specs
+                    .map(entry => {
+                        if (Array.isArray(entry)) {
+                            const [label, value] = entry;
+                            const normalizedLabel = typeof label === 'string' ? label.trim() : '';
+                            const normalizedValue = typeof value === 'string' ? value.trim() : '';
+                            return normalizedLabel ? [normalizedLabel, normalizedValue] : null;
+                        }
+
+                        if (entry && typeof entry === 'object') {
+                            const label = typeof entry.label === 'string' ? entry.label.trim() : '';
+                            const value = typeof entry.value === 'string'
+                                ? entry.value.trim()
+                                : typeof entry.description === 'string'
+                                    ? entry.description.trim()
+                                    : '';
+                            return label ? [label, value] : null;
+                        }
+
+                        if (typeof entry === 'string') {
+                            const trimmed = entry.trim();
+                            if (!trimmed) {
+                                return null;
+                            }
+                            const separatorIndex = trimmed.indexOf(':');
+                            if (separatorIndex === -1) {
+                                return [trimmed, ''];
+                            }
+                            const label = trimmed.slice(0, separatorIndex).trim();
+                            const value = trimmed.slice(separatorIndex + 1).trim();
+                            return label ? [label, value] : null;
+                        }
+
+                        return null;
+                    })
+                    .filter(Boolean);
+            }
+
+            if (typeof specs === 'string') {
+                return specs
+                    .split(/\r?\n/)
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .map(line => {
+                        const separatorIndex = line.indexOf(':');
+                        if (separatorIndex === -1) {
+                            return [line, ''];
+                        }
+                        const label = line.slice(0, separatorIndex).trim();
+                        const value = line.slice(separatorIndex + 1).trim();
+                        return label ? [label, value] : null;
+                    })
+                    .filter(Boolean);
+            }
+
+            return [];
+        }
+
+        function getProductPriceDisplay(product) {
+            if (!product) {
+                return '';
+            }
+
+            const formatted = formatCurrencyCOP(product.price);
+            if (formatted) {
+                if (typeof product.priceUnit === 'string' && product.priceUnit.trim()) {
+                    return `${formatted} ${product.priceUnit.trim()}`;
+                }
+                return formatted;
+            }
+
+            if (typeof product.price === 'string' && product.price.trim()) {
+                return product.price.trim();
+            }
+
+            if (typeof product.customPrice === 'string' && product.customPrice.trim()) {
+                return product.customPrice.trim();
+            }
+
+            return '';
+        }
+
+        function parsePriceValue(value) {
+            if (typeof value === 'number') {
+                return Number.isFinite(value) ? value : Number.NaN;
+            }
+
+            if (typeof value !== 'string') {
+                return Number.NaN;
+            }
+
+            const trimmed = value.trim();
+            if (!trimmed) {
+                return Number.NaN;
+            }
+
+            const digits = trimmed
+                .replace(/COP/gi, '')
+                .replace(/\$/g, '')
+                .replace(/[^\d.,-]/g, '')
+                .replace(/\./g, '')
+                .replace(',', '.');
+
+            if (!digits) {
+                return Number.NaN;
+            }
+
+            const parsed = Number.parseFloat(digits);
+            return Number.isFinite(parsed) ? parsed : Number.NaN;
+        }
+
+        function computePriceRanges(sortedValues) {
+            if (!Array.isArray(sortedValues) || sortedValues.length === 0) {
+                return [];
+            }
+
+            if (sortedValues.length === 1) {
+                const only = sortedValues[0];
+                return [{
+                    value: `${Math.max(0, Math.floor(only))}+`,
+                    label: `Precio: ${formatCurrencyCOP(only)}`
+                }];
+            }
+
+            const minValue = sortedValues[0];
+            const maxValue = sortedValues[sortedValues.length - 1];
+            const medianValue = sortedValues[Math.floor(sortedValues.length / 2)];
+            const upperValue = sortedValues[Math.max(0, Math.floor(sortedValues.length * 0.75))];
+
+            const ranges = [];
+
+            if (medianValue > minValue) {
+                ranges.push({
+                    value: `${Math.max(0, Math.floor(minValue))}-${Math.ceil(medianValue)}`,
+                    label: `Hasta ${formatCurrencyCOP(medianValue)}`
+                });
+            }
+
+            if (upperValue > medianValue) {
+                ranges.push({
+                    value: `${Math.ceil(medianValue)}-${Math.ceil(upperValue)}`,
+                    label: `${formatCurrencyCOP(medianValue)} - ${formatCurrencyCOP(upperValue)}`
+                });
+            }
+
+            ranges.push({
+                value: `${Math.ceil(upperValue)}+`,
+                label: `Desde ${formatCurrencyCOP(upperValue)}`
+            });
+
+            const unique = [];
+            const seen = new Set();
+            ranges.forEach(range => {
+                if (!range || !range.value || seen.has(range.value)) {
+                    return;
+                }
+                seen.add(range.value);
+                unique.push(range);
+            });
+
+            if (!unique.length) {
+                unique.push({
+                    value: `${Math.max(0, Math.floor(minValue))}+`,
+                    label: `Desde ${formatCurrencyCOP(minValue)}`
+                });
+            }
+
+            return unique;
+        }
+
+        function updatePriceFilterOptions(priceValues) {
+            const filterRow = document.querySelector('.filter-chip-row');
+            const existingChip = document.getElementById('catalogPriceFilterChip');
+            const uniqueSorted = Array.from(new Set(priceValues.filter(value => Number.isFinite(value) && value >= 0)))
+                .sort((a, b) => a - b);
+
+            if (!uniqueSorted.length) {
+                if (existingChip && existingChip.parentNode) {
+                    existingChip.parentNode.removeChild(existingChip);
+                }
+                return;
+            }
+
+            let chip = existingChip;
+            if (!chip) {
+                chip = document.createElement('div');
+                chip.className = 'filter-chip';
+                chip.id = 'catalogPriceFilterChip';
+                chip.innerHTML = `
+                    <button type="button" class="filter-chip__button" data-filter-toggle="catalogPriceFilter" aria-controls="catalogPriceFilterPopover" aria-expanded="false" aria-haspopup="dialog" aria-label="Filtrar por precio">
+                        <span class="filter-chip__icon" aria-hidden="true">💲</span>
+                        <span class="filter-chip__text">Precio</span>
+                    </button>
+                    <div class="filter-popover" id="catalogPriceFilterPopover" role="dialog" aria-modal="false" aria-labelledby="catalogPriceFilterLabel" hidden>
+                        <div class="filter-popover__content">
+                            <label class="filter-field filter-field--popover" for="catalogPriceFilter" id="catalogPriceFilterLabel">
+                                <span class="filter-label">Precio</span>
+                                <select id="catalogPriceFilter">
+                                    <option value="">Todos los precios</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                `;
+                if (filterRow) {
+                    filterRow.appendChild(chip);
+                }
+            }
+
+            const select = chip.querySelector('#catalogPriceFilter');
+            if (!select) {
+                return;
+            }
+
+            const previousValue = select.value;
+            select.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Todos los precios';
+            select.appendChild(defaultOption);
+
+            const ranges = computePriceRanges(uniqueSorted);
+            ranges.forEach(range => {
+                const option = document.createElement('option');
+                option.value = range.value;
+                option.textContent = range.label;
+                select.appendChild(option);
+            });
+
+            if (Array.from(select.options).some(option => option.value === previousValue)) {
+                select.value = previousValue;
+            } else {
+                select.value = '';
+            }
+
+            const trigger = chip.querySelector('[data-filter-toggle="catalogPriceFilter"]');
+            if (trigger && trigger.dataset.filterPopoverInitialized === 'true') {
+                delete trigger.dataset.filterPopoverInitialized;
+            }
+
+            initializeFilterPopovers();
+        }
+
+        function createProductCard(category, product, priceValues, productMap) {
+            if (!category || !product) {
+                return null;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.dataset.category = category.id;
+            card.dataset.productId = product.id;
+
+            const name = product.name || 'Producto Amazonia';
+            card.dataset.name = name;
+
+            const descriptionTokens = [];
+            if (product.shortDesc) {
+                descriptionTokens.push(product.shortDesc);
+            }
+            if (product.longDesc) {
+                descriptionTokens.push(product.longDesc);
+            }
+            card.dataset.description = descriptionTokens.join(' ');
+
+            const featureValues = Array.isArray(product.features) ? product.features : [];
+            card.dataset.features = featureValues.join('||');
+
+            const numericPrice = parsePriceValue(product.price);
+            if (Number.isFinite(numericPrice)) {
+                card.dataset.price = String(numericPrice);
+                priceValues.push(numericPrice);
+            } else {
+                card.dataset.price = '';
+            }
+
+            card.addEventListener('click', function() {
+                openModal(product.id);
+            });
+
+            const imageWrapper = document.createElement('div');
+            imageWrapper.className = 'product-image';
+            const imageElement = document.createElement('img');
+            const imageSource = getProductImageSource(product, category.icon || '🛠️');
+            imageElement.src = imageSource;
+            imageElement.alt = `Imagen de ${name}`;
+            imageWrapper.appendChild(imageElement);
+            card.appendChild(imageWrapper);
+
+            const info = document.createElement('div');
+            info.className = 'product-info';
+
+            const nameElement = document.createElement('h3');
+            nameElement.className = 'product-name';
+            nameElement.textContent = name;
+            info.appendChild(nameElement);
+
+            const shortDescription = product.shortDesc || 'Información disponible próximamente.';
+            const descriptionElement = document.createElement('p');
+            descriptionElement.className = 'product-description';
+            descriptionElement.textContent = shortDescription;
+            info.appendChild(descriptionElement);
+
+            const featuresElement = document.createElement('div');
+            featuresElement.className = 'product-features';
+            if (featureValues.length > 0) {
+                featureValues.forEach(value => {
+                    const tag = document.createElement('span');
+                    tag.className = 'feature-tag';
+                    tag.textContent = value;
+                    featuresElement.appendChild(tag);
+                });
+            } else {
+                featuresElement.style.display = 'none';
+            }
+            info.appendChild(featuresElement);
+
+            const priceElement = document.createElement('p');
+            priceElement.className = 'product-price';
+            const displayPrice = getProductPriceDisplay(product);
+            if (displayPrice) {
+                priceElement.textContent = displayPrice;
+            } else {
+                priceElement.style.display = 'none';
+            }
+            info.appendChild(priceElement);
+
+            const actions = document.createElement('div');
+            actions.className = 'product-actions';
+            const addButton = document.createElement('button');
+            addButton.type = 'button';
+            addButton.className = 'product-card__select';
+            addButton.dataset.productId = product.id;
+            addButton.setAttribute('aria-pressed', 'false');
+            addButton.setAttribute('aria-label', `Agregar ${name} al carrito`);
+            addButton.textContent = '➕ Añadir al carrito';
+            actions.appendChild(addButton);
+            info.appendChild(actions);
+
+            card.appendChild(info);
+
+            const normalizedImages = getNormalizedProductImages(product);
+            const modalDescription = product.longDesc || product.shortDesc || 'Información disponible próximamente.';
+            const specsList = parseProductSpecs(product.specs);
+
+            productMap[product.id] = {
+                title: name,
+                image: imageSource,
+                images: normalizedImages,
+                alt: `Imagen de ${name}`,
+                description: modalDescription,
+                specs: specsList
+            };
+
+            return card;
+        }
+
+        function hydrateCatalogFromStorage() {
+            const storage = getPersistentStorage();
+            if (!storage) {
+                return;
+            }
+
+            let rawSaved;
+            try {
+                rawSaved = storage.getItem('amazoniaData');
+            } catch (error) {
+                console.warn('No se pudo acceder al almacenamiento local para cargar el catálogo.', error);
+                return;
+            }
+
+            if (!rawSaved) {
+                return;
+            }
+
+            let parsed;
+            try {
+                parsed = JSON.parse(rawSaved);
+            } catch (error) {
+                console.warn('No se pudieron analizar los datos guardados del catálogo.', error);
+                return;
+            }
+
+            if (!parsed || typeof parsed !== 'object') {
+                return;
+            }
+
+            const normalizedConfig = normalizeCatalogConfig(parsed.config);
+            const categoryInfo = parsed.categoryInfo && typeof parsed.categoryInfo === 'object'
+                ? parsed.categoryInfo
+                : {};
+            const normalizedCategories = normalizeCategories(parsed.categories, categoryInfo, parsed.products);
+            const normalizedProducts = normalizeProducts(parsed.products, normalizedCategories);
+
+            const navButtonsContainer = document.getElementById('navButtons');
+            const catalogContainer = document.getElementById('catalogProducts');
+
+            catalogConfig = normalizedConfig;
+
+            if (!navButtonsContainer || !catalogContainer) {
+                return;
+            }
+
+            navButtonsContainer.innerHTML = '';
+            const emptyMessage = document.getElementById('emptyCatalogMessage');
+            Array.from(catalogContainer.querySelectorAll('.category')).forEach(node => node.remove());
+
+            const newProductData = {};
+            const priceValues = [];
+
+            let categoriesToRender = normalizedCategories.filter(category => {
+                const list = normalizedProducts[category.id];
+                return Array.isArray(list) && list.length > 0;
+            });
+
+            if (!categoriesToRender.length) {
+                categoriesToRender = Object.keys(normalizedProducts).map(id => ({
+                    id,
+                    name: formatCategoryTitleFromId(id),
+                    description: '',
+                    icon: '📦'
+                })).filter(category => {
+                    const list = normalizedProducts[category.id];
+                    return Array.isArray(list) && list.length > 0;
+                });
+            }
+
+            if (!categoriesToRender.length) {
+                productData = {};
+                updatePriceFilterOptions([]);
+                return;
+            }
+
+            categoriesToRender.forEach(category => {
+                const products = normalizedProducts[category.id] || [];
+                if (!products.length) {
+                    return;
+                }
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'nav-btn' + (navButtonsContainer.children.length === 0 ? ' active' : '');
+                button.dataset.category = category.id;
+                if (category.description) {
+                    button.dataset.description = category.description;
+                }
+                button.textContent = (category.icon ? `${category.icon} ` : '') + category.name;
+                button.addEventListener('click', function(event) {
+                    showCategory(event, category.id);
+                });
+                navButtonsContainer.appendChild(button);
+
+                const section = document.createElement('div');
+                section.className = 'category';
+                if (navButtonsContainer.children.length === 1) {
+                    section.classList.add('active');
+                }
+                section.id = category.id;
+
+                const titleElement = document.createElement('h2');
+                titleElement.className = 'category-title';
+                titleElement.textContent = category.name;
+                section.appendChild(titleElement);
+
+                if (category.description) {
+                    const descriptionElement = document.createElement('p');
+                    descriptionElement.className = 'category-description';
+                    descriptionElement.textContent = category.description;
+                    section.appendChild(descriptionElement);
+                }
+
+                const productsGrid = document.createElement('div');
+                productsGrid.className = 'products-grid';
+                section.appendChild(productsGrid);
+
+                products.forEach(product => {
+                    const card = createProductCard(category, product, priceValues, newProductData);
+                    if (card) {
+                        productsGrid.appendChild(card);
+                    }
+                });
+
+                const emptyCategoryMessage = document.createElement('p');
+                emptyCategoryMessage.className = 'no-results-message';
+                emptyCategoryMessage.setAttribute('data-category-empty', '');
+                emptyCategoryMessage.style.display = 'none';
+                emptyCategoryMessage.textContent = 'No se encontraron productos que coincidan con los filtros seleccionados.';
+                section.appendChild(emptyCategoryMessage);
+
+                if (emptyMessage && emptyMessage.parentNode === catalogContainer) {
+                    catalogContainer.insertBefore(section, emptyMessage);
+                } else {
+                    catalogContainer.appendChild(section);
+                }
+            });
+
+            productData = newProductData;
+            updatePriceFilterOptions(priceValues);
+        }
 
         const observerOptions = {
             threshold: 0.1,
@@ -2395,6 +3458,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             try {
+                hydrateCatalogFromStorage();
                 applyConfig();
                 setupPrimaryNav();
                 setupFilters();
@@ -2664,6 +3728,32 @@
 
             if (footerSocialContainer) {
                 footerSocialContainer.style.display = hasFooterSocial ? '' : 'none';
+            }
+
+            const footerCompanyNameElement = document.getElementById('footerCompanyName');
+            if (footerCompanyNameElement) {
+                footerCompanyNameElement.textContent = companyName || 'Catálogo Digital';
+            }
+
+            const footerMessageValue = typeof config.footerMessage === 'string'
+                ? config.footerMessage.trim()
+                : '';
+            const footerMessageElement = document.getElementById('footerMessage');
+            if (footerMessageElement) {
+                if (footerMessageValue) {
+                    footerMessageElement.textContent = footerMessageValue;
+                    footerMessageElement.style.display = '';
+                } else {
+                    footerMessageElement.textContent = '';
+                    footerMessageElement.style.display = 'none';
+                }
+            }
+
+            const footerCopyrightElement = document.getElementById('footerCopyright');
+            if (footerCopyrightElement) {
+                const currentYear = new Date().getFullYear();
+                const displayName = companyName || 'Catálogo Digital';
+                footerCopyrightElement.textContent = `© ${currentYear} ${displayName} - Todos los derechos reservados`;
             }
 
             const aboutData = updateAboutSection(config.about);
