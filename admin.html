@@ -23,6 +23,7 @@
             <div class="sidebar">
                 <h3 class="section-title">Menú</h3>
                 <button class="btn btn-primary btn-block" data-section="config" aria-controls="configSection" aria-expanded="true">⚙️ Configuración</button>
+                <button class="btn btn-primary btn-block" data-section="shippingPolicy" aria-controls="shippingPolicySection" aria-expanded="false">🚚 Política de envíos</button>
                 <button class="btn btn-primary btn-block" data-section="products" aria-controls="productsSection" aria-expanded="false">📦 Productos</button>
                 <button class="btn btn-success btn-block mt-md" data-action="generate-catalog">📥 Generar Catálogo</button>
                 <button class="btn btn-secondary btn-block" id="updatePreviewButton">🔄 Actualizar vista previa</button>
@@ -194,6 +195,103 @@
                     </div>
 
                     <button class="btn btn-primary" id="saveConfigButton">Guardar Configuración</button>
+                </div>
+
+                <!-- Shipping Policy Section -->
+                <div id="shippingPolicySection" class="section" role="region" aria-labelledby="shippingPolicySectionTitle" aria-hidden="true" hidden>
+                    <h2 class="section-title" id="shippingPolicySectionTitle">🚚 Política de envíos</h2>
+                    <p class="section-description">Redacta la información que verán tus clientes en la página dedicada a los envíos. Los cambios se aplican al generar el catálogo.</p>
+
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Introducción</h3>
+                        <div class="form-group">
+                            <label for="shippingPolicyHeroTitle">Título principal</label>
+                            <input type="text" id="shippingPolicyHeroTitle" placeholder="Política de envíos">
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicyHeroDescription">Descripción destacada</label>
+                            <textarea id="shippingPolicyHeroDescription" rows="3" placeholder="Describe brevemente cómo gestionas los envíos y tiempos estimados."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Sección 1</h3>
+                        <div class="form-group">
+                            <label for="shippingPolicySection1Title">Título de la sección</label>
+                            <input type="text" id="shippingPolicySection1Title" placeholder="Cobertura y tiempos de entrega">
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection1Description">Descripción</label>
+                            <textarea id="shippingPolicySection1Description" rows="3" placeholder="Explica cómo coordinas los envíos en distintas regiones."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection1Items">Lista de puntos clave (uno por línea)</label>
+                            <textarea id="shippingPolicySection1Items" rows="4" placeholder="Envíos en Bogotá y municipios aledaños.&#10;Cobertura nacional con aliados logísticos.&#10;Entrega estimada entre 5 y 10 días hábiles."></textarea>
+                            <small style="display: block; margin-top: 0.5rem; color: #555;">Cada línea se mostrará como un elemento de lista en el catálogo.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection1Note">Nota adicional (opcional)</label>
+                            <textarea id="shippingPolicySection1Note" rows="2" placeholder="Ejemplo: Los tiempos pueden variar en temporadas de alta demanda."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Sección 2</h3>
+                        <div class="form-group">
+                            <label for="shippingPolicySection2Title">Título de la sección</label>
+                            <input type="text" id="shippingPolicySection2Title" placeholder="Empaque y manipulación especializada">
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection2Description">Descripción</label>
+                            <textarea id="shippingPolicySection2Description" rows="3" placeholder="Detalla cómo proteges tus productos antes del despacho."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection2Items">Lista de puntos clave (uno por línea)</label>
+                            <textarea id="shippingPolicySection2Items" rows="4" placeholder="Inspeccionamos cada pieza antes de salir.&#10;Utilizamos empaques reforzados y reutilizables.&#10;Coordinamos cargue y descargue con personal capacitado."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection2Note">Nota adicional (opcional)</label>
+                            <textarea id="shippingPolicySection2Note" rows="2" placeholder="Ejemplo: Reporta cualquier novedad durante las primeras 24 horas."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Sección 3</h3>
+                        <div class="form-group">
+                            <label for="shippingPolicySection3Title">Título de la sección</label>
+                            <input type="text" id="shippingPolicySection3Title" placeholder="Costos y coordinación">
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection3Description">Descripción</label>
+                            <textarea id="shippingPolicySection3Description" rows="3" placeholder="Indica cómo calculas los costos y coordinar la logística."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection3Items">Lista de puntos clave (uno por línea)</label>
+                            <textarea id="shippingPolicySection3Items" rows="4" placeholder="Cotizamos según volumen, peso y destino.&#10;Ofrecemos recogida en taller sin costo adicional.&#10;Coordinamos entregas especiales para proyectos corporativos."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicySection3Note">Nota adicional (opcional)</label>
+                            <textarea id="shippingPolicySection3Note" rows="2" placeholder="Ejemplo: Confirmamos los detalles logísticos antes del despacho."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Mensaje de cierre</h3>
+                        <div class="form-group">
+                            <label for="shippingPolicyClosingTitle">Título del cierre</label>
+                            <input type="text" id="shippingPolicyClosingTitle" placeholder="¿Listo para coordinar tu envío?">
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicyClosingDescription">Mensaje principal</label>
+                            <textarea id="shippingPolicyClosingDescription" rows="3" placeholder="Invita a tus clientes a contactarte para coordinar su envío."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="shippingPolicyClosingNote">Nota o recordatorio final</label>
+                            <textarea id="shippingPolicyClosingNote" rows="2" placeholder="Ejemplo: Atendemos solicitudes de lunes a viernes de 8 a.m. a 6 p.m."></textarea>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="saveShippingPolicyButton">Guardar política de envíos</button>
                 </div>
 
                 <!-- Products Section -->

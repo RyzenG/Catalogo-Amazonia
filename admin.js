@@ -17,6 +17,49 @@
             values: []
         };
 
+        const defaultShippingPolicy = {
+            heroTitle: 'Política de envíos',
+            heroDescription: 'Coordinamos entregas seguras y puntuales para cada uno de tus proyectos en Colombia.',
+            sections: [
+                {
+                    id: 'coverage',
+                    title: 'Cobertura y tiempos de entrega',
+                    description: 'Planificamos cada despacho según la ciudad y la complejidad del pedido.',
+                    items: [
+                        'Envíos en Bogotá y municipios aledaños con logística propia.',
+                        'Despachos nacionales con aliados estratégicos especializados.',
+                        'Tiempo estimado entre 5 y 10 días hábiles después de confirmar el pedido.'
+                    ],
+                    note: 'Los tiempos pueden variar en temporadas de alta demanda o para piezas personalizadas.'
+                },
+                {
+                    id: 'packaging',
+                    title: 'Empaque y manipulación especializada',
+                    description: 'Protegemos cada pieza para que llegue en perfecto estado.',
+                    items: [
+                        'Revisamos cada producto antes del despacho.',
+                        'Utilizamos empaques reforzados y materiales reutilizables.',
+                        'Coordinamos cargue y descargue con personal capacitado.'
+                    ],
+                    note: 'Si detectas alguna novedad en la entrega, repórtala en las primeras 24 horas.'
+                },
+                {
+                    id: 'coordination',
+                    title: 'Costos y coordinación',
+                    description: 'Te acompañamos para elegir la opción de transporte ideal.',
+                    items: [
+                        'Cotizamos el envío según volumen, peso y destino.',
+                        'Ofrecemos recogida en taller sin costo adicional.',
+                        'Puedes programar entregas especiales para proyectos corporativos.'
+                    ],
+                    note: 'Nuestro equipo confirmará los detalles logísticos antes de despachar tu pedido.'
+                }
+            ],
+            closingTitle: '¿Listo para coordinar tu envío?',
+            closingDescription: 'Escríbenos y recibe asesoría personalizada para definir la mejor opción de entrega.',
+            closingNote: 'Atendemos solicitudes de lunes a viernes de 8:00 a.m. a 6:00 p.m.'
+        };
+
         const APPEARANCE_FIELDS = [
             { id: 'appearanceBackground', key: 'background' },
             { id: 'appearanceHeader', key: 'header' },
@@ -69,6 +112,85 @@
             return normalized;
         }
 
+        function normalizeShippingPolicy(candidate) {
+            const normalized = {
+                heroTitle: defaultShippingPolicy.heroTitle,
+                heroDescription: defaultShippingPolicy.heroDescription,
+                sections: defaultShippingPolicy.sections.map(section => ({
+                    id: section.id,
+                    title: section.title,
+                    description: section.description,
+                    items: Array.isArray(section.items) ? section.items.slice() : [],
+                    note: section.note || ''
+                })),
+                closingTitle: defaultShippingPolicy.closingTitle,
+                closingDescription: defaultShippingPolicy.closingDescription,
+                closingNote: defaultShippingPolicy.closingNote
+            };
+
+            if (!isPlainObject(candidate)) {
+                return normalized;
+            }
+
+            if (typeof candidate.heroTitle === 'string') {
+                normalized.heroTitle = candidate.heroTitle.trim();
+            }
+
+            if (typeof candidate.heroDescription === 'string') {
+                normalized.heroDescription = candidate.heroDescription.trim();
+            }
+
+            if (typeof candidate.closingTitle === 'string') {
+                normalized.closingTitle = candidate.closingTitle.trim();
+            }
+
+            if (typeof candidate.closingDescription === 'string') {
+                normalized.closingDescription = candidate.closingDescription.trim();
+            }
+
+            if (typeof candidate.closingNote === 'string') {
+                normalized.closingNote = candidate.closingNote.trim();
+            }
+
+            const sectionsSource = Array.isArray(candidate.sections) ? candidate.sections : [];
+            if (sectionsSource.length > 0) {
+                normalized.sections = sectionsSource.map((section, index) => {
+                    const fallbackId = defaultShippingPolicy.sections[index]
+                        && typeof defaultShippingPolicy.sections[index].id === 'string'
+                        ? defaultShippingPolicy.sections[index].id
+                        : `section-${index + 1}`;
+
+                    const idCandidate = typeof section.id === 'string' ? section.id.trim() : '';
+                    const titleCandidate = typeof section.title === 'string' ? section.title.trim() : '';
+                    const descriptionCandidate = typeof section.description === 'string' ? section.description.trim() : '';
+                    const noteCandidate = typeof section.note === 'string'
+                        ? section.note.trim()
+                        : (typeof section.notes === 'string' ? section.notes.trim() : '');
+
+                    let itemsSource = [];
+                    if (Array.isArray(section.items)) {
+                        itemsSource = section.items;
+                    } else if (typeof section.items === 'string') {
+                        itemsSource = section.items.split(/\r?\n/);
+                    }
+
+                    const items = itemsSource
+                        .map(item => typeof item === 'string' ? item.trim() : '')
+                        .filter(item => item.length > 0);
+
+                    return {
+                        id: idCandidate || fallbackId,
+                        title: titleCandidate,
+                        description: descriptionCandidate,
+                        items,
+                        note: noteCandidate
+                    };
+                });
+            }
+
+            return normalized;
+        }
+
         // Default data structure
         const defaultConfig = {
             whatsapp: '573000000000',
@@ -83,7 +205,8 @@
             footerMessage: 'Creando espacios únicos con concreto sostenible',
             logoData: '',
             appearance: { ...defaultAppearance },
-            about: normalizeAbout(defaultAbout)
+            about: normalizeAbout(defaultAbout),
+            shippingPolicy: normalizeShippingPolicy(defaultShippingPolicy)
         };
 
         const defaultCategories = [
@@ -174,6 +297,7 @@
 
             base.appearance = normalizeAppearance(base.appearance);
             base.about = normalizeAbout(base.about);
+            base.shippingPolicy = normalizeShippingPolicy(base.shippingPolicy);
             return base;
         }
 
@@ -2231,6 +2355,11 @@
                 saveConfigButton.addEventListener('click', saveConfig);
             }
 
+            const saveShippingPolicyButton = document.getElementById('saveShippingPolicyButton');
+            if (saveShippingPolicyButton) {
+                saveShippingPolicyButton.addEventListener('click', saveConfig);
+            }
+
             const removeLogoButton = document.getElementById('removeLogoButton');
             if (removeLogoButton) {
                 removeLogoButton.addEventListener('click', handleRemoveLogoClick);
@@ -2491,6 +2620,49 @@
                 return element.value;
             };
 
+            const readShippingSectionValues = () => {
+                const sections = [];
+                const existingSections = catalogData
+                    && catalogData.config
+                    && catalogData.config.shippingPolicy
+                    && Array.isArray(catalogData.config.shippingPolicy.sections)
+                    ? catalogData.config.shippingPolicy.sections
+                    : [];
+
+                const fallbackSections = Array.isArray(defaultShippingPolicy.sections)
+                    ? defaultShippingPolicy.sections
+                    : [];
+
+                const maxSections = Math.max(fallbackSections.length, existingSections.length, 3);
+
+                for (let index = 0; index < maxSections; index += 1) {
+                    const base = fallbackSections[index] || existingSections[index] || {};
+                    const baseId = typeof base.id === 'string' && base.id.trim().length > 0
+                        ? base.id.trim()
+                        : `section-${index + 1}`;
+                    const sectionPrefix = `shippingPolicySection${index + 1}`;
+
+                    const title = readValue(`${sectionPrefix}Title`);
+                    const description = readValue(`${sectionPrefix}Description`);
+                    const items = readMultilineList(`${sectionPrefix}Items`);
+                    const note = readValue(`${sectionPrefix}Note`);
+
+                    if (!title && !description && items.length === 0 && !note && !baseId) {
+                        continue;
+                    }
+
+                    sections.push({
+                        id: baseId,
+                        title,
+                        description,
+                        items,
+                        note
+                    });
+                }
+
+                return sections;
+            };
+
             return {
                 whatsapp: readValue('whatsapp'),
                 email: readValue('email'),
@@ -2507,6 +2679,14 @@
                     mission: readValue('aboutMission'),
                     vision: readValue('aboutVision'),
                     values: readMultilineList('aboutValues')
+                }),
+                shippingPolicy: normalizeShippingPolicy({
+                    heroTitle: readValue('shippingPolicyHeroTitle'),
+                    heroDescription: readValue('shippingPolicyHeroDescription'),
+                    sections: readShippingSectionValues(),
+                    closingTitle: readValue('shippingPolicyClosingTitle'),
+                    closingDescription: readValue('shippingPolicyClosingDescription'),
+                    closingNote: readValue('shippingPolicyClosingNote')
                 }),
                 appearance: normalizeAppearance({
                     background: readColor('appearanceBackground'),
@@ -2665,6 +2845,8 @@
                 ? configValues.appearance
                 : {};
 
+            configValues.shippingPolicy = normalizeShippingPolicy(configValues.shippingPolicy);
+
             const appearanceImageFields = [
                 { id: 'appearanceBackgroundImage', key: 'backgroundImage', label: 'la imagen de fondo del catálogo' },
                 { id: 'appearanceHeaderImage', key: 'headerImage', label: 'la imagen del encabezado' },
@@ -2776,6 +2958,52 @@
             if (aboutValuesInput) {
                 aboutValuesInput.value = aboutValues.values.join('\n');
             }
+
+            const shippingPolicyValues = normalizeShippingPolicy(catalogData.config.shippingPolicy);
+            const setInputValue = (id, value) => {
+                const element = document.getElementById(id);
+                if (!element || typeof element.value !== 'string') {
+                    return;
+                }
+                element.value = typeof value === 'string' ? value : '';
+            };
+
+            setInputValue('shippingPolicyHeroTitle', shippingPolicyValues.heroTitle || '');
+            setInputValue('shippingPolicyHeroDescription', shippingPolicyValues.heroDescription || '');
+
+            const sections = Array.isArray(shippingPolicyValues.sections)
+                ? shippingPolicyValues.sections
+                : [];
+
+            sections.forEach((section, index) => {
+                const prefix = `shippingPolicySection${index + 1}`;
+                setInputValue(`${prefix}Title`, section && section.title ? section.title : '');
+                setInputValue(`${prefix}Description`, section && section.description ? section.description : '');
+                const itemsInput = document.getElementById(`${prefix}Items`);
+                if (itemsInput && typeof itemsInput.value === 'string') {
+                    const items = Array.isArray(section && section.items)
+                        ? section.items.map(item => typeof item === 'string' ? item : '').filter(Boolean)
+                        : [];
+                    itemsInput.value = items.join('\n');
+                }
+                setInputValue(`${prefix}Note`, section && section.note ? section.note : '');
+            });
+
+            const maxSections = Math.max(sections.length, Array.isArray(defaultShippingPolicy.sections) ? defaultShippingPolicy.sections.length : 0);
+            for (let index = sections.length; index < maxSections; index += 1) {
+                const prefix = `shippingPolicySection${index + 1}`;
+                setInputValue(`${prefix}Title`, '');
+                setInputValue(`${prefix}Description`, '');
+                const itemsInput = document.getElementById(`${prefix}Items`);
+                if (itemsInput && typeof itemsInput.value === 'string') {
+                    itemsInput.value = '';
+                }
+                setInputValue(`${prefix}Note`, '');
+            }
+
+            setInputValue('shippingPolicyClosingTitle', shippingPolicyValues.closingTitle || '');
+            setInputValue('shippingPolicyClosingDescription', shippingPolicyValues.closingDescription || '');
+            setInputValue('shippingPolicyClosingNote', shippingPolicyValues.closingNote || '');
             const logoValue = catalogData.config.logoData || '';
             const logoUrlInput = document.getElementById('companyLogoUrl');
             if (logoUrlInput) {
@@ -2888,6 +3116,11 @@
                     element: document.getElementById('configSection'),
                     button: document.querySelector('button[data-section="config"]'),
                     label: 'Configuración general'
+                },
+                shippingPolicy: {
+                    element: document.getElementById('shippingPolicySection'),
+                    button: document.querySelector('button[data-section="shippingPolicy"]'),
+                    label: 'Política de envíos'
                 },
                 products: {
                     element: document.getElementById('productsSection'),
@@ -3648,27 +3881,31 @@
                     detail: 'Compilando catálogo con tus productos…'
                 });
                 // Generate the HTML content
-                const htmlContent = generateCatalogHTML(catalogData.config);
+                const indexHtmlContent = generateCatalogHTML(catalogData.config);
+                const shippingPolicyHtmlContent = generateShippingPolicyHTML(catalogData.config);
 
                 updateProcessStatusEntry(processEntryId, {
-                    detail: 'Generando archivo para la descarga…'
+                    detail: 'Generando archivos para la descarga…'
                 });
-                // Create download link
-                const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'catalogo_amazonia_' + new Date().toISOString().split('T')[0] + '.html';
-                link.click();
 
-                // Clean up
-                URL.revokeObjectURL(url);
+                const triggerDownload = (filename, content) => {
+                    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                };
+
+                triggerDownload('index.html', indexHtmlContent);
+                triggerDownload('politica-envios.html', shippingPolicyHtmlContent);
 
                 updateProcessStatusEntry(processEntryId, {
                     state: 'success',
-                    detail: 'Descarga completada. El catálogo está listo.'
+                    detail: 'Descarga completada. Se generaron index.html y politica-envios.html.'
                 });
-                showMessage('¡Catálogo generado correctamente! Revisa tu carpeta de descargas.', 'success');
+                showMessage('¡Catálogo y política de envíos generados correctamente! Revisa tu carpeta de descargas para encontrar index.html y politica-envios.html.', 'success');
             } catch (error) {
                 console.error('No se pudo generar el catálogo', error);
                 updateProcessStatusEntry(processEntryId, {
@@ -3817,6 +4054,7 @@
                 logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
             };
 
+            const shippingPolicy = normalizeShippingPolicy(config.shippingPolicy);
             const about = normalizeAbout(config.about);
             const aboutMissionText = about.mission || '';
             const aboutVisionText = about.vision || '';
@@ -3825,6 +4063,31 @@
             const hasVision = aboutVisionText.length > 0;
             const hasValues = aboutValues.length > 0;
             const shouldShowAboutSection = hasMission || hasVision || hasValues;
+            const hasShippingPolicyContent = (() => {
+                if (!shippingPolicy || typeof shippingPolicy !== 'object') {
+                    return false;
+                }
+
+                const heroHasContent = (typeof shippingPolicy.heroTitle === 'string' && shippingPolicy.heroTitle.trim().length > 0)
+                    || (typeof shippingPolicy.heroDescription === 'string' && shippingPolicy.heroDescription.trim().length > 0);
+                const closingHasContent = (typeof shippingPolicy.closingTitle === 'string' && shippingPolicy.closingTitle.trim().length > 0)
+                    || (typeof shippingPolicy.closingDescription === 'string' && shippingPolicy.closingDescription.trim().length > 0)
+                    || (typeof shippingPolicy.closingNote === 'string' && shippingPolicy.closingNote.trim().length > 0);
+                const sectionsHaveContent = Array.isArray(shippingPolicy.sections)
+                    && shippingPolicy.sections.some(section => {
+                        if (!section || typeof section !== 'object') {
+                            return false;
+                        }
+                        const hasSectionTitle = typeof section.title === 'string' && section.title.trim().length > 0;
+                        const hasSectionDescription = typeof section.description === 'string' && section.description.trim().length > 0;
+                        const hasSectionItems = Array.isArray(section.items)
+                            && section.items.some(item => typeof item === 'string' && item.trim().length > 0);
+                        const hasSectionNote = typeof section.note === 'string' && section.note.trim().length > 0;
+                        return hasSectionTitle || hasSectionDescription || hasSectionItems || hasSectionNote;
+                    });
+
+                return heroHasContent || closingHasContent || sectionsHaveContent;
+            })();
             const missionCardAttributes = hasMission ? '' : ' style="display: none;" aria-hidden="true"';
             const visionCardAttributes = hasVision ? '' : ' style="display: none;" aria-hidden="true"';
             const valuesCardAttributes = hasValues ? '' : ' style="display: none;" aria-hidden="true"';
@@ -4133,14 +4396,18 @@
             const primaryNavItems = [
                 { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true },
                 { id: 'primaryNavProducts', label: 'Productos', target: 'catalogProducts', visible: hasProductNavigation },
-                { id: 'primaryNavAbout', label: 'Nosotros', target: 'aboutSection', visible: shouldShowAboutSection }
+                { id: 'primaryNavAbout', label: 'Nosotros', target: 'aboutSection', visible: shouldShowAboutSection },
+                { id: 'primaryNavShipping', label: 'Política de envíos', href: 'politica-envios.html', external: true, visible: hasShippingPolicyContent }
             ];
 
             const primaryNavLinksMarkup = primaryNavItems
                 .map(item => {
                     const styleAttr = item.visible ? '' : ' style="display: none;"';
                     const hiddenAttr = item.visible ? '' : ' aria-hidden="true" tabindex="-1"';
-                    return `<a class="primary-nav__link" id="${item.id}" href="#${item.target}" data-scroll-target="${item.target}"${styleAttr}${hiddenAttr}>${escapeHtml(item.label)}</a>`;
+                    const hrefAttr = item.href ? item.href : `#${item.target}`;
+                    const targetAttr = item.href ? '' : ` data-scroll-target="${item.target}"`;
+                    const externalAttr = item.external && item.href ? ` data-external-url="${item.href}"` : '';
+                    return `<a class="primary-nav__link" id="${item.id}" href="${hrefAttr}"${targetAttr}${externalAttr}${styleAttr}${hiddenAttr}>${escapeHtml(item.label)}</a>`;
                 })
                 .join('');
 
@@ -4300,6 +4567,289 @@
 
     <script>
         ${getCatalogScript(productDataJS, config, serializeForScript)}
+    </script>
+</body>
+</html>`;
+        }
+
+        function generateShippingPolicyHTML(configOverride) {
+            const config = getNormalizedConfig(configOverride || catalogData.config);
+            const theme = buildThemeTokens(config.appearance);
+            const shippingPolicy = normalizeShippingPolicy(config.shippingPolicy);
+
+            const trimmedConfig = {
+                whatsapp: (config.whatsapp || '').trim(),
+                email: (config.email || '').trim(),
+                phone: (config.phone || '').trim(),
+                address: (config.address || '').trim(),
+                instagram: (config.instagram || '').trim(),
+                facebook: (config.facebook || '').trim(),
+                tiktok: (config.tiktok || '').trim(),
+                companyName: config.companyName || '',
+                footerMessage: config.footerMessage || '',
+                logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
+            };
+
+            const heroTitleText = typeof shippingPolicy.heroTitle === 'string' && shippingPolicy.heroTitle.trim().length > 0
+                ? shippingPolicy.heroTitle.trim()
+                : defaultShippingPolicy.heroTitle;
+            const heroDescriptionText = typeof shippingPolicy.heroDescription === 'string'
+                ? shippingPolicy.heroDescription.trim()
+                : '';
+
+            const heroTitleHtml = escapeHtml(heroTitleText);
+            const heroDescriptionMarkup = heroDescriptionText
+                ? `<p class="shipping-hero__description" id="shippingPolicyLead">${escapeHtml(heroDescriptionText)}</p>`
+                : '<p class="shipping-hero__description" id="shippingPolicyLead" style="display: none;"></p>';
+
+            const sectionsSource = Array.isArray(shippingPolicy.sections) ? shippingPolicy.sections : [];
+            const visibleSections = sectionsSource.filter(section => {
+                if (!section || typeof section !== 'object') {
+                    return false;
+                }
+
+                const hasTitle = typeof section.title === 'string' && section.title.trim().length > 0;
+                const hasDescription = typeof section.description === 'string' && section.description.trim().length > 0;
+                const hasItems = Array.isArray(section.items)
+                    && section.items.some(item => typeof item === 'string' && item.trim().length > 0);
+                const hasNote = typeof section.note === 'string' && section.note.trim().length > 0;
+
+                return hasTitle || hasDescription || hasItems || hasNote;
+            });
+
+            const sectionsMarkup = visibleSections.length > 0
+                ? visibleSections.map((section, index) => {
+                    const sectionId = (typeof section.id === 'string' && section.id.trim().length > 0)
+                        ? section.id.trim()
+                        : `shipping-section-${index + 1}`;
+                    const titleText = typeof section.title === 'string' && section.title.trim().length > 0
+                        ? section.title.trim()
+                        : `Sección ${index + 1}`;
+                    const descriptionText = typeof section.description === 'string'
+                        ? section.description.trim()
+                        : '';
+                    const items = Array.isArray(section.items)
+                        ? section.items
+                            .map(item => typeof item === 'string' ? item.trim() : '')
+                            .filter(item => item.length > 0)
+                        : [];
+                    const noteText = typeof section.note === 'string' ? section.note.trim() : '';
+
+                    const descriptionMarkup = descriptionText
+                        ? `<p class="shipping-section__description">${escapeHtml(descriptionText)}</p>`
+                        : '';
+                    const itemsMarkup = items.length > 0
+                        ? `<ul class="shipping-section__list">${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+                        : '';
+                    const noteMarkup = noteText
+                        ? `<p class="shipping-section__note">${escapeHtml(noteText)}</p>`
+                        : '';
+
+                    return `
+                <article class="shipping-section" id="${escapeHtml(sectionId)}">
+                    <h3 class="shipping-section__title">${escapeHtml(titleText)}</h3>
+                    ${descriptionMarkup}
+                    ${itemsMarkup}
+                    ${noteMarkup}
+                </article>`;
+                }).join('')
+                : `
+                <article class="shipping-section">
+                    <p class="shipping-section__description">Pronto compartiremos los detalles de nuestra política de envíos.</p>
+                </article>`;
+
+            const closingTitleText = typeof shippingPolicy.closingTitle === 'string'
+                ? shippingPolicy.closingTitle.trim()
+                : '';
+            const closingDescriptionText = typeof shippingPolicy.closingDescription === 'string'
+                ? shippingPolicy.closingDescription.trim()
+                : '';
+            const closingNoteText = typeof shippingPolicy.closingNote === 'string'
+                ? shippingPolicy.closingNote.trim()
+                : '';
+
+            const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
+            const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '';
+            const emailLinkHref = trimmedConfig.email ? `mailto:${escapeHtml(trimmedConfig.email)}` : '';
+
+            const ctaButtons = [];
+            if (whatsappLinkHref) {
+                ctaButtons.push(`<a class="cta-button shipping-cta__button" href="${escapeHtml(whatsappLinkHref)}" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp</a>`);
+            }
+            if (emailLinkHref) {
+                ctaButtons.push(`<a class="cta-button shipping-cta__button shipping-cta__button--secondary" href="${emailLinkHref}">Enviar un correo</a>`);
+            }
+
+            const ctaButtonsMarkup = ctaButtons.length > 0
+                ? `<div class="shipping-cta__buttons">${ctaButtons.join('')}</div>`
+                : '';
+
+            const hasCtaContent = Boolean(
+                closingTitleText
+                || closingDescriptionText
+                || closingNoteText
+                || ctaButtons.length > 0
+            );
+
+            const ctaSectionAttributes = closingTitleText
+                ? ' aria-labelledby="shippingCtaTitle"'
+                : ' aria-label="Contacto para coordinar envíos"';
+
+            const ctaSectionMarkup = hasCtaContent
+                ? `
+            <section class="shipping-cta"${ctaSectionAttributes}>
+                <div class="shipping-cta__inner">
+                    ${closingTitleText ? `<h2 class="shipping-cta__title" id="shippingCtaTitle">${escapeHtml(closingTitleText)}</h2>` : ''}
+                    ${closingDescriptionText ? `<p class="shipping-cta__text">${escapeHtml(closingDescriptionText)}</p>` : ''}
+                    ${ctaButtonsMarkup}
+                    ${closingNoteText ? `<p class="shipping-cta__note">${escapeHtml(closingNoteText)}</p>` : ''}
+                </div>
+            </section>`
+                : '';
+
+            const defaultCompanyNameHtml = escapeHtml(defaultConfig.companyName || 'Amazonia Concrete');
+            const companyNameHtml = escapeHtml(trimmedConfig.companyName || '');
+            const footerCompanyName = companyNameHtml || defaultCompanyNameHtml;
+            const footerMessageHtml = trimmedConfig.footerMessage
+                ? `<p>${escapeHtml(trimmedConfig.footerMessage)}</p>`
+                : '';
+            const logoAltName = footerCompanyName || 'la empresa';
+            const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : '';
+            const logoContainerStyle = trimmedConfig.logoData ? '' : 'display: none;';
+            const headerLogoMarkup = `
+        <div class="logo-container" id="headerLogoContainer" style="${logoContainerStyle}">
+            <img id="headerLogo" src="${sanitizedLogoData}" alt="Logo de ${logoAltName}">
+        </div>`;
+
+            const primaryNavLinksMarkup = `
+            <a class="primary-nav__link" id="primaryNavHome" href="index.html" data-external-url="index.html">Inicio</a>
+            <a class="primary-nav__link" id="primaryNavShipping" href="#policyMain" data-scroll-target="policyMain">Política de envíos</a>`;
+
+            const instagramUrlRaw = trimmedConfig.instagram;
+            const facebookUrlRaw = trimmedConfig.facebook;
+            const tiktokUrlRaw = trimmedConfig.tiktok;
+
+            const instagramLinkHref = instagramUrlRaw ? escapeHtml(instagramUrlRaw) : '#';
+            const instagramLinkStyle = instagramUrlRaw ? '' : 'display: none;';
+            const facebookLinkHref = facebookUrlRaw ? escapeHtml(facebookUrlRaw) : '#';
+            const facebookLinkStyle = facebookUrlRaw ? '' : 'display: none;';
+            const tiktokLinkHref = tiktokUrlRaw ? escapeHtml(tiktokUrlRaw) : '#';
+            const tiktokLinkStyle = tiktokUrlRaw ? '' : 'display: none;';
+            const whatsappLinkStyle = whatsappLinkHref ? '' : 'display: none;';
+            const hasSocialLinks = Boolean(whatsappLinkHref || instagramUrlRaw || facebookUrlRaw || tiktokUrlRaw);
+            const socialLinksContainerStyle = hasSocialLinks ? '' : 'display: none;';
+
+            const socialLinksMarkup = `
+                <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="${socialLinksContainerStyle}">
+                    <a id="footerSocialWhatsApp" class="social-link social-link--whatsapp" href="${whatsappLinkHref || '#'}" target="_blank" rel="noopener noreferrer" style="${whatsappLinkStyle}">
+                        ${getSocialIconSvg('whatsapp')}
+                        <span class="sr-only">WhatsApp</span>
+                    </a>
+                    <a id="footerSocialInstagram" class="social-link social-link--instagram" href="${instagramLinkHref}" target="_blank" rel="noopener noreferrer" style="${instagramLinkStyle}">
+                        ${getSocialIconSvg('instagram')}
+                        <span class="sr-only">Instagram</span>
+                    </a>
+                    <a id="footerSocialFacebook" class="social-link social-link--facebook" href="${facebookLinkHref}" target="_blank" rel="noopener noreferrer" style="${facebookLinkStyle}">
+                        ${getSocialIconSvg('facebook')}
+                        <span class="sr-only">Facebook</span>
+                    </a>
+                    <a id="footerSocialTiktok" class="social-link social-link--tiktok" href="${tiktokLinkHref}" target="_blank" rel="noopener noreferrer" style="${tiktokLinkStyle}">
+                        ${getSocialIconSvg('tiktok')}
+                        <span class="sr-only">TikTok</span>
+                    </a>
+                </div>`;
+
+            return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${heroTitleHtml} - ${footerCompanyName}</title>
+    <style>
+        ${getCatalogStyles(theme)}
+    </style>
+</head>
+<body>
+    <div class="loader" id="loader">
+        <svg class="leaf-spinner" viewBox="0 0 100 100">
+            <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="${theme.loaderPrimary}"/>
+            <path d="M50 40 Q30 60 50 80 Q70 60 50 40" fill="${theme.loaderSecondary}"/>
+        </svg>
+    </div>
+
+    <header id="pageTop">
+        <div class="header-inner">
+            ${headerLogoMarkup}
+            <div class="header-content shipping-hero__content">
+                <h1 class="shipping-hero__title" id="policyMain">${heroTitleHtml}</h1>
+                ${heroDescriptionMarkup}
+            </div>
+        </div>
+        <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
+            ${primaryNavLinksMarkup}
+        </nav>
+    </header>
+
+    <main class="shipping-main" id="mainContent">
+        <section class="shipping-sections" aria-labelledby="shippingSectionsTitle">
+            <div class="shipping-sections__inner">
+                <h2 class="shipping-sections__title" id="shippingSectionsTitle">Detalles de envíos</h2>
+                ${sectionsMarkup}
+            </div>
+        </section>
+        ${ctaSectionMarkup}
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="contact-info" id="contactSection">
+                <h3>${footerCompanyName}</h3>
+                ${socialLinksMarkup}
+                ${footerMessageHtml}
+            </div>
+            <p style="margin-top: 2rem; opacity: 0.7;">© 2025 ${footerCompanyName} - Todos los derechos reservados</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var loader = document.getElementById('loader');
+            if (loader) {
+                requestAnimationFrame(function() {
+                    loader.classList.add('hidden');
+                });
+            }
+
+            var nav = document.getElementById('primaryNav');
+            if (nav) {
+                nav.addEventListener('click', function(event) {
+                    var link = event.target.closest('.primary-nav__link');
+                    if (!link || link.getAttribute('aria-hidden') === 'true') {
+                        return;
+                    }
+
+                    var externalUrl = link.getAttribute('data-external-url');
+                    if (externalUrl) {
+                        return;
+                    }
+
+                    var targetId = link.getAttribute('data-scroll-target');
+                    if (!targetId) {
+                        return;
+                    }
+
+                    var target = document.getElementById(targetId);
+                    if (!target) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    if (typeof target.scrollIntoView === 'function') {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>`;
@@ -5462,6 +6012,144 @@ ${formatCssBlock(headerBackground)}
             box-shadow: 0 5px 15px ${theme.ctaShadow};
         }
 
+        .shipping-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem 4rem;
+        }
+
+        .shipping-hero__content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1.5rem;
+        }
+
+        .shipping-hero__title {
+            font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+            letter-spacing: 2px;
+            color: ${theme.textOnDark};
+        }
+
+        .shipping-hero__description {
+            max-width: 720px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: ${theme.textOnDark};
+            margin: 0 auto;
+        }
+
+        .shipping-sections {
+            margin-top: 3rem;
+        }
+
+        .shipping-sections__inner {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+            padding: 3rem;
+        }
+
+        .shipping-sections__title {
+            font-size: 2rem;
+            color: ${theme.categoryTitle};
+            text-align: center;
+        }
+
+        .shipping-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .shipping-section__title {
+            font-size: 1.5rem;
+            color: ${theme.categoryTitle};
+        }
+
+        .shipping-section__description {
+            color: ${theme.textSecondary};
+            line-height: 1.6;
+        }
+
+        .shipping-section__list {
+            padding-left: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            color: ${theme.categoryTitle};
+        }
+
+        .shipping-section__note {
+            font-size: 0.95rem;
+            color: ${theme.accentStrong};
+            background: ${theme.ctaSectionBackground};
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+        }
+
+        .shipping-cta {
+            margin-top: 3rem;
+        }
+
+        .shipping-cta__inner {
+            background: linear-gradient(135deg, ${theme.ctaSectionBackground} 0%, ${theme.accentSoft} 100%);
+            border-radius: 28px;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .shipping-cta__title {
+            font-size: 2rem;
+            color: ${theme.categoryTitle};
+        }
+
+        .shipping-cta__text {
+            font-size: 1.05rem;
+            color: ${theme.categoryTitle};
+            max-width: 720px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .shipping-cta__buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .shipping-cta__button {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 220px;
+        }
+
+        .shipping-cta__button--secondary {
+            background: #ffffff;
+            color: ${theme.categoryTitle};
+            border: 1px solid ${theme.borderColor};
+        }
+
+        .shipping-cta__button--secondary:hover {
+            color: ${theme.accentStrong};
+        }
+
+        .shipping-cta__note {
+            font-size: 0.95rem;
+            color: ${theme.textSecondary};
+        }
+
         /* Footer */
         footer {
 ${formatCssBlock(footerBackground)}
@@ -6002,6 +6690,18 @@ ${formatCssBlock(footerBackground)}
             .products-grid {
                 grid-template-columns: 1fr;
             }
+
+            .shipping-main {
+                padding: 2.5rem 1.5rem 3rem;
+            }
+
+            .shipping-sections__inner {
+                padding: 2rem 1.5rem;
+            }
+
+            .shipping-cta__inner {
+                padding: 2.5rem 1.5rem;
+            }
         }`;
         }
 
@@ -6179,6 +6879,11 @@ ${formatCssBlock(footerBackground)}
                     return;
                 }
 
+                const externalUrl = link.getAttribute('data-external-url');
+                if (externalUrl) {
+                    return;
+                }
+
                 const targetId = link.getAttribute('data-scroll-target');
                 if (!targetId) {
                     return;
@@ -6203,10 +6908,12 @@ ${formatCssBlock(footerBackground)}
             const navHome = document.getElementById('primaryNavHome');
             const navProducts = document.getElementById('primaryNavProducts');
             const navAbout = document.getElementById('primaryNavAbout');
+            const navShipping = document.getElementById('primaryNavShipping');
 
             updateLinkVisibility(navHome, true);
             updateLinkVisibility(navProducts, Boolean(state && state.hasProducts));
             updateLinkVisibility(navAbout, Boolean(state && state.hasAbout));
+            updateLinkVisibility(navShipping, Boolean(state && state.hasShippingPolicy));
         }
 
         function hideLoader() {
@@ -6495,13 +7202,42 @@ ${formatCssBlock(footerBackground)}
                 (aboutData && aboutData.vision) ||
                 (aboutData && Array.isArray(aboutData.values) && aboutData.values.length > 0)
             );
+            const shippingPolicyData = config && config.shippingPolicy ? config.shippingPolicy : null;
+            const hasShippingPolicyContent = (() => {
+                if (!shippingPolicyData || typeof shippingPolicyData !== 'object') {
+                    return false;
+                }
+
+                const heroHasContent = (typeof shippingPolicyData.heroTitle === 'string' && shippingPolicyData.heroTitle.trim().length > 0)
+                    || (typeof shippingPolicyData.heroDescription === 'string' && shippingPolicyData.heroDescription.trim().length > 0);
+                const closingHasContent = (typeof shippingPolicyData.closingTitle === 'string' && shippingPolicyData.closingTitle.trim().length > 0)
+                    || (typeof shippingPolicyData.closingDescription === 'string' && shippingPolicyData.closingDescription.trim().length > 0)
+                    || (typeof shippingPolicyData.closingNote === 'string' && shippingPolicyData.closingNote.trim().length > 0);
+                const sectionsHaveContent = Array.isArray(shippingPolicyData.sections)
+                    && shippingPolicyData.sections.some(section => {
+                        if (!section || typeof section !== 'object') {
+                            return false;
+                        }
+
+                        const hasSectionTitle = typeof section.title === 'string' && section.title.trim().length > 0;
+                        const hasSectionDescription = typeof section.description === 'string' && section.description.trim().length > 0;
+                        const hasSectionItems = Array.isArray(section.items)
+                            && section.items.some(item => typeof item === 'string' && item.trim().length > 0);
+                        const hasSectionNote = typeof section.note === 'string' && section.note.trim().length > 0;
+
+                        return hasSectionTitle || hasSectionDescription || hasSectionItems || hasSectionNote;
+                    });
+
+                return heroHasContent || closingHasContent || sectionsHaveContent;
+            })();
             const productKeys = productData && typeof productData === 'object'
                 ? Object.keys(productData)
                 : [];
 
             updatePrimaryNavVisibility({
                 hasProducts: productKeys.length > 0,
-                hasAbout: hasAboutContent
+                hasAbout: hasAboutContent,
+                hasShippingPolicy: hasShippingPolicyContent
             });
         }
 
