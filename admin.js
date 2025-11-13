@@ -4722,7 +4722,7 @@
         </div>`;
 
             const primaryNavLinksMarkup = `
-            <a class="primary-nav__link" id="primaryNavHome" href="index.html" data-external-url="index.html">Inicio</a>
+            <a class="primary-nav__link" id="primaryNavHome" href="#pageTop" data-scroll-target="pageTop">Inicio</a>
             <a class="primary-nav__link" id="primaryNavShipping" href="#policyMain" data-scroll-target="policyMain">Política de envíos</a>`;
 
             const instagramUrlRaw = trimmedConfig.instagram;
@@ -4818,6 +4818,28 @@
                 requestAnimationFrame(function() {
                     loader.classList.add('hidden');
                 });
+            }
+
+            var homeLink = document.getElementById('primaryNavHome');
+            if (homeLink) {
+                var href = window.location.href || '';
+                var isPreviewContext = (href.indexOf('about:') === 0) || (href.indexOf('blob:') === 0);
+                if (!isPreviewContext) {
+                    try {
+                        var catalogUrl = new URL('index.html', window.location.href);
+                        homeLink.setAttribute('href', catalogUrl.href);
+                        homeLink.setAttribute('data-external-url', catalogUrl.href);
+                        homeLink.removeAttribute('data-scroll-target');
+                    } catch (error) {
+                        homeLink.setAttribute('href', '#pageTop');
+                        homeLink.setAttribute('data-scroll-target', 'pageTop');
+                        homeLink.removeAttribute('data-external-url');
+                    }
+                } else {
+                    homeLink.setAttribute('href', '#pageTop');
+                    homeLink.setAttribute('data-scroll-target', 'pageTop');
+                    homeLink.removeAttribute('data-external-url');
+                }
             }
 
             var nav = document.getElementById('primaryNav');
