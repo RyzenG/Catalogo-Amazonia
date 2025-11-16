@@ -595,6 +595,30 @@
             text-transform: uppercase;
         }
 
+        .about-history {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 18px;
+            border: 1px solid rgba(41, 68, 40, 0.1);
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .about-history__label {
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #8fa68c;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .about-history__text {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #425c40;
+            margin: 0;
+        }
+
         .about-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -1935,6 +1959,10 @@
         <section id="aboutSection" class="about-section about-section--standalone" aria-labelledby="aboutSectionTitle">
             <div class="about-section__inner">
                 <h2 class="about-section__title" id="aboutSectionTitle">Nosotros</h2>
+                <div class="about-history" id="aboutHistory">
+                    <p class="about-history__label">Nuestra historia</p>
+                    <p class="about-history__text" id="aboutHistoryText">Desde nuestros primeros proyectos hemos transformado el concreto en experiencias cálidas y funcionales. Cada pieza que sale de nuestro taller está inspirada en la biodiversidad de la Amazonia y en el deseo de crear espacios responsables con el entorno.</p>
+                </div>
                 <div class="about-grid" id="aboutGrid">
                     <article class="about-card about-card--mission" id="aboutMissionCard">
                         <h3 class="about-card__title">Nuestra misión</h3>

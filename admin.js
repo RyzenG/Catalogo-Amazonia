@@ -12,6 +12,8 @@
         };
 
         const defaultAbout = {
+            heroTitle: '',
+            history: '',
             mission: '',
             vision: '',
             values: []
@@ -82,12 +84,22 @@
 
         function normalizeAbout(candidate) {
             const normalized = {
+                heroTitle: defaultAbout.heroTitle,
+                history: defaultAbout.history,
                 mission: defaultAbout.mission,
                 vision: defaultAbout.vision,
                 values: []
             };
 
             if (isPlainObject(candidate)) {
+                if (typeof candidate.heroTitle === 'string') {
+                    normalized.heroTitle = candidate.heroTitle.trim();
+                }
+
+                if (typeof candidate.history === 'string') {
+                    normalized.history = candidate.history.trim();
+                }
+
                 if (typeof candidate.mission === 'string') {
                     normalized.mission = candidate.mission.trim();
                 }
@@ -2678,6 +2690,8 @@
                 footerMessage: readValue('footerMessage'),
                 logoData: readValue('companyLogoUrl'),
                 about: normalizeAbout({
+                    heroTitle: readValue('aboutHeroTitle'),
+                    history: readValue('aboutHistory'),
                     mission: readValue('aboutMission'),
                     vision: readValue('aboutVision'),
                     values: readMultilineList('aboutValues')
@@ -2946,6 +2960,14 @@
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
             const aboutValues = normalizeAbout(catalogData.config.about);
+            const aboutHeroTitleInput = document.getElementById('aboutHeroTitle');
+            if (aboutHeroTitleInput) {
+                aboutHeroTitleInput.value = aboutValues.heroTitle || '';
+            }
+            const aboutHistoryInput = document.getElementById('aboutHistory');
+            if (aboutHistoryInput) {
+                aboutHistoryInput.value = aboutValues.history || '';
+            }
             const aboutMissionInput = document.getElementById('aboutMission');
             if (aboutMissionInput) {
                 aboutMissionInput.value = aboutValues.mission || '';
@@ -4068,6 +4090,7 @@
             const hasAboutContent = Boolean(
                 (about && typeof about.mission === 'string' && about.mission.trim().length > 0)
                 || (about && typeof about.vision === 'string' && about.vision.trim().length > 0)
+                || (about && typeof about.history === 'string' && about.history.trim().length > 0)
                 || (about && Array.isArray(about.values) && about.values.some(value => typeof value === 'string' && value.trim().length > 0))
             );
             const hasShippingPolicyContent = (() => {
@@ -4871,12 +4894,15 @@
 
             const missionText = typeof about.mission === 'string' ? about.mission.trim() : '';
             const visionText = typeof about.vision === 'string' ? about.vision.trim() : '';
+            const historyText = typeof about.history === 'string' ? about.history.trim() : '';
             const valuesList = Array.isArray(about.values)
                 ? about.values.map(value => typeof value === 'string' ? value.trim() : '').filter(value => value.length > 0)
                 : [];
             const hasMission = missionText.length > 0;
             const hasVision = visionText.length > 0;
+            const hasHistory = historyText.length > 0;
             const hasValues = valuesList.length > 0;
+            const hasAboutCards = hasMission || hasVision || hasValues;
 
             const missionCardMarkup = hasMission ? `
                 <article class="about-card about-card--mission" id="aboutMissionCard">
@@ -4897,14 +4923,19 @@
                     <ul class="about-values-list" id="aboutValuesList">${valuesListMarkup}</ul>
                 </article>` : '';
 
-            const hasAboutContent = hasMission || hasVision || hasValues;
-            const aboutCardsMarkup = hasAboutContent
+            const aboutCardsMarkup = hasAboutCards
                 ? `${missionCardMarkup}${visionCardMarkup}${valuesCardMarkup}`
+                : '';
+            const aboutFallbackMarkup = (hasAboutCards || hasHistory)
+                ? ''
                 : `<p class="about-empty-message">Pronto compartiremos más sobre nuestra historia. Actualiza la sección de "Nosotros" desde el panel de administración para personalizar esta página.</p>`;
 
-            const headerTitleText = trimmedConfig.companyName
-                ? `Nosotros en ${trimmedConfig.companyName}`
-                : 'Nosotros';
+            const heroTitleCandidate = typeof about.heroTitle === 'string' ? about.heroTitle.trim() : '';
+            const headerTitleText = heroTitleCandidate
+                ? heroTitleCandidate
+                : (trimmedConfig.companyName
+                    ? `Nosotros en ${trimmedConfig.companyName}`
+                    : 'Nosotros');
             const headerTitleHtml = escapeHtml(headerTitleText);
             const heroLeadText = trimmedConfig.tagline
                 ? trimmedConfig.tagline
@@ -4948,6 +4979,12 @@
             const ctaDescriptionText = trimmedConfig.footerMessage
                 ? trimmedConfig.footerMessage
                 : 'Estamos listos para acompañarte en cada proyecto y responder tus dudas.';
+            const historySectionMarkup = hasHistory ? `
+                <div class="about-history" id="aboutHistory">
+                    <p class="about-history__label">Nuestra historia</p>
+                    <p class="about-history__text" id="aboutHistoryText">${escapeHtml(historyText)}</p>
+                </div>` : '';
+
             const ctaSectionMarkup = `
         <section class="about-cta" aria-labelledby="aboutCtaTitle">
             <div class="about-cta__inner">
@@ -5086,8 +5123,9 @@
         <section id="aboutSection" class="about-section about-section--standalone" aria-labelledby="aboutSectionTitle">
             <div class="about-section__inner">
                 <h2 class="about-section__title" id="aboutSectionTitle">Nosotros</h2>
+                ${historySectionMarkup}
                 <div class="about-grid" id="aboutGrid">
-                    ${aboutCardsMarkup}
+                    ${aboutCardsMarkup || aboutFallbackMarkup}
                 </div>
             </div>
         </section>
@@ -5845,6 +5883,30 @@ ${formatCssBlock(headerBackground)}
             margin-bottom: 1.5rem;
             letter-spacing: 1px;
             text-transform: uppercase;
+        }
+
+        .about-history {
+            background: rgba(249, 250, 251, 0.9);
+            border-radius: 18px;
+            border: 1px solid ${theme.borderColor};
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .about-history__label {
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: ${theme.accentStrong};
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .about-history__text {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: ${theme.categoryDescription};
+            margin: 0;
         }
 
         .about-grid {
@@ -7208,9 +7270,11 @@ ${formatCssBlock(footerBackground)}
 
         function normalizeAboutSection(rawAbout) {
             if (!rawAbout || typeof rawAbout !== 'object') {
-                return { mission: '', vision: '', values: [] };
+                return { heroTitle: '', history: '', mission: '', vision: '', values: [] };
             }
 
+            const heroTitle = typeof rawAbout.heroTitle === 'string' ? rawAbout.heroTitle.trim() : '';
+            const history = typeof rawAbout.history === 'string' ? rawAbout.history.trim() : '';
             const mission = typeof rawAbout.mission === 'string' ? rawAbout.mission.trim() : '';
             const vision = typeof rawAbout.vision === 'string' ? rawAbout.vision.trim() : '';
 
@@ -7225,7 +7289,7 @@ ${formatCssBlock(footerBackground)}
                 .map(value => typeof value === 'string' ? value.trim() : '')
                 .filter(value => value.length > 0);
 
-            return { mission, vision, values: sanitizedValues };
+            return { heroTitle, history, mission, vision, values: sanitizedValues };
         }
 
         function updateLinkVisibility(link, shouldShow) {
@@ -7652,6 +7716,7 @@ ${formatCssBlock(footerBackground)}
             const hasAboutContent = Boolean(
                 (aboutData && aboutData.mission) ||
                 (aboutData && aboutData.vision) ||
+                (aboutData && aboutData.history) ||
                 (aboutData && Array.isArray(aboutData.values) && aboutData.values.length > 0)
             );
             const shippingPolicyData = config && config.shippingPolicy ? config.shippingPolicy : null;
