@@ -23,6 +23,7 @@
             <div class="sidebar">
                 <h3 class="section-title">Menú</h3>
                 <button class="btn btn-primary btn-block" data-section="config" aria-controls="configSection" aria-expanded="true">⚙️ Configuración</button>
+                <button class="btn btn-primary btn-block" data-section="about" aria-controls="aboutConfigSection" aria-expanded="false">👥 Nosotros</button>
                 <button class="btn btn-primary btn-block" data-section="shippingPolicy" aria-controls="shippingPolicySection" aria-expanded="false">🚚 Política de envíos</button>
                 <button class="btn btn-primary btn-block" data-section="products" aria-controls="productsSection" aria-expanded="false">📦 Productos</button>
                 <button class="btn btn-success btn-block mt-md" data-action="generate-catalog">📥 Generar Catálogo</button>
@@ -112,23 +113,6 @@
                         </div>
                     </div>
 
-                    <div class="config-section">
-                        <h3 style="margin-bottom: 1rem">Nosotros</h3>
-                        <div class="form-group">
-                            <label for="aboutMission">Misión:</label>
-                            <textarea id="aboutMission" rows="3" placeholder="Describe la misión de la empresa"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="aboutVision">Visión:</label>
-                            <textarea id="aboutVision" rows="3" placeholder="Comparte la visión de la empresa"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="aboutValues">Valores (uno por línea):</label>
-                            <textarea id="aboutValues" rows="4" placeholder="Innovación&#10;Sostenibilidad&#10;Calidad"></textarea>
-                            <small style="display: block; margin-top: 0.5rem; color: #555;">Cada valor se separa con un salto de línea y se mostrará como una lista en el catálogo.</small>
-                        </div>
-                    </div>
-
                     <!-- Apariencia del catálogo: mantener esta sección inmediatamente después de la información de la empresa -->
                     <div class="config-section">
                         <h3 style="margin-bottom: 1rem">Apariencia del catálogo</h3>
@@ -198,6 +182,28 @@
                 </div>
 
                 <!-- Shipping Policy Section -->
+                <div id="aboutConfigSection" class="section" role="region" aria-labelledby="aboutConfigSectionTitle" aria-hidden="true" hidden>
+                    <h2 class="section-title" id="aboutConfigSectionTitle">👥 Sección Nosotros</h2>
+                    <p class="section-description">Configura la información de misión, visión y valores que aparecerá en la página independiente de "Nosotros". Esta información ya no ocupa espacio dentro del catálogo principal.</p>
+
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Historia y propósito</h3>
+                        <div class="form-group">
+                            <label for="aboutMission">Misión:</label>
+                            <textarea id="aboutMission" rows="3" placeholder="Describe la misión de la empresa"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="aboutVision">Visión:</label>
+                            <textarea id="aboutVision" rows="3" placeholder="Comparte la visión de la empresa"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="aboutValues">Valores (uno por línea):</label>
+                            <textarea id="aboutValues" rows="4" placeholder="Innovación&#10;Sostenibilidad&#10;Calidad"></textarea>
+                            <small style="display: block; margin-top: 0.5rem; color: #555;">Cada valor se separa con un salto de línea y se mostrará como una lista en la página de "Nosotros".</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="shippingPolicySection" class="section" role="region" aria-labelledby="shippingPolicySectionTitle" aria-hidden="true" hidden>
                     <h2 class="section-title" id="shippingPolicySectionTitle">🚚 Política de envíos</h2>
                     <p class="section-description">Redacta la información que verán tus clientes en la página dedicada a los envíos. Los cambios se aplican al generar el catálogo.</p>

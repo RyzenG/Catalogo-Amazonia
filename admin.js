@@ -451,7 +451,9 @@
                 imagePlaceholderStart,
                 imagePlaceholderEnd,
                 priceColor,
-                specBorderColor
+                specBorderColor,
+                primaryButtonBg: normalized.primary,
+                primaryButtonText: getReadableTextColor(normalized.primary, '#ffffff', normalized.text)
             };
         }
 
@@ -3117,6 +3119,11 @@
                     button: document.querySelector('button[data-section="config"]'),
                     label: 'Configuración general'
                 },
+                about: {
+                    element: document.getElementById('aboutConfigSection'),
+                    button: document.querySelector('button[data-section="about"]'),
+                    label: 'Nosotros'
+                },
                 shippingPolicy: {
                     element: document.getElementById('shippingPolicySection'),
                     button: document.querySelector('button[data-section="shippingPolicy"]'),
@@ -3883,6 +3890,7 @@
                 // Generate the HTML content
                 const indexHtmlContent = generateCatalogHTML(catalogData.config);
                 const shippingPolicyHtmlContent = generateShippingPolicyHTML(catalogData.config);
+                const aboutHtmlContent = generateAboutPageHTML(catalogData.config);
 
                 updateProcessStatusEntry(processEntryId, {
                     detail: 'Generando archivos para la descarga…'
@@ -3900,12 +3908,13 @@
 
                 triggerDownload('index.html', indexHtmlContent);
                 triggerDownload('politica-envios.html', shippingPolicyHtmlContent);
+                triggerDownload('nosotros.html', aboutHtmlContent);
 
                 updateProcessStatusEntry(processEntryId, {
                     state: 'success',
-                    detail: 'Descarga completada. Se generaron index.html y politica-envios.html.'
+                    detail: 'Descarga completada. Se generaron index.html, politica-envios.html y nosotros.html.'
                 });
-                showMessage('¡Catálogo y política de envíos generados correctamente! Revisa tu carpeta de descargas para encontrar index.html y politica-envios.html.', 'success');
+                showMessage('¡Catálogo, política de envíos y página de "Nosotros" generados correctamente! Revisa tu carpeta de descargas para encontrar index.html, politica-envios.html y nosotros.html.', 'success');
             } catch (error) {
                 console.error('No se pudo generar el catálogo', error);
                 updateProcessStatusEntry(processEntryId, {
@@ -4056,13 +4065,11 @@
 
             const shippingPolicy = normalizeShippingPolicy(config.shippingPolicy);
             const about = normalizeAbout(config.about);
-            const aboutMissionText = about.mission || '';
-            const aboutVisionText = about.vision || '';
-            const aboutValues = Array.isArray(about.values) ? about.values : [];
-            const hasMission = aboutMissionText.length > 0;
-            const hasVision = aboutVisionText.length > 0;
-            const hasValues = aboutValues.length > 0;
-            const shouldShowAboutSection = hasMission || hasVision || hasValues;
+            const hasAboutContent = Boolean(
+                (about && typeof about.mission === 'string' && about.mission.trim().length > 0)
+                || (about && typeof about.vision === 'string' && about.vision.trim().length > 0)
+                || (about && Array.isArray(about.values) && about.values.some(value => typeof value === 'string' && value.trim().length > 0))
+            );
             const hasShippingPolicyContent = (() => {
                 if (!shippingPolicy || typeof shippingPolicy !== 'object') {
                     return false;
@@ -4088,39 +4095,7 @@
 
                 return heroHasContent || closingHasContent || sectionsHaveContent;
             })();
-            const missionCardAttributes = hasMission ? '' : ' style="display: none;" aria-hidden="true"';
-            const visionCardAttributes = hasVision ? '' : ' style="display: none;" aria-hidden="true"';
-            const valuesCardAttributes = hasValues ? '' : ' style="display: none;" aria-hidden="true"';
-            const aboutSectionAttributes = shouldShowAboutSection ? '' : ' style="display: none;" aria-hidden="true"';
-            const missionCardMarkup = `
-                <article class="about-card about-card--mission" id="aboutMissionCard"${missionCardAttributes}>
-                    <h3 class="about-card__title">Nuestra misión</h3>
-                    <p class="about-card__text" id="aboutMissionText">${escapeHtml(aboutMissionText)}</p>
-                </article>`;
-            const visionCardMarkup = `
-                <article class="about-card about-card--vision" id="aboutVisionCard"${visionCardAttributes}>
-                    <h3 class="about-card__title">Nuestra visión</h3>
-                    <p class="about-card__text" id="aboutVisionText">${escapeHtml(aboutVisionText)}</p>
-                </article>`;
-            const valuesListMarkup = aboutValues
-                .map(value => `<li>${escapeHtml(value)}</li>`)
-                .join('');
-            const valuesCardMarkup = `
-                <article class="about-card about-card--values" id="aboutValuesCard"${valuesCardAttributes}>
-                    <h3 class="about-card__title">Nuestros valores</h3>
-                    <ul class="about-values-list" id="aboutValuesList">${valuesListMarkup}</ul>
-                </article>`;
-            const aboutSectionMarkup = `
-        <section id="aboutSection" class="about-section" aria-labelledby="aboutSectionTitle"${aboutSectionAttributes}>
-            <div class="about-section__inner">
-                <h2 class="about-section__title" id="aboutSectionTitle">Nosotros</h2>
-                <div class="about-grid" id="aboutGrid">
-                    ${missionCardMarkup}
-                    ${visionCardMarkup}
-                    ${valuesCardMarkup}
-                </div>
-            </div>
-        </section>`;
+            const shouldShowAboutSection = hasAboutContent;
 
             const companyNameHtml = escapeHtml(trimmedConfig.companyName);
             const taglineHtml = escapeHtml(trimmedConfig.tagline);
@@ -4396,7 +4371,7 @@
             const primaryNavItems = [
                 { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true },
                 { id: 'primaryNavProducts', label: 'Productos', target: 'catalogProducts', visible: hasProductNavigation },
-                { id: 'primaryNavAbout', label: 'Nosotros', target: 'aboutSection', visible: shouldShowAboutSection },
+                { id: 'primaryNavAbout', label: 'Nosotros', href: 'nosotros.html', external: true, visible: shouldShowAboutSection },
                 { id: 'primaryNavShipping', label: 'Política de envíos', href: 'politica-envios.html', external: true, visible: hasShippingPolicyContent }
             ];
 
@@ -4512,8 +4487,6 @@
             ${productsHTML}
             <p class="category-description" id="emptyCatalogMessage" style="display: none; text-align: center;">Aún no hay productos publicados. Estamos preparando nuevas colecciones para ti, ¡vuelve pronto!</p>
         </div>
-
-        ${aboutSectionMarkup}
     </main>
 
     ${selectionPanelMarkup}
@@ -4868,6 +4841,329 @@
                     event.preventDefault();
                     if (typeof target.scrollIntoView === 'function') {
                         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>`;
+        }
+
+        function generateAboutPageHTML(configOverride) {
+            const config = getNormalizedConfig(configOverride || catalogData.config);
+            const theme = buildThemeTokens(config.appearance);
+            const about = normalizeAbout(config.about);
+
+            const trimmedConfig = {
+                whatsapp: (config.whatsapp || '').trim(),
+                email: (config.email || '').trim(),
+                phone: (config.phone || '').trim(),
+                address: (config.address || '').trim(),
+                instagram: (config.instagram || '').trim(),
+                facebook: (config.facebook || '').trim(),
+                tiktok: (config.tiktok || '').trim(),
+                companyName: config.companyName || '',
+                tagline: config.tagline || '',
+                footerMessage: config.footerMessage || '',
+                logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
+            };
+
+            const missionText = typeof about.mission === 'string' ? about.mission.trim() : '';
+            const visionText = typeof about.vision === 'string' ? about.vision.trim() : '';
+            const valuesList = Array.isArray(about.values)
+                ? about.values.map(value => typeof value === 'string' ? value.trim() : '').filter(value => value.length > 0)
+                : [];
+            const hasMission = missionText.length > 0;
+            const hasVision = visionText.length > 0;
+            const hasValues = valuesList.length > 0;
+
+            const missionCardMarkup = hasMission ? `
+                <article class="about-card about-card--mission" id="aboutMissionCard">
+                    <h3 class="about-card__title">Nuestra misión</h3>
+                    <p class="about-card__text" id="aboutMissionText">${escapeHtml(missionText)}</p>
+                </article>` : '';
+            const visionCardMarkup = hasVision ? `
+                <article class="about-card about-card--vision" id="aboutVisionCard">
+                    <h3 class="about-card__title">Nuestra visión</h3>
+                    <p class="about-card__text" id="aboutVisionText">${escapeHtml(visionText)}</p>
+                </article>` : '';
+            const valuesListMarkup = hasValues
+                ? valuesList.map(value => `<li>${escapeHtml(value)}</li>`).join('')
+                : '';
+            const valuesCardMarkup = hasValues ? `
+                <article class="about-card about-card--values" id="aboutValuesCard">
+                    <h3 class="about-card__title">Nuestros valores</h3>
+                    <ul class="about-values-list" id="aboutValuesList">${valuesListMarkup}</ul>
+                </article>` : '';
+
+            const hasAboutContent = hasMission || hasVision || hasValues;
+            const aboutCardsMarkup = hasAboutContent
+                ? `${missionCardMarkup}${visionCardMarkup}${valuesCardMarkup}`
+                : `<p class="about-empty-message">Pronto compartiremos más sobre nuestra historia. Actualiza la sección de "Nosotros" desde el panel de administración para personalizar esta página.</p>`;
+
+            const headerTitleText = trimmedConfig.companyName
+                ? `Nosotros en ${trimmedConfig.companyName}`
+                : 'Nosotros';
+            const headerTitleHtml = escapeHtml(headerTitleText);
+            const heroLeadText = trimmedConfig.tagline
+                ? trimmedConfig.tagline
+                : 'Conoce nuestro propósito, visión y los valores que nos inspiran.';
+            const heroLeadMarkup = heroLeadText
+                ? `<p class="about-hero__lead" id="aboutHeroLead">${escapeHtml(heroLeadText)}</p>`
+                : '';
+
+            const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/[^0-9]/g, '');
+            const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '';
+            const emailLinkHref = trimmedConfig.email ? `mailto:${encodeURIComponent(trimmedConfig.email)}` : '';
+
+            const ctaButtons = [];
+            if (whatsappLinkHref) {
+                ctaButtons.push(`<a class="about-cta__button" href="${escapeHtml(whatsappLinkHref)}" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp</a>`);
+            }
+            if (emailLinkHref) {
+                ctaButtons.push(`<a class="about-cta__button about-cta__button--secondary" href="${escapeHtml(emailLinkHref)}">Enviar un correo</a>`);
+            }
+            const ctaButtonsMarkup = ctaButtons.length > 0
+                ? `<div class="about-cta__buttons">${ctaButtons.join('')}</div>`
+                : '';
+
+            const contactDetails = [];
+            if (trimmedConfig.phone) {
+                contactDetails.push(`<li><span class="about-cta__icon">📞</span><span>${escapeHtml(trimmedConfig.phone)}</span></li>`);
+            }
+            if (trimmedConfig.email) {
+                contactDetails.push(`<li><span class="about-cta__icon">✉️</span><span>${escapeHtml(trimmedConfig.email)}</span></li>`);
+            }
+            if (trimmedConfig.address) {
+                contactDetails.push(`<li><span class="about-cta__icon">📍</span><span>${escapeHtml(trimmedConfig.address)}</span></li>`);
+            }
+            const contactDetailsMarkup = contactDetails.length > 0
+                ? `<ul class="about-cta__details">${contactDetails.join('')}</ul>`
+                : '';
+
+            const ctaTitleText = trimmedConfig.companyName
+                ? `Conecta con ${trimmedConfig.companyName}`
+                : 'Conectemos';
+            const ctaDescriptionText = trimmedConfig.footerMessage
+                ? trimmedConfig.footerMessage
+                : 'Estamos listos para acompañarte en cada proyecto y responder tus dudas.';
+            const ctaSectionMarkup = `
+        <section class="about-cta" aria-labelledby="aboutCtaTitle">
+            <div class="about-cta__inner">
+                <h2 class="about-cta__title" id="aboutCtaTitle">${escapeHtml(ctaTitleText)}</h2>
+                <p class="about-cta__text">${escapeHtml(ctaDescriptionText)}</p>
+                ${contactDetailsMarkup}
+                ${ctaButtonsMarkup}
+            </div>
+        </section>`;
+
+            const shippingPolicy = normalizeShippingPolicy(config.shippingPolicy);
+            const hasShippingPolicyContent = (() => {
+                if (!shippingPolicy || typeof shippingPolicy !== 'object') {
+                    return false;
+                }
+
+                const heroHasContent = (typeof shippingPolicy.heroTitle === 'string' && shippingPolicy.heroTitle.trim().length > 0)
+                    || (typeof shippingPolicy.heroDescription === 'string' && shippingPolicy.heroDescription.trim().length > 0);
+                const closingHasContent = (typeof shippingPolicy.closingTitle === 'string' && shippingPolicy.closingTitle.trim().length > 0)
+                    || (typeof shippingPolicy.closingDescription === 'string' && shippingPolicy.closingDescription.trim().length > 0)
+                    || (typeof shippingPolicy.closingNote === 'string' && shippingPolicy.closingNote.trim().length > 0);
+                const sectionsHaveContent = Array.isArray(shippingPolicy.sections)
+                    && shippingPolicy.sections.some(section => {
+                        if (!section || typeof section !== 'object') {
+                            return false;
+                        }
+
+                        const hasSectionTitle = typeof section.title === 'string' && section.title.trim().length > 0;
+                        const hasSectionDescription = typeof section.description === 'string' && section.description.trim().length > 0;
+                        const hasSectionItems = Array.isArray(section.items)
+                            && section.items.some(item => typeof item === 'string' && item.trim().length > 0);
+                        const hasSectionNote = typeof section.note === 'string' && section.note.trim().length > 0;
+
+                        return hasSectionTitle || hasSectionDescription || hasSectionItems || hasSectionNote;
+                    });
+
+                return heroHasContent || closingHasContent || sectionsHaveContent;
+            })();
+
+            const logoAltName = trimmedConfig.companyName || 'la empresa';
+            const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : '';
+            const logoContainerStyle = trimmedConfig.logoData ? '' : 'display: none;';
+            const headerLogoMarkup = `
+        <div class="logo-container" id="headerLogoContainer" style="${logoContainerStyle}">
+            <img id="headerLogo" src="${sanitizedLogoData}" alt="Logo de ${escapeHtml(logoAltName)}">
+        </div>`;
+
+            const primaryNavItems = [
+                { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true },
+                { id: 'primaryNavAbout', label: 'Nosotros', target: 'mainContent', visible: true },
+                { id: 'primaryNavShipping', label: 'Política de envíos', href: 'politica-envios.html', external: true, visible: hasShippingPolicyContent }
+            ];
+
+            const primaryNavLinksMarkup = primaryNavItems
+                .map(item => {
+                    const styleAttr = item.visible ? '' : ' style="display: none;"';
+                    const hiddenAttr = item.visible ? '' : ' aria-hidden="true" tabindex="-1"';
+                    const hrefAttr = item.href ? item.href : `#${item.target}`;
+                    const targetAttr = item.href ? '' : ` data-scroll-target="${item.target}"`;
+                    const externalAttr = item.external && item.href ? ` data-external-url="${item.href}"` : '';
+                    return `<a class="primary-nav__link" id="${item.id}" href="${hrefAttr}"${targetAttr}${externalAttr}${styleAttr}${hiddenAttr}>${escapeHtml(item.label)}</a>`;
+                })
+                .join('');
+
+            const instagramUrlRaw = trimmedConfig.instagram;
+            const facebookUrlRaw = trimmedConfig.facebook;
+            const tiktokUrlRaw = trimmedConfig.tiktok;
+            const instagramLinkHref = instagramUrlRaw ? escapeHtml(instagramUrlRaw) : '#';
+            const instagramLinkStyle = instagramUrlRaw ? '' : 'display: none;';
+            const facebookLinkHref = facebookUrlRaw ? escapeHtml(facebookUrlRaw) : '#';
+            const facebookLinkStyle = facebookUrlRaw ? '' : 'display: none;';
+            const tiktokLinkHref = tiktokUrlRaw ? escapeHtml(tiktokUrlRaw) : '#';
+            const tiktokLinkStyle = tiktokUrlRaw ? '' : 'display: none;';
+            const whatsappLinkStyle = whatsappLinkHref ? '' : 'display: none;';
+            const hasSocialLinks = Boolean(whatsappLinkHref || instagramUrlRaw || facebookUrlRaw || tiktokUrlRaw);
+            const socialLinksContainerStyle = hasSocialLinks ? '' : 'display: none;';
+
+            const socialLinksMarkup = `
+                <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="${socialLinksContainerStyle}">
+                    <a id="footerSocialWhatsApp" class="social-link social-link--whatsapp" href="${whatsappLinkHref || '#'}" target="_blank" rel="noopener noreferrer" style="${whatsappLinkStyle}">
+                        ${getSocialIconSvg('whatsapp')}
+                        <span class="sr-only">WhatsApp</span>
+                    </a>
+                    <a id="footerSocialInstagram" class="social-link social-link--instagram" href="${instagramLinkHref}" target="_blank" rel="noopener noreferrer" style="${instagramLinkStyle}">
+                        ${getSocialIconSvg('instagram')}
+                        <span class="sr-only">Instagram</span>
+                    </a>
+                    <a id="footerSocialFacebook" class="social-link social-link--facebook" href="${facebookLinkHref}" target="_blank" rel="noopener noreferrer" style="${facebookLinkStyle}">
+                        ${getSocialIconSvg('facebook')}
+                        <span class="sr-only">Facebook</span>
+                    </a>
+                    <a id="footerSocialTiktok" class="social-link social-link--tiktok" href="${tiktokLinkHref}" target="_blank" rel="noopener noreferrer" style="${tiktokLinkStyle}">
+                        ${getSocialIconSvg('tiktok')}
+                        <span class="sr-only">TikTok</span>
+                    </a>
+                </div>`;
+
+            const footerCompanyName = trimmedConfig.companyName ? escapeHtml(trimmedConfig.companyName) : 'Nuestra marca';
+            const footerMessageHtml = trimmedConfig.footerMessage
+                ? `<p>${escapeHtml(trimmedConfig.footerMessage)}</p>`
+                : '';
+
+            return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${headerTitleHtml}</title>
+    <style>
+        ${getCatalogStyles(theme)}
+    </style>
+</head>
+<body>
+    <div class="loader" id="loader">
+        <svg class="leaf-spinner" viewBox="0 0 100 100">
+            <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="${theme.loaderPrimary}"/>
+            <path d="M50 40 Q30 60 50 80 Q70 60 50 40" fill="${theme.loaderSecondary}"/>
+        </svg>
+    </div>
+
+    <header id="pageTop" class="about-hero">
+        <div class="header-inner">
+            ${headerLogoMarkup}
+            <div class="header-content about-hero__content">
+                <p class="about-hero__eyebrow">Conócenos</p>
+                <h1 class="about-hero__title" id="aboutHeroTitle">${headerTitleHtml}</h1>
+                ${heroLeadMarkup}
+            </div>
+        </div>
+        <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
+            ${primaryNavLinksMarkup}
+        </nav>
+    </header>
+
+    <main class="about-page__main" id="mainContent">
+        <section id="aboutSection" class="about-section about-section--standalone" aria-labelledby="aboutSectionTitle">
+            <div class="about-section__inner">
+                <h2 class="about-section__title" id="aboutSectionTitle">Nosotros</h2>
+                <div class="about-grid" id="aboutGrid">
+                    ${aboutCardsMarkup}
+                </div>
+            </div>
+        </section>
+        ${ctaSectionMarkup}
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="contact-info" id="contactSection">
+                <h3>${footerCompanyName}</h3>
+                ${socialLinksMarkup}
+                ${footerMessageHtml}
+            </div>
+            <p style="margin-top: 2rem; opacity: 0.7;">© 2025 ${footerCompanyName} - Todos los derechos reservados</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var loader = document.getElementById('loader');
+            if (loader) {
+                requestAnimationFrame(function() {
+                    loader.classList.add('hidden');
+                });
+            }
+
+            var homeLink = document.getElementById('primaryNavHome');
+            if (homeLink) {
+                var href = window.location.href || '';
+                var isPreviewContext = (href.indexOf('about:') === 0) || (href.indexOf('blob:') === 0);
+                if (!isPreviewContext) {
+                    try {
+                        var catalogUrl = new URL('index.html', window.location.href);
+                        homeLink.setAttribute('href', catalogUrl.href);
+                        homeLink.setAttribute('data-external-url', catalogUrl.href);
+                        homeLink.removeAttribute('data-scroll-target');
+                    } catch (error) {
+                        homeLink.setAttribute('href', '#pageTop');
+                        homeLink.setAttribute('data-scroll-target', 'pageTop');
+                        homeLink.removeAttribute('data-external-url');
+                    }
+                } else {
+                    homeLink.setAttribute('href', '#pageTop');
+                    homeLink.setAttribute('data-scroll-target', 'pageTop');
+                    homeLink.removeAttribute('data-external-url');
+                }
+            }
+
+            var nav = document.getElementById('primaryNav');
+            if (nav) {
+                nav.addEventListener('click', function(event) {
+                    var link = event.target.closest('.primary-nav__link');
+                    if (!link || link.getAttribute('aria-hidden') === 'true') {
+                        return;
+                    }
+
+                    var externalUrl = link.getAttribute('data-external-url');
+                    if (externalUrl) {
+                        return;
+                    }
+
+                    var targetId = link.getAttribute('data-scroll-target');
+                    if (!targetId) {
+                        return;
+                    }
+
+                    var target = document.getElementById(targetId);
+                    if (!target) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    if (typeof target.scrollIntoView === 'function') {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        window.location.hash = '#' + targetId;
                     }
                 });
             }
@@ -5608,6 +5904,140 @@ ${formatCssBlock(headerBackground)}
             font-weight: 700;
             flex: 0 0 auto;
             transform: translateY(2px);
+        }
+
+        .about-page__main {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 4rem 0 6rem;
+        }
+
+        .about-hero {
+            padding-bottom: 2rem;
+        }
+
+        .about-hero__content {
+            text-align: center;
+            gap: 0.75rem;
+        }
+
+        .about-hero__eyebrow {
+            font-size: 0.95rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .about-hero__title {
+            font-size: clamp(2.5rem, 6vw, 3.8rem);
+            color: #ffffff;
+            letter-spacing: 2px;
+        }
+
+        .about-hero__lead {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.7;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .about-section--standalone {
+            padding-top: 2rem;
+        }
+
+        .about-empty-message {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px dashed ${theme.borderColor};
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            color: ${theme.categoryDescription};
+            font-size: 1.05rem;
+            line-height: 1.7;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .about-cta {
+            margin-top: 4rem;
+        }
+
+        .about-cta__inner {
+            max-width: 900px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+            border-radius: 24px;
+            padding: 2.5rem;
+            border: 1px solid ${theme.borderColor};
+            box-shadow: 0 25px 40px rgba(15, 23, 42, 0.12);
+            text-align: center;
+        }
+
+        .about-cta__title {
+            font-size: 2rem;
+            color: ${theme.categoryTitle};
+            margin-bottom: 1rem;
+        }
+
+        .about-cta__text {
+            font-size: 1.1rem;
+            color: ${theme.categoryDescription};
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .about-cta__details {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: center;
+            color: ${theme.categoryDescription};
+        }
+
+        .about-cta__details li {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .about-cta__icon {
+            font-size: 1.2rem;
+        }
+
+        .about-cta__buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .about-cta__button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.9rem 1.75rem;
+            border-radius: 999px;
+            background: ${theme.primaryButtonBg};
+            color: ${theme.primaryButtonText};
+            font-weight: 600;
+            border: none;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .about-cta__button:hover,
+        .about-cta__button:focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .about-cta__button--secondary {
+            background: transparent;
+            color: ${theme.categoryTitle};
+            border: 1px solid ${theme.borderColor};
         }
 
         /* Category Sections */
