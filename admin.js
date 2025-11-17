@@ -62,6 +62,91 @@
             closingNote: 'Atendemos solicitudes de lunes a viernes de 8:00 a.m. a 6:00 p.m.'
         };
 
+        const defaultPolicies = {
+            shipping: {
+                active: true,
+                summary: 'Enviamos cada pedido con embalaje reforzado y seguimiento en tiempo real para garantizar entregas seguras.',
+                sla: '3 a 5 días hábiles',
+                coverage: 'Cobertura nacional con aliados certificados',
+                cost: 'Sin costo para compras superiores a $300.000',
+                contact: 'logistica@amazonia.com',
+                details: 'Coordinamos entregas programadas y ofrecemos retiros en planta bajo cita previa. Las zonas especiales pueden requerir tiempos adicionales.',
+                points: [
+                    'Seguimiento proactivo',
+                    'Mensajería directa con el transportista',
+                    'Compensación por demoras'
+                ]
+            },
+            refund: {
+                active: true,
+                summary: 'Buscamos soluciones rápidas y transparentes para cada solicitud de devolución o reembolso.',
+                window: '15 días calendario posteriores a la entrega',
+                method: 'Transferencia bancaria o saldo a favor',
+                contact: 'servicio@amazonia.com',
+                requirements: 'Factura y evidencia del estado del producto',
+                details: 'Los reembolsos se aprueban tras una inspección técnica. Productos personalizados o usados fuera de especificación no aplican.',
+                points: [
+                    'Respuesta inicial en 24 horas',
+                    'Recolección sin costo',
+                    'Reportes automatizados para auditoría'
+                ]
+            },
+            privacy: {
+                active: true,
+                summary: 'Protegemos la información de nuestros clientes mediante procesos seguros y transparentes.',
+                usage: 'Gestión comercial, despachos y comunicaciones internas',
+                storage: 'Al menos 5 años o según normativa vigente',
+                shared: 'Transportistas, pasarelas de pago y aliados de servicio',
+                contact: 'datos@amazonia.com',
+                details: 'Aplicamos los principios de legalidad, finalidad y confidencialidad. Los titulares pueden ejercer sus derechos de acceso, corrección o eliminación en cualquier momento.',
+                points: [
+                    'Infraestructura alojada en Colombia',
+                    'Protocolos de cifrado AES-256',
+                    'Evaluaciones anuales de cumplimiento'
+                ]
+            },
+            extra: {
+                active: false,
+                customTitle: 'Política ambiental',
+                summary: 'Minimizamos el impacto ambiental con procesos eficientes y trazables.',
+                owner: 'Gerencia HSE',
+                scope: 'Operaciones industriales y cadena logística',
+                details: 'Monitoreamos consumos energéticos, promovemos reciclaje y neutralizamos emisiones con proveedores certificados.',
+                points: [
+                    'Metas de reducción del 20%',
+                    'Auditorías externas',
+                    'Reportes trimestrales'
+                ]
+            }
+        };
+
+        const POLICY_META_LABELS = {
+            shipping: {
+                sla: 'Tiempo',
+                coverage: 'Cobertura',
+                cost: 'Costo',
+                contact: 'Contacto'
+            },
+            refund: {
+                window: 'Ventana',
+                method: 'Método',
+                contact: 'Contacto',
+                requirements: 'Requisitos'
+            },
+            privacy: {
+                usage: 'Uso',
+                storage: 'Retención',
+                shared: 'Terceros',
+                contact: 'Contacto'
+            },
+            extra: {
+                owner: 'Responsable',
+                scope: 'Ámbito'
+            }
+        };
+
+        const POLICY_IDS = Object.keys(defaultPolicies);
+
         const APPEARANCE_FIELDS = [
             { id: 'appearanceBackground', key: 'background' },
             { id: 'appearanceHeader', key: 'header' },
@@ -203,6 +288,58 @@
             return normalized;
         }
 
+        function normalizePolicies(candidate) {
+            const normalized = {};
+            const source = isPlainObject(candidate) ? candidate : {};
+
+            POLICY_IDS.forEach(policyId => {
+                const defaults = defaultPolicies[policyId] || {};
+                const base = {};
+                Object.keys(defaults).forEach(field => {
+                    const value = defaults[field];
+                    if (Array.isArray(value)) {
+                        base[field] = value.slice();
+                    } else {
+                        base[field] = value;
+                    }
+                });
+
+                const rawPolicy = source[policyId];
+                if (isPlainObject(rawPolicy)) {
+                    Object.keys(rawPolicy).forEach(field => {
+                        const rawValue = rawPolicy[field];
+                        if (field === 'points') {
+                            let pointsSource = [];
+                            if (Array.isArray(rawValue)) {
+                                pointsSource = rawValue;
+                            } else if (typeof rawValue === 'string') {
+                                pointsSource = rawValue.split(/\r?\n/);
+                            }
+                            base.points = pointsSource
+                                .map(point => typeof point === 'string' ? point.trim() : '')
+                                .filter(point => point.length > 0);
+                        } else if (field === 'active') {
+                            base.active = Boolean(rawValue);
+                        } else if (typeof rawValue === 'string') {
+                            base[field] = rawValue.trim();
+                        } else if (typeof rawValue === 'number') {
+                            base[field] = String(rawValue);
+                        }
+                    });
+                } else if (typeof rawPolicy === 'string') {
+                    base.summary = rawPolicy.trim();
+                }
+
+                if (!Array.isArray(base.points)) {
+                    base.points = [];
+                }
+
+                normalized[policyId] = base;
+            });
+
+            return normalized;
+        }
+
         // Default data structure
         const defaultConfig = {
             whatsapp: '573000000000',
@@ -218,7 +355,8 @@
             logoData: '',
             appearance: { ...defaultAppearance },
             about: normalizeAbout(defaultAbout),
-            shippingPolicy: normalizeShippingPolicy(defaultShippingPolicy)
+            shippingPolicy: normalizeShippingPolicy(defaultShippingPolicy),
+            policies: normalizePolicies(defaultPolicies)
         };
 
         const defaultCategories = [
@@ -310,6 +448,7 @@
             base.appearance = normalizeAppearance(base.appearance);
             base.about = normalizeAbout(base.about);
             base.shippingPolicy = normalizeShippingPolicy(base.shippingPolicy);
+            base.policies = normalizePolicies(base.policies);
             return base;
         }
 
@@ -2356,13 +2495,6 @@
                 importDataButton.addEventListener('click', importData);
             }
 
-            const openShippingConfigButton = document.getElementById('openShippingConfigButton');
-            if (openShippingConfigButton) {
-                openShippingConfigButton.addEventListener('click', () => {
-                    showSection('shippingPolicy');
-                });
-            }
-
             const clearProcessStatusButton = document.getElementById('clearProcessStatusButton');
             if (clearProcessStatusButton) {
                 clearProcessStatusButton.addEventListener('click', () => {
@@ -2376,9 +2508,16 @@
                 saveConfigButton.addEventListener('click', saveConfig);
             }
 
-            const saveShippingPolicyButton = document.getElementById('saveShippingPolicyButton');
-            if (saveShippingPolicyButton) {
-                saveShippingPolicyButton.addEventListener('click', saveConfig);
+            const savePoliciesButton = document.getElementById('savePoliciesButton');
+            if (savePoliciesButton) {
+                savePoliciesButton.addEventListener('click', saveConfig);
+            }
+
+            setupPolicyFormListeners();
+
+            const companyNameInput = document.getElementById('companyName');
+            if (companyNameInput) {
+                companyNameInput.addEventListener('input', updateAllPolicyPreviews);
             }
 
             const removeLogoButton = document.getElementById('removeLogoButton');
@@ -2684,6 +2823,22 @@
                 return sections;
             };
 
+            const hasShippingPolicyForm = Boolean(document.getElementById('shippingPolicyHeroTitle'));
+            const shippingPolicySource = hasShippingPolicyForm
+                ? {
+                    heroTitle: readValue('shippingPolicyHeroTitle'),
+                    heroDescription: readValue('shippingPolicyHeroDescription'),
+                    sections: readShippingSectionValues(),
+                    closingTitle: readValue('shippingPolicyClosingTitle'),
+                    closingDescription: readValue('shippingPolicyClosingDescription'),
+                    closingNote: readValue('shippingPolicyClosingNote')
+                }
+                : (catalogData
+                    && catalogData.config
+                    && catalogData.config.shippingPolicy
+                    ? catalogData.config.shippingPolicy
+                    : defaultShippingPolicy);
+
             return {
                 whatsapp: readValue('whatsapp'),
                 email: readValue('email'),
@@ -2703,14 +2858,8 @@
                     vision: readValue('aboutVision'),
                     values: readMultilineList('aboutValues')
                 }),
-                shippingPolicy: normalizeShippingPolicy({
-                    heroTitle: readValue('shippingPolicyHeroTitle'),
-                    heroDescription: readValue('shippingPolicyHeroDescription'),
-                    sections: readShippingSectionValues(),
-                    closingTitle: readValue('shippingPolicyClosingTitle'),
-                    closingDescription: readValue('shippingPolicyClosingDescription'),
-                    closingNote: readValue('shippingPolicyClosingNote')
-                }),
+                shippingPolicy: normalizeShippingPolicy(shippingPolicySource),
+                policies: normalizePolicies(readPoliciesFromInputs()),
                 appearance: normalizeAppearance({
                     background: readColor('appearanceBackground'),
                     header: readColor('appearanceHeader'),
@@ -2722,6 +2871,175 @@
                     footerImage: readValue('appearanceFooterImage')
                 })
             };
+        }
+
+        function getPolicyFieldNames(policyId) {
+            const defaults = defaultPolicies[policyId];
+            return defaults ? Object.keys(defaults) : [];
+        }
+
+        function readPolicyInputValues(policyId) {
+            const values = {};
+            getPolicyFieldNames(policyId).forEach(field => {
+                const selector = `[data-policy-id="${policyId}"][data-policy-field="${field}"]`;
+                const element = document.querySelector(selector);
+                if (!element) {
+                    return;
+                }
+                if (element.type === 'checkbox') {
+                    values[field] = element.checked;
+                } else {
+                    values[field] = element.value;
+                }
+            });
+            return values;
+        }
+
+        function readPoliciesFromInputs() {
+            const policies = {};
+            POLICY_IDS.forEach(policyId => {
+                policies[policyId] = readPolicyInputValues(policyId);
+            });
+            return policies;
+        }
+
+        function applyPoliciesToInputs(policies) {
+            const normalized = normalizePolicies(policies);
+            POLICY_IDS.forEach(policyId => {
+                const policyState = normalized[policyId];
+                const fields = getPolicyFieldNames(policyId);
+                fields.forEach(field => {
+                    const selector = `[data-policy-id="${policyId}"][data-policy-field="${field}"]`;
+                    const element = document.querySelector(selector);
+                    if (!element) {
+                        return;
+                    }
+                    if (element.type === 'checkbox') {
+                        element.checked = Boolean(policyState[field]);
+                    } else if (field === 'points') {
+                        element.value = Array.isArray(policyState.points) ? policyState.points.join('\n') : '';
+                    } else {
+                        element.value = typeof policyState[field] === 'string' ? policyState[field] : '';
+                    }
+                });
+                updatePolicyPreview(policyId, policyState);
+            });
+        }
+
+        function getCompanyNameForPolicyPreview() {
+            const companyNameInput = document.getElementById('companyName');
+            if (companyNameInput && typeof companyNameInput.value === 'string') {
+                const trimmed = companyNameInput.value.trim();
+                if (trimmed.length > 0) {
+                    return trimmed;
+                }
+            }
+
+            const stored = catalogData
+                && catalogData.config
+                && typeof catalogData.config.companyName === 'string'
+                ? catalogData.config.companyName.trim()
+                : '';
+
+            return stored || 'La compañía';
+        }
+
+        function formatPolicyPreview(policyId, policyState) {
+            const companyName = getCompanyNameForPolicyPreview();
+            const summaryText = typeof policyState.summary === 'string' ? policyState.summary.trim() : '';
+            const detailsText = typeof policyState.details === 'string' ? policyState.details.trim() : '';
+            let description = summaryText || 'Completa la información para mostrar esta política.';
+
+            if (detailsText) {
+                description = `${description} ${detailsText}`.trim();
+            }
+
+            if (policyId === 'extra') {
+                const customTitle = typeof policyState.customTitle === 'string' ? policyState.customTitle.trim() : '';
+                if (customTitle) {
+                    description = `${customTitle} — ${description}`;
+                }
+            }
+
+            const metaLabels = POLICY_META_LABELS[policyId] || {};
+            const metaParts = Object.keys(metaLabels)
+                .map(field => {
+                    const value = typeof policyState[field] === 'string' ? policyState[field].trim() : '';
+                    return value ? `${metaLabels[field]}: ${value}` : '';
+                })
+                .filter(Boolean);
+
+            return {
+                text: `${companyName} informa: ${description}`.trim(),
+                meta: metaParts.join(' · ')
+            };
+        }
+
+        function updatePolicyPreview(policyId, policyStateOverride) {
+            if (!policyId) {
+                return;
+            }
+
+            const previewElement = document.querySelector(`[data-policy-preview="${policyId}"]`);
+            const listElement = document.querySelector(`[data-policy-points="${policyId}"]`);
+            const metaElement = document.querySelector(`[data-policy-meta="${policyId}"]`);
+
+            if (!previewElement || !listElement || !metaElement) {
+                return;
+            }
+
+            const normalizedState = policyStateOverride
+                ? normalizePolicies({ [policyId]: policyStateOverride })[policyId]
+                : normalizePolicies({ [policyId]: readPolicyInputValues(policyId) })[policyId];
+
+            const { text, meta } = formatPolicyPreview(policyId, normalizedState);
+            previewElement.textContent = text;
+            metaElement.textContent = meta;
+
+            listElement.innerHTML = '';
+            const points = Array.isArray(normalizedState.points) ? normalizedState.points : [];
+            points.forEach(point => {
+                const li = document.createElement('li');
+                li.textContent = point;
+                listElement.appendChild(li);
+            });
+
+            const previewWrapper = document.querySelector(`[data-policy-preview-wrapper="${policyId}"]`);
+            const panel = document.querySelector(`[data-policy-panel="${policyId}"]`);
+            const isActive = Boolean(normalizedState.active);
+
+            if (previewWrapper) {
+                previewWrapper.classList.toggle('policy-preview--inactive', !isActive);
+            }
+
+            if (panel) {
+                panel.classList.toggle('policy-panel--inactive', !isActive);
+            }
+        }
+
+        function updateAllPolicyPreviews() {
+            POLICY_IDS.forEach(policyId => updatePolicyPreview(policyId));
+        }
+
+        function setupPolicyFormListeners() {
+            const policiesSection = document.getElementById('policiesSection');
+            if (!policiesSection) {
+                return;
+            }
+
+            policiesSection.addEventListener('input', event => {
+                const target = event.target;
+                if (!target || !target.matches('[data-policy-field]')) {
+                    return;
+                }
+
+                const policyId = target.getAttribute('data-policy-id');
+                if (!policyId) {
+                    return;
+                }
+
+                updatePolicyPreview(policyId);
+            });
         }
 
         function getAppearanceDefaultValue(fieldId) {
@@ -2869,6 +3187,7 @@
                 : {};
 
             configValues.shippingPolicy = normalizeShippingPolicy(configValues.shippingPolicy);
+            configValues.policies = normalizePolicies(configValues.policies);
 
             const appearanceImageFields = [
                 { id: 'appearanceBackgroundImage', key: 'backgroundImage', label: 'la imagen de fondo del catálogo' },
@@ -3035,6 +3354,7 @@
             setInputValue('shippingPolicyClosingTitle', shippingPolicyValues.closingTitle || '');
             setInputValue('shippingPolicyClosingDescription', shippingPolicyValues.closingDescription || '');
             setInputValue('shippingPolicyClosingNote', shippingPolicyValues.closingNote || '');
+            applyPoliciesToInputs(catalogData.config.policies);
             const logoValue = catalogData.config.logoData || '';
             const logoUrlInput = document.getElementById('companyLogoUrl');
             if (logoUrlInput) {
@@ -3153,15 +3473,10 @@
                     button: document.querySelector('button[data-section="about"]'),
                     label: 'Nosotros'
                 },
-                policiesHub: {
-                    element: document.getElementById('policiesHubSection'),
-                    button: document.querySelector('button[data-section="policiesHub"]'),
+                policies: {
+                    element: document.getElementById('policiesSection'),
+                    button: document.querySelector('button[data-section="policies"]'),
                     label: 'Políticas corporativas'
-                },
-                shippingPolicy: {
-                    element: document.getElementById('shippingPolicySection'),
-                    button: document.querySelector('button[data-section="shippingPolicy"]'),
-                    label: 'Política de envíos'
                 },
                 products: {
                     element: document.getElementById('productsSection'),
