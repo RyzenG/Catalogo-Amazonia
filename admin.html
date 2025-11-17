@@ -24,7 +24,8 @@
                 <h3 class="section-title">Menú</h3>
                 <button class="btn btn-primary btn-block" data-section="config" aria-controls="configSection" aria-expanded="true">⚙️ Configuración</button>
                 <button class="btn btn-primary btn-block" data-section="about" aria-controls="aboutConfigSection" aria-expanded="false">👥 Nosotros</button>
-                <button class="btn btn-primary btn-block" data-section="shippingPolicy" aria-controls="shippingPolicySection" aria-expanded="false">🚚 Política de envíos</button>
+                <button class="btn btn-primary btn-block" data-section="policiesHub" aria-controls="policiesHubSection" aria-expanded="false">📄 Políticas corporativas</button>
+                <button class="btn btn-primary btn-block" data-section="shippingPolicy" aria-controls="shippingPolicySection" aria-expanded="false">🚚 Configurar política de envíos</button>
                 <button class="btn btn-primary btn-block" data-section="products" aria-controls="productsSection" aria-expanded="false">📦 Productos</button>
                 <button class="btn btn-success btn-block mt-md" data-action="generate-catalog">📥 Generar Catálogo</button>
                 <button class="btn btn-secondary btn-block" id="updatePreviewButton">🔄 Actualizar vista previa</button>
@@ -210,6 +211,61 @@
                             <textarea id="aboutValues" rows="4" placeholder="Innovación&#10;Sostenibilidad&#10;Calidad"></textarea>
                             <small style="display: block; margin-top: 0.5rem; color: #555;">Cada valor se separa con un salto de línea y se mostrará como una lista en la página de "Nosotros".</small>
                         </div>
+                    </div>
+                </div>
+
+                <div id="policiesHubSection" class="section" role="region" aria-labelledby="policiesHubSectionTitle" aria-hidden="true" hidden>
+                    <h2 class="section-title" id="policiesHubSectionTitle">📄 Políticas corporativas</h2>
+                    <p class="section-description">Centraliza tus políticas y abre cada panel dedicado desde aquí. La política de envíos se edita dentro de este administrador, mientras que reembolsos, privacidad y otras directrices se actualizan en la página especializada de políticas.</p>
+
+                    <div class="policies-grid" role="list">
+                        <article class="policy-card" role="listitem">
+                            <div>
+                                <p class="policy-eyebrow">Logística</p>
+                                <h3>Política de envíos</h3>
+                                <p>Gestiona mensajes, secciones y notas que alimentan la página dedicada a envíos.</p>
+                            </div>
+                            <div class="policy-actions">
+                                <button type="button" class="btn btn-primary" id="openShippingConfigButton">Editar en este panel</button>
+                                <a class="btn btn-secondary" href="politica-envios.html#envios" target="_blank" rel="noopener">Abrir página completa</a>
+                            </div>
+                        </article>
+
+                        <article class="policy-card" role="listitem">
+                            <div>
+                                <p class="policy-eyebrow">Servicio al cliente</p>
+                                <h3>Política de reembolso</h3>
+                                <p>Define plazos, responsables y requisitos desde el gestor especializado.</p>
+                            </div>
+                            <div class="policy-actions">
+                                <a class="btn btn-primary" href="politica-envios.html#reembolsos" target="_blank" rel="noopener">Configurar en políticas</a>
+                                <p class="policy-link-hint">Se abre en una nueva pestaña.</p>
+                            </div>
+                        </article>
+
+                        <article class="policy-card" role="listitem">
+                            <div>
+                                <p class="policy-eyebrow">Datos y seguridad</p>
+                                <h3>Política de privacidad</h3>
+                                <p>Actualiza el uso de datos, almacenamiento y contactos del oficial de privacidad.</p>
+                            </div>
+                            <div class="policy-actions">
+                                <a class="btn btn-primary" href="politica-envios.html#privacidad" target="_blank" rel="noopener">Configurar en políticas</a>
+                                <p class="policy-link-hint">Se abre en una nueva pestaña.</p>
+                            </div>
+                        </article>
+
+                        <article class="policy-card" role="listitem">
+                            <div>
+                                <p class="policy-eyebrow">Personalizable</p>
+                                <h3>Otras políticas</h3>
+                                <p>Documenta garantías extendidas, políticas ambientales u otra directriz interna.</p>
+                            </div>
+                            <div class="policy-actions">
+                                <a class="btn btn-primary" href="politica-envios.html#extras" target="_blank" rel="noopener">Configurar en políticas</a>
+                                <p class="policy-link-hint">Se abre en una nueva pestaña.</p>
+                            </div>
+                        </article>
                     </div>
                 </div>
 
