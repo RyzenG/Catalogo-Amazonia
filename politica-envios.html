@@ -3,1925 +3,830 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Política de envíos - AMAZONIA CONCRETE</title>
+    <title>Políticas - Amazonia Concrete</title>
     <style>
-        
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            color-scheme: light;
+            font-size: 16px;
+            --green-900: #1c2e1b;
+            --green-800: #284428;
+            --green-600: #3f5c3d;
+            --green-400: #6f8e6c;
+            --green-200: #dfe7dc;
+            --yellow-500: #f6c343;
+            --bg: #f3f5f1;
         }
 
-        html {
-            scroll-behavior: smooth;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f5f5 0%, #dddddd 100%);
-            overflow-x: hidden;
+            background: var(--bg);
+            color: var(--green-900);
+            line-height: 1.6;
         }
 
-        /* Loading Screen */
-        .loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: #294428;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            transition: opacity 1s, visibility 1s;
-        }
-
-        .loader.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .leaf-spinner {
-            width: 80px;
-            height: 80px;
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Header */
         header {
-            background: linear-gradient(135deg, #294428 0%, #466044 100%);
-            color: #ffffff;
-            padding: 2rem 0;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #20321f, #456642);
+            color: white;
+            padding: 3rem 1rem 4rem;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
             position: relative;
             overflow: hidden;
         }
 
-        header::before {
+        header::after {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(45, 74, 43, 0.10) 0%, transparent 70%);
-            animation: float 20s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
+            inset: 0;
+            background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.2), transparent 55%);
+            opacity: 0.8;
+            pointer-events: none;
         }
 
         .header-inner {
+            position: relative;
+            z-index: 1;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .logo-panel {
+            background: rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 2.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header-content {
-            text-align: center;
-        }
-
-        .primary-nav {
-            max-width: 1200px;
-            margin: 1.5rem auto 0;
-            padding: 0 2rem 1rem;
-            display: flex;
             gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-
-        .primary-nav__link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.65rem 1.25rem;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            background: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-            font-weight: 600;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-            text-decoration: none;
-            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            backdrop-filter: blur(4px);
-        }
-
-        .primary-nav__link:hover,
-        .primary-nav__link:focus-visible {
-            background: rgba(255, 255, 255, 0.35);
-            border-color: rgba(255, 255, 255, 0.6);
-            transform: translateY(-1px);
-            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
-            color: #ffffff;
-            outline: none;
-        }
-
-        .primary-nav__link:focus-visible {
-            box-shadow: 0 0 0 3px rgba(143, 166, 140, 0.15), 0 12px 24px rgba(15, 23, 42, 0.18);
-        }
-
-        .logo-container {
-            width: clamp(160px, 18vw, 240px);
-            max-height: 240px;
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            padding: 0;
-            display: flex;
-            align-items: center;
+            min-height: 240px;
             justify-content: center;
         }
 
-        .logo-container img {
-            width: 100%;
+        .logo-panel img {
+            width: 180px;
             height: auto;
-            display: block;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.35));
         }
 
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            letter-spacing: 3px;
-            animation: fadeInDown 1s ease-out;
-        }
-
-        .tagline {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            animation: fadeInUp 1s ease-out 0.3s both;
-        }
-
-        /* Navigation */
-        .nav-container {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            animation: slideDown 0.5s ease-out 0.5s both;
-        }
-
-        .nav-container nav {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem 2rem 0.5rem;
-        }
-
-        .nav-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .catalog-filters {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem 1.5rem;
-            display: flex;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .filter-field {
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
-        }
-
-        .filter-chip-row {
-            display: inline-flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: flex-end;
-        }
-
-        .filter-chip {
-            position: relative;
-            flex: 0 0 auto;
-        }
-
-        .filter-chip__button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            padding: 0.45rem 0.95rem;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.95);
-            color: #2d4a2b;
-            font-size: 0.9rem;
-            font-weight: 600;
-            letter-spacing: 0.4px;
-            text-transform: uppercase;
-            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, transform 0.2s ease;
-            cursor: pointer;
-        }
-
-        .filter-chip__icon {
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .filter-chip__button::after {
-            content: '';
-            display: inline-block;
-            width: 0.45rem;
-            height: 0.45rem;
-            border-right: 2px solid currentColor;
-            border-bottom: 2px solid currentColor;
-            transform: rotate(45deg);
-            transition: transform 0.2s ease;
-            margin-left: 0.35rem;
-        }
-
-        .filter-chip__button:hover,
-        .filter-chip__button[aria-expanded="true"] {
-            border-color: #8fa68c;
-            color: #8fa68c;
-            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
-            background: rgba(255, 255, 255, 1);
-            transform: translateY(-1px);
-        }
-
-        .filter-chip__button[aria-expanded="true"]::after {
-            transform: rotate(-135deg);
-        }
-
-        .filter-chip__button:focus-visible {
-            outline: none;
-            border-color: #8fa68c;
-            box-shadow: 0 0 0 3px rgba(143, 166, 140, 0.15), 0 10px 20px rgba(15, 23, 42, 0.12);
-        }
-
-        .filter-chip__text {
-            white-space: nowrap;
-        }
-
-        .filter-popover {
-            position: absolute;
-            top: calc(100% + 0.55rem);
-            inset-inline-start: 0;
-            min-width: 240px;
-            max-width: min(320px, 90vw);
-            padding: 1rem;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            border-radius: 16px;
-            background: #ffffff;
-            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
-            z-index: 20;
-        }
-
-        .filter-chip:last-child .filter-popover {
-            inset-inline-start: auto;
-            inset-inline-end: 0;
-        }
-
-        .filter-popover__content {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .filter-field--popover {
-            min-width: 0;
-        }
-
-        .filter-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #778975;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .filter-label__icon {
-            font-size: 1.05rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .filter-label__text {
-            display: inline-block;
-        }
-
-        .catalog-filters input,
-        .catalog-filters select {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            border-radius: 12px;
-            background: #ffffff;
-            color: #2d4a2b;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-        }
-
-        .catalog-filters input::placeholder {
-            color: #778975;
-        }
-
-        .catalog-filters input:focus,
-        .catalog-filters select:focus {
-            outline: none;
-            border-color: #8fa68c;
-            box-shadow: 0 0 0 3px rgba(143, 166, 140, 0.15);
-            transform: translateY(-1px);
-        }
-
-        .catalog-filters select {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background-image:
-                linear-gradient(45deg, transparent 50%, #8fa68c 50%),
-                linear-gradient(135deg, #8fa68c 50%, transparent 50%);
-            background-position:
-                calc(100% - 18px) calc(50% - 3px),
-                calc(100% - 12px) calc(50% - 3px);
-            background-size: 6px 6px, 6px 6px;
-            background-repeat: no-repeat;
-            padding-right: 2.5rem;
-        }
-
-        .filter-popover--search {
-            min-width: 260px;
-        }
-
-        .filter-popover select,
-        .filter-popover input[type="search"] {
-            margin-top: 0.25rem;
-        }
-
-        .nav-container--compact {
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-        }
-
-        .nav-container--compact nav {
-            padding: 0.65rem 1.5rem 0.3rem;
-        }
-
-        .nav-container--compact .catalog-filters {
-            padding: 0.35rem 1.5rem 0.85rem;
-            gap: 0.65rem;
-        }
-
-        .nav-container--compact .catalog-filters input,
-        .nav-container--compact .catalog-filters select {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.95rem;
-        }
-
-        .nav-container--compact .filter-chip__button {
-            padding: 0.4rem 0.6rem;
-            gap: 0.3rem;
-        }
-
-        .nav-container--compact .filter-chip__icon,
-        .nav-container--compact .filter-label__icon {
-            font-size: 1.15rem;
-        }
-
-        .nav-container--compact .filter-chip__text,
-        .nav-container--compact .filter-label__text {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        .nav-container--compact .filter-chip__button::after {
-            margin-left: 0.25rem;
-        }
-
-        .scroll-to-top {
-            position: fixed;
-            inset-inline-end: 2rem;
-            bottom: 2.5rem;
-            width: 3rem;
-            height: 3rem;
-            border-radius: 999px;
-            border: none;
-            background: #8fa68c;
-            color: #ffffff;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.35rem;
-            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.25);
-            cursor: pointer;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(18px);
-            transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            z-index: 1300;
-        }
-
-        .scroll-to-top--visible {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
-
-        .scroll-to-top:hover,
-        .scroll-to-top:focus-visible {
-            box-shadow: 0 22px 40px rgba(15, 23, 42, 0.3);
-        }
-
-        .scroll-to-top:focus-visible {
-            outline: 3px solid #ffffff;
-            outline-offset: 3px;
-        }
-
-        @media (max-width: 768px) {
-            .catalog-filters {
-                flex-direction: column;
-                align-items: stretch;
-                padding: 0 1.25rem 1.25rem;
-            }
-
-            .filter-chip-row {
-                width: 100%;
-                overflow-x: auto;
-                flex-wrap: nowrap;
-                gap: 0.65rem;
-                padding-bottom: 0.35rem;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .filter-chip {
-                flex: 0 0 auto;
-                scroll-snap-align: start;
-            }
-
-            .filter-chip-row {
-                scroll-snap-type: x proximity;
-            }
-
-            .filter-chip__button {
-                white-space: nowrap;
-            }
-
-            .filter-chip:last-child .filter-popover {
-                inset-inline-start: 0;
-                inset-inline-end: auto;
-            }
-
-            .filter-popover {
-                max-width: min(360px, 95vw);
-            }
-
-            .nav-container--compact nav {
-                padding: 0.5rem 1.1rem 0.2rem;
-            }
-
-            .nav-container--compact .catalog-filters {
-                padding: 0.35rem 1.1rem 0.75rem;
-            }
-
-            .scroll-to-top {
-                inset-inline-end: 1rem;
-                bottom: 5.25rem;
-                width: 2.75rem;
-                height: 2.75rem;
-                font-size: 1.2rem;
-            }
-        }
-
-        .nav-btn {
-            padding: 0.7rem 1.5rem;
-            background: linear-gradient(135deg, #779774 0%, #628360 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .nav-btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .nav-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(107, 142, 104, 0.28);
-        }
-
-        .nav-btn.active {
-            background: linear-gradient(135deg, #2b4629 0%, #4d654b 100%);
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .about-section {
-            max-width: 1200px;
-            margin: 4rem auto;
-            padding: 0 2rem;
-        }
-
-        .about-section__inner {
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 28px;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
-            padding: 2.5rem 2.5rem 2rem;
-            backdrop-filter: blur(6px);
-        }
-
-        .about-section__title {
-            font-size: 2.3rem;
-            color: #2d4a2b;
-            text-align: center;
-            margin-bottom: 1.5rem;
+        .header-copy h1 {
+            font-size: clamp(2rem, 4vw, 3.2rem);
             letter-spacing: 1px;
-            text-transform: uppercase;
         }
 
-        .about-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1.75rem;
+        .header-copy p {
+            opacity: 0.9;
+            margin-top: 0.75rem;
         }
 
-        .about-card {
-            background: #ffffff;
-            border-radius: 20px;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-            padding: 1.75rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .about-card__title {
-            font-size: 1.4rem;
-            color: #2d4a2b;
-            letter-spacing: 0.6px;
-        }
-
-        .about-card__text {
-            color: #778975;
-            line-height: 1.7;
-            font-size: 1rem;
-        }
-
-        .about-values-list {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            color: #778975;
-            font-size: 1rem;
-        }
-
-        .about-values-list li {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            line-height: 1.6;
-            background: rgba(249, 250, 251, 0.9);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            position: relative;
-        }
-
-        .about-values-list li::before {
-            content: '✔';
-            color: #8fa68c;
-            font-weight: 700;
-            flex: 0 0 auto;
-            transform: translateY(2px);
-        }
-
-        /* Category Sections */
-        .category {
-            display: none;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .category.active {
-            display: block;
-        }
-
-        .category-title {
-            font-size: 2.5rem;
-            color: #2d4a2b;
-            margin-bottom: 1rem;
-            text-align: center;
-            position: relative;
-            padding-bottom: 1rem;
-        }
-
-        .category-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #8fa68c, transparent);
-        }
-
-        .category-description {
-            text-align: center;
-            color: #778975;
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
-        }
-
-        .no-results-message {
-            margin: 1.5rem auto 0;
-            text-align: center;
-            font-size: 1rem;
-            color: #778975;
-            max-width: 680px;
-            padding: 1.5rem;
-            border-radius: 16px;
-            border: 1px dashed rgba(45, 74, 43, 0.08);
-            background: rgba(255,255,255,0.75);
-            line-height: 1.6;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-        }
-
-        .no-results-message::before {
-            content: '🔍';
-            display: block;
-            font-size: 1.6rem;
-            margin-bottom: 0.5rem;
-            opacity: 0.85;
-        }
-
-        /* Product Grid */
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .product-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(45, 74, 43, 0.12);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .product-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(107, 142, 104, 0.12) 0%, rgba(45, 74, 43, 0.12) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-
-        .product-card:hover::before {
-            opacity: 1;
-        }
-
-        .product-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(45, 74, 43, 0.18);
-        }
-
-        .product-image {
-            width: 100%;
-            height: 250px;
-            background: linear-gradient(135deg, #e6e6e6 0%, #cecece 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .product-image::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
-            animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: rotate(0deg) translateX(-100%); }
-            100% { transform: rotate(0deg) translateX(100%); }
-        }
-
-        .product-info {
-            padding: 1.5rem;
-        }
-
-        .product-name {
-            font-size: 1.3rem;
-            color: #2d4a2b;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .product-description {
-            color: #778975;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            margin-bottom: 1rem;
-        }
-
-        .product-features {
+        .quick-links {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
         }
 
-        .feature-tag {
-            background: rgba(143, 166, 140, 0.18);
-            color: #6b7d69;
-            padding: 0.3rem 0.8rem;
-            border-radius: 15px;
-            font-size: 0.85rem;
-        }
-
-        .product-price {
-            font-size: 1.5rem;
-            color: #668763;
-            font-weight: bold;
-        }
-
-        .product-actions {
-            margin-top: 1.2rem;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .product-card__select {
-            appearance: none;
-            border: none;
+        .quick-links a {
+            padding: 0.5rem 1.25rem;
             border-radius: 999px;
-            background: #8fa68c;
-            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.45);
+            color: white;
+            text-decoration: none;
             font-weight: 600;
-            padding: 0.55rem 1.4rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-            box-shadow: 0 10px 20px rgba(143, 166, 140, 0.15);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
         }
 
-        .product-card__select:hover,
-        .product-card__select:focus {
+        .quick-links a:hover,
+        .quick-links a:focus-visible {
+            background: rgba(255,255,255,0.2);
             transform: translateY(-2px);
-            box-shadow: 0 14px 28px rgba(143, 166, 140, 0.15);
+            border-color: white;
         }
 
-        .product-card__select:focus-visible {
-            outline: 3px solid #8fa68c;
-            outline-offset: 2px;
-        }
-
-        .product-card__select[aria-pressed="true"] {
-            background: linear-gradient(135deg, #294428 0%, #466044 100%);
-            box-shadow: 0 8px 18px rgba(143, 166, 140, 0.15);
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .modal.active {
-            display: flex;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            max-width: 800px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            width: 40px;
-            height: 40px;
-            background: rgba(0,0,0,0.1);
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            z-index: 10;
-        }
-
-        .close-modal:hover {
-            background: rgba(0,0,0,0.2);
-            transform: rotate(90deg);
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, #294428 0%, #466044 100%);
-            color: #ffffff;
-            padding: 2rem;
-            border-radius: 20px 20px 0 0;
-        }
-
-        .modal-body {
-            padding: 2rem;
-        }
-
-        .modal-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .modal-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .modal-image {
-            position: relative;
-            width: 100%;
-            max-height: 320px;
-            background: linear-gradient(135deg, #e6e6e6 0%, #cecece 100%);
-            border-radius: 10px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-image-frame {
-            width: 100%;
-            height: 100%;
-        }
-
-        .modal-image-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .carousel-button {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(0, 0, 0, 0.35);
-            color: #fff;
-            font-size: 1.6rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.2s;
-        }
-
-        .carousel-button:hover {
-            background: rgba(0, 0, 0, 0.55);
-            transform: translateY(-50%) scale(1.05);
-        }
-
-        .carousel-button:disabled {
-            background: rgba(0, 0, 0, 0.2);
-            cursor: default;
-            transform: translateY(-50%);
-        }
-
-        .carousel-button--prev {
-            left: 12px;
-        }
-
-        .carousel-button--next {
-            right: 12px;
-        }
-
-        .carousel-indicators {
-            position: absolute;
-            bottom: 14px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 0.4rem;
-        }
-
-        .carousel-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 255, 255, 0.6);
-            cursor: pointer;
-            padding: 0;
-            transition: background 0.2s, transform 0.2s;
-        }
-
-        .carousel-indicator:hover,
-        .carousel-indicator:focus {
-            background: rgba(255, 255, 255, 0.85);
-            outline: none;
-            transform: scale(1.05);
-        }
-
-        .carousel-indicator.active {
-            background: #60805e;
-        }
-
-        .modal-details h3 {
-            color: #5e7d5c;
-            margin-bottom: 1rem;
-        }
-
-        .modal-details p {
-            color: #778975;
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
-
-        .specs-list {
-            list-style: none;
-            margin: 1rem 0;
-        }
-
-        .specs-list li {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid rgba(45, 74, 43, 0.12);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .cta-section {
-            background: rgba(143, 166, 140, 0.12);
-            padding: 1.5rem;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .cta-button {
-            background: linear-gradient(135deg, #749571 0%, #658562 100%);
-            color: #ffffff;
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 25px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0.5rem;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(107, 142, 104, 0.30);
-        }
-
-        .shipping-main {
+        main {
             max-width: 1200px;
-            margin: 0 auto;
-            padding: 3rem 2rem 4rem;
+            margin: -60px auto 3rem;
+            padding: 0 1.5rem;
         }
 
-        .shipping-hero__content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 1.5rem;
-        }
-
-        .shipping-hero__title {
-            font-size: clamp(2.4rem, 5.5vw, 3.6rem);
-            letter-spacing: 2px;
-            color: #ffffff;
-        }
-
-        .shipping-hero__description {
-            max-width: 720px;
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: #ffffff;
-            margin: 0 auto;
-        }
-
-        .shipping-sections {
-            margin-top: 3rem;
-        }
-
-        .shipping-sections__inner {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            background: #ffffff;
+        .card {
+            background: #fff;
             border-radius: 28px;
-            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
-            padding: 3rem;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            border: 1px solid rgba(33, 57, 33, 0.08);
         }
 
-        .shipping-sections__title {
-            font-size: 2rem;
-            color: #2d4a2b;
-            text-align: center;
+        .card h2 {
+            margin-bottom: 1rem;
+            font-size: 1.6rem;
         }
 
-        .shipping-section {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .shipping-section__title {
-            font-size: 1.5rem;
-            color: #2d4a2b;
-        }
-
-        .shipping-section__description {
-            color: #778975;
-            line-height: 1.6;
-        }
-
-        .shipping-section__list {
-            padding-left: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            color: #2d4a2b;
-        }
-
-        .shipping-section__note {
-            font-size: 0.95rem;
-            color: #8fa68c;
-            background: rgba(143, 166, 140, 0.12);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-        }
-
-        .shipping-cta {
-            margin-top: 3rem;
-        }
-
-        .shipping-cta__inner {
-            background: linear-gradient(135deg, rgba(143, 166, 140, 0.12) 0%, rgba(143, 166, 140, 0.15) 100%);
-            border-radius: 28px;
-            padding: 3rem 2rem;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
-            display: flex;
-            flex-direction: column;
+        .grid-two {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1.25rem;
         }
 
-        .shipping-cta__title {
-            font-size: 2rem;
-            color: #2d4a2b;
-        }
-
-        .shipping-cta__text {
-            font-size: 1.05rem;
-            color: #2d4a2b;
-            max-width: 720px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        .shipping-cta__buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        .shipping-cta__button {
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 220px;
-        }
-
-        .shipping-cta__button--secondary {
-            background: #ffffff;
-            color: #2d4a2b;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-        }
-
-        .shipping-cta__button--secondary:hover {
-            color: #8fa68c;
-        }
-
-        .shipping-cta__note {
-            font-size: 0.95rem;
-            color: #778975;
-        }
-
-        /* Footer */
-        footer {
-            background: linear-gradient(135deg, #294428 0%, #466044 100%);
-            color: #ffffff;
-            padding: 3rem 0 2rem;
-            margin-top: 4rem;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            text-align: center;
-        }
-
-        .contact-info {
-            margin-bottom: 2rem;
-        }
-
-        .contact-info h3 {
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-
-        .social-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin: 1.5rem 0 1rem;
-        }
-
-        .social-link {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: #fff;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .social-link svg {
-            width: 1.5rem;
-            height: 1.5rem;
-        }
-
-        .social-link svg path {
-            fill: currentColor;
-        }
-
-        .social-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-        }
-
-        .social-link--whatsapp {
-            background: #25d366;
-        }
-
-        .social-link--instagram {
-            background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
-        }
-
-        .social-link--facebook {
-            background: #1877f2;
-        }
-
-        .social-link--tiktok {
-            background: #010101;
-        }
-
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 1px, 1px);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-100%);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Selected products panel */
-        .selected-products-toggle {
-            position: fixed;
-            bottom: 1.5rem;
-            right: 1.5rem;
-            z-index: 1100;
-            background: #8fa68c;
-            color: #ffffff;
-            border: none;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 0.65rem 1.2rem;
+        label {
+            font-size: 0.9rem;
             font-weight: 600;
-            box-shadow: 0 18px 35px rgba(143, 166, 140, 0.15);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--green-600);
+            display: block;
+            margin-bottom: 0.35rem;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.08);
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--green-400);
+            box-shadow: 0 0 0 3px rgba(111, 142, 108, 0.2);
+        }
+
+        .policy-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .policy-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .policy-header span {
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            color: var(--green-400);
+            text-transform: uppercase;
+        }
+
+        .switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            margin-top: 0.4rem;
+        }
+
+        .switch input {
+            width: 0;
+            height: 0;
+            opacity: 0;
+            position: absolute;
+        }
+
+        .switch-slider {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: var(--green-200);
+            border-radius: 999px;
+            transition: background 0.2s ease;
+        }
+
+        .switch-slider::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .switch input:checked + .switch-slider {
+            background: var(--yellow-500);
+        }
+
+        .switch input:checked + .switch-slider::after {
+            transform: translateX(24px);
+        }
+
+        .preview {
+            background: linear-gradient(135deg, rgba(111,142,108,0.08), rgba(111,142,108,0.18));
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px dashed rgba(52, 76, 51, 0.2);
+        }
+
+        .preview h4 {
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .preview ul {
+            margin-top: 0.75rem;
+            padding-left: 1.2rem;
+        }
+
+        .preview li + li {
+            margin-top: 0.35rem;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            border: none;
+            border-radius: 14px;
+            padding: 0.9rem 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .selected-products-toggle:hover,
-        .selected-products-toggle:focus {
-            transform: translateY(-3px);
-            box-shadow: 0 22px 40px rgba(143, 166, 140, 0.15);
+        .btn-primary {
+            background: var(--green-600);
+            color: white;
+            box-shadow: 0 10px 25px rgba(63,92,61,0.35);
         }
 
-        .selected-products-toggle:focus-visible {
-            outline: 3px solid #ffffff;
-            outline-offset: 3px;
+        .btn-secondary {
+            background: white;
+            color: var(--green-600);
+            border: 1px solid rgba(63,92,61,0.35);
         }
 
-        .selected-products-toggle__badge {
-            min-width: 1.8rem;
-            height: 1.8rem;
-            border-radius: 999px;
-            background: rgba(0, 0, 0, 0.15);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
-        }
-
-        .selected-products-panel {
-            position: fixed;
-            bottom: 1.5rem;
-            right: 1.5rem;
-            width: min(420px, calc(100% - 3rem));
-            max-height: min(75vh, 520px);
-            background: #ffffff;
-            border-radius: 18px;
-            box-shadow: 0 25px 55px rgba(0,0,0,0.18);
-            transform: translateY(calc(100% + 2rem));
-            opacity: 0;
-            visibility: hidden;
-            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            z-index: 1200;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-        }
-
-        .selected-products-panel--open {
-            transform: translateY(0);
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .selected-products-panel:focus {
-            outline: none;
-            box-shadow: 0 0 0 4px rgba(143, 166, 140, 0.15);
-        }
-
-        .selected-products-panel__header {
-            padding: 1.1rem 1.4rem 0.9rem;
-            border-bottom: 1px solid rgba(45, 74, 43, 0.08);
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .selected-products-panel__title {
-            font-size: 1.2rem;
-            color: #2d4a2b;
-        }
-
-        .selected-products-panel__header-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .selected-products-panel__summary {
-            color: #778975;
-            font-size: 0.95rem;
-        }
-
-        .selected-products-panel__clear {
-            margin-left: auto;
-            background: transparent;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            border-radius: 999px;
-            padding: 0.35rem 0.9rem;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
-        }
-
-        .selected-products-panel__clear:not(:disabled):hover,
-        .selected-products-panel__clear:not(:disabled):focus {
-            background: rgba(143, 166, 140, 0.15);
-            border-color: #8fa68c;
-            color: #2d4a2b;
-        }
-
-        .selected-products-panel__clear:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .selected-products-panel__close {
-            background: transparent;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0.25rem;
-            color: #778975;
-        }
-
-        .selected-products-panel__close:hover,
-        .selected-products-panel__close:focus {
-            color: #2d4a2b;
-        }
-
-        .selected-products-panel__body {
-            padding: 1rem 1.4rem 1.4rem;
-            overflow-y: auto;
-            flex: 1 1 auto;
-        }
-
-        .selected-products-panel__footer {
-            padding: 0.9rem 1.4rem 1.4rem;
-            border-top: 1px solid rgba(45, 74, 43, 0.08);
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            background: #ffffff;
-        }
-
-        .selected-products-panel__hint {
-            margin: 0;
-            font-size: 0.9rem;
-            color: #778975;
-        }
-
-        .selected-products-panel__checkout {
-            background: #8fa68c;
-            color: #ffffff;
-            border: none;
-            border-radius: 14px;
-            padding: 0.85rem 1.1rem;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-            box-shadow: 0 18px 35px rgba(143, 166, 140, 0.15);
-        }
-
-        .selected-products-panel__checkout:hover,
-        .selected-products-panel__checkout:focus {
+        button:hover,
+        button:focus-visible {
             transform: translateY(-2px);
-            box-shadow: 0 24px 40px rgba(143, 166, 140, 0.15);
         }
 
-        .selected-products-panel__checkout:focus-visible {
-            outline: 3px solid #ffffff;
-            outline-offset: 2px;
-        }
-
-        .selected-products-panel__checkout:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            box-shadow: none;
-            transform: none;
-        }
-
-        .selected-products-panel__empty {
-            color: #778975;
-            font-size: 0.95rem;
-        }
-
-        .selected-products-panel__list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .selected-products-item {
-            padding: 1rem;
-            border-radius: 12px;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,1) 100%);
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .selected-products-item__header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .selected-products-item__thumbnail {
-            width: 64px;
-            height: 64px;
-            border-radius: 12px;
-            overflow: hidden;
-            flex-shrink: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,1) 100%);
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .selected-products-item__thumbnail img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .selected-products-item__thumbnail-fallback {
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: #8fa68c;
-        }
-
-        .selected-products-item__name {
-            font-weight: 600;
-            color: #2d4a2b;
-            flex: 1 1 auto;
-        }
-
-        .selected-products-item__remove {
-            border: none;
-            background: transparent;
-            color: #778975;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .selected-products-item__remove:hover,
-        .selected-products-item__remove:focus {
-            color: #8fa68c;
-            text-decoration: underline;
-        }
-
-        .selected-products-item__fields {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 0.75rem;
-        }
-
-        .selected-products-item__field {
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
-            font-size: 0.9rem;
-            color: #778975;
-        }
-
-        .selected-products-item__field input,
-        .selected-products-item__field textarea {
-            width: 100%;
-            border: 1px solid rgba(45, 74, 43, 0.08);
-            border-radius: 10px;
-            padding: 0.55rem 0.7rem;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 2.3rem;
-            transition: border 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .selected-products-item__field input:focus,
-        .selected-products-item__field textarea:focus {
-            border-color: #8fa68c;
-            box-shadow: 0 0 0 3px rgba(143, 166, 140, 0.15);
-            outline: none;
-        }
-
-        .selected-products-panel[data-empty="true"] .selected-products-panel__list {
-            display: none;
-        }
-
-        .selected-products-panel[data-empty="false"] .selected-products-panel__empty {
-            display: none;
-        }
-
-        .selected-products-panel[data-empty="true"] .selected-products-panel__hint {
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .selected-products-toggle {
-                right: 1rem;
-                left: auto;
-                bottom: 1rem;
-                width: 3.25rem;
-                height: 3.25rem;
-                padding: 0.75rem;
-                justify-content: center;
-                border-radius: 999px;
-                gap: 0;
+        @media (max-width: 640px) {
+            .card {
+                padding: 1.5rem;
             }
 
-            .selected-products-toggle__icon svg {
-                width: 1.6rem;
-                height: 1.6rem;
-            }
-
-            .selected-products-toggle__badge {
-                position: absolute;
-                top: -0.35rem;
-                right: -0.35rem;
-                min-width: 1.5rem;
-                height: 1.5rem;
-                font-size: 0.85rem;
-                background: #ffffff;
-                color: #8fa68c;
-                border: 2px solid #8fa68c;
-            }
-
-            .selected-products-panel {
-                right: 1rem;
-                left: 1rem;
-                width: auto;
-                max-width: none;
-                max-height: 80vh;
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            .header-inner {
-                gap: 2rem;
-            }
-
-            .logo-container {
-                width: clamp(140px, 45vw, 200px);
-                max-height: 200px;
-                padding: 0;
-                background: transparent;
-                border: none;
-                box-shadow: none;
-            }
-
-            .primary-nav {
-                padding: 0 1.5rem 1rem;
-            }
-
-            .nav-container nav {
-                padding: 1rem 1.5rem 0.5rem;
-            }
-
-            .about-section {
-                margin: 3rem auto;
-                padding: 0 1.5rem;
-            }
-
-            .about-section__inner {
-                padding: 2rem 1.5rem;
-            }
-
-            .about-grid {
-                grid-template-columns: 1fr;
-                gap: 1.25rem;
-            }
-
-            .catalog-filters {
-                padding: 0 1.5rem 1.5rem;
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .filter-field {
-                flex: 1 1 auto;
-            }
-
-            .category-title {
-                font-size: 1.8rem;
-            }
-
-            .products-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .shipping-main {
-                padding: 2.5rem 1.5rem 3rem;
-            }
-
-            .shipping-sections__inner {
-                padding: 2rem 1.5rem;
-            }
-
-            .shipping-cta__inner {
-                padding: 2.5rem 1.5rem;
+            .preview {
+                padding: 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="loader" id="loader">
-        <svg class="leaf-spinner" viewBox="0 0 100 100">
-            <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="#425c40"/>
-            <path d="M50 40 Q30 60 50 80 Q70 60 50 40" fill="#9aaf98"/>
-        </svg>
-    </div>
-
-    <header id="pageTop">
+    <header>
         <div class="header-inner">
-            
-        <div class="logo-container" id="headerLogoContainer" style="display: none;">
-            <img id="headerLogo" src="" alt="Logo de AMAZONIA CONCRETE">
-        </div>
-            <div class="header-content shipping-hero__content">
-                <h1 class="shipping-hero__title" id="policyMain">Política de envíos</h1>
-                <p class="shipping-hero__description" id="shippingPolicyLead">Coordinamos entregas seguras y puntuales para cada uno de tus proyectos en Colombia.</p>
+            <div class="logo-panel">
+                <img id="company-logo" src="images/logo.webp" alt="Logo de Amazonia Concrete" onerror="this.src='images/logo.webp'">
+                <p>Personaliza la imagen agregando tu propia URL en la sección de configuración.</p>
+            </div>
+            <div class="header-copy">
+                <p class="eyebrow">Centro de configuración</p>
+                <h1>Políticas corporativas</h1>
+                <p>Actualiza desde un mismo lugar la información clave de tus políticas de envío, reembolso, privacidad y cualquier otra directriz interna.</p>
+                <div class="meta">
+                    <span id="company-name-display">Amazonia Concrete</span>
+                    <span id="last-update-display">Actualizado: 2024-01-01</span>
+                </div>
+                <div class="quick-links">
+                    <a href="#envios">Política de envíos</a>
+                    <a href="#reembolsos">Política de reembolso</a>
+                    <a href="#privacidad">Política de privacidad</a>
+                    <a href="#extras">Otras políticas</a>
+                </div>
             </div>
         </div>
-        <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
-            <a class="primary-nav__link" id="primaryNavHome" href="#pageTop" data-scroll-target="pageTop">Inicio</a>
-            <a class="primary-nav__link" id="primaryNavShipping" href="#policyMain" data-scroll-target="policyMain">Política de envíos</a>
-        </nav>
     </header>
 
-    <main class="shipping-main" id="mainContent">
-        <section class="shipping-sections" aria-labelledby="shippingSectionsTitle">
-            <div class="shipping-sections__inner">
-                <h2 class="shipping-sections__title" id="shippingSectionsTitle">Detalles de envíos</h2>
-                
-                <article class="shipping-section" id="coverage">
-                    <h3 class="shipping-section__title">Cobertura y tiempos de entrega</h3>
-                    <p class="shipping-section__description">Planificamos cada despacho según la ciudad y la complejidad del pedido.</p>
-                    <ul class="shipping-section__list"><li>Envíos en Bogotá y municipios aledaños con logística propia.</li><li>Despachos nacionales con aliados estratégicos especializados.</li><li>Tiempo estimado entre 5 y 10 días hábiles después de confirmar el pedido.</li></ul>
-                    <p class="shipping-section__note">Los tiempos pueden variar en temporadas de alta demanda o para piezas personalizadas.</p>
-                </article>
-                <article class="shipping-section" id="packaging">
-                    <h3 class="shipping-section__title">Empaque y manipulación especializada</h3>
-                    <p class="shipping-section__description">Protegemos cada pieza para que llegue en perfecto estado.</p>
-                    <ul class="shipping-section__list"><li>Revisamos cada producto antes del despacho.</li><li>Utilizamos empaques reforzados y materiales reutilizables.</li><li>Coordinamos cargue y descargue con personal capacitado.</li></ul>
-                    <p class="shipping-section__note">Si detectas alguna novedad en la entrega, repórtala en las primeras 24 horas.</p>
-                </article>
-                <article class="shipping-section" id="coordination">
-                    <h3 class="shipping-section__title">Costos y coordinación</h3>
-                    <p class="shipping-section__description">Te acompañamos para elegir la opción de transporte ideal.</p>
-                    <ul class="shipping-section__list"><li>Cotizamos el envío según volumen, peso y destino.</li><li>Ofrecemos recogida en taller sin costo adicional.</li><li>Puedes programar entregas especiales para proyectos corporativos.</li></ul>
-                    <p class="shipping-section__note">Nuestro equipo confirmará los detalles logísticos antes de despachar tu pedido.</p>
-                </article>
+    <main>
+        <section class="card" aria-labelledby="general-config-title">
+            <div class="policy-header">
+                <span>Panel principal</span>
+                <h2 id="general-config-title">Configuración general</h2>
+            </div>
+            <p>Completa estos campos para mostrar tu marca y datos de contacto en cada política.</p>
+            <div class="grid-two" style="margin-top: 1.5rem;">
+                <div>
+                    <label for="company-name">Nombre comercial</label>
+                    <input id="company-name" type="text" data-general-field="companyName" placeholder="Amazonia Concrete">
+                </div>
+                <div>
+                    <label for="contact-email">Correo de contacto</label>
+                    <input id="contact-email" type="email" data-general-field="contactEmail" placeholder="info@amazonia.com">
+                </div>
+                <div>
+                    <label for="contact-phone">Teléfono</label>
+                    <input id="contact-phone" type="tel" data-general-field="contactPhone" placeholder="(+57) 320 000 0000">
+                </div>
+                <div>
+                    <label for="last-update">Fecha de actualización</label>
+                    <input id="last-update" type="date" data-general-field="lastUpdate">
+                </div>
+                <div>
+                    <label for="logo-url">URL del logo</label>
+                    <input id="logo-url" type="url" data-general-field="logoUrl" placeholder="https://tuservidor.com/logo.svg">
+                </div>
+                <div>
+                    <label for="global-note">Nota general</label>
+                    <textarea id="global-note" rows="4" data-general-field="globalNote" placeholder="Describe aquí cualquier aclaración que se repetirá en todas las políticas."></textarea>
+                </div>
+            </div>
+            <div class="button-row">
+                <button class="btn-secondary" type="button" id="reset-config">Restablecer</button>
+                <button class="btn-primary" type="button" id="save-config">Guardar cambios</button>
             </div>
         </section>
-        
-            <section class="shipping-cta" aria-labelledby="shippingCtaTitle">
-                <div class="shipping-cta__inner">
-                    <h2 class="shipping-cta__title" id="shippingCtaTitle">¿Listo para coordinar tu envío?</h2>
-                    <p class="shipping-cta__text">Escríbenos y recibe asesoría personalizada para definir la mejor opción de entrega.</p>
-                    <div class="shipping-cta__buttons"><a class="cta-button shipping-cta__button" href="https://wa.me/573000000000" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp</a><a class="cta-button shipping-cta__button shipping-cta__button--secondary" href="mailto:info@amazoniaconcrete.com">Enviar un correo</a></div>
-                    <p class="shipping-cta__note">Atendemos solicitudes de lunes a viernes de 8:00 a.m. a 6:00 p.m.</p>
+
+        <section class="card" id="envios">
+            <div class="policy-card" data-policy="shipping">
+                <div>
+                    <div class="policy-header">
+                        <span>Operaciones</span>
+                        <h2>Política de envíos</h2>
+                        <label class="switch">
+                            <input type="checkbox" data-policy-field="active">
+                            <span class="switch-slider" aria-hidden="true"></span>
+                            <strong>Mostrar en el sitio</strong>
+                        </label>
+                    </div>
+                    <div style="margin-top: 1.2rem; display: grid; gap: 1.2rem;">
+                        <div>
+                            <label for="shipping-summary">Resumen</label>
+                            <textarea id="shipping-summary" data-policy-field="summary" placeholder="Describe los plazos de envío y las zonas cubiertas."></textarea>
+                        </div>
+                        <div class="grid-two">
+                            <div>
+                                <label for="shipping-sla">Tiempo estimado</label>
+                                <input id="shipping-sla" type="text" data-policy-field="sla" placeholder="3 - 5 días hábiles">
+                            </div>
+                            <div>
+                                <label for="shipping-coverage">Cobertura</label>
+                                <input id="shipping-coverage" type="text" data-policy-field="coverage" placeholder="Todo el territorio nacional">
+                            </div>
+                            <div>
+                                <label for="shipping-cost">Costo base</label>
+                                <input id="shipping-cost" type="text" data-policy-field="cost" placeholder="Envíos gratis desde $300.000">
+                            </div>
+                            <div>
+                                <label for="shipping-contact">Contacto logístico</label>
+                                <input id="shipping-contact" type="text" data-policy-field="contact" placeholder="logistica@amazonia.com">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="shipping-details">Detalles</label>
+                            <textarea id="shipping-details" data-policy-field="details" placeholder="Incluye empaques especiales, entregas programadas, restricciones, etc."></textarea>
+                        </div>
+                        <div>
+                            <label for="shipping-points">Puntos destacados (uno por línea)</label>
+                            <textarea id="shipping-points" data-policy-field="points" placeholder="Seguimiento en línea\nNotificación por SMS\nEntregas neutras en carbono"></textarea>
+                        </div>
+                    </div>
                 </div>
-            </section>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p data-policy-preview="shipping"></p>
+                    <ul data-policy-points="shipping"></ul>
+                    <p class="meta" style="flex-direction: column; gap: 0.3rem;">
+                        <span data-policy-meta="shipping"></span>
+                        <span data-global-note></span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" id="reembolsos">
+            <div class="policy-card" data-policy="refund">
+                <div>
+                    <div class="policy-header">
+                        <span>Clientes</span>
+                        <h2>Política de reembolso</h2>
+                        <label class="switch">
+                            <input type="checkbox" data-policy-field="active">
+                            <span class="switch-slider" aria-hidden="true"></span>
+                            <strong>Mostrar en el sitio</strong>
+                        </label>
+                    </div>
+                    <div style="margin-top: 1.2rem; display: grid; gap: 1.2rem;">
+                        <div>
+                            <label for="refund-summary">Resumen</label>
+                            <textarea id="refund-summary" data-policy-field="summary" placeholder="Explica quién aplica para reembolso y los plazos."></textarea>
+                        </div>
+                        <div class="grid-two">
+                            <div>
+                                <label for="refund-window">Ventana de solicitud</label>
+                                <input id="refund-window" type="text" data-policy-field="window" placeholder="15 días desde la entrega">
+                            </div>
+                            <div>
+                                <label for="refund-method">Método de reembolso</label>
+                                <input id="refund-method" type="text" data-policy-field="method" placeholder="Transferencia bancaria / Nota crédito">
+                            </div>
+                            <div>
+                                <label for="refund-contact">Contacto</label>
+                                <input id="refund-contact" type="text" data-policy-field="contact" placeholder="servicio@amazonia.com">
+                            </div>
+                            <div>
+                                <label for="refund-requirements">Requisitos</label>
+                                <input id="refund-requirements" type="text" data-policy-field="requirements" placeholder="Factura, evidencia fotográfica">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="refund-details">Detalles</label>
+                            <textarea id="refund-details" data-policy-field="details" placeholder="Condiciones especiales, productos sin reembolso, pasos del proceso."></textarea>
+                        </div>
+                        <div>
+                            <label for="refund-points">Puntos destacados</label>
+                            <textarea id="refund-points" data-policy-field="points" placeholder="Evaluación en 48h\nNotificación automática\nCobertura nacional"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p data-policy-preview="refund"></p>
+                    <ul data-policy-points="refund"></ul>
+                    <p class="meta" style="flex-direction: column; gap: 0.3rem;">
+                        <span data-policy-meta="refund"></span>
+                        <span data-global-note></span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" id="privacidad">
+            <div class="policy-card" data-policy="privacy">
+                <div>
+                    <div class="policy-header">
+                        <span>Confidencialidad</span>
+                        <h2>Política de privacidad</h2>
+                        <label class="switch">
+                            <input type="checkbox" data-policy-field="active">
+                            <span class="switch-slider" aria-hidden="true"></span>
+                            <strong>Mostrar en el sitio</strong>
+                        </label>
+                    </div>
+                    <div style="margin-top: 1.2rem; display: grid; gap: 1.2rem;">
+                        <div>
+                            <label for="privacy-summary">Resumen</label>
+                            <textarea id="privacy-summary" data-policy-field="summary" placeholder="Describe cómo recolectan, utilizan y protegen la información."></textarea>
+                        </div>
+                        <div class="grid-two">
+                            <div>
+                                <label for="privacy-usage">Uso de datos</label>
+                                <input id="privacy-usage" type="text" data-policy-field="usage" placeholder="Procesar pedidos, analítica interna">
+                            </div>
+                            <div>
+                                <label for="privacy-storage">Tiempo de almacenamiento</label>
+                                <input id="privacy-storage" type="text" data-policy-field="storage" placeholder="5 años o según la ley">
+                            </div>
+                            <div>
+                                <label for="privacy-shared">Terceros autorizados</label>
+                                <input id="privacy-shared" type="text" data-policy-field="shared" placeholder="Pasarelas de pago, transporte">
+                            </div>
+                            <div>
+                                <label for="privacy-contact">Oficial de datos</label>
+                                <input id="privacy-contact" type="text" data-policy-field="contact" placeholder="datos@amazonia.com">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="privacy-details">Detalles</label>
+                            <textarea id="privacy-details" data-policy-field="details" placeholder="Derechos ARCO, mecanismos de revocatoria, bases legales."></textarea>
+                        </div>
+                        <div>
+                            <label for="privacy-points">Puntos destacados</label>
+                            <textarea id="privacy-points" data-policy-field="points" placeholder="Infraestructura certificada\nCifrado punto a punto\nAuditorías anuales"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p data-policy-preview="privacy"></p>
+                    <ul data-policy-points="privacy"></ul>
+                    <p class="meta" style="flex-direction: column; gap: 0.3rem;">
+                        <span data-policy-meta="privacy"></span>
+                        <span data-global-note></span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" id="extras">
+            <div class="policy-card" data-policy="extra">
+                <div>
+                    <div class="policy-header">
+                        <span>Complementos</span>
+                        <h2>Otras políticas internas</h2>
+                        <label class="switch">
+                            <input type="checkbox" data-policy-field="active">
+                            <span class="switch-slider" aria-hidden="true"></span>
+                            <strong>Mostrar en el sitio</strong>
+                        </label>
+                    </div>
+                    <div style="margin-top: 1.2rem; display: grid; gap: 1.2rem;">
+                        <div>
+                            <label for="extra-title">Nombre de la política</label>
+                            <input id="extra-title" type="text" data-policy-field="customTitle" placeholder="Política ambiental, garantía extendida, etc.">
+                        </div>
+                        <div>
+                            <label for="extra-summary">Resumen</label>
+                            <textarea id="extra-summary" data-policy-field="summary" placeholder="Describe el objetivo de la política seleccionada."></textarea>
+                        </div>
+                        <div class="grid-two">
+                            <div>
+                                <label for="extra-owner">Responsable</label>
+                                <input id="extra-owner" type="text" data-policy-field="owner" placeholder="Gerencia de calidad">
+                            </div>
+                            <div>
+                                <label for="extra-scope">Ámbito</label>
+                                <input id="extra-scope" type="text" data-policy-field="scope" placeholder="Plantas productivas, oficinas, etc.">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="extra-details">Detalles</label>
+                            <textarea id="extra-details" data-policy-field="details" placeholder="Procedimientos, métricas, requisitos regulatorios."></textarea>
+                        </div>
+                        <div>
+                            <label for="extra-points">Puntos destacados</label>
+                            <textarea id="extra-points" data-policy-field="points" placeholder="Capacitaciones trimestrales\nReportes automáticos\nPlanes de mejora continua"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p data-policy-preview="extra"></p>
+                    <ul data-policy-points="extra"></ul>
+                    <p class="meta" style="flex-direction: column; gap: 0.3rem;">
+                        <span data-policy-meta="extra"></span>
+                        <span data-global-note></span>
+                    </p>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <footer>
-        <div class="footer-content">
-            <div class="contact-info" id="contactSection">
-                <h3>AMAZONIA CONCRETE</h3>
-                
-                <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="">
-                    <a id="footerSocialWhatsApp" class="social-link social-link--whatsapp" href="https://wa.me/573000000000" target="_blank" rel="noopener noreferrer" style="">
-                        <svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                        <span class="sr-only">WhatsApp</span>
-                    </a>
-                    <a id="footerSocialInstagram" class="social-link social-link--instagram" href="#" target="_blank" rel="noopener noreferrer" style="display: none;">
-                        <svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg>
-                        <span class="sr-only">Instagram</span>
-                    </a>
-                    <a id="footerSocialFacebook" class="social-link social-link--facebook" href="#" target="_blank" rel="noopener noreferrer" style="display: none;">
-                        <svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
-                        <span class="sr-only">Facebook</span>
-                    </a>
-                    <a id="footerSocialTiktok" class="social-link social-link--tiktok" href="#" target="_blank" rel="noopener noreferrer" style="display: none;">
-                        <svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
-                        <span class="sr-only">TikTok</span>
-                    </a>
-                </div>
-                <p>Creando espacios únicos con concreto sostenible</p>
-            </div>
-            <p style="margin-top: 2rem; opacity: 0.7;">© 2025 AMAZONIA CONCRETE - Todos los derechos reservados</p>
-        </div>
-    </footer>
-
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var loader = document.getElementById('loader');
-            if (loader) {
-                requestAnimationFrame(function() {
-                    loader.classList.add('hidden');
-                });
-            }
-
-            var homeLink = document.getElementById('primaryNavHome');
-            if (homeLink) {
-                var href = window.location.href || '';
-                var isPreviewContext = (href.indexOf('about:') === 0) || (href.indexOf('blob:') === 0);
-                if (!isPreviewContext) {
-                    try {
-                        var catalogUrl = new URL('index.html', window.location.href);
-                        homeLink.setAttribute('href', catalogUrl.href);
-                        homeLink.setAttribute('data-external-url', catalogUrl.href);
-                        homeLink.removeAttribute('data-scroll-target');
-                    } catch (error) {
-                        homeLink.setAttribute('href', '#pageTop');
-                        homeLink.setAttribute('data-scroll-target', 'pageTop');
-                        homeLink.removeAttribute('data-external-url');
-                    }
-                } else {
-                    homeLink.setAttribute('href', '#pageTop');
-                    homeLink.setAttribute('data-scroll-target', 'pageTop');
-                    homeLink.removeAttribute('data-external-url');
+        const defaultState = {
+            companyName: 'Amazonia Concrete',
+            contactEmail: 'contacto@amazonia.com',
+            contactPhone: '+57 320 000 0000',
+            lastUpdate: '2024-01-01',
+            logoUrl: 'images/logo.webp',
+            globalNote: 'Todas nuestras políticas se apegan al marco regulatorio colombiano y se actualizan de forma periódica.',
+            policies: {
+                shipping: {
+                    active: true,
+                    summary: 'Enviamos cada pedido con embalaje reforzado y seguimiento en tiempo real para garantizar entregas seguras.',
+                    sla: '3 a 5 días hábiles',
+                    coverage: 'Cobertura nacional con aliados certificados',
+                    cost: 'Sin costo para compras superiores a $300.000',
+                    contact: 'logistica@amazonia.com',
+                    details: 'Coordinamos entregas programadas y ofrecemos retiros en planta bajo cita previa. Las zonas especiales pueden requerir tiempos adicionales.',
+                    points: 'Seguimiento proactivo\nMensajería directa con el transportista\nCompensación por demoras'
+                },
+                refund: {
+                    active: true,
+                    summary: 'Buscamos soluciones rápidas y transparentes para cada solicitud de devolución o reembolso.',
+                    window: '15 días calendario posteriores a la entrega',
+                    method: 'Transferencia bancaria o saldo a favor',
+                    contact: 'servicio@amazonia.com',
+                    requirements: 'Factura y evidencia del estado del producto',
+                    details: 'Los reembolsos se aprueban tras una inspección técnica. Productos personalizados o usados fuera de especificación no aplican.',
+                    points: 'Respuesta inicial en 24 horas\nRecolección sin costo\nReportes automatizados para auditoría'
+                },
+                privacy: {
+                    active: true,
+                    summary: 'Protegemos la información de nuestros clientes mediante procesos seguros y transparentes.',
+                    usage: 'Gestión comercial, despachos y comunicaciones internas',
+                    storage: 'Al menos 5 años o según normativa vigente',
+                    shared: 'Transportistas, pasarelas de pago y aliados de servicio',
+                    contact: 'datos@amazonia.com',
+                    details: 'Aplicamos los principios de legalidad, finalidad y confidencialidad. Los titulares pueden ejercer sus derechos de acceso, corrección o eliminación en cualquier momento.',
+                    points: 'Infraestructura alojada en Colombia\nProtocolos de cifrado AES-256\nEvaluaciones anuales de cumplimiento'
+                },
+                extra: {
+                    active: false,
+                    customTitle: 'Política ambiental',
+                    summary: 'Minimizamos el impacto ambiental con procesos eficientes y trazables.',
+                    owner: 'Gerencia HSE',
+                    scope: 'Operaciones industriales y cadena logística',
+                    details: 'Monitoreamos consumos energéticos, promovemos reciclaje y neutralizamos emisiones con proveedores certificados.',
+                    points: 'Metas de reducción del 20%\nAuditorías externas\nReportes trimestrales'
                 }
             }
+        };
 
-            var nav = document.getElementById('primaryNav');
-            if (nav) {
-                nav.addEventListener('click', function(event) {
-                    var link = event.target.closest('.primary-nav__link');
-                    if (!link || link.getAttribute('aria-hidden') === 'true') {
-                        return;
-                    }
+        const STORAGE_KEY = 'amazoniaPoliciesConfig';
+        let state = loadState();
 
-                    var externalUrl = link.getAttribute('data-external-url');
-                    if (externalUrl) {
-                        return;
-                    }
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    return mergeDeep(JSON.parse(JSON.stringify(defaultState)), parsed);
+                }
+            } catch (error) {
+                console.warn('No se pudo cargar la configuración guardada', error);
+            }
+            return JSON.parse(JSON.stringify(defaultState));
+        }
 
-                    var targetId = link.getAttribute('data-scroll-target');
-                    if (!targetId) {
-                        return;
-                    }
+        function mergeDeep(target, source) {
+            if (!source) return target;
+            for (const key of Object.keys(source)) {
+                if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
+                    if (!target[key]) target[key] = {};
+                    mergeDeep(target[key], source[key]);
+                } else {
+                    target[key] = source[key];
+                }
+            }
+            return target;
+        }
 
-                    var target = document.getElementById(targetId);
-                    if (!target) {
-                        return;
-                    }
+        const generalInputs = document.querySelectorAll('[data-general-field]');
+        const policySections = document.querySelectorAll('[data-policy]');
 
-                    event.preventDefault();
-                    if (typeof target.scrollIntoView === 'function') {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        function applyStateToInputs() {
+            generalInputs.forEach(input => {
+                const field = input.dataset.generalField;
+                if (field in state) {
+                    input.value = state[field] || '';
+                }
+            });
+
+            policySections.forEach(section => {
+                const policyId = section.dataset.policy;
+                const policyState = state.policies[policyId];
+                if (!policyState) return;
+                const inputs = section.querySelectorAll('[data-policy-field]');
+                inputs.forEach(input => {
+                    const field = input.dataset.policyField;
+                    if (field in policyState) {
+                        if (input.type === 'checkbox') {
+                            input.checked = Boolean(policyState[field]);
+                        } else {
+                            input.value = policyState[field] || '';
+                        }
+                    } else if (input.type === 'checkbox') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
                     }
                 });
+            });
+        }
+
+        function updateGeneralUI() {
+            document.getElementById('company-name-display').textContent = state.companyName || 'Nombre de la compañía';
+            document.getElementById('last-update-display').textContent = `Actualizado: ${state.lastUpdate || 'sin fecha'}`;
+            document.querySelectorAll('[data-global-note]').forEach(span => {
+                span.textContent = state.globalNote || '';
+            });
+            const logo = document.getElementById('company-logo');
+            logo.src = state.logoUrl || 'images/logo.webp';
+        }
+
+        function formatPreview(policy) {
+            const company = state.companyName || 'la compañía';
+            let text = policy.summary || 'Completa la información para mostrar esta política.';
+            const metaParts = [];
+            if (policy.sla) metaParts.push(`Tiempo: ${policy.sla}`);
+            if (policy.coverage) metaParts.push(`Cobertura: ${policy.coverage}`);
+            if (policy.cost) metaParts.push(`Costo: ${policy.cost}`);
+            if (policy.contact) metaParts.push(`Contacto: ${policy.contact}`);
+            if (policy.window) metaParts.push(`Ventana: ${policy.window}`);
+            if (policy.method) metaParts.push(`Método: ${policy.method}`);
+            if (policy.requirements) metaParts.push(`Requisitos: ${policy.requirements}`);
+            if (policy.usage) metaParts.push(`Uso: ${policy.usage}`);
+            if (policy.storage) metaParts.push(`Retención: ${policy.storage}`);
+            if (policy.shared) metaParts.push(`Terceros: ${policy.shared}`);
+            if (policy.owner) metaParts.push(`Responsable: ${policy.owner}`);
+            if (policy.scope) metaParts.push(`Ámbito: ${policy.scope}`);
+            if (policy.details) text += ` ${policy.details}`;
+            if (policy.customTitle) text = `${policy.customTitle} — ${text}`;
+            return { text: `${company} informa: ${text}`, meta: metaParts.join(' · ') };
+        }
+
+        function updatePreviews() {
+            policySections.forEach(section => {
+                const policyId = section.dataset.policy;
+                const policyState = state.policies[policyId];
+                if (!policyState) return;
+                const preview = section.querySelector(`[data-policy-preview="${policyId}"]`);
+                const list = section.querySelector(`[data-policy-points="${policyId}"]`);
+                const meta = section.querySelector(`[data-policy-meta="${policyId}"]`);
+                const { text, meta: metaText } = formatPreview(policyState);
+                preview.textContent = text;
+                meta.textContent = metaText;
+                list.innerHTML = '';
+                if (policyState.points) {
+                    policyState.points.split('\n').filter(Boolean).forEach(point => {
+                        const li = document.createElement('li');
+                        li.textContent = point.trim();
+                        list.appendChild(li);
+                    });
+                }
+                if (!policyState.active) {
+                    preview.style.opacity = 0.5;
+                    list.style.opacity = 0.5;
+                    meta.style.opacity = 0.5;
+                } else {
+                    preview.style.opacity = 1;
+                    list.style.opacity = 1;
+                    meta.style.opacity = 1;
+                }
+            });
+        }
+
+        function persistState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (error) {
+                console.warn('No se pudo guardar la configuración', error);
             }
+        }
+
+        generalInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                const field = input.dataset.generalField;
+                state[field] = input.value;
+                updateGeneralUI();
+            });
         });
+
+        policySections.forEach(section => {
+            section.addEventListener('input', event => {
+                const input = event.target;
+                if (!input.matches('[data-policy-field]')) return;
+                const policyId = section.dataset.policy;
+                const field = input.dataset.policyField;
+                if (!state.policies[policyId]) state.policies[policyId] = {};
+                state.policies[policyId][field] = input.type === 'checkbox' ? input.checked : input.value;
+                updatePreviews();
+            });
+        });
+
+        document.getElementById('save-config').addEventListener('click', () => {
+            persistState();
+            alert('Configuración guardada correctamente.');
+        });
+
+        document.getElementById('reset-config').addEventListener('click', () => {
+            if (!confirm('¿Deseas restablecer todas las políticas al valor predeterminado?')) return;
+            state = JSON.parse(JSON.stringify(defaultState));
+            applyStateToInputs();
+            updateGeneralUI();
+            updatePreviews();
+            persistState();
+        });
+
+        applyStateToInputs();
+        updateGeneralUI();
+        updatePreviews();
     </script>
 </body>
 </html>
