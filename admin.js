@@ -145,7 +145,38 @@
             }
         };
 
+        const POLICY_DISPLAY_INFO = {
+            shipping: { category: 'Operaciones', defaultTitle: 'Política de envíos', quickLink: 'Envíos', icon: '🚚' },
+            refund: { category: 'Clientes', defaultTitle: 'Política de reembolso', quickLink: 'Reembolsos', icon: '💸' },
+            privacy: { category: 'Confidencialidad', defaultTitle: 'Política de privacidad', quickLink: 'Privacidad', icon: '🔒' },
+            extra: { category: 'Especiales', defaultTitle: 'Política adicional', quickLink: 'Extra', icon: '✨' }
+        };
+
         const POLICY_IDS = Object.keys(defaultPolicies);
+
+        function hasPoliciesContent(policies) {
+            const normalized = normalizePolicies(policies);
+            return POLICY_IDS.some(policyId => {
+                const policy = normalized[policyId];
+
+                if (!policy || typeof policy !== 'object') {
+                    return false;
+                }
+
+                const summary = typeof policy.summary === 'string' ? policy.summary.trim() : '';
+                const details = typeof policy.details === 'string' ? policy.details.trim() : '';
+                const hasPoints = Array.isArray(policy.points)
+                    && policy.points.some(point => typeof point === 'string' && point.trim().length > 0);
+                const metaLabels = POLICY_META_LABELS[policyId] || {};
+                const hasMeta = Object.keys(metaLabels)
+                    .some(field => typeof policy[field] === 'string' && policy[field].trim().length > 0);
+                const extraTitle = policyId === 'extra' && typeof policy.customTitle === 'string'
+                    ? policy.customTitle.trim()
+                    : '';
+
+                return Boolean(policy.active || summary || details || hasPoints || hasMeta || extraTitle);
+            });
+        }
 
         const APPEARANCE_FIELDS = [
             { id: 'appearanceBackground', key: 'background' },
@@ -4238,7 +4269,7 @@
                 });
                 // Generate the HTML content
                 const indexHtmlContent = generateCatalogHTML(catalogData.config);
-                const shippingPolicyHtmlContent = generateShippingPolicyHTML(catalogData.config);
+                const policiesHtmlContent = generatePoliciesHTML(catalogData.config);
                 const aboutHtmlContent = generateAboutPageHTML(catalogData.config);
 
                 updateProcessStatusEntry(processEntryId, {
@@ -4256,14 +4287,14 @@
                 };
 
                 triggerDownload('index.html', indexHtmlContent);
-                triggerDownload('politica-envios.html', shippingPolicyHtmlContent);
+                triggerDownload('politicas.html', policiesHtmlContent);
                 triggerDownload('nosotros.html', aboutHtmlContent);
 
                 updateProcessStatusEntry(processEntryId, {
                     state: 'success',
-                    detail: 'Descarga completada. Se generaron index.html, politica-envios.html y nosotros.html.'
+                    detail: 'Descarga completada. Se generaron index.html, politicas.html y nosotros.html.'
                 });
-                showMessage('¡Catálogo, política de envíos y página de "Nosotros" generados correctamente! Revisa tu carpeta de descargas para encontrar index.html, politica-envios.html y nosotros.html.', 'success');
+                showMessage('¡Catálogo, políticas corporativas y página de "Nosotros" generados correctamente! Revisa tu carpeta de descargas para encontrar index.html, politicas.html y nosotros.html.', 'success');
             } catch (error) {
                 console.error('No se pudo generar el catálogo', error);
                 updateProcessStatusEntry(processEntryId, {
@@ -4412,7 +4443,7 @@
                 logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
             };
 
-            const shippingPolicy = normalizeShippingPolicy(config.shippingPolicy);
+            const policiesConfig = normalizePolicies(config.policies);
             const about = normalizeAbout(config.about);
             const hasAboutContent = Boolean(
                 (about && typeof about.mission === 'string' && about.mission.trim().length > 0)
@@ -4420,31 +4451,7 @@
                 || (about && typeof about.history === 'string' && about.history.trim().length > 0)
                 || (about && Array.isArray(about.values) && about.values.some(value => typeof value === 'string' && value.trim().length > 0))
             );
-            const hasShippingPolicyContent = (() => {
-                if (!shippingPolicy || typeof shippingPolicy !== 'object') {
-                    return false;
-                }
-
-                const heroHasContent = (typeof shippingPolicy.heroTitle === 'string' && shippingPolicy.heroTitle.trim().length > 0)
-                    || (typeof shippingPolicy.heroDescription === 'string' && shippingPolicy.heroDescription.trim().length > 0);
-                const closingHasContent = (typeof shippingPolicy.closingTitle === 'string' && shippingPolicy.closingTitle.trim().length > 0)
-                    || (typeof shippingPolicy.closingDescription === 'string' && shippingPolicy.closingDescription.trim().length > 0)
-                    || (typeof shippingPolicy.closingNote === 'string' && shippingPolicy.closingNote.trim().length > 0);
-                const sectionsHaveContent = Array.isArray(shippingPolicy.sections)
-                    && shippingPolicy.sections.some(section => {
-                        if (!section || typeof section !== 'object') {
-                            return false;
-                        }
-                        const hasSectionTitle = typeof section.title === 'string' && section.title.trim().length > 0;
-                        const hasSectionDescription = typeof section.description === 'string' && section.description.trim().length > 0;
-                        const hasSectionItems = Array.isArray(section.items)
-                            && section.items.some(item => typeof item === 'string' && item.trim().length > 0);
-                        const hasSectionNote = typeof section.note === 'string' && section.note.trim().length > 0;
-                        return hasSectionTitle || hasSectionDescription || hasSectionItems || hasSectionNote;
-                    });
-
-                return heroHasContent || closingHasContent || sectionsHaveContent;
-            })();
+            const hasPoliciesSection = hasPoliciesContent(policiesConfig);
             const shouldShowAboutSection = hasAboutContent;
 
             const companyNameHtml = escapeHtml(trimmedConfig.companyName);
@@ -4722,7 +4729,7 @@
                 { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true },
                 { id: 'primaryNavProducts', label: 'Productos', target: 'catalogProducts', visible: hasProductNavigation },
                 { id: 'primaryNavAbout', label: 'Nosotros', href: 'nosotros.html', external: true, visible: shouldShowAboutSection },
-                { id: 'primaryNavShipping', label: 'Política de envíos', href: 'politica-envios.html', external: true, visible: hasShippingPolicyContent }
+                { id: 'primaryNavPolicies', label: 'Políticas corporativas', href: 'politicas.html', external: true, visible: hasPoliciesSection }
             ];
 
             const primaryNavLinksMarkup = primaryNavItems
@@ -4895,10 +4902,10 @@
 </html>`;
         }
 
-        function generateShippingPolicyHTML(configOverride) {
+        function generatePoliciesHTML(configOverride) {
             const config = getNormalizedConfig(configOverride || catalogData.config);
-            const theme = buildThemeTokens(config.appearance);
-            const shippingPolicy = normalizeShippingPolicy(config.shippingPolicy);
+            const appearance = normalizeAppearance(config.appearance);
+            const policies = normalizePolicies(config.policies);
 
             const trimmedConfig = {
                 whatsapp: (config.whatsapp || '').trim(),
@@ -4909,144 +4916,80 @@
                 facebook: (config.facebook || '').trim(),
                 tiktok: (config.tiktok || '').trim(),
                 companyName: config.companyName || '',
+                tagline: config.tagline || '',
                 footerMessage: config.footerMessage || '',
                 logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
             };
 
-            const heroTitleText = typeof shippingPolicy.heroTitle === 'string' && shippingPolicy.heroTitle.trim().length > 0
-                ? shippingPolicy.heroTitle.trim()
-                : defaultShippingPolicy.heroTitle;
-            const heroDescriptionText = typeof shippingPolicy.heroDescription === 'string'
-                ? shippingPolicy.heroDescription.trim()
-                : '';
+            const headerStart = adjustColorBrightness(appearance.header, -8);
+            const headerEnd = adjustColorBrightness(appearance.header, 12);
+            const cardBorder = hexToRgba(appearance.text, 0.08);
+            const cardShadow = hexToRgba(appearance.text, 0.08);
+            const previewBackground = hexToRgba(appearance.primary, 0.12);
+            const mutedText = hexToRgba(appearance.text, 0.6);
+            const switchOff = hexToRgba(appearance.text, 0.2);
 
+            const now = new Date();
+            const generationDate = now.toISOString().split('T')[0];
+            const currentYear = now.getFullYear();
+
+            const heroTitleText = trimmedConfig.companyName
+                ? `Políticas corporativas de ${trimmedConfig.companyName}`
+                : 'Políticas corporativas';
+            const heroLeadText = trimmedConfig.tagline
+                ? trimmedConfig.tagline
+                : 'Administra y comunica tus políticas de envíos, reembolsos, privacidad y lineamientos especiales desde un mismo lugar.';
             const heroTitleHtml = escapeHtml(heroTitleText);
-            const heroDescriptionMarkup = heroDescriptionText
-                ? `<p class="shipping-hero__description" id="shippingPolicyLead">${escapeHtml(heroDescriptionText)}</p>`
-                : '<p class="shipping-hero__description" id="shippingPolicyLead" style="display: none;"></p>';
+            const heroLeadHtml = escapeHtml(heroLeadText);
 
-            const sectionsSource = Array.isArray(shippingPolicy.sections) ? shippingPolicy.sections : [];
-            const visibleSections = sectionsSource.filter(section => {
-                if (!section || typeof section !== 'object') {
-                    return false;
-                }
-
-                const hasTitle = typeof section.title === 'string' && section.title.trim().length > 0;
-                const hasDescription = typeof section.description === 'string' && section.description.trim().length > 0;
-                const hasItems = Array.isArray(section.items)
-                    && section.items.some(item => typeof item === 'string' && item.trim().length > 0);
-                const hasNote = typeof section.note === 'string' && section.note.trim().length > 0;
-
-                return hasTitle || hasDescription || hasItems || hasNote;
-            });
-
-            const sectionsMarkup = visibleSections.length > 0
-                ? visibleSections.map((section, index) => {
-                    const sectionId = (typeof section.id === 'string' && section.id.trim().length > 0)
-                        ? section.id.trim()
-                        : `shipping-section-${index + 1}`;
-                    const titleText = typeof section.title === 'string' && section.title.trim().length > 0
-                        ? section.title.trim()
-                        : `Sección ${index + 1}`;
-                    const descriptionText = typeof section.description === 'string'
-                        ? section.description.trim()
-                        : '';
-                    const items = Array.isArray(section.items)
-                        ? section.items
-                            .map(item => typeof item === 'string' ? item.trim() : '')
-                            .filter(item => item.length > 0)
-                        : [];
-                    const noteText = typeof section.note === 'string' ? section.note.trim() : '';
-
-                    const descriptionMarkup = descriptionText
-                        ? `<p class="shipping-section__description">${escapeHtml(descriptionText)}</p>`
-                        : '';
-                    const itemsMarkup = items.length > 0
-                        ? `<ul class="shipping-section__list">${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
-                        : '';
-                    const noteMarkup = noteText
-                        ? `<p class="shipping-section__note">${escapeHtml(noteText)}</p>`
-                        : '';
-
-                    return `
-                <article class="shipping-section" id="${escapeHtml(sectionId)}">
-                    <h3 class="shipping-section__title">${escapeHtml(titleText)}</h3>
-                    ${descriptionMarkup}
-                    ${itemsMarkup}
-                    ${noteMarkup}
-                </article>`;
-                }).join('')
-                : `
-                <article class="shipping-section">
-                    <p class="shipping-section__description">Pronto compartiremos los detalles de nuestra política de envíos.</p>
-                </article>`;
-
-            const closingTitleText = typeof shippingPolicy.closingTitle === 'string'
-                ? shippingPolicy.closingTitle.trim()
+            const heroMetaItems = [
+                trimmedConfig.companyName ? trimmedConfig.companyName : '',
+                `Generado: ${generationDate}`
+            ].filter(Boolean);
+            const heroMetaMarkup = heroMetaItems.length > 0
+                ? `<div class="meta">${heroMetaItems.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>`
                 : '';
-            const closingDescriptionText = typeof shippingPolicy.closingDescription === 'string'
-                ? shippingPolicy.closingDescription.trim()
-                : '';
-            const closingNoteText = typeof shippingPolicy.closingNote === 'string'
-                ? shippingPolicy.closingNote.trim()
+
+            const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : 'images/logo.webp';
+            const logoAltName = trimmedConfig.companyName || defaultConfig.companyName || 'la empresa';
+
+            const quickLinksMarkup = POLICY_IDS
+                .map(policyId => {
+                    const info = POLICY_DISPLAY_INFO[policyId] || {};
+                    const policyState = policies[policyId];
+                    const customTitle = policyId === 'extra'
+                        ? (typeof policyState.customTitle === 'string' ? policyState.customTitle.trim() : '')
+                        : '';
+                    const label = customTitle || info.quickLink || info.defaultTitle || `Política ${policyId}`;
+                    return `<a href="#policy-${policyId}" data-quick-link>${escapeHtml(label)}</a>`;
+                })
+                .join('');
+
+            const generalDetails = [];
+            if (trimmedConfig.companyName) {
+                generalDetails.push(`<li><span>Nombre comercial</span><strong>${escapeHtml(trimmedConfig.companyName)}</strong></li>`);
+            }
+            if (trimmedConfig.email) {
+                generalDetails.push(`<li><span>Correo</span><strong>${escapeHtml(trimmedConfig.email)}</strong></li>`);
+            }
+            if (trimmedConfig.phone) {
+                generalDetails.push(`<li><span>Teléfono</span><strong>${escapeHtml(trimmedConfig.phone)}</strong></li>`);
+            }
+            if (trimmedConfig.address) {
+                generalDetails.push(`<li><span>Ubicación</span><strong>${escapeHtml(trimmedConfig.address)}</strong></li>`);
+            }
+
+            const generalDetailsMarkup = generalDetails.length > 0
+                ? `<ul class="general-details">${generalDetails.join('')}</ul>`
+                : '<p class="general-details__empty">Agrega los datos de contacto desde el panel de administración para mostrarlos aquí.</p>';
+
+            const globalNoteText = trimmedConfig.footerMessage ? trimmedConfig.footerMessage.trim() : '';
+            const globalNoteMarkup = globalNoteText
+                ? `<p class="global-note">${escapeHtml(globalNoteText)}</p>`
                 : '';
 
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
             const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '';
-            const emailLinkHref = trimmedConfig.email ? `mailto:${escapeHtml(trimmedConfig.email)}` : '';
-
-            const ctaButtons = [];
-            if (whatsappLinkHref) {
-                ctaButtons.push(`<a class="cta-button shipping-cta__button" href="${escapeHtml(whatsappLinkHref)}" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp</a>`);
-            }
-            if (emailLinkHref) {
-                ctaButtons.push(`<a class="cta-button shipping-cta__button shipping-cta__button--secondary" href="${emailLinkHref}">Enviar un correo</a>`);
-            }
-
-            const ctaButtonsMarkup = ctaButtons.length > 0
-                ? `<div class="shipping-cta__buttons">${ctaButtons.join('')}</div>`
-                : '';
-
-            const hasCtaContent = Boolean(
-                closingTitleText
-                || closingDescriptionText
-                || closingNoteText
-                || ctaButtons.length > 0
-            );
-
-            const ctaSectionAttributes = closingTitleText
-                ? ' aria-labelledby="shippingCtaTitle"'
-                : ' aria-label="Contacto para coordinar envíos"';
-
-            const ctaSectionMarkup = hasCtaContent
-                ? `
-            <section class="shipping-cta"${ctaSectionAttributes}>
-                <div class="shipping-cta__inner">
-                    ${closingTitleText ? `<h2 class="shipping-cta__title" id="shippingCtaTitle">${escapeHtml(closingTitleText)}</h2>` : ''}
-                    ${closingDescriptionText ? `<p class="shipping-cta__text">${escapeHtml(closingDescriptionText)}</p>` : ''}
-                    ${ctaButtonsMarkup}
-                    ${closingNoteText ? `<p class="shipping-cta__note">${escapeHtml(closingNoteText)}</p>` : ''}
-                </div>
-            </section>`
-                : '';
-
-            const defaultCompanyNameHtml = escapeHtml(defaultConfig.companyName || 'Amazonia Concrete');
-            const companyNameHtml = escapeHtml(trimmedConfig.companyName || '');
-            const footerCompanyName = companyNameHtml || defaultCompanyNameHtml;
-            const footerMessageHtml = trimmedConfig.footerMessage
-                ? `<p>${escapeHtml(trimmedConfig.footerMessage)}</p>`
-                : '';
-            const logoAltName = footerCompanyName || 'la empresa';
-            const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : '';
-            const logoContainerStyle = trimmedConfig.logoData ? '' : 'display: none;';
-            const headerLogoMarkup = `
-        <div class="logo-container" id="headerLogoContainer" style="${logoContainerStyle}">
-            <img id="headerLogo" src="${sanitizedLogoData}" alt="Logo de ${logoAltName}">
-        </div>`;
-
-            const primaryNavLinksMarkup = `
-            <a class="primary-nav__link" id="primaryNavHome" href="#pageTop" data-scroll-target="pageTop">Inicio</a>
-            <a class="primary-nav__link" id="primaryNavShipping" href="#policyMain" data-scroll-target="policyMain">Política de envíos</a>`;
 
             const instagramUrlRaw = trimmedConfig.instagram;
             const facebookUrlRaw = trimmedConfig.facebook;
@@ -5082,67 +5025,543 @@
                     </a>
                 </div>`;
 
+            const policySectionsMarkup = POLICY_IDS.map(policyId => {
+                const info = POLICY_DISPLAY_INFO[policyId] || { category: 'General', defaultTitle: `Política ${policyId}`, icon: '📄' };
+                const policyState = policies[policyId];
+                const active = Boolean(policyState.active);
+                const customTitle = policyId === 'extra'
+                    ? (typeof policyState.customTitle === 'string' ? policyState.customTitle.trim() : '')
+                    : '';
+                const sectionTitle = customTitle || info.defaultTitle;
+                const summaryText = typeof policyState.summary === 'string' ? policyState.summary.trim() : '';
+                const detailsText = typeof policyState.details === 'string' ? policyState.details.trim() : '';
+                const previewData = formatPolicyPreview(policyId, policyState);
+                const previewText = previewData.text
+                    ? escapeHtml(previewData.text)
+                    : 'Completa la información para mostrar esta política.';
+                const previewMetaMarkup = previewData.meta
+                    ? `<span class="policy-preview__meta">${escapeHtml(previewData.meta)}</span>`
+                    : '';
+                const metaLabels = POLICY_META_LABELS[policyId] || {};
+                const metaItems = Object.keys(metaLabels)
+                    .map(field => {
+                        const value = typeof policyState[field] === 'string' ? policyState[field].trim() : '';
+                        return value ? `<li><strong>${escapeHtml(metaLabels[field])}:</strong> ${escapeHtml(value)}</li>` : '';
+                    })
+                    .filter(Boolean);
+                const metaMarkup = metaItems.length > 0
+                    ? `<ul class="policy-meta">${metaItems.join('')}</ul>`
+                    : '<p class="policy-meta policy-meta--empty">Añade detalles específicos como tiempos, coberturas o responsables.</p>';
+                const points = Array.isArray(policyState.points)
+                    ? policyState.points
+                        .map(point => typeof point === 'string' ? point.trim() : '')
+                        .filter(point => point.length > 0)
+                    : [];
+                const pointsMarkup = points.length > 0
+                    ? `<ul>${points.map(point => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`
+                    : '<p class="policy-preview__empty">Registra puntos destacados para comunicar compromisos clave.</p>';
+                const detailsMarkup = detailsText
+                    ? `<p class="policy-details">${escapeHtml(detailsText)}</p>`
+                    : '';
+                const summaryMarkup = summaryText
+                    ? `<p class="policy-summary">${escapeHtml(summaryText)}</p>`
+                    : '<p class="policy-summary policy-summary--empty">Aún no se ha definido el resumen para esta política.</p>';
+                const globalNotePreview = globalNoteText
+                    ? `<span class="policy-preview__global-note">${escapeHtml(globalNoteText)}</span>`
+                    : '';
+                const icon = info.icon || '📄';
+                const statusClass = active ? 'policy-status--active' : 'policy-status--inactive';
+                const statusLabel = active ? 'Activa' : 'Oculta';
+
+                return `
+        <section class="card policy-card${active ? '' : ' policy-card--inactive'}" id="policy-${policyId}">
+            <div class="policy-card__grid">
+                <div class="policy-card__content">
+                    <div class="policy-header">
+                        <span>${escapeHtml(info.category || 'General')}</span>
+                        <h2>${escapeHtml(`${icon} ${sectionTitle}`)}</h2>
+                        <div class="policy-header__status">
+                            <span class="policy-status ${statusClass}">${escapeHtml(statusLabel)}</span>
+                            <label class="switch">
+                                <input type="checkbox" ${active ? 'checked' : ''} disabled aria-label="${escapeHtml(sectionTitle)} ${active ? 'visible' : 'oculta'}">
+                                <span class="switch-slider" aria-hidden="true"></span>
+                                <strong>${active ? 'Visible en el sitio' : 'Oculta en el sitio'}</strong>
+                            </label>
+                        </div>
+                    </div>
+                    ${summaryMarkup}
+                    ${metaMarkup}
+                    ${detailsMarkup}
+                </div>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p>${previewText}</p>
+                    ${pointsMarkup}
+                    <p class="meta">
+                        ${previewMetaMarkup}
+                        ${globalNotePreview}
+                    </p>
+                </div>
+            </div>
+        </section>`;
+            }).join('');
+
+            const companyNameFooter = trimmedConfig.companyName || defaultConfig.companyName || 'Tu empresa';
+
+            const policyStyles = `
+        :root {
+            color-scheme: light;
+            font-size: 16px;
+            --policy-bg: ${appearance.background};
+            --policy-text: ${appearance.text};
+            --policy-header-start: ${headerStart};
+            --policy-header-end: ${headerEnd};
+            --policy-primary: ${appearance.primary};
+            --policy-accent: ${appearance.accent};
+            --policy-card-border: ${cardBorder};
+            --policy-card-shadow: ${cardShadow};
+            --policy-preview-bg: ${previewBackground};
+            --policy-muted: ${mutedText};
+            --policy-switch-off: ${switchOff};
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--policy-bg);
+            color: var(--policy-text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--policy-header-start), var(--policy-header-end));
+            color: #fff;
+            padding: 3rem 1rem 4rem;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.2), transparent 55%);
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .header-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .logo-panel {
+            background: rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            min-height: 240px;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .logo-panel img {
+            width: 180px;
+            height: auto;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.35));
+        }
+
+        .header-copy h1 {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            letter-spacing: 1px;
+        }
+
+        .header-copy p {
+            opacity: 0.9;
+            margin-top: 0.75rem;
+        }
+
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+
+        .quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+        }
+
+        .quick-links a {
+            padding: 0.5rem 1.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.45);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .quick-links a:hover,
+        .quick-links a:focus-visible {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+            border-color: white;
+        }
+
+        .primary-nav {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            margin: 2rem auto 0;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+
+        .primary-nav__link {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            opacity: 0.85;
+        }
+
+        .primary-nav__link:hover,
+        .primary-nav__link:focus-visible {
+            opacity: 1;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: -60px auto 3rem;
+            padding: 0 1.5rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 28px;
+            padding: 2rem;
+            box-shadow: var(--policy-card-shadow);
+            margin-bottom: 2rem;
+            border: 1px solid var(--policy-card-border);
+        }
+
+        .policy-card__grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .policy-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .policy-header span {
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            color: var(--policy-muted);
+            text-transform: uppercase;
+        }
+
+        .policy-header__status {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .policy-status {
+            padding: 0.35rem 0.9rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .policy-status--active {
+            background: rgba(53, 132, 52, 0.15);
+            color: var(--policy-primary);
+        }
+
+        .policy-status--inactive {
+            background: var(--policy-switch-off);
+            color: var(--policy-text);
+        }
+
+        .switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: default;
+            margin-top: 0.2rem;
+        }
+
+        .switch input {
+            width: 0;
+            height: 0;
+            opacity: 0;
+            position: absolute;
+        }
+
+        .switch-slider {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: var(--policy-switch-off);
+            border-radius: 999px;
+            transition: background 0.2s ease;
+        }
+
+        .switch-slider::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .switch input:checked + .switch-slider {
+            background: var(--policy-accent);
+        }
+
+        .switch input:checked + .switch-slider::after {
+            transform: translateX(24px);
+        }
+
+        .policy-summary--empty,
+        .policy-meta--empty,
+        .policy-preview__empty {
+            color: var(--policy-muted);
+            font-style: italic;
+        }
+
+        .policy-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin: 1rem 0;
+            list-style: none;
+            padding: 0;
+        }
+
+        .policy-meta li {
+            font-size: 0.95rem;
+        }
+
+        .preview {
+            background: var(--policy-preview-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px dashed rgba(52, 76, 51, 0.2);
+        }
+
+        .preview ul {
+            margin-top: 0.75rem;
+            padding-left: 1.2rem;
+        }
+
+        .preview li + li {
+            margin-top: 0.35rem;
+        }
+
+        .policy-card--inactive {
+            opacity: 0.92;
+        }
+
+        .general-details {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .general-details li {
+            background: rgba(0,0,0,0.03);
+            padding: 1rem;
+            border-radius: 16px;
+        }
+
+        .general-details span {
+            display: block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--policy-muted);
+        }
+
+        .general-details strong {
+            display: block;
+            margin-top: 0.4rem;
+        }
+
+        .global-note {
+            margin-top: 1.25rem;
+            font-size: 0.95rem;
+            color: var(--policy-muted);
+        }
+
+        footer {
+            padding: 3rem 1rem;
+            background: var(--policy-header-start);
+            color: #fff;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .contact-info h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .social-links {
+            display: inline-flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-link {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .social-link svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .social-link:hover,
+        .social-link:focus-visible {
+            transform: translateY(-2px);
+            border-color: #fff;
+        }
+
+        .policy-preview__meta,
+        .policy-preview__global-note {
+            display: block;
+            color: var(--policy-muted);
+            margin-top: 0.35rem;
+        }
+
+        @media (max-width: 640px) {
+            .card {
+                padding: 1.5rem;
+            }
+
+            .preview {
+                padding: 1rem;
+            }
+        }`;
+
             return `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${heroTitleHtml} - ${footerCompanyName}</title>
+    <title>${heroTitleHtml} - ${escapeHtml(companyNameFooter)}</title>
     <style>
-        ${getCatalogStyles(theme)}
+        ${policyStyles}
     </style>
 </head>
 <body>
-    <div class="loader" id="loader">
-        <svg class="leaf-spinner" viewBox="0 0 100 100">
-            <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="${theme.loaderPrimary}"/>
-            <path d="M50 40 Q30 60 50 80 Q70 60 50 40" fill="${theme.loaderSecondary}"/>
-        </svg>
-    </div>
-
     <header id="pageTop">
         <div class="header-inner">
-            ${headerLogoMarkup}
-            <div class="header-content shipping-hero__content">
-                <h1 class="shipping-hero__title" id="policyMain">${heroTitleHtml}</h1>
-                ${heroDescriptionMarkup}
+            <div class="logo-panel">
+                <img src="${sanitizedLogoData}" alt="Logo de ${escapeHtml(logoAltName)}">
+                <p>Actualiza este logo y los datos de contacto desde el panel de administración.</p>
+            </div>
+            <div class="header-copy">
+                <p class="eyebrow">Centro de políticas</p>
+                <h1>${heroTitleHtml}</h1>
+                <p>${heroLeadHtml}</p>
+                ${heroMetaMarkup}
+                <div class="quick-links">${quickLinksMarkup}</div>
             </div>
         </div>
         <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
-            ${primaryNavLinksMarkup}
+            <a class="primary-nav__link" id="primaryNavHome" href="#pageTop" data-scroll-target="pageTop">Inicio</a>
+            <a class="primary-nav__link" id="primaryNavPolicies" href="#policyMain" data-scroll-target="policyMain">Políticas corporativas</a>
         </nav>
     </header>
 
-    <main class="shipping-main" id="mainContent">
-        <section class="shipping-sections" aria-labelledby="shippingSectionsTitle">
-            <div class="shipping-sections__inner">
-                <h2 class="shipping-sections__title" id="shippingSectionsTitle">Detalles de envíos</h2>
-                ${sectionsMarkup}
+    <main id="policyMain">
+        <section class="card" aria-labelledby="general-config-title">
+            <div class="policy-header">
+                <span>Panel principal</span>
+                <h2 id="general-config-title">Configuración general</h2>
             </div>
+            <p>Completa estos campos desde el panel de administración para mantener tus políticas actualizadas.</p>
+            ${generalDetailsMarkup}
+            ${globalNoteMarkup}
         </section>
-        ${ctaSectionMarkup}
+        ${policySectionsMarkup}
     </main>
 
     <footer>
         <div class="footer-content">
-            <div class="contact-info" id="contactSection">
-                <h3>${footerCompanyName}</h3>
+            <div class="contact-info">
+                <h3>${escapeHtml(companyNameFooter)}</h3>
                 ${socialLinksMarkup}
-                ${footerMessageHtml}
+                <p style="margin-top: 1rem; opacity: 0.85;">© ${currentYear} ${escapeHtml(companyNameFooter)} - Todos los derechos reservados</p>
             </div>
-            <p style="margin-top: 2rem; opacity: 0.7;">© 2025 ${footerCompanyName} - Todos los derechos reservados</p>
         </div>
     </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var loader = document.getElementById('loader');
-            if (loader) {
-                requestAnimationFrame(function() {
-                    loader.classList.add('hidden');
-                });
-            }
-
             var homeLink = document.getElementById('primaryNavHome');
             if (homeLink) {
                 var href = window.location.href || '';
@@ -5194,6 +5613,24 @@
                     }
                 });
             }
+
+            var quickLinks = document.querySelectorAll('[data-quick-link]');
+            quickLinks.forEach(function(link) {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var href = link.getAttribute('href') || '';
+                    if (!href.startsWith('#')) {
+                        return;
+                    }
+                    var targetId = href.slice(1);
+                    var target = document.getElementById(targetId);
+                    if (target && typeof target.scrollIntoView === 'function') {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else if (targetId) {
+                        window.location.hash = targetId;
+                    }
+                });
+            });
         });
     </script>
 </body>
@@ -5322,34 +5759,8 @@
             </div>
         </section>`;
 
-            const shippingPolicy = normalizeShippingPolicy(config.shippingPolicy);
-            const hasShippingPolicyContent = (() => {
-                if (!shippingPolicy || typeof shippingPolicy !== 'object') {
-                    return false;
-                }
-
-                const heroHasContent = (typeof shippingPolicy.heroTitle === 'string' && shippingPolicy.heroTitle.trim().length > 0)
-                    || (typeof shippingPolicy.heroDescription === 'string' && shippingPolicy.heroDescription.trim().length > 0);
-                const closingHasContent = (typeof shippingPolicy.closingTitle === 'string' && shippingPolicy.closingTitle.trim().length > 0)
-                    || (typeof shippingPolicy.closingDescription === 'string' && shippingPolicy.closingDescription.trim().length > 0)
-                    || (typeof shippingPolicy.closingNote === 'string' && shippingPolicy.closingNote.trim().length > 0);
-                const sectionsHaveContent = Array.isArray(shippingPolicy.sections)
-                    && shippingPolicy.sections.some(section => {
-                        if (!section || typeof section !== 'object') {
-                            return false;
-                        }
-
-                        const hasSectionTitle = typeof section.title === 'string' && section.title.trim().length > 0;
-                        const hasSectionDescription = typeof section.description === 'string' && section.description.trim().length > 0;
-                        const hasSectionItems = Array.isArray(section.items)
-                            && section.items.some(item => typeof item === 'string' && item.trim().length > 0);
-                        const hasSectionNote = typeof section.note === 'string' && section.note.trim().length > 0;
-
-                        return hasSectionTitle || hasSectionDescription || hasSectionItems || hasSectionNote;
-                    });
-
-                return heroHasContent || closingHasContent || sectionsHaveContent;
-            })();
+            const policiesConfig = normalizePolicies(config.policies);
+            const hasPoliciesSection = hasPoliciesContent(policiesConfig);
 
             const logoAltName = trimmedConfig.companyName || 'la empresa';
             const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : '';
@@ -5362,7 +5773,7 @@
             const primaryNavItems = [
                 { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true },
                 { id: 'primaryNavAbout', label: 'Nosotros', target: 'mainContent', visible: true },
-                { id: 'primaryNavShipping', label: 'Política de envíos', href: 'politica-envios.html', external: true, visible: hasShippingPolicyContent }
+                { id: 'primaryNavPolicies', label: 'Políticas corporativas', href: 'politicas.html', external: true, visible: hasPoliciesSection }
             ];
 
             const primaryNavLinksMarkup = primaryNavItems
@@ -7751,12 +8162,12 @@ ${formatCssBlock(footerBackground)}
             const navHome = document.getElementById('primaryNavHome');
             const navProducts = document.getElementById('primaryNavProducts');
             const navAbout = document.getElementById('primaryNavAbout');
-            const navShipping = document.getElementById('primaryNavShipping');
+            const navPolicies = document.getElementById('primaryNavPolicies');
 
             updateLinkVisibility(navHome, true);
             updateLinkVisibility(navProducts, Boolean(state && state.hasProducts));
             updateLinkVisibility(navAbout, Boolean(state && state.hasAbout));
-            updateLinkVisibility(navShipping, Boolean(state && state.hasShippingPolicy));
+            updateLinkVisibility(navPolicies, Boolean(state && state.hasPolicies));
         }
 
         function hideLoader() {
@@ -8046,33 +8457,31 @@ ${formatCssBlock(footerBackground)}
                 (aboutData && aboutData.history) ||
                 (aboutData && Array.isArray(aboutData.values) && aboutData.values.length > 0)
             );
-            const shippingPolicyData = config && config.shippingPolicy ? config.shippingPolicy : null;
-            const hasShippingPolicyContent = (() => {
-                if (!shippingPolicyData || typeof shippingPolicyData !== 'object') {
+            const policiesData = config && config.policies ? config.policies : null;
+            const hasPoliciesSection = (() => {
+                if (!policiesData || typeof policiesData !== 'object') {
                     return false;
                 }
 
-                const heroHasContent = (typeof shippingPolicyData.heroTitle === 'string' && shippingPolicyData.heroTitle.trim().length > 0)
-                    || (typeof shippingPolicyData.heroDescription === 'string' && shippingPolicyData.heroDescription.trim().length > 0);
-                const closingHasContent = (typeof shippingPolicyData.closingTitle === 'string' && shippingPolicyData.closingTitle.trim().length > 0)
-                    || (typeof shippingPolicyData.closingDescription === 'string' && shippingPolicyData.closingDescription.trim().length > 0)
-                    || (typeof shippingPolicyData.closingNote === 'string' && shippingPolicyData.closingNote.trim().length > 0);
-                const sectionsHaveContent = Array.isArray(shippingPolicyData.sections)
-                    && shippingPolicyData.sections.some(section => {
-                        if (!section || typeof section !== 'object') {
-                            return false;
-                        }
+                const policyIds = ['shipping', 'refund', 'privacy', 'extra'];
+                return policyIds.some(policyId => {
+                    const policy = policiesData[policyId];
+                    if (!policy || typeof policy !== 'object') {
+                        return false;
+                    }
 
-                        const hasSectionTitle = typeof section.title === 'string' && section.title.trim().length > 0;
-                        const hasSectionDescription = typeof section.description === 'string' && section.description.trim().length > 0;
-                        const hasSectionItems = Array.isArray(section.items)
-                            && section.items.some(item => typeof item === 'string' && item.trim().length > 0);
-                        const hasSectionNote = typeof section.note === 'string' && section.note.trim().length > 0;
+                    const summary = typeof policy.summary === 'string' ? policy.summary.trim() : '';
+                    const details = typeof policy.details === 'string' ? policy.details.trim() : '';
+                    const hasPoints = Array.isArray(policy.points)
+                        && policy.points.some(point => typeof point === 'string' && point.trim().length > 0);
+                    const metaFields = ['sla', 'coverage', 'cost', 'contact', 'window', 'method', 'requirements', 'usage', 'storage', 'shared', 'owner', 'scope'];
+                    const hasMeta = metaFields.some(field => typeof policy[field] === 'string' && policy[field].trim().length > 0);
+                    const extraTitle = policyId === 'extra' && typeof policy.customTitle === 'string'
+                        ? policy.customTitle.trim()
+                        : '';
 
-                        return hasSectionTitle || hasSectionDescription || hasSectionItems || hasSectionNote;
-                    });
-
-                return heroHasContent || closingHasContent || sectionsHaveContent;
+                    return Boolean(policy.active || summary || details || hasPoints || hasMeta || extraTitle);
+                });
             })();
             const productKeys = productData && typeof productData === 'object'
                 ? Object.keys(productData)
@@ -8081,7 +8490,7 @@ ${formatCssBlock(footerBackground)}
             updatePrimaryNavVisibility({
                 hasProducts: productKeys.length > 0,
                 hasAbout: hasAboutContent,
-                hasShippingPolicy: hasShippingPolicyContent
+                hasPolicies: hasPoliciesSection
             });
         }
 
