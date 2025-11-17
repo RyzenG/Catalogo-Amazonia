@@ -2356,6 +2356,13 @@
                 importDataButton.addEventListener('click', importData);
             }
 
+            const openShippingConfigButton = document.getElementById('openShippingConfigButton');
+            if (openShippingConfigButton) {
+                openShippingConfigButton.addEventListener('click', () => {
+                    showSection('shippingPolicy');
+                });
+            }
+
             const clearProcessStatusButton = document.getElementById('clearProcessStatusButton');
             if (clearProcessStatusButton) {
                 clearProcessStatusButton.addEventListener('click', () => {
@@ -3145,6 +3152,11 @@
                     element: document.getElementById('aboutConfigSection'),
                     button: document.querySelector('button[data-section="about"]'),
                     label: 'Nosotros'
+                },
+                policiesHub: {
+                    element: document.getElementById('policiesHubSection'),
+                    button: document.querySelector('button[data-section="policiesHub"]'),
+                    label: 'Políticas corporativas'
                 },
                 shippingPolicy: {
                     element: document.getElementById('shippingPolicySection'),
