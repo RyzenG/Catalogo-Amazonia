@@ -4981,7 +4981,7 @@
 
             const generalDetailsMarkup = generalDetails.length > 0
                 ? `<ul class="general-details">${generalDetails.join('')}</ul>`
-                : '<p class="general-details__empty">Agrega los datos de contacto desde el panel de administración para mostrarlos aquí.</p>';
+                : '<p class="general-details__empty">Estamos actualizando los datos de contacto de esta sección.</p>';
 
             const globalNoteText = trimmedConfig.footerMessage ? trimmedConfig.footerMessage.trim() : '';
             const globalNoteMarkup = globalNoteText
@@ -5035,13 +5035,6 @@
                 const sectionTitle = customTitle || info.defaultTitle;
                 const summaryText = typeof policyState.summary === 'string' ? policyState.summary.trim() : '';
                 const detailsText = typeof policyState.details === 'string' ? policyState.details.trim() : '';
-                const previewData = formatPolicyPreview(policyId, policyState);
-                const previewText = previewData.text
-                    ? escapeHtml(previewData.text)
-                    : 'Completa la información para mostrar esta política.';
-                const previewMetaMarkup = previewData.meta
-                    ? `<span class="policy-preview__meta">${escapeHtml(previewData.meta)}</span>`
-                    : '';
                 const metaLabels = POLICY_META_LABELS[policyId] || {};
                 const metaItems = Object.keys(metaLabels)
                     .map(field => {
@@ -5051,57 +5044,49 @@
                     .filter(Boolean);
                 const metaMarkup = metaItems.length > 0
                     ? `<ul class="policy-meta">${metaItems.join('')}</ul>`
-                    : '<p class="policy-meta policy-meta--empty">Añade detalles específicos como tiempos, coberturas o responsables.</p>';
+                    : '<p class="policy-meta policy-meta--empty">Pronto compartiremos detalles como tiempos, coberturas o responsables.</p>';
                 const points = Array.isArray(policyState.points)
                     ? policyState.points
                         .map(point => typeof point === 'string' ? point.trim() : '')
                         .filter(point => point.length > 0)
                     : [];
                 const pointsMarkup = points.length > 0
-                    ? `<ul>${points.map(point => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`
-                    : '<p class="policy-preview__empty">Registra puntos destacados para comunicar compromisos clave.</p>';
+                    ? `<ul class="policy-points">${points.map(point => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`
+                    : '';
                 const detailsMarkup = detailsText
                     ? `<p class="policy-details">${escapeHtml(detailsText)}</p>`
                     : '';
                 const summaryMarkup = summaryText
                     ? `<p class="policy-summary">${escapeHtml(summaryText)}</p>`
-                    : '<p class="policy-summary policy-summary--empty">Aún no se ha definido el resumen para esta política.</p>';
-                const globalNotePreview = globalNoteText
-                    ? `<span class="policy-preview__global-note">${escapeHtml(globalNoteText)}</span>`
-                    : '';
+                    : '<p class="policy-summary policy-summary--empty">Pronto publicaremos el resumen de esta política.</p>';
                 const icon = info.icon || '📄';
                 const statusClass = active ? 'policy-status--active' : 'policy-status--inactive';
-                const statusLabel = active ? 'Activa' : 'Oculta';
+                const statusLabel = active ? 'Activa' : 'En actualización';
+                const highlightsContent = pointsMarkup || globalNoteText
+                    ? `${pointsMarkup || ''}${globalNoteText ? `<span class="policy-highlights__note">${escapeHtml(globalNoteText)}</span>` : ''}`
+                    : '<p class="policy-highlights__empty">Pronto compartiremos nuestros compromisos destacados.</p>';
+                const highlightsMarkup = `
+                    <div class="policy-highlights">
+                        <h3>Compromisos destacados</h3>
+                        ${highlightsContent}
+                    </div>`;
 
                 return `
         <section class="card policy-card${active ? '' : ' policy-card--inactive'}" id="policy-${policyId}">
+            <div class="policy-card__header">
+                <div>
+                    <p class="policy-eyebrow">${escapeHtml(info.category || 'General')}</p>
+                    <h2>${escapeHtml(`${icon} ${sectionTitle}`)}</h2>
+                </div>
+                <span class="policy-status ${statusClass}">${escapeHtml(statusLabel)}</span>
+            </div>
             <div class="policy-card__grid">
                 <div class="policy-card__content">
-                    <div class="policy-header">
-                        <span>${escapeHtml(info.category || 'General')}</span>
-                        <h2>${escapeHtml(`${icon} ${sectionTitle}`)}</h2>
-                        <div class="policy-header__status">
-                            <span class="policy-status ${statusClass}">${escapeHtml(statusLabel)}</span>
-                            <label class="switch">
-                                <input type="checkbox" ${active ? 'checked' : ''} disabled aria-label="${escapeHtml(sectionTitle)} ${active ? 'visible' : 'oculta'}">
-                                <span class="switch-slider" aria-hidden="true"></span>
-                                <strong>${active ? 'Visible en el sitio' : 'Oculta en el sitio'}</strong>
-                            </label>
-                        </div>
-                    </div>
                     ${summaryMarkup}
                     ${metaMarkup}
                     ${detailsMarkup}
                 </div>
-                <div class="preview">
-                    <h4>Vista previa</h4>
-                    <p>${previewText}</p>
-                    ${pointsMarkup}
-                    <p class="meta">
-                        ${previewMetaMarkup}
-                        ${globalNotePreview}
-                    </p>
-                </div>
+                ${highlightsMarkup}
             </div>
         </section>`;
             }).join('');
@@ -5292,19 +5277,24 @@
             gap: 0.35rem;
         }
 
-        .policy-header span {
+        .policy-card__header {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .policy-card__header--simple {
+            margin-bottom: 0.5rem;
+        }
+
+        .policy-eyebrow {
             font-size: 0.85rem;
             letter-spacing: 0.1em;
             color: var(--policy-muted);
             text-transform: uppercase;
-        }
-
-        .policy-header__status {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
-            margin-top: 0.5rem;
         }
 
         .policy-status {
@@ -5324,54 +5314,9 @@
             color: var(--policy-text);
         }
 
-        .switch {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: default;
-            margin-top: 0.2rem;
-        }
-
-        .switch input {
-            width: 0;
-            height: 0;
-            opacity: 0;
-            position: absolute;
-        }
-
-        .switch-slider {
-            position: relative;
-            width: 50px;
-            height: 26px;
-            background: var(--policy-switch-off);
-            border-radius: 999px;
-            transition: background 0.2s ease;
-        }
-
-        .switch-slider::after {
-            content: '';
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 20px;
-            height: 20px;
-            background: #fff;
-            border-radius: 50%;
-            transition: transform 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .switch input:checked + .switch-slider {
-            background: var(--policy-accent);
-        }
-
-        .switch input:checked + .switch-slider::after {
-            transform: translateX(24px);
-        }
-
         .policy-summary--empty,
         .policy-meta--empty,
-        .policy-preview__empty {
+        .policy-highlights__empty {
             color: var(--policy-muted);
             font-style: italic;
         }
@@ -5389,20 +5334,33 @@
             font-size: 0.95rem;
         }
 
-        .preview {
+        .policy-highlights {
             background: var(--policy-preview-bg);
             border-radius: 20px;
             padding: 1.5rem;
-            border: 1px dashed rgba(52, 76, 51, 0.2);
+            border: 1px solid rgba(52, 76, 51, 0.15);
         }
 
-        .preview ul {
-            margin-top: 0.75rem;
+        .policy-highlights h3 {
+            margin-bottom: 0.75rem;
+            font-size: 1.05rem;
+        }
+
+        .policy-points {
+            margin-top: 0.5rem;
             padding-left: 1.2rem;
+            line-height: 1.5;
         }
 
-        .preview li + li {
+        .policy-points li + li {
             margin-top: 0.35rem;
+        }
+
+        .policy-highlights__note {
+            display: block;
+            margin-top: 0.85rem;
+            color: var(--policy-muted);
+            font-style: normal;
         }
 
         .policy-card--inactive {
@@ -5421,6 +5379,12 @@
             background: rgba(0,0,0,0.03);
             padding: 1rem;
             border-radius: 16px;
+        }
+
+        .general-details__empty {
+            margin-top: 1rem;
+            color: var(--policy-muted);
+            font-style: italic;
         }
 
         .general-details span {
@@ -5489,12 +5453,6 @@
             border-color: #fff;
         }
 
-        .policy-preview__meta,
-        .policy-preview__global-note {
-            display: block;
-            color: var(--policy-muted);
-            margin-top: 0.35rem;
-        }
 
         @media (max-width: 640px) {
             .card {
@@ -5521,7 +5479,7 @@
         <div class="header-inner">
             <div class="logo-panel">
                 <img src="${sanitizedLogoData}" alt="Logo de ${escapeHtml(logoAltName)}">
-                <p>Actualiza este logo y los datos de contacto desde el panel de administración.</p>
+                <p>${escapeHtml(trimmedConfig.tagline || 'Transparencia y soporte para tus proyectos.')}</p>
             </div>
             <div class="header-copy">
                 <p class="eyebrow">Centro de políticas</p>
@@ -5539,11 +5497,12 @@
 
     <main id="policyMain">
         <section class="card" aria-labelledby="general-config-title">
-            <div class="policy-header">
-                <span>Panel principal</span>
-                <h2 id="general-config-title">Configuración general</h2>
+            <div class="policy-card__header policy-card__header--simple">
+                <div>
+                    <p class="policy-eyebrow">Información general</p>
+                    <h2 id="general-config-title">Contacto y soporte</h2>
+                </div>
             </div>
-            <p>Completa estos campos desde el panel de administración para mantener tus políticas actualizadas.</p>
             ${generalDetailsMarkup}
             ${globalNoteMarkup}
         </section>
