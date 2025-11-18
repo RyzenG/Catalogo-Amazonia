@@ -1050,8 +1050,19 @@
             tiktok: `<svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>`
         };
 
+        const PRIMARY_NAV_ICON_SVGS = {
+            home: `<svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 10.75 12 3l8.5 7.75v10.5a1 1 0 0 1-1 1h-5.5v-6h-4v6H4.5a1 1 0 0 1-1-1Z" fill="currentColor"/></svg>`,
+            products: `<svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m4 7 8-4 8 4v10l-8 4-8-4Zm8 2.236L7.618 6.5 4.5 8l7.5 3.75Zm1 9.463 6.5-3.25V8l-3 1.5v4.25l-3.5 1.75Zm-2 0V15.5L8.5 13.75V9.5L5 8v7.449Z" fill="currentColor"/></svg>`,
+            about: `<svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12.5a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 12 12.5Zm-7.5 7v1h15v-1c0-4.142-3.358-7.5-7.5-7.5s-7.5 3.358-7.5 7.5Z" fill="currentColor"/></svg>`,
+            policies: `<svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2 5 5v6c0 5.303 3.438 10.35 7 11 3.562-.65 7-5.697 7-11V5Z" fill="currentColor"/></svg>`
+        };
+
         function getSocialIconSvg(name) {
             return SOCIAL_ICON_SVGS[name] || '';
+        }
+
+        function getPrimaryNavIconSvg(name) {
+            return PRIMARY_NAV_ICON_SVGS[name] || '';
         }
 
         const COP_CURRENCY_FORMATTER = new Intl.NumberFormat('es-CO', {
@@ -4726,10 +4737,10 @@
                 .join('');
 
             const primaryNavItems = [
-                { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true },
-                { id: 'primaryNavProducts', label: 'Productos', target: 'catalogProducts', visible: hasProductNavigation },
-                { id: 'primaryNavAbout', label: 'Nosotros', href: 'nosotros.html', external: true, visible: shouldShowAboutSection },
-                { id: 'primaryNavPolicies', label: 'Políticas corporativas', href: 'politicas.html', external: true, visible: hasPoliciesSection }
+                { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true, icon: 'home' },
+                { id: 'primaryNavProducts', label: 'Productos', target: 'catalogProducts', visible: hasProductNavigation, icon: 'products' },
+                { id: 'primaryNavAbout', label: 'Nosotros', href: 'nosotros.html', external: true, visible: shouldShowAboutSection, icon: 'about' },
+                { id: 'primaryNavPolicies', label: 'Políticas corporativas', href: 'politicas.html', external: true, visible: hasPoliciesSection, icon: 'policies' }
             ];
 
             const primaryNavLinksMarkup = primaryNavItems
@@ -4739,7 +4750,8 @@
                     const hrefAttr = item.href ? item.href : `#${item.target}`;
                     const targetAttr = item.href ? '' : ` data-scroll-target="${item.target}"`;
                     const externalAttr = item.external && item.href ? ` data-external-url="${item.href}"` : '';
-                    return `<a class="primary-nav__link" id="${item.id}" href="${hrefAttr}"${targetAttr}${externalAttr}${styleAttr}${hiddenAttr}>${escapeHtml(item.label)}</a>`;
+                    const iconMarkup = item.icon ? `<span class="primary-nav__icon" aria-hidden="true">${getPrimaryNavIconSvg(item.icon)}</span>` : '';
+                    return `<a class="primary-nav__link" id="${item.id}" href="${hrefAttr}"${targetAttr}${externalAttr}${styleAttr}${hiddenAttr}>${iconMarkup}<span class="primary-nav__label">${escapeHtml(item.label)}</span></a>`;
                 })
                 .join('');
 
@@ -5242,11 +5254,33 @@
             text-decoration: none;
             font-weight: 600;
             opacity: 0.85;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
         }
 
         .primary-nav__link:hover,
         .primary-nav__link:focus-visible {
             opacity: 1;
+        }
+
+        .primary-nav__icon {
+            width: 1.1rem;
+            height: 1.1rem;
+            display: inline-flex;
+        }
+
+        .primary-nav__icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .primary-nav__icon svg path {
+            fill: currentColor;
+        }
+
+        .primary-nav__label {
+            line-height: 1;
         }
 
         main {
@@ -5447,6 +5481,10 @@
             height: 20px;
         }
 
+        .social-link svg path {
+            fill: currentColor;
+        }
+
         .social-link:hover,
         .social-link:focus-visible {
             transform: translateY(-2px);
@@ -5490,8 +5528,14 @@
             </div>
         </div>
         <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
-            <a class="primary-nav__link" id="primaryNavHome" href="#pageTop" data-scroll-target="pageTop">Inicio</a>
-            <a class="primary-nav__link" id="primaryNavPolicies" href="#policyMain" data-scroll-target="policyMain">Políticas corporativas</a>
+            <a class="primary-nav__link" id="primaryNavHome" href="#pageTop" data-scroll-target="pageTop">
+                <span class="primary-nav__icon" aria-hidden="true">${getPrimaryNavIconSvg('home')}</span>
+                <span class="primary-nav__label">Inicio</span>
+            </a>
+            <a class="primary-nav__link" id="primaryNavPolicies" href="#policyMain" data-scroll-target="policyMain">
+                <span class="primary-nav__icon" aria-hidden="true">${getPrimaryNavIconSvg('policies')}</span>
+                <span class="primary-nav__label">Políticas corporativas</span>
+            </a>
         </nav>
     </header>
 
@@ -6100,6 +6144,7 @@ ${formatCssBlock(headerBackground)}
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 0.4rem;
             padding: 0.65rem 1.25rem;
             border-radius: 999px;
             border: 1px solid rgba(255, 255, 255, 0.35);
@@ -6125,6 +6170,25 @@ ${formatCssBlock(headerBackground)}
 
         .primary-nav__link:focus-visible {
             box-shadow: 0 0 0 3px ${theme.accentSoft}, 0 12px 24px rgba(15, 23, 42, 0.18);
+        }
+
+        .primary-nav__icon {
+            display: inline-flex;
+            width: 1.1rem;
+            height: 1.1rem;
+        }
+
+        .primary-nav__icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .primary-nav__icon svg path {
+            fill: currentColor;
+        }
+
+        .primary-nav__label {
+            line-height: 1;
         }
 
         .logo-container {
