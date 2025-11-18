@@ -434,7 +434,35 @@
                     <button class="btn btn-primary" id="savePoliciesButton">Guardar políticas</button>
                 </div>
 
-                <section id="previewSection" class="preview-section">                <section id="previewSection" class="preview-section">
+                <div id="productsSection" class="section" role="region" aria-labelledby="productsSectionTitle" aria-hidden="true" hidden>
+                    <h2 class="section-title" id="productsSectionTitle">📦 Gestión de productos</h2>
+                    <p class="section-description">
+                        Organiza tus categorías, busca productos específicos y usa el botón de “Añadir producto” para
+                        crear o actualizar la información de tu catálogo.
+                    </p>
+
+                    <div class="category-header" role="toolbar" aria-label="Gestión de categorías">
+                        <div class="category-tabs" id="categoryTabs" role="tablist" aria-label="Categorías de productos">
+                            <!-- Las pestañas de categorías se inyectan desde admin.js -->
+                        </div>
+                        <div class="category-controls">
+                            <button type="button" class="btn btn-secondary" id="manageCategoriesButton">🗂️ Gestionar categorías</button>
+                            <button type="button" class="btn btn-primary" id="openProductModalButton">➕ Añadir producto</button>
+                        </div>
+                    </div>
+
+                    <div class="product-search-bar">
+                        <label for="productSearch">Buscar productos</label>
+                        <input type="search" id="productSearch" placeholder="Buscar por nombre, descripción o etiqueta" autocomplete="off">
+                        <p class="product-search-summary" id="productSearchSummary" aria-live="polite">
+                            Usa la barra de búsqueda o selecciona una categoría para comenzar.
+                        </p>
+                    </div>
+
+                    <div id="productsList" class="product-list" role="list" aria-live="polite"></div>
+                </div>
+
+                <section id="previewSection" class="preview-section">
                     <h2 class="section-title">👀 Vista previa del catálogo</h2>
                     <iframe id="catalogPreview" title="Vista previa del catálogo"></iframe>
                 </section>
