@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Políticas corporativas de AMAZONIA CONCRETE - AMAZONIA CONCRETE</title>
+    <style>
+        
+        :root {
+            color-scheme: light;
+            font-size: 16px;
+            --policy-bg: #f5f5f5;
+            --policy-text: #2d4a2b;
+            --policy-header-start: #294428;
+            --policy-header-end: #466044;
+            --policy-primary: #6b8e68;
+            --policy-accent: #8fa68c;
+            --policy-card-border: rgba(45, 74, 43, 0.08);
+            --policy-card-shadow: rgba(45, 74, 43, 0.08);
+            --policy-preview-bg: rgba(107, 142, 104, 0.12);
+            --policy-muted: rgba(45, 74, 43, 0.60);
+            --policy-switch-off: rgba(45, 74, 43, 0.20);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--policy-bg);
+            color: var(--policy-text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--policy-header-start), var(--policy-header-end));
+            color: #fff;
+            padding: 3rem 1rem 4rem;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.2), transparent 55%);
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .header-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .logo-panel {
+            background: rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            min-height: 240px;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .logo-panel img {
+            width: 180px;
+            height: auto;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.35));
+        }
+
+        .header-copy h1 {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            letter-spacing: 1px;
+        }
+
+        .header-copy p {
+            opacity: 0.9;
+            margin-top: 0.75rem;
+        }
+
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+
+        .quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+        }
+
+        .quick-links a {
+            padding: 0.5rem 1.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.45);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .quick-links a:hover,
+        .quick-links a:focus-visible {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+            border-color: white;
+        }
+
+        .primary-nav {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            margin: 2rem auto 0;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+
+        .primary-nav__link {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            opacity: 0.85;
+        }
+
+        .primary-nav__link:hover,
+        .primary-nav__link:focus-visible {
+            opacity: 1;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: -60px auto 3rem;
+            padding: 0 1.5rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 28px;
+            padding: 2rem;
+            box-shadow: var(--policy-card-shadow);
+            margin-bottom: 2rem;
+            border: 1px solid var(--policy-card-border);
+        }
+
+        .policy-card__grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .policy-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .policy-header span {
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            color: var(--policy-muted);
+            text-transform: uppercase;
+        }
+
+        .policy-header__status {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .policy-status {
+            padding: 0.35rem 0.9rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .policy-status--active {
+            background: rgba(53, 132, 52, 0.15);
+            color: var(--policy-primary);
+        }
+
+        .policy-status--inactive {
+            background: var(--policy-switch-off);
+            color: var(--policy-text);
+        }
+
+        .switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: default;
+            margin-top: 0.2rem;
+        }
+
+        .switch input {
+            width: 0;
+            height: 0;
+            opacity: 0;
+            position: absolute;
+        }
+
+        .switch-slider {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: var(--policy-switch-off);
+            border-radius: 999px;
+            transition: background 0.2s ease;
+        }
+
+        .switch-slider::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .switch input:checked + .switch-slider {
+            background: var(--policy-accent);
+        }
+
+        .switch input:checked + .switch-slider::after {
+            transform: translateX(24px);
+        }
+
+        .policy-summary--empty,
+        .policy-meta--empty,
+        .policy-preview__empty {
+            color: var(--policy-muted);
+            font-style: italic;
+        }
+
+        .policy-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin: 1rem 0;
+            list-style: none;
+            padding: 0;
+        }
+
+        .policy-meta li {
+            font-size: 0.95rem;
+        }
+
+        .preview {
+            background: var(--policy-preview-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px dashed rgba(52, 76, 51, 0.2);
+        }
+
+        .preview ul {
+            margin-top: 0.75rem;
+            padding-left: 1.2rem;
+        }
+
+        .preview li + li {
+            margin-top: 0.35rem;
+        }
+
+        .policy-card--inactive {
+            opacity: 0.92;
+        }
+
+        .general-details {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .general-details li {
+            background: rgba(0,0,0,0.03);
+            padding: 1rem;
+            border-radius: 16px;
+        }
+
+        .general-details span {
+            display: block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--policy-muted);
+        }
+
+        .general-details strong {
+            display: block;
+            margin-top: 0.4rem;
+        }
+
+        .global-note {
+            margin-top: 1.25rem;
+            font-size: 0.95rem;
+            color: var(--policy-muted);
+        }
+
+        footer {
+            padding: 3rem 1rem;
+            background: var(--policy-header-start);
+            color: #fff;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .contact-info h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .social-links {
+            display: inline-flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-link {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .social-link svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .social-link:hover,
+        .social-link:focus-visible {
+            transform: translateY(-2px);
+            border-color: #fff;
+        }
+
+        .policy-preview__meta,
+        .policy-preview__global-note {
+            display: block;
+            color: var(--policy-muted);
+            margin-top: 0.35rem;
+        }
+
+        @media (max-width: 640px) {
+            .card {
+                padding: 1.5rem;
+            }
+
+            .preview {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="pageTop">
+        <div class="header-inner">
+            <div class="logo-panel">
+                <img src="https://raw.githubusercontent.com/RyzenG/Catalogo-Amazonia/refs/heads/main/images/logo.webp" alt="Logo de AMAZONIA CONCRETE">
+                <p>Actualiza este logo y los datos de contacto desde el panel de administración.</p>
+            </div>
+            <div class="header-copy">
+                <p class="eyebrow">Centro de políticas</p>
+                <h1>Políticas corporativas de AMAZONIA CONCRETE</h1>
+                <p>Belleza Natural En Concreto</p>
+                <div class="meta"><span>AMAZONIA CONCRETE</span><span>Generado: 2025-11-18</span></div>
+                <div class="quick-links"><a href="#policy-shipping" data-quick-link>Envíos</a><a href="#policy-refund" data-quick-link>Reembolsos</a><a href="#policy-privacy" data-quick-link>Privacidad</a><a href="#policy-extra" data-quick-link>Política ambiental</a></div>
+            </div>
+        </div>
+        <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
+            <a class="primary-nav__link" id="primaryNavHome" href="#pageTop" data-scroll-target="pageTop">Inicio</a>
+            <a class="primary-nav__link" id="primaryNavPolicies" href="#policyMain" data-scroll-target="policyMain">Políticas corporativas</a>
+        </nav>
+    </header>
+
+    <main id="policyMain">
+        <section class="card" aria-labelledby="general-config-title">
+            <div class="policy-header">
+                <span>Panel principal</span>
+                <h2 id="general-config-title">Configuración general</h2>
+            </div>
+            <p>Completa estos campos desde el panel de administración para mantener tus políticas actualizadas.</p>
+            <ul class="general-details"><li><span>Nombre comercial</span><strong>AMAZONIA CONCRETE</strong></li><li><span>Correo</span><strong>Amazoniaenconcreto@gmail.com</strong></li><li><span>Teléfono</span><strong>3004618873</strong></li></ul>
+            <p class="global-note">Creando espacios únicos con concreto sostenible</p>
+        </section>
+        
+        <section class="card policy-card" id="policy-shipping">
+            <div class="policy-card__grid">
+                <div class="policy-card__content">
+                    <div class="policy-header">
+                        <span>Operaciones</span>
+                        <h2>🚚 Política de envíos</h2>
+                        <div class="policy-header__status">
+                            <span class="policy-status policy-status--active">Activa</span>
+                            <label class="switch">
+                                <input type="checkbox" checked disabled aria-label="Política de envíos visible">
+                                <span class="switch-slider" aria-hidden="true"></span>
+                                <strong>Visible en el sitio</strong>
+                            </label>
+                        </div>
+                    </div>
+                    <p class="policy-summary">Enviamos cada pedido con embalaje reforzado y seguimiento en tiempo real para garantizar entregas seguras.</p>
+                    <ul class="policy-meta"><li><strong>Tiempo:</strong> 3 a 5 días hábiles</li><li><strong>Cobertura:</strong> Cobertura nacional con aliados certificados</li><li><strong>Costo:</strong> Sin costo para compras superiores a $300.000</li><li><strong>Contacto:</strong> logistica@amazonia.com</li></ul>
+                    <p class="policy-details">Coordinamos entregas programadas y ofrecemos retiros en planta bajo cita previa. Las zonas especiales pueden requerir tiempos adicionales.</p>
+                </div>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p>AMAZONIA CONCRETE informa: Enviamos cada pedido con embalaje reforzado y seguimiento en tiempo real para garantizar entregas seguras. Coordinamos entregas programadas y ofrecemos retiros en planta bajo cita previa. Las zonas especiales pueden requerir tiempos adicionales.</p>
+                    <ul><li>Seguimiento proactivo</li><li>Mensajería directa con el transportista</li><li>Compensación por demoras</li></ul>
+                    <p class="meta">
+                        <span class="policy-preview__meta">Tiempo: 3 a 5 días hábiles · Cobertura: Cobertura nacional con aliados certificados · Costo: Sin costo para compras superiores a $300.000 · Contacto: logistica@amazonia.com</span>
+                        <span class="policy-preview__global-note">Creando espacios únicos con concreto sostenible</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+        <section class="card policy-card" id="policy-refund">
+            <div class="policy-card__grid">
+                <div class="policy-card__content">
+                    <div class="policy-header">
+                        <span>Clientes</span>
+                        <h2>💸 Política de reembolso</h2>
+                        <div class="policy-header__status">
+                            <span class="policy-status policy-status--active">Activa</span>
+                            <label class="switch">
+                                <input type="checkbox" checked disabled aria-label="Política de reembolso visible">
+                                <span class="switch-slider" aria-hidden="true"></span>
+                                <strong>Visible en el sitio</strong>
+                            </label>
+                        </div>
+                    </div>
+                    <p class="policy-summary">Buscamos soluciones rápidas y transparentes para cada solicitud de devolución o reembolso.</p>
+                    <ul class="policy-meta"><li><strong>Ventana:</strong> 15 días calendario posteriores a la entrega</li><li><strong>Método:</strong> Transferencia bancaria o saldo a favor</li><li><strong>Contacto:</strong> servicio@amazonia.com</li><li><strong>Requisitos:</strong> Factura y evidencia del estado del producto</li></ul>
+                    <p class="policy-details">Los reembolsos se aprueban tras una inspección técnica. Productos personalizados o usados fuera de especificación no aplican.</p>
+                </div>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p>AMAZONIA CONCRETE informa: Buscamos soluciones rápidas y transparentes para cada solicitud de devolución o reembolso. Los reembolsos se aprueban tras una inspección técnica. Productos personalizados o usados fuera de especificación no aplican.</p>
+                    <ul><li>Respuesta inicial en 24 horas</li><li>Recolección sin costo</li><li>Reportes automatizados para auditoría</li></ul>
+                    <p class="meta">
+                        <span class="policy-preview__meta">Ventana: 15 días calendario posteriores a la entrega · Método: Transferencia bancaria o saldo a favor · Contacto: servicio@amazonia.com · Requisitos: Factura y evidencia del estado del producto</span>
+                        <span class="policy-preview__global-note">Creando espacios únicos con concreto sostenible</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+        <section class="card policy-card" id="policy-privacy">
+            <div class="policy-card__grid">
+                <div class="policy-card__content">
+                    <div class="policy-header">
+                        <span>Confidencialidad</span>
+                        <h2>🔒 Política de privacidad</h2>
+                        <div class="policy-header__status">
+                            <span class="policy-status policy-status--active">Activa</span>
+                            <label class="switch">
+                                <input type="checkbox" checked disabled aria-label="Política de privacidad visible">
+                                <span class="switch-slider" aria-hidden="true"></span>
+                                <strong>Visible en el sitio</strong>
+                            </label>
+                        </div>
+                    </div>
+                    <p class="policy-summary">Protegemos la información de nuestros clientes mediante procesos seguros y transparentes.</p>
+                    <ul class="policy-meta"><li><strong>Uso:</strong> Gestión comercial, despachos y comunicaciones internas</li><li><strong>Retención:</strong> Al menos 5 años o según normativa vigente</li><li><strong>Terceros:</strong> Transportistas, pasarelas de pago y aliados de servicio</li><li><strong>Contacto:</strong> datos@amazonia.com</li></ul>
+                    <p class="policy-details">Aplicamos los principios de legalidad, finalidad y confidencialidad. Los titulares pueden ejercer sus derechos de acceso, corrección o eliminación en cualquier momento.</p>
+                </div>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p>AMAZONIA CONCRETE informa: Protegemos la información de nuestros clientes mediante procesos seguros y transparentes. Aplicamos los principios de legalidad, finalidad y confidencialidad. Los titulares pueden ejercer sus derechos de acceso, corrección o eliminación en cualquier momento.</p>
+                    <ul><li>Infraestructura alojada en Colombia</li><li>Protocolos de cifrado AES-256</li><li>Evaluaciones anuales de cumplimiento</li></ul>
+                    <p class="meta">
+                        <span class="policy-preview__meta">Uso: Gestión comercial, despachos y comunicaciones internas · Retención: Al menos 5 años o según normativa vigente · Terceros: Transportistas, pasarelas de pago y aliados de servicio · Contacto: datos@amazonia.com</span>
+                        <span class="policy-preview__global-note">Creando espacios únicos con concreto sostenible</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+        <section class="card policy-card policy-card--inactive" id="policy-extra">
+            <div class="policy-card__grid">
+                <div class="policy-card__content">
+                    <div class="policy-header">
+                        <span>Especiales</span>
+                        <h2>✨ Política ambiental</h2>
+                        <div class="policy-header__status">
+                            <span class="policy-status policy-status--inactive">Oculta</span>
+                            <label class="switch">
+                                <input type="checkbox"  disabled aria-label="Política ambiental oculta">
+                                <span class="switch-slider" aria-hidden="true"></span>
+                                <strong>Oculta en el sitio</strong>
+                            </label>
+                        </div>
+                    </div>
+                    <p class="policy-summary">Minimizamos el impacto ambiental con procesos eficientes y trazables.</p>
+                    <ul class="policy-meta"><li><strong>Responsable:</strong> Gerencia HSE</li><li><strong>Ámbito:</strong> Operaciones industriales y cadena logística</li></ul>
+                    <p class="policy-details">Monitoreamos consumos energéticos, promovemos reciclaje y neutralizamos emisiones con proveedores certificados.</p>
+                </div>
+                <div class="preview">
+                    <h4>Vista previa</h4>
+                    <p>AMAZONIA CONCRETE informa: Política ambiental — Minimizamos el impacto ambiental con procesos eficientes y trazables. Monitoreamos consumos energéticos, promovemos reciclaje y neutralizamos emisiones con proveedores certificados.</p>
+                    <ul><li>Metas de reducción del 20%</li><li>Auditorías externas</li><li>Reportes trimestrales</li></ul>
+                    <p class="meta">
+                        <span class="policy-preview__meta">Responsable: Gerencia HSE · Ámbito: Operaciones industriales y cadena logística</span>
+                        <span class="policy-preview__global-note">Creando espacios únicos con concreto sostenible</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="contact-info">
+                <h3>AMAZONIA CONCRETE</h3>
+                
+                <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="">
+                    <a id="footerSocialWhatsApp" class="social-link social-link--whatsapp" href="https://wa.me/573004618873" target="_blank" rel="noopener noreferrer" style="">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                        <span class="sr-only">WhatsApp</span>
+                    </a>
+                    <a id="footerSocialInstagram" class="social-link social-link--instagram" href="https://www.instagram.com/amazonia_concrete" target="_blank" rel="noopener noreferrer" style="">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg>
+                        <span class="sr-only">Instagram</span>
+                    </a>
+                    <a id="footerSocialFacebook" class="social-link social-link--facebook" href="#" target="_blank" rel="noopener noreferrer" style="display: none;">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
+                        <span class="sr-only">Facebook</span>
+                    </a>
+                    <a id="footerSocialTiktok" class="social-link social-link--tiktok" href="https://www.tiktok.com/@amazonia_concrete" target="_blank" rel="noopener noreferrer" style="">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                        <span class="sr-only">TikTok</span>
+                    </a>
+                </div>
+                <p style="margin-top: 1rem; opacity: 0.85;">© 2025 AMAZONIA CONCRETE - Todos los derechos reservados</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var homeLink = document.getElementById('primaryNavHome');
+            if (homeLink) {
+                var href = window.location.href || '';
+                var isPreviewContext = (href.indexOf('about:') === 0) || (href.indexOf('blob:') === 0);
+                if (!isPreviewContext) {
+                    try {
+                        var catalogUrl = new URL('index.html', window.location.href);
+                        homeLink.setAttribute('href', catalogUrl.href);
+                        homeLink.setAttribute('data-external-url', catalogUrl.href);
+                        homeLink.removeAttribute('data-scroll-target');
+                    } catch (error) {
+                        homeLink.setAttribute('href', '#pageTop');
+                        homeLink.setAttribute('data-scroll-target', 'pageTop');
+                        homeLink.removeAttribute('data-external-url');
+                    }
+                } else {
+                    homeLink.setAttribute('href', '#pageTop');
+                    homeLink.setAttribute('data-scroll-target', 'pageTop');
+                    homeLink.removeAttribute('data-external-url');
+                }
+            }
+
+            var nav = document.getElementById('primaryNav');
+            if (nav) {
+                nav.addEventListener('click', function(event) {
+                    var link = event.target.closest('.primary-nav__link');
+                    if (!link || link.getAttribute('aria-hidden') === 'true') {
+                        return;
+                    }
+
+                    var externalUrl = link.getAttribute('data-external-url');
+                    if (externalUrl) {
+                        return;
+                    }
+
+                    var targetId = link.getAttribute('data-scroll-target');
+                    if (!targetId) {
+                        return;
+                    }
+
+                    var target = document.getElementById(targetId);
+                    if (!target) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    if (typeof target.scrollIntoView === 'function') {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            }
+
+            var quickLinks = document.querySelectorAll('[data-quick-link]');
+            quickLinks.forEach(function(link) {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var href = link.getAttribute('href') || '';
+                    if (!href.startsWith('#')) {
+                        return;
+                    }
+                    var targetId = href.slice(1);
+                    var target = document.getElementById(targetId);
+                    if (target && typeof target.scrollIntoView === 'function') {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else if (targetId) {
+                        window.location.hash = targetId;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
