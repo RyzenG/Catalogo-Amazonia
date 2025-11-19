@@ -4918,6 +4918,21 @@
             const config = getNormalizedConfig(configOverride || catalogData.config);
             const appearance = normalizeAppearance(config.appearance);
             const policies = normalizePolicies(config.policies);
+            const aboutConfig = normalizeAbout(config.about);
+
+            const hasAboutSection = Boolean(
+                (aboutConfig && typeof aboutConfig.mission === 'string' && aboutConfig.mission.trim().length > 0)
+                || (aboutConfig && typeof aboutConfig.vision === 'string' && aboutConfig.vision.trim().length > 0)
+                || (aboutConfig && typeof aboutConfig.history === 'string' && aboutConfig.history.trim().length > 0)
+                || (aboutConfig && Array.isArray(aboutConfig.values) && aboutConfig.values.some(value => typeof value === 'string' && value.trim().length > 0))
+            );
+
+            const productSources = catalogData && isPlainObject(catalogData.products)
+                ? Object.values(catalogData.products)
+                : [];
+            const hasProducts = productSources.some(list => Array.isArray(list) && list.length > 0);
+
+            const hasPoliciesSection = hasPoliciesContent(policies);
 
             const trimmedConfig = {
                 whatsapp: (config.whatsapp || '').trim(),
@@ -4964,6 +4979,25 @@
 
             const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : 'images/logo.webp';
             const logoAltName = trimmedConfig.companyName || defaultConfig.companyName || 'la empresa';
+
+            const primaryNavItems = [
+                { id: 'primaryNavHome', label: 'Inicio', href: 'index.html', visible: true, external: true, icon: 'home' },
+                { id: 'primaryNavProducts', label: 'Productos', href: 'index.html#catalogProducts', visible: hasProducts, external: true, icon: 'products' },
+                { id: 'primaryNavAbout', label: 'Nosotros', href: 'nosotros.html', visible: hasAboutSection, external: true, icon: 'about' },
+                { id: 'primaryNavPolicies', label: 'Políticas corporativas', target: 'policyMain', visible: hasPoliciesSection, icon: 'policies' }
+            ];
+
+            const primaryNavLinksMarkup = primaryNavItems
+                .map(item => {
+                    const styleAttr = item.visible ? '' : ' style="display: none;"';
+                    const hiddenAttr = item.visible ? '' : ' aria-hidden="true" tabindex="-1"';
+                    const hrefAttr = item.href ? item.href : `#${item.target}`;
+                    const targetAttr = item.href ? '' : ` data-scroll-target="${item.target}"`;
+                    const externalAttr = item.external && item.href ? ` data-external-url="${item.href}"` : '';
+                    const iconMarkup = item.icon ? `<span class="primary-nav__icon" aria-hidden="true">${getPrimaryNavIconSvg(item.icon)}</span>` : '';
+                    return `<a class="primary-nav__link" id="${item.id}" href="${hrefAttr}"${targetAttr}${externalAttr}${styleAttr}${hiddenAttr}>${iconMarkup}<span class="primary-nav__label">${escapeHtml(item.label)}</span></a>`;
+                })
+                .join('');
 
             const quickLinksMarkup = POLICY_IDS
                 .map(policyId => {
@@ -5458,27 +5492,30 @@
         }
 
         .social-links {
-            display: inline-flex;
+            display: flex;
+            justify-content: center;
             gap: 1rem;
-            margin-top: 1rem;
+            flex-wrap: wrap;
+            margin: 1.5rem 0 1rem;
         }
 
         .social-link {
-            width: 44px;
-            height: 44px;
+            width: 3rem;
+            height: 3rem;
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.3);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
             text-decoration: none;
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            color: #fff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
         .social-link svg {
-            width: 20px;
-            height: 20px;
+            width: 1.5rem;
+            height: 1.5rem;
         }
 
         .social-link svg path {
@@ -5487,8 +5524,36 @@
 
         .social-link:hover,
         .social-link:focus-visible {
-            transform: translateY(-2px);
-            border-color: #fff;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+        }
+
+        .social-link--whatsapp {
+            background: #25d366;
+        }
+
+        .social-link--instagram {
+            background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
+        }
+
+        .social-link--facebook {
+            background: #1877f2;
+        }
+
+        .social-link--tiktok {
+            background: #010101;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 1px, 1px);
+            white-space: nowrap;
+            border: 0;
         }
 
 
@@ -5528,14 +5593,7 @@
             </div>
         </div>
         <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
-            <a class="primary-nav__link" id="primaryNavHome" href="#pageTop" data-scroll-target="pageTop">
-                <span class="primary-nav__icon" aria-hidden="true">${getPrimaryNavIconSvg('home')}</span>
-                <span class="primary-nav__label">Inicio</span>
-            </a>
-            <a class="primary-nav__link" id="primaryNavPolicies" href="#policyMain" data-scroll-target="policyMain">
-                <span class="primary-nav__icon" aria-hidden="true">${getPrimaryNavIconSvg('policies')}</span>
-                <span class="primary-nav__label">Políticas corporativas</span>
-            </a>
+            ${primaryNavLinksMarkup}
         </nav>
     </header>
 
