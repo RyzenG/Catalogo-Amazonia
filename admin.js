@@ -4329,8 +4329,11 @@
                 const previewSource = hasConfigForm
                     ? { ...catalogData.config, ...collectConfigValues() }
                     : catalogData.config;
-                const previewConfig = getNormalizedConfig(previewSource);
-                const htmlContent = generateCatalogHTML(previewConfig);
+
+                const context = buildCatalogContext(previewSource);
+                updateMetadataPreview(context.pageMetadata);
+
+                const htmlContent = generateCatalogHTML(context.config, context);
                 if ('srcdoc' in previewFrame) {
                     previewFrame.srcdoc = htmlContent;
                 } else {
@@ -4362,28 +4365,29 @@
         window.editProduct = editProduct;
         window.deleteProduct = deleteProduct;
 
-        // Generate catalog HTML
-        function generateCatalogHTML(configOverride) {
-            ensureCategoryStructure();
-            const config = getNormalizedConfig(configOverride || catalogData.config);
-            const products = catalogData.products;
-            const categories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
-            const serializeForScript = (value) => {
-                const jsonString = JSON.stringify(value);
+        function trimConfigFields(config) {
+            const normalized = isPlainObject(config) ? config : {};
 
-                if (typeof jsonString !== 'string') {
-                    return 'null';
-                }
-
-                return jsonString
-                    .replace(/</g, '\\u003C')
-                    .replace(/>/g, '\\u003E')
-                    .replace(/&/g, '\\u0026')
-                    .replace(/\u2028/g, '\\u2028')
-                    .replace(/\u2029/g, '\\u2029');
+            return {
+                whatsapp: (normalized.whatsapp || '').trim(),
+                email: (normalized.email || '').trim(),
+                phone: (normalized.phone || '').trim(),
+                address: (normalized.address || '').trim(),
+                instagram: (normalized.instagram || '').trim(),
+                facebook: (normalized.facebook || '').trim(),
+                tiktok: (normalized.tiktok || '').trim(),
+                companyName: normalized.companyName || '',
+                tagline: normalized.tagline || '',
+                footerMessage: normalized.footerMessage || '',
+                logoData: typeof normalized.logoData === 'string' ? normalized.logoData.trim() : ''
             };
-            const legacyCategoryResolver = createLegacyCategoryResolver(catalogData.categoryInfo);
-            const resolvedCategories = categories.map((category, index) => {
+        }
+
+        function resolveCatalogCategories(categories, categoryInfo) {
+            const list = Array.isArray(categories) ? categories : [];
+            const legacyCategoryResolver = createLegacyCategoryResolver(categoryInfo);
+
+            return list.map((category, index) => {
                 const normalized = isPlainObject(category)
                     ? category
                     : (typeof category === 'string'
@@ -4421,11 +4425,10 @@
                     typeof normalized.emoji === 'string' ? normalized.emoji.trim() : '',
                     metadata.icon || ''
                 ].filter(Boolean);
-                const icon = iconCandidates.length > 0 ? iconCandidates[0] : '📦';
+                const icon = iconCandidates.find(value => value.trim().length > 0) || '🛠️';
 
                 const descriptionCandidates = [
-                    typeof normalized.description === 'string' ? normalized.description.trim() : '',
-                    typeof normalized.desc === 'string' ? normalized.desc.trim() : '',
+                    typeof normalized.description === 'string' ? normalized.description : '',
                     metadata.description || ''
                 ].filter(value => typeof value === 'string');
                 const description = descriptionCandidates.find(value => value.trim().length > 0) || '';
@@ -4437,22 +4440,158 @@
                     description
                 };
             });
+        }
 
-            const theme = buildThemeTokens(config.appearance);
+        function getCategoriesWithProducts(resolvedCategories, products) {
+            return resolvedCategories.filter(category => {
+                const list = products && products[category.id];
+                return Array.isArray(list) && list.length > 0;
+            });
+        }
 
-            const trimmedConfig = {
-                whatsapp: (config.whatsapp || '').trim(),
-                email: (config.email || '').trim(),
-                phone: (config.phone || '').trim(),
-                address: (config.address || '').trim(),
-                instagram: (config.instagram || '').trim(),
-                facebook: (config.facebook || '').trim(),
-                tiktok: (config.tiktok || '').trim(),
-                companyName: config.companyName || '',
-                tagline: config.tagline || '',
-                footerMessage: config.footerMessage || '',
-                logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
+        function buildContactCta(trimmedConfig) {
+            const contactPieces = [];
+
+            if (trimmedConfig.whatsapp) {
+                contactPieces.push(`WhatsApp ${trimmedConfig.whatsapp}`);
+            }
+
+            if (trimmedConfig.phone) {
+                contactPieces.push(`teléfono ${trimmedConfig.phone}`);
+            }
+
+            if (trimmedConfig.email) {
+                contactPieces.push(`correo ${trimmedConfig.email}`);
+            }
+
+            if (contactPieces.length === 0) {
+                return '';
+            }
+
+            if (contactPieces.length === 1) {
+                return `Contáctanos por ${contactPieces[0]}`;
+            }
+
+            const lastPiece = contactPieces.pop();
+            return `Contáctanos por ${contactPieces.join(', ')} y ${lastPiece}`;
+        }
+
+        function buildCatalogPageMetadata(trimmedConfig, resolvedCategories, categoriesWithProducts) {
+            const defaultName = typeof defaultConfig.companyName === 'string'
+                ? defaultConfig.companyName.trim()
+                : '';
+            const displayName = (trimmedConfig.companyName || '').trim() || defaultName || 'Catálogo digital';
+            const safeTagline = (trimmedConfig.tagline || '').trim()
+                || 'Catálogo digital con colecciones seleccionadas.';
+            const highlightedCategory = categoriesWithProducts[0]
+                ? categoriesWithProducts[0].title
+                : (resolvedCategories[0] ? resolvedCategories[0].title : '');
+            const contactCta = buildContactCta(trimmedConfig);
+            const highlight = highlightedCategory || contactCta || 'Contáctanos para recibir asesoría personalizada.';
+            const descriptionParts = [`${displayName}: ${safeTagline}`];
+
+            if (highlight) {
+                descriptionParts.push(highlight);
+            }
+
+            const description = descriptionParts.join(' · ');
+            const metaTitle = `${displayName} - Catálogo Digital`;
+            const logoHref = trimmedConfig.logoData || '';
+
+            return {
+                title: metaTitle,
+                description,
+                highlight,
+                ogTitle: metaTitle,
+                ogDescription: description,
+                twitterTitle: metaTitle,
+                twitterDescription: description,
+                faviconHref: logoHref,
+                image: logoHref
             };
+        }
+
+        function buildCatalogContext(configOverride) {
+            ensureCategoryStructure();
+            const config = getNormalizedConfig(configOverride || catalogData.config);
+            const products = catalogData.products;
+            const categories = Array.isArray(catalogData.categories) ? catalogData.categories : [];
+            const resolvedCategories = resolveCatalogCategories(categories, catalogData.categoryInfo);
+            const categoriesWithProducts = getCategoriesWithProducts(resolvedCategories, products);
+            const trimmedConfig = trimConfigFields(config);
+            const pageMetadata = buildCatalogPageMetadata(trimmedConfig, resolvedCategories, categoriesWithProducts);
+
+            return {
+                config,
+                products,
+                resolvedCategories,
+                categoriesWithProducts,
+                trimmedConfig,
+                pageMetadata
+            };
+        }
+
+        function updateMetadataPreview(pageMetadata) {
+            const container = document.getElementById('metaPreview');
+            if (!container) {
+                return;
+            }
+
+            const safeMetadata = isPlainObject(pageMetadata) ? pageMetadata : {};
+            const titleElement = document.getElementById('metaTitlePreview');
+            const descriptionElement = document.getElementById('metaDescriptionPreview');
+            const highlightElement = document.getElementById('metaHighlightPreview');
+            const faviconElement = document.getElementById('metaFaviconPreview');
+
+            const titleText = typeof safeMetadata.title === 'string' && safeMetadata.title.trim()
+                ? safeMetadata.title.trim()
+                : 'Catálogo digital (se arma con el nombre de la empresa)';
+            const descriptionText = typeof safeMetadata.description === 'string' && safeMetadata.description.trim()
+                ? safeMetadata.description.trim()
+                : 'La descripción combina el nombre, el eslogan y el CTA de contacto si no hay categorías con productos.';
+            const highlightText = typeof safeMetadata.highlight === 'string' && safeMetadata.highlight.trim()
+                ? safeMetadata.highlight.trim()
+                : 'Mostramos la primera categoría con productos; si no existe, usamos los datos de contacto disponibles.';
+            const faviconText = safeMetadata.faviconHref
+                ? 'Usaremos el logo como ícono y vista previa para compartir.'
+                : 'Sin logo cargado: se mantendrá el ícono por defecto del navegador.';
+
+            if (titleElement) {
+                titleElement.textContent = titleText;
+            }
+
+            if (descriptionElement) {
+                descriptionElement.textContent = descriptionText;
+            }
+
+            if (highlightElement) {
+                highlightElement.textContent = highlightText;
+            }
+
+            if (faviconElement) {
+                faviconElement.textContent = faviconText;
+            }
+        }
+
+        // Generate catalog HTML
+        function generateCatalogHTML(configOverride, precomputedContext) {
+            const context = precomputedContext || buildCatalogContext(configOverride);
+            const { config, products, resolvedCategories, categoriesWithProducts, trimmedConfig, pageMetadata } = context;
+            const serializeForScript = (value) => {
+                const jsonString = JSON.stringify(value);
+
+                if (typeof jsonString !== 'string') {
+                    return 'null';
+                }
+
+                return jsonString
+                    .replace(/</g, '\\u003C')
+                    .replace(/>/g, '\\u003E')
+                    .replace(/&/g, '\\u0026')
+                    .replace(/\u2028/g, '\\u2028')
+                    .replace(/\u2029/g, '\\u2029');
+            };
+            const theme = buildThemeTokens(config.appearance);
 
             const policiesConfig = normalizePolicies(config.policies);
             const about = normalizeAbout(config.about);
@@ -4478,11 +4617,6 @@
             const taglineMarkup = trimmedConfig.tagline
                 ? `<p class="tagline" id="headerTagline">${taglineHtml}</p>`
                 : `<p class="tagline" id="headerTagline" style="display: none;"></p>`;
-
-            const categoriesWithProducts = resolvedCategories.filter(category => {
-                const list = products && products[category.id];
-                return Array.isArray(list) && list.length > 0;
-            });
 
             const firstCategoryWithProducts = categoriesWithProducts[0] ? categoriesWithProducts[0].id : null;
 
@@ -4801,13 +4935,33 @@
                     </a>
                 </div>`;
 
+            const documentTitle = escapeHtml(pageMetadata.title || `${headerTitleText} - Catálogo Digital`);
+            const metaDescription = escapeHtml(pageMetadata.description || `${headerTitleText} - Catálogo digital actualizado.`);
+            const metaSiteName = companyNameHtml || defaultCompanyNameHtml;
+            const ogImageMarkup = pageMetadata.image
+                ? `    <meta property="og:image" content="${escapeHtml(pageMetadata.image)}">\n    <meta name="twitter:image" content="${escapeHtml(pageMetadata.image)}">`
+                : '';
+            const faviconMarkup = pageMetadata.faviconHref
+                ? `    <link rel="icon" href="${escapeHtml(pageMetadata.faviconHref)}" />`
+                : '';
+
             // Generate the complete HTML
             return `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${companyNameHtml || defaultCompanyNameHtml} - Catálogo Digital</title>
+    <title>${documentTitle}</title>
+    <meta name="description" content="${metaDescription}">
+    <meta property="og:title" content="${documentTitle}">
+    <meta property="og:description" content="${metaDescription}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="${metaSiteName}">
+    ${ogImageMarkup}
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="${documentTitle}">
+    <meta name="twitter:description" content="${metaDescription}">
+    ${faviconMarkup}
     <style>
         ${getCatalogStyles(theme)}
     </style>
