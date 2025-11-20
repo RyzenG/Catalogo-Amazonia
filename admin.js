@@ -1453,6 +1453,26 @@
                 .filter(url => url.length > 0);
         }
 
+        function getProductImageVariants(product) {
+            if (!product || typeof product !== 'object') {
+                return [];
+            }
+
+            const variantConfig = [
+                { key: 'imageSmall', descriptor: '480w' },
+                { key: 'imageMedium', descriptor: '768w' },
+                { key: 'imageLarge', descriptor: '1200w' },
+                { key: 'imageFull', descriptor: '1600w' }
+            ];
+
+            return variantConfig
+                .map(({ key, descriptor }) => {
+                    const url = sanitizeImageValue(product[key]);
+                    return url ? { url, descriptor } : null;
+                })
+                .filter(Boolean);
+        }
+
         function getProductImageSource(product, fallbackIcon = '🛠️') {
             if (!product) {
                 return createIconPlaceholder(fallbackIcon, 'Producto Amazonia');
@@ -1472,6 +1492,72 @@
             }
 
             return createIconPlaceholder(iconValue, nameValue);
+        }
+
+        function buildProductImageAttributes(product, fallbackIcon = '🛠️') {
+            const aspectWidth = 4;
+            const aspectHeight = 3;
+            const defaultWidth = 960;
+            const defaultHeight = Math.round(defaultWidth * aspectHeight / aspectWidth);
+            const aspectStyle = 'aspect-ratio: 4 / 3; width: 100%; height: auto;';
+
+            const normalizedImages = getNormalizedProductImages(product);
+            const primarySrc = normalizedImages.length > 0
+                ? normalizedImages[0]
+                : getProductImageSource(product, fallbackIcon);
+
+            const variants = getProductImageVariants(product);
+            const srcsetEntries = [];
+            const seenUrls = new Set();
+
+            const addVariant = (url, descriptor) => {
+                if (!url || seenUrls.has(url)) {
+                    return;
+                }
+
+                seenUrls.add(url);
+                srcsetEntries.push(`${url} ${descriptor}`);
+            };
+
+            variants.forEach(variant => addVariant(variant.url, variant.descriptor));
+            if (primarySrc) {
+                addVariant(primarySrc, `${defaultWidth}w`);
+            }
+
+            const srcset = srcsetEntries.length > 1 ? srcsetEntries.join(', ') : '';
+            const sizes = srcset
+                ? '(max-width: 768px) 90vw, (max-width: 1200px) 45vw, 360px'
+                : '';
+
+            return {
+                src: primarySrc,
+                srcset,
+                sizes,
+                width: defaultWidth,
+                height: defaultHeight,
+                style: aspectStyle,
+                loading: 'lazy',
+                decoding: 'async'
+            };
+        }
+
+        function buildImageAttributesString(attributes) {
+            if (!attributes || typeof attributes !== 'object') {
+                return '';
+            }
+
+            const parts = [
+                `src="${escapeHtml(attributes.src || '')}"`,
+                attributes.srcset ? `srcset="${escapeHtml(attributes.srcset)}"` : '',
+                attributes.sizes ? `sizes="${escapeHtml(attributes.sizes)}"` : '',
+                `loading="${escapeHtml(attributes.loading || 'lazy')}"`,
+                `decoding="${escapeHtml(attributes.decoding || 'async')}"`,
+                attributes.width ? `width="${escapeHtml(String(attributes.width))}"` : '',
+                attributes.height ? `height="${escapeHtml(String(attributes.height))}"` : '',
+                attributes.style ? `style="${escapeHtml(attributes.style)}"` : ''
+            ];
+
+            return parts.filter(Boolean).join(' ');
         }
 
         function normalizeProductImages(product) {
@@ -4624,6 +4710,10 @@
             let productsHTML = '';
             let productDataJS = {};
             const priceValues = [];
+            const baseImageAttributes = buildProductImageAttributes(
+                { name: trimmedConfig.companyName || defaultConfig.companyName || 'Producto Amazonia' },
+                '🛠️'
+            );
 
             resolvedCategories.forEach(category => {
                 const categoryProducts = products && products[category.id] ? products[category.id] : [];
@@ -4657,9 +4747,9 @@
                         const sanitizedFeatures = featureValues.map(feature => `<span class="feature-tag">${escapeHtml(feature)}</span>`);
                         const featuresHtml = sanitizedFeatures.join('');
                         const imageList = getNormalizedProductImages(product);
-                        const imageSrc = imageList.length > 0
-                            ? imageList[0]
-                            : getProductImageSource(product, categoryIcon);
+                        const productImageAttributes = buildProductImageAttributes(product, categoryIcon);
+                        const productImageAttrString = buildImageAttributesString(productImageAttributes);
+                        const imageSrc = productImageAttributes.src;
                         const imageAlt = escapeHtml(`Imagen de ${rawName}`);
                         const formattedPrice = formatCurrencyCOP(product.price);
                         let numericPrice = Number.NaN;
@@ -4690,7 +4780,7 @@
                     productsHTML += `
                 <div class="product-card" data-category="${category.id}" data-product-id="${product.id}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${product.id}')">
                     <div class="product-image">
-                        <img src="${imageSrc}" alt="${imageAlt}">
+                        <img ${productImageAttrString} alt="${imageAlt}">
                     </div>
                     <div class="product-info">
                         <h3 class="product-name">${productNameHtml}</h3>
@@ -4722,6 +4812,7 @@
                         productDataJS[product.id] = {
                             title: rawName,
                             image: imageSrc,
+                            imageAttributes: productImageAttributes,
                             images: imageList,
                             alt: `Imagen de ${rawName}`,
                             description: typeof product.longDesc === 'string' && product.longDesc.trim()
@@ -4935,6 +5026,8 @@
                     </a>
                 </div>`;
 
+            const modalPlaceholderAttributes = buildImageAttributesString(baseImageAttributes);
+
             const documentTitle = escapeHtml(pageMetadata.title || `${headerTitleText} - Catálogo Digital`);
             const metaDescription = escapeHtml(pageMetadata.description || `${headerTitleText} - Catálogo digital actualizado.`);
             const metaSiteName = companyNameHtml || defaultCompanyNameHtml;
@@ -5026,7 +5119,7 @@
                     <div class="modal-image">
                         <button class="carousel-button carousel-button--prev" id="modalPrevButton" aria-label="Imagen anterior">‹</button>
                         <div class="modal-image-frame">
-                            <img id="modalImage" src="" alt="Imagen del producto seleccionado">
+                            <img id="modalImage" ${modalPlaceholderAttributes} alt="Imagen del producto seleccionado">
                         </div>
                         <button class="carousel-button carousel-button--next" id="modalNextButton" aria-label="Imagen siguiente">›</button>
                         <div class="carousel-indicators" id="modalIndicators" role="tablist" aria-label="Selector de imagen del producto"></div>
@@ -5062,7 +5155,7 @@
     </footer>
 
     <script>
-        ${getCatalogScript(productDataJS, config, serializeForScript)}
+        ${getCatalogScript(productDataJS, config, serializeForScript, baseImageAttributes)}
     </script>
 </body>
 </html>`;
@@ -8193,7 +8286,7 @@ ${formatCssBlock(footerBackground)}
         }
 
         // Get catalog script
-        function getCatalogScript(productData, config, serializer) {
+        function getCatalogScript(productData, config, serializer, baseImageAttributes) {
             const nonDigitPatternLiteral = String.raw`/\D+/g`;
             const serialize = typeof serializer === 'function'
                 ? serializer
@@ -8211,6 +8304,16 @@ ${formatCssBlock(footerBackground)}
                         .replace(/\u2028/g, '\\u2028')
                         .replace(/\u2029/g, '\\u2029');
                 };
+            const defaultImageAttributes = baseImageAttributes || {
+                loading: 'lazy',
+                decoding: 'async',
+                width: 960,
+                height: 720,
+                style: 'aspect-ratio: 4 / 3; width: 100%; height: auto;',
+                srcset: '',
+                sizes: '',
+                src: ''
+            };
 
             return `
         let currentProduct = null;
@@ -8219,6 +8322,7 @@ ${formatCssBlock(footerBackground)}
         let currentImageIndex = 0;
         let searchFilterTimeout = null;
         const productData = ${serialize(productData)};
+        const defaultImageAttributes = ${serialize(defaultImageAttributes)};
         const catalogConfig = ${serialize(config || {})};
         const selectionStorageKey = 'amazoniaCatalogSelectedProducts';
         const selectionStorage = getPersistentStorage();
@@ -8296,6 +8400,29 @@ ${formatCssBlock(footerBackground)}
                 element.style.display = 'none';
                 element.setAttribute('aria-hidden', 'true');
             }
+        }
+
+        function applyImageAttributes(target, attributes) {
+            if (!target || !attributes) {
+                return;
+            }
+
+            const applyValue = (attributeName, value) => {
+                if (value === undefined || value === null || value === '') {
+                    target.removeAttribute(attributeName);
+                    return;
+                }
+
+                target.setAttribute(attributeName, value);
+            };
+
+            target.loading = attributes.loading || 'lazy';
+            target.decoding = attributes.decoding || 'async';
+            applyValue('width', attributes.width ? String(attributes.width) : '');
+            applyValue('height', attributes.height ? String(attributes.height) : '');
+            applyValue('style', attributes.style || '');
+            applyValue('srcset', attributes.srcset || '');
+            applyValue('sizes', attributes.sizes || '');
         }
 
         function updateAboutSection(rawAbout) {
@@ -8492,8 +8619,14 @@ ${formatCssBlock(footerBackground)}
             }
 
             const product = modalProduct;
+            const activeAttributes = (product && product.imageAttributes) || defaultImageAttributes;
+
+            applyImageAttributes(imageElement, activeAttributes);
+
             if (!product) {
                 imageElement.removeAttribute('src');
+                imageElement.removeAttribute('srcset');
+                imageElement.removeAttribute('sizes');
                 imageElement.alt = 'Imagen del producto seleccionado';
                 return;
             }
@@ -8504,10 +8637,10 @@ ${formatCssBlock(footerBackground)}
             if (hasImages) {
                 const boundedIndex = Math.max(0, Math.min(currentImageIndex, images.length - 1));
                 currentImageIndex = boundedIndex;
-                imageElement.src = images[currentImageIndex] || '';
+                imageElement.src = images[currentImageIndex] || activeAttributes.src || '';
             } else {
                 currentImageIndex = 0;
-                imageElement.src = product.image || '';
+                imageElement.src = activeAttributes.src || product.image || '';
             }
 
             const baseAlt = product.alt || \`Imagen de \${product.title}\`;
