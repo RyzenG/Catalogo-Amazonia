@@ -4818,7 +4818,9 @@
                             description: typeof product.longDesc === 'string' && product.longDesc.trim()
                                 ? product.longDesc
                                 : rawShortDesc,
-                            specs: sanitizedSpecs
+                            specs: sanitizedSpecs,
+                            price: Number.isFinite(numericPrice) ? numericPrice : null,
+                            priceFormatted: formattedPrice
                         };
                     });
 
@@ -9709,11 +9711,35 @@ ${formatCssBlock(footerBackground)}
                         return null;
                     }
 
+                    const quantity = sanitizeQuantity(item.quantity);
+                    const notes = sanitizeNotes(item.notes);
+                    const numericPrice = Number.isFinite(product.price)
+                        ? product.price
+                        : Number.isFinite(product.numericPrice)
+                            ? product.numericPrice
+                            : Number.isFinite(product.priceValue)
+                                ? product.priceValue
+                                : Number.isFinite(product.priceNumber)
+                                    ? product.priceNumber
+                                    : Number.NaN;
+                    const hasPrice = Number.isFinite(numericPrice);
+                    const formattedPrice = hasPrice
+                        ? (typeof product.priceFormatted === 'string' && product.priceFormatted.trim()
+                            ? product.priceFormatted.trim()
+                            : formatCurrencyCOP(numericPrice))
+                        : '';
+                    const subtotal = hasPrice ? numericPrice * quantity : null;
+                    const subtotalFormatted = hasPrice ? formatCurrencyCOP(subtotal) : '';
+
                     return {
                         id: item.id,
                         name: product.title || 'Producto Amazonia',
-                        quantity: sanitizeQuantity(item.quantity),
-                        notes: sanitizeNotes(item.notes)
+                        quantity,
+                        notes,
+                        unitPrice: hasPrice ? numericPrice : null,
+                        unitPriceFormatted: formattedPrice,
+                        subtotal,
+                        subtotalFormatted
                     };
                 })
                 .filter(Boolean);
@@ -9943,11 +9969,24 @@ ${formatCssBlock(footerBackground)}
             if (selectedDetails.length > 0) {
                 const lines = selectedDetails.map((detail, index) => {
                     const notesPart = detail.notes ? \` - Notas: \${detail.notes}\` : '';
-                    return \`\${index + 1}. \${detail.name} - Cantidad: \${detail.quantity}\${notesPart}\`;
+                    const pricePart = Number.isFinite(detail.unitPrice)
+                        ? \` | Precio unitario: \${detail.unitPriceFormatted} | Subtotal: \${detail.subtotalFormatted}\`
+                        : ' | Precio: pendiente de cotizar';
+                    return \`\${index + 1}. \${detail.name} - Cantidad: \${detail.quantity}\${pricePart}\${notesPart}\`;
                 }).join('\\n');
 
                 const totalUnits = selectedDetails.reduce((sum, detail) => sum + detail.quantity, 0);
-                message = \`Hola! Quiero finalizar mi compra con este pedido:\n\n\${lines}\n\nTotal de unidades: \${totalUnits}\n\n¿Me ayudas a completar la compra?\`;
+                const totalAmount = selectedDetails.reduce(
+                    (sum, detail) => sum + (Number.isFinite(detail.subtotal) ? detail.subtotal : 0),
+                    0
+                );
+                const hasPricedItems = selectedDetails.some(detail => Number.isFinite(detail.subtotal));
+                const hasPendingPrices = selectedDetails.some(detail => !Number.isFinite(detail.subtotal));
+                const totalLine = hasPricedItems
+                    ? \`Total estimado: \${formatCurrencyCOP(totalAmount)}\${hasPendingPrices ? ' (faltan precios por confirmar)' : ''}\`
+                    : 'Total estimado: pendiente de cotizar';
+
+                message = \`Hola! Quiero finalizar mi compra con este pedido:\n\n\${lines}\n\nTotal de unidades: \${totalUnits}\n\${totalLine}\n\n¿Me ayudas a completar la compra?\`;
             } else {
                 const productName = currentProduct || 'Producto Amazonia';
                 message = \`Hola! Me interesa el producto: \${productName}. ¿Podríamos avanzar con la compra?\`;
@@ -9977,13 +10016,25 @@ ${formatCssBlock(footerBackground)}
                     : \`Cotización - \${selectedDetails.length} productos\`;
 
                 const productLines = selectedDetails.map(detail => {
-                    const baseLine = \`- \${detail.name} (Cantidad: \${detail.quantity})\`;
+                    const pricePart = Number.isFinite(detail.unitPrice)
+                        ? \` | Precio unitario: \${detail.unitPriceFormatted} | Subtotal: \${detail.subtotalFormatted}\`
+                        : ' | Precio: pendiente de cotizar';
+                    const baseLine = \`- \${detail.name} (Cantidad: \${detail.quantity}\${pricePart})\`;
                     return detail.notes
                         ? \`\${baseLine}\\n  Notas: \${detail.notes}\`
                         : baseLine;
                 }).join('\\n');
 
                 const totalUnits = selectedDetails.reduce((sum, detail) => sum + detail.quantity, 0);
+                const totalAmount = selectedDetails.reduce(
+                    (sum, detail) => sum + (Number.isFinite(detail.subtotal) ? detail.subtotal : 0),
+                    0
+                );
+                const hasPricedItems = selectedDetails.some(detail => Number.isFinite(detail.subtotal));
+                const hasPendingPrices = selectedDetails.some(detail => !Number.isFinite(detail.subtotal));
+                const totalLine = hasPricedItems
+                    ? \`Total estimado: \${formatCurrencyCOP(totalAmount)}\${hasPendingPrices ? ' (faltan precios por confirmar)' : ''}\`
+                    : 'Total estimado: pendiente de cotizar';
 
                 body = [
                     'Hola,',
@@ -9993,6 +10044,7 @@ ${formatCssBlock(footerBackground)}
                     productLines,
                     '',
                     \`Total de unidades solicitadas: \${totalUnits}\`,
+                    totalLine,
                     '',
                     phoneLine,
                     '',
