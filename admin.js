@@ -4947,6 +4947,7 @@
             <ul class="selected-products-panel__list" id="selectedProductsList" aria-describedby="selectedProductsTitle"></ul>
         </div>
         <div class="selected-products-panel__footer">
+            <p class="selected-products-panel__notice" id="whatsappConfigAlert" role="status" aria-live="polite" hidden></p>
             <p class="selected-products-panel__hint">Revisa los productos seleccionados y finaliza tu compra por WhatsApp.</p>
             <button type="button" class="selected-products-panel__checkout" id="checkoutButton" disabled>Finalizar compra</button>
         </div>
@@ -8019,6 +8020,15 @@ ${formatCssBlock(footerBackground)}
             background: #ffffff;
         }
 
+        .selected-products-panel__notice {
+            margin: 0;
+            font-size: 0.9rem;
+            color: ${theme.accentStrong};
+            background: ${theme.accentSoft};
+            padding: 0.65rem 0.75rem;
+            border-radius: 10px;
+        }
+
         .selected-products-panel__hint {
             margin: 0;
             font-size: 0.9rem;
@@ -8329,6 +8339,15 @@ ${formatCssBlock(footerBackground)}
         const selectionStorageKey = 'amazoniaCatalogSelectedProducts';
         const selectionStorage = getPersistentStorage();
         let selectedProducts = [];
+
+        function getWhatsappStatus() {
+            const config = catalogConfig || {};
+            const rawValue = typeof config.whatsapp === 'string' ? config.whatsapp.trim() : '';
+            const digits = rawValue.replace(/\D/g, '');
+            const isValid = digits.length >= 10 && digits.length <= 15;
+
+            return { rawValue, digits, isValid };
+        }
 
         const observerOptions = {
             threshold: 0.1,
@@ -9327,6 +9346,11 @@ ${formatCssBlock(footerBackground)}
             const closeButton = document.getElementById('selectedPanelClose');
             const clearButton = document.getElementById('clearSelectedProductsButton');
             const checkoutButton = document.getElementById('checkoutButton');
+            const whatsappAlert = document.getElementById('whatsappConfigAlert');
+
+            const whatsappStatus = getWhatsappStatus();
+            const hasValidWhatsapp = whatsappStatus.isValid;
+            const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
 
             if (toggle) {
                 toggle.addEventListener('click', function() {
@@ -9366,6 +9390,12 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (checkoutButton) {
+                const hasSelection = selectedProducts.some(item => productData[item.id]);
+                const canCheckout = hasSelection && hasValidWhatsapp;
+                checkoutButton.disabled = !canCheckout;
+                checkoutButton.setAttribute('aria-disabled', canCheckout ? 'false' : 'true');
+                checkoutButton.style.display = hasWhatsappValue ? '' : 'none';
+
                 checkoutButton.addEventListener('click', function() {
                     if (checkoutButton.disabled) {
                         return;
@@ -9374,6 +9404,19 @@ ${formatCssBlock(footerBackground)}
                     closeSelectionPanel();
                     contactWhatsApp();
                 });
+            }
+
+            if (whatsappAlert) {
+                let message = '';
+
+                if (!hasWhatsappValue) {
+                    message = 'Configura un número de WhatsApp en Ajustes para finalizar la compra.';
+                } else if (!hasValidWhatsapp) {
+                    message = 'El número de WhatsApp no es válido. Actualízalo para finalizar la compra.';
+                }
+
+                whatsappAlert.textContent = message;
+                whatsappAlert.hidden = !message;
             }
         }
 
@@ -9609,10 +9652,13 @@ ${formatCssBlock(footerBackground)}
             const panel = document.getElementById('selectedProductsPanel');
             const toggle = document.getElementById('selectedPanelToggle');
             const checkoutButton = document.getElementById('checkoutButton');
+            const whatsappAlert = document.getElementById('whatsappConfigAlert');
 
             const validItems = selectedProducts.filter(item => productData[item.id]);
             const uniqueCount = validItems.length;
             const totalUnits = validItems.reduce((sum, item) => sum + sanitizeQuantity(item.quantity), 0);
+            const whatsappStatus = getWhatsappStatus();
+            const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
 
             if (countElement) {
                 countElement.textContent = String(uniqueCount);
@@ -9635,7 +9681,23 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (checkoutButton) {
-                checkoutButton.disabled = uniqueCount === 0;
+                const canCheckout = uniqueCount > 0 && whatsappStatus.isValid;
+                checkoutButton.disabled = !canCheckout;
+                checkoutButton.setAttribute('aria-disabled', canCheckout ? 'false' : 'true');
+                checkoutButton.style.display = hasWhatsappValue ? '' : 'none';
+            }
+
+            if (whatsappAlert) {
+                let message = '';
+
+                if (!hasWhatsappValue) {
+                    message = 'Configura un número de WhatsApp en Ajustes para finalizar la compra.';
+                } else if (!whatsappStatus.isValid) {
+                    message = 'El número de WhatsApp no es válido. Actualízalo para finalizar la compra.';
+                }
+
+                whatsappAlert.textContent = message;
+                whatsappAlert.hidden = !message;
             }
 
             if (panel) {
@@ -9957,7 +10019,8 @@ ${formatCssBlock(footerBackground)}
 
         function contactWhatsApp() {
             const config = catalogConfig || {};
-            const whatsappNumber = (config.whatsapp || '').replace(${nonDigitPatternLiteral}, '');
+            const whatsappStatus = getWhatsappStatus();
+            const whatsappNumber = whatsappStatus.isValid ? whatsappStatus.digits : '';
 
             if (!whatsappNumber) {
                 return;
