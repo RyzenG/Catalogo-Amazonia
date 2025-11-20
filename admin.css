@@ -76,6 +76,52 @@ body {
     color: #2d4a2b;
 }
 
+.meta-preview {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    background: #f8faf7;
+    margin-bottom: 1.25rem;
+}
+
+.meta-preview__title {
+    margin: 0 0 0.35rem;
+    color: #2d4a2b;
+}
+
+.meta-preview__hint {
+    margin: 0 0 0.75rem;
+    color: #4d4d4d;
+    font-size: 0.95rem;
+}
+
+.meta-preview__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+.meta-preview__item {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.meta-preview__item dt {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #2d4a2b;
+}
+
+.meta-preview__item dd {
+    margin: 0;
+    color: #444;
+    line-height: 1.4;
+}
+
 #catalogPreview {
     width: 100%;
     min-height: 600px;

@@ -464,6 +464,32 @@
 
                 <section id="previewSection" class="preview-section">
                     <h2 class="section-title">👀 Vista previa del catálogo</h2>
+                    <div class="meta-preview" id="metaPreview" aria-live="polite">
+                        <div class="meta-preview__header">
+                            <h3 class="meta-preview__title">🧭 Metadatos listos para compartir</h3>
+                            <p class="meta-preview__hint">
+                                El título y la descripción usan el nombre y el eslogan. La frase destacada toma la primera categoría con productos; si no hay, armamos un CTA con WhatsApp, teléfono o correo. El logo, cuando existe, se usará como ícono.
+                            </p>
+                        </div>
+                        <dl class="meta-preview__list">
+                            <div class="meta-preview__item">
+                                <dt>Título</dt>
+                                <dd id="metaTitlePreview">Catálogo digital (se arma con el nombre de la empresa)</dd>
+                            </div>
+                            <div class="meta-preview__item">
+                                <dt>Descripción</dt>
+                                <dd id="metaDescriptionPreview">La descripción combina el nombre, el eslogan y el CTA de contacto si no hay categorías con productos.</dd>
+                            </div>
+                            <div class="meta-preview__item">
+                                <dt>Frase destacada</dt>
+                                <dd id="metaHighlightPreview">Mostramos la primera categoría con productos; si no existe, usamos los datos de contacto disponibles.</dd>
+                            </div>
+                            <div class="meta-preview__item">
+                                <dt>Ícono</dt>
+                                <dd id="metaFaviconPreview">Sin logo cargado: se mantendrá el ícono por defecto del navegador.</dd>
+                            </div>
+                        </dl>
+                    </div>
                     <iframe id="catalogPreview" title="Vista previa del catálogo"></iframe>
                 </section>
             </div>
