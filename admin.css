@@ -7,7 +7,9 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f5f5f5;
-    padding: 20px;
+    padding: 16px;
+    color: #1e2a1d;
+    line-height: 1.6;
 }
 
 .sr-only {
@@ -25,7 +27,7 @@ body {
 .admin-header {
     background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
     color: white;
-    padding: 2rem;
+    padding: 1.5rem;
     border-radius: 10px;
     margin-bottom: 2rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -35,36 +37,122 @@ body {
     margin-bottom: 0.5rem;
 }
 
+.admin-actions {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    background: linear-gradient(180deg, rgba(245,245,245,0.95) 0%, rgba(245,245,245,0.85) 100%);
+    backdrop-filter: blur(6px);
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.admin-actions__spacer {
+    height: 1px;
+}
+
+.admin-actions__generate {
+    width: 100%;
+    justify-content: center;
+}
+
+.sidebar-toggle {
+    appearance: none;
+    border: 1px solid #d0d8d0;
+    background: #ffffff;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    color: #2d4a2b;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-toggle:focus-visible {
+    outline: 3px solid #6b8e68;
+    outline-offset: 2px;
+}
+
+.sidebar-toggle:hover {
+    background: #f0f5ef;
+    transform: translateY(-1px);
+}
+
 .admin-container {
     max-width: 1400px;
     margin: 0 auto;
+    padding: 0 4px;
 }
 
 .admin-grid {
     display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 2rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 960px) {
     .admin-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 320px 1fr;
+        gap: 1.5rem;
     }
 }
 
 .sidebar {
     background: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    height: fit-content;
+    padding: 1.25rem;
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    height: 100vh;
+    position: fixed;
+    inset: 0 auto 0 -110%;
+    width: min(320px, 85vw);
+    overflow-y: auto;
+    transition: transform 0.25s ease, box-shadow 0.2s ease;
+    transform: translateX(0);
+    z-index: 20;
+}
+
+.sidebar.is-open {
+    transform: translateX(110%);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 15, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 10;
+}
+
+@media (min-width: 960px) {
+    .sidebar {
+        position: sticky;
+        top: 0.5rem;
+        inset: auto;
+        transform: none;
+        height: auto;
+        width: auto;
+        max-height: calc(100vh - 1rem);
+    }
+
+    .sidebar-overlay {
+        display: none;
+    }
 }
 
 .main-content {
     background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 1.25rem;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
 .preview-section {
@@ -74,6 +162,68 @@ body {
 .preview-section h2 {
     margin-bottom: 1rem;
     color: #2d4a2b;
+}
+
+.preview-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.preview-toolbar__label {
+    font-weight: 600;
+    color: #2d4a2b;
+}
+
+.preview-toolbar__controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chip {
+    border: 1px solid #d9e2d9;
+    background: #fff;
+    color: #2d4a2b;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.chip.is-active {
+    background: #2d4a2b;
+    color: #fff;
+    border-color: #2d4a2b;
+}
+
+.preview-frame {
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #f1f5f0 0%, #f8fbf7 100%);
+    border-radius: 14px;
+    border: 1px solid #e3e8e0;
+}
+
+.preview-frame iframe {
+    width: 100%;
+    min-height: 600px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    background: white;
+}
+
+.preview-frame[data-viewport="tablet"] iframe {
+    max-width: 900px;
+}
+
+.preview-frame[data-viewport="mobile"] iframe {
+    max-width: 480px;
+    min-height: 640px;
 }
 
 .meta-preview {
@@ -135,6 +285,42 @@ body {
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid #e0e0e0;
+}
+
+.accordion {
+    border: 1px solid #e2e8e2;
+    border-radius: 12px;
+    background: #fdfdfd;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.accordion__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+}
+
+.accordion__summary::-webkit-details-marker {
+    display: none;
+}
+
+.accordion[open] .accordion__summary {
+    border-bottom: 1px solid #edf0ed;
+    background: linear-gradient(180deg, #f7faf7 0%, #fff 100%);
+}
+
+.accordion .config-section {
+    margin-bottom: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 1rem 1.1rem 1.2rem;
 }
 
 .form-group {
@@ -531,6 +717,27 @@ textarea {
     color: white;
 }
 
+.sticky-generate {
+    position: sticky;
+    top: 0.5rem;
+    z-index: 5;
+}
+
+@media (max-width: 959px) {
+    .sticky-generate {
+        position: static;
+        box-shadow: none;
+    }
+
+    .sidebar.is-open .sticky-generate {
+        position: fixed;
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+}
+
 .category-header {
     display: flex;
     justify-content: space-between;
@@ -856,7 +1063,7 @@ textarea {
 
 .config-section {
     background: #f9f9f9;
-    padding: 1.5rem;
+    padding: 1.25rem;
     border-radius: 5px;
     margin-bottom: 1.5rem;
 }

@@ -198,6 +198,8 @@
 
         const APPEARANCE_FIELD_MAP = new Map(APPEARANCE_FIELDS.map(field => [field.id, field]));
 
+        let sidebarControls = null;
+
         function normalizeAbout(candidate) {
             const normalized = {
                 heroTitle: defaultAbout.heroTitle,
@@ -2582,13 +2584,98 @@
             });
         }
 
+        function setupSidebarDrawer() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const toggle = document.getElementById('sidebarToggle');
+
+            if (!sidebar || !overlay || !toggle) {
+                return null;
+            }
+
+            const closeDrawer = () => {
+                sidebar.classList.remove('is-open');
+                overlay.hidden = true;
+                toggle.setAttribute('aria-expanded', 'false');
+            };
+
+            const openDrawer = () => {
+                sidebar.classList.add('is-open');
+                overlay.hidden = false;
+                toggle.setAttribute('aria-expanded', 'true');
+            };
+
+            const toggleDrawer = () => {
+                const isOpen = sidebar.classList.contains('is-open');
+                if (isOpen) {
+                    closeDrawer();
+                } else {
+                    openDrawer();
+                }
+            };
+
+            toggle.addEventListener('click', toggleDrawer);
+            overlay.addEventListener('click', closeDrawer);
+
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape') {
+                    closeDrawer();
+                }
+            });
+
+            return { open: openDrawer, close: closeDrawer, toggle: toggleDrawer };
+        }
+
+        function setupPreviewViewportControls() {
+            const controls = document.getElementById('previewViewportControls');
+            const wrapper = document.getElementById('previewFrameWrapper');
+
+            if (!controls || !wrapper) {
+                return;
+            }
+
+            const buttons = controls.querySelectorAll('[data-viewport]');
+
+            const setViewport = viewport => {
+                wrapper.setAttribute('data-viewport', viewport);
+                buttons.forEach(button => {
+                    const isActive = button.getAttribute('data-viewport') === viewport;
+                    button.classList.toggle('is-active', isActive);
+                    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+
+                updateCatalogPreview();
+            };
+
+            controls.addEventListener('click', event => {
+                const button = event.target.closest('[data-viewport]');
+                if (!button) {
+                    return;
+                }
+
+                const viewport = button.getAttribute('data-viewport');
+                if (viewport) {
+                    setViewport(viewport);
+                }
+            });
+
+            setViewport('desktop');
+        }
+
         function registerAdminEventHandlers() {
+            sidebarControls = setupSidebarDrawer();
+            setupPreviewViewportControls();
+
             const sectionButtons = document.querySelectorAll('button[data-section]');
             sectionButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const section = button.getAttribute('data-section');
                     if (section) {
                         showSection(section);
+                    }
+
+                    if (sidebarControls && typeof sidebarControls.close === 'function') {
+                        sidebarControls.close();
                     }
                 });
             });
