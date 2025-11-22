@@ -65,17 +65,16 @@
         const defaultPolicies = {
             shipping: {
                 active: true,
-                summary: 'Enviamos cada pedido con embalaje reforzado y seguimiento en tiempo real para garantizar entregas seguras.',
-                sla: '3 a 5 días hábiles',
+                summary: 'Enviamos cada pedido con seguimiento y coordinación personalizada para garantizar entregas seguras.',
                 coverage: 'Cobertura nacional con aliados certificados',
-                cost: 'Sin costo para compras superiores a $300.000',
-                contact: 'logistica@amazonia.com',
-                details: 'Coordinamos entregas programadas y ofrecemos retiros en planta bajo cita previa. Las zonas especiales pueden requerir tiempos adicionales.',
-                points: [
-                    'Seguimiento proactivo',
-                    'Mensajería directa con el transportista',
-                    'Compensación por demoras'
-                ]
+                processing: 'Confirmamos la orden y preparamos el despacho entre 2 y 3 días hábiles.',
+                packaging: 'Empaque reforzado y protección interna para piezas delicadas.',
+                shippingCost: 'Sin costo en compras superiores a $300.000; calculamos flete según destino y volumen.',
+                shippingMethod: 'Transporte especializado para concreto y mensajería certificada para accesorios.',
+                deliveries: 'Coordinamos entregas programadas y ofrecemos retiro en planta con cita previa.',
+                damages: 'Si ves golpes en el empaque, repórtalo en las primeras 24 horas con fotos de la guía y el producto.',
+                disclaimers: 'Variaciones climáticas, demoras de terceros y rutas restringidas pueden extender los tiempos.',
+                confirmation: 'Enviaremos la confirmación y guía de seguimiento cuando el pedido salga de nuestro taller.'
             },
             refund: {
                 active: true,
@@ -122,10 +121,15 @@
 
         const POLICY_META_LABELS = {
             shipping: {
-                sla: 'Tiempo',
                 coverage: 'Cobertura',
-                cost: 'Costo',
-                contact: 'Contacto'
+                processing: 'Tiempos de procesamiento',
+                packaging: 'Empaque',
+                shippingCost: 'Costos de envío',
+                shippingMethod: 'Método de envío',
+                deliveries: 'Entregas',
+                damages: 'Daños durante el envío',
+                disclaimers: 'No nos hacemos responsables por',
+                confirmation: 'Confirmación del pedido'
             },
             refund: {
                 window: 'Ventana',
@@ -325,6 +329,7 @@
 
             POLICY_IDS.forEach(policyId => {
                 const defaults = defaultPolicies[policyId] || {};
+                const allowedFields = new Set([...Object.keys(defaults), 'points']);
                 const base = {};
                 Object.keys(defaults).forEach(field => {
                     const value = defaults[field];
@@ -338,6 +343,10 @@
                 const rawPolicy = source[policyId];
                 if (isPlainObject(rawPolicy)) {
                     Object.keys(rawPolicy).forEach(field => {
+                        if (!allowedFields.has(field)) {
+                            return;
+                        }
+
                         const rawValue = rawPolicy[field];
                         if (field === 'points') {
                             let pointsSource = [];
@@ -1010,6 +1019,30 @@
 
         function escapeRegExp(value) {
             return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function renderParagraphs(text, { className = '' } = {}) {
+            const source = typeof text === 'string' ? text.trim() : '';
+
+            if (!source) {
+                return '';
+            }
+
+            const blocks = source.split(/\r?\n\s*\r?\n/);
+            const paragraphs = blocks.map(block => {
+                const safeBlock = block
+                    .split(/\r?\n/)
+                    .map(line => escapeHtml(line.trim()))
+                    .join('<br>');
+
+                return `<p>${safeBlock}</p>`;
+            }).join('');
+
+            if (className) {
+                return `<div class="${className}">${paragraphs}</div>`;
+            }
+
+            return paragraphs;
         }
 
         function highlightSearchMatches(text, regex) {
@@ -3076,11 +3109,20 @@
             const companyName = getCompanyNameForPolicyPreview();
             const summaryText = typeof policyState.summary === 'string' ? policyState.summary.trim() : '';
             const detailsText = typeof policyState.details === 'string' ? policyState.details.trim() : '';
-            let description = summaryText || 'Completa la información para mostrar esta política.';
+            const intro = `${companyName} informa:`;
+
+            const descriptionParts = [];
+
+            if (summaryText) {
+                descriptionParts.push(summaryText);
+            }
 
             if (detailsText) {
-                description = `${description} ${detailsText}`.trim();
+                descriptionParts.push(detailsText);
             }
+
+            let description = descriptionParts.join('\n\n')
+                || 'Completa la información para mostrar esta política.';
 
             if (policyId === 'extra') {
                 const customTitle = typeof policyState.customTitle === 'string' ? policyState.customTitle.trim() : '';
@@ -3097,8 +3139,11 @@
                 })
                 .filter(Boolean);
 
+            const textContent = `${intro} ${description}`.trim();
+            const textHtml = renderParagraphs(textContent) || `<p>${escapeHtml(textContent)}</p>`;
+
             return {
-                text: `${companyName} informa: ${description}`.trim(),
+                html: textHtml,
                 meta: metaParts.join(' · ')
             };
         }
@@ -3120,8 +3165,8 @@
                 ? normalizePolicies({ [policyId]: policyStateOverride })[policyId]
                 : normalizePolicies({ [policyId]: readPolicyInputValues(policyId) })[policyId];
 
-            const { text, meta } = formatPolicyPreview(policyId, normalizedState);
-            previewElement.textContent = text;
+            const { html, meta } = formatPolicyPreview(policyId, normalizedState);
+            previewElement.innerHTML = html;
             metaElement.textContent = meta;
 
             listElement.innerHTML = '';
@@ -5349,12 +5394,9 @@
                 const pointsMarkup = points.length > 0
                     ? `<ul class="policy-points">${points.map(point => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`
                     : '';
-                const detailsMarkup = detailsText
-                    ? `<p class="policy-details">${escapeHtml(detailsText)}</p>`
-                    : '';
-                const summaryMarkup = summaryText
-                    ? `<p class="policy-summary">${escapeHtml(summaryText)}</p>`
-                    : '<p class="policy-summary policy-summary--empty">Pronto publicaremos el resumen de esta política.</p>';
+                const detailsMarkup = renderParagraphs(detailsText, { className: 'policy-details' });
+                const summaryMarkup = renderParagraphs(summaryText, { className: 'policy-summary' })
+                    || '<p class="policy-summary policy-summary--empty">Pronto publicaremos el resumen de esta política.</p>';
                 const icon = info.icon || '📄';
                 const statusClass = active ? 'policy-status--active' : 'policy-status--inactive';
                 const statusLabel = active ? 'Activa' : 'En actualización';
