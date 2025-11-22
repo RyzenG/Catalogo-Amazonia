@@ -627,6 +627,40 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Variantes optimizadas (opcionales):</label>
+                    <div class="field-hint">
+                        Si añades versiones por tamaño, el catálogo construirá automáticamente <code>srcset</code> y <code>sizes</code> para mejorar la carga adaptativa.
+                    </div>
+                    <div class="responsive-image-grid">
+                        <label class="responsive-image-field" for="productImageSmall">
+                            <span class="responsive-image-field__label">📱 Pequeña (≈480px)</span>
+                            <span class="responsive-image-field__hint">Ideal para tarjetas móviles</span>
+                            <input type="url" id="productImageSmall" placeholder="https://.../producto-480.jpg">
+                        </label>
+                        <label class="responsive-image-field" for="productImageMedium">
+                            <span class="responsive-image-field__label">📲 Media (≈768px)</span>
+                            <span class="responsive-image-field__hint">Para tablets y listados</span>
+                            <input type="url" id="productImageMedium" placeholder="https://.../producto-768.jpg">
+                        </label>
+                        <label class="responsive-image-field" for="productImageLarge">
+                            <span class="responsive-image-field__label">💻 Grande (≈1200px)</span>
+                            <span class="responsive-image-field__hint">Sección principal del catálogo</span>
+                            <input type="url" id="productImageLarge" placeholder="https://.../producto-1200.jpg">
+                        </label>
+                        <label class="responsive-image-field" for="productImageFull">
+                            <span class="responsive-image-field__label">🖥️ Completa (≈1600px)</span>
+                            <span class="responsive-image-field__hint">Fondos y pantallas amplias</span>
+                            <input type="url" id="productImageFull" placeholder="https://.../producto-1600.jpg">
+                        </label>
+                    </div>
+                    <div class="image-usage" id="productImageUsage">
+                        <div class="image-usage__summary" id="productImageUsageSummary">Añade al menos una imagen para generar la vista previa.</div>
+                        <ul class="image-usage__list" id="productImageUsageList"></ul>
+                        <div class="image-usage__warning" id="productImageUsageWarning" role="status"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label>Características (etiquetas):</label>
                     <div id="featuresList" class="feature-list"></div>
                     <button type="button" class="btn btn-secondary" id="addFeatureButton">+ Añadir característica</button>
