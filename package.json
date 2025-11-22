@@ -1,0 +1,10 @@
+{
+  "name": "catalogo-amazonia",
+  "version": "1.0.0",
+  "description": "API y panel de administración para el catálogo de Amazonia Concrete",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
+  "dependencies": {}
+}
