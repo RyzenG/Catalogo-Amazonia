@@ -237,34 +237,52 @@
                                 </div>
                                 <div class="policy-form-grid">
                                     <div class="form-group">
-                                        <label for="policy-shipping-sla">Tiempo estimado</label>
-                                        <input type="text" id="policy-shipping-sla" data-policy-id="shipping" data-policy-field="sla" placeholder="3 - 5 días hábiles">
-                                    </div>
-                                    <div class="form-group">
                                         <label for="policy-shipping-coverage">Cobertura</label>
-                                        <input type="text" id="policy-shipping-coverage" data-policy-id="shipping" data-policy-field="coverage" placeholder="Todo el territorio nacional">
+                                        <textarea id="policy-shipping-coverage" rows="2" data-policy-id="shipping" data-policy-field="coverage" placeholder="Todo el territorio nacional"></textarea>
                                     </div>
                                     <div class="form-group">
-                                        <label for="policy-shipping-cost">Costo base</label>
-                                        <input type="text" id="policy-shipping-cost" data-policy-id="shipping" data-policy-field="cost" placeholder="Envíos gratis desde $300.000">
+                                        <label for="policy-shipping-processing">Tiempos de procesamiento</label>
+                                        <textarea id="policy-shipping-processing" rows="2" data-policy-id="shipping" data-policy-field="processing" placeholder="Ej. Confirmación y despacho en 2 - 3 días hábiles"></textarea>
+                                    </div>
+                                </div>
+                                <div class="policy-form-grid">
+                                    <div class="form-group">
+                                        <label for="policy-shipping-packaging">Empaque</label>
+                                        <textarea id="policy-shipping-packaging" rows="2" data-policy-id="shipping" data-policy-field="packaging" placeholder="Materiales, refuerzos y protección adicional"></textarea>
                                     </div>
                                     <div class="form-group">
-                                        <label for="policy-shipping-contact">Contacto logístico</label>
-                                        <input type="text" id="policy-shipping-contact" data-policy-id="shipping" data-policy-field="contact" placeholder="logistica@amazonia.com">
+                                        <label for="policy-shipping-cost">Costos de envío</label>
+                                        <textarea id="policy-shipping-cost" rows="2" data-policy-id="shipping" data-policy-field="shippingCost" placeholder="Tarifas base, mínimos o políticas de envío gratis"></textarea>
+                                    </div>
+                                </div>
+                                <div class="policy-form-grid">
+                                    <div class="form-group">
+                                        <label for="policy-shipping-method">Método de envío</label>
+                                        <textarea id="policy-shipping-method" rows="2" data-policy-id="shipping" data-policy-field="shippingMethod" placeholder="Transporte especializado, mensajería certificada, etc."></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="policy-shipping-deliveries">Entregas</label>
+                                        <textarea id="policy-shipping-deliveries" rows="2" data-policy-id="shipping" data-policy-field="deliveries" placeholder="Programaciones, ventanas horarias o retiros en planta"></textarea>
+                                    </div>
+                                </div>
+                                <div class="policy-form-grid">
+                                    <div class="form-group">
+                                        <label for="policy-shipping-damages">Daños durante el envío</label>
+                                        <textarea id="policy-shipping-damages" rows="2" data-policy-id="shipping" data-policy-field="damages" placeholder="Pasos para reportar novedades y evidencias requeridas"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="policy-shipping-disclaimers">No nos hacemos responsables por</label>
+                                        <textarea id="policy-shipping-disclaimers" rows="2" data-policy-id="shipping" data-policy-field="disclaimers" placeholder="Restricciones, demoras de terceros o condiciones fuera de control"></textarea>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="policy-shipping-details">Detalles</label>
-                                    <textarea id="policy-shipping-details" rows="3" data-policy-id="shipping" data-policy-field="details" placeholder="Incluye empaques especiales, entregas programadas, restricciones, etc."></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="policy-shipping-points">Puntos destacados (uno por línea)</label>
-                                    <textarea id="policy-shipping-points" rows="4" data-policy-id="shipping" data-policy-field="points" placeholder="Seguimiento en línea&#10;Notificación por SMS&#10;Entregas neutras en carbono"></textarea>
+                                    <label for="policy-shipping-confirmation">Confirmación del pedido</label>
+                                    <textarea id="policy-shipping-confirmation" rows="2" data-policy-id="shipping" data-policy-field="confirmation" placeholder="Cómo y cuándo se envía la guía o confirmación de despacho"></textarea>
                                 </div>
                             </div>
                             <div class="policy-preview" data-policy-preview-wrapper="shipping">
                                 <h4>Vista previa</h4>
-                                <p class="policy-preview__text" data-policy-preview="shipping"></p>
+                                <div class="policy-preview__text" data-policy-preview="shipping"></div>
                                 <ul class="policy-preview__list" data-policy-points="shipping"></ul>
                                 <p class="policy-preview__meta">
                                     <span data-policy-meta="shipping"></span>
@@ -318,7 +336,7 @@
                             </div>
                             <div class="policy-preview" data-policy-preview-wrapper="refund">
                                 <h4>Vista previa</h4>
-                                <p class="policy-preview__text" data-policy-preview="refund"></p>
+                                <div class="policy-preview__text" data-policy-preview="refund"></div>
                                 <ul class="policy-preview__list" data-policy-points="refund"></ul>
                                 <p class="policy-preview__meta">
                                     <span data-policy-meta="refund"></span>
@@ -372,7 +390,7 @@
                             </div>
                             <div class="policy-preview" data-policy-preview-wrapper="privacy">
                                 <h4>Vista previa</h4>
-                                <p class="policy-preview__text" data-policy-preview="privacy"></p>
+                                <div class="policy-preview__text" data-policy-preview="privacy"></div>
                                 <ul class="policy-preview__list" data-policy-points="privacy"></ul>
                                 <p class="policy-preview__meta">
                                     <span data-policy-meta="privacy"></span>
@@ -422,7 +440,7 @@
                             </div>
                             <div class="policy-preview" data-policy-preview-wrapper="extra">
                                 <h4>Vista previa</h4>
-                                <p class="policy-preview__text" data-policy-preview="extra"></p>
+                                <div class="policy-preview__text" data-policy-preview="extra"></div>
                                 <ul class="policy-preview__list" data-policy-points="extra"></ul>
                                 <p class="policy-preview__meta">
                                     <span data-policy-meta="extra"></span>
