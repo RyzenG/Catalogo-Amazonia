@@ -1455,19 +1455,19 @@
                 .filter(url => url.length > 0);
         }
 
+        const PRODUCT_IMAGE_VARIANT_CONFIG = [
+            { key: 'imageSmall', descriptor: '480w', inputId: 'productImageSmall', label: 'Pequeña' },
+            { key: 'imageMedium', descriptor: '768w', inputId: 'productImageMedium', label: 'Media' },
+            { key: 'imageLarge', descriptor: '1200w', inputId: 'productImageLarge', label: 'Grande' },
+            { key: 'imageFull', descriptor: '1600w', inputId: 'productImageFull', label: 'Completa' }
+        ];
+
         function getProductImageVariants(product) {
             if (!product || typeof product !== 'object') {
                 return [];
             }
 
-            const variantConfig = [
-                { key: 'imageSmall', descriptor: '480w' },
-                { key: 'imageMedium', descriptor: '768w' },
-                { key: 'imageLarge', descriptor: '1200w' },
-                { key: 'imageFull', descriptor: '1600w' }
-            ];
-
-            return variantConfig
+            return PRODUCT_IMAGE_VARIANT_CONFIG
                 .map(({ key, descriptor }) => {
                     const url = sanitizeImageValue(product[key]);
                     return url ? { url, descriptor } : null;
@@ -1486,6 +1486,11 @@
                 return normalizedImages[0];
             }
 
+            const variantEntry = getProductImageVariants(product)[0];
+            if (variantEntry && variantEntry.url) {
+                return variantEntry.url;
+            }
+
             const iconValue = product.icon || fallbackIcon;
             const nameValue = product.name || 'Producto Amazonia';
 
@@ -1496,19 +1501,26 @@
             return createIconPlaceholder(iconValue, nameValue);
         }
 
+        const PRODUCT_IMAGE_DEFAULT_WIDTH = 960;
+        const PRODUCT_IMAGE_ASPECT_RATIO = { width: 4, height: 3 };
+        const PRODUCT_IMAGE_SIZES_ATTR = '(max-width: 768px) 90vw, (max-width: 1200px) 45vw, 360px';
+
         function buildProductImageAttributes(product, fallbackIcon = '🛠️') {
-            const aspectWidth = 4;
-            const aspectHeight = 3;
-            const defaultWidth = 960;
+            const aspectWidth = PRODUCT_IMAGE_ASPECT_RATIO.width;
+            const aspectHeight = PRODUCT_IMAGE_ASPECT_RATIO.height;
+            const defaultWidth = PRODUCT_IMAGE_DEFAULT_WIDTH;
             const defaultHeight = Math.round(defaultWidth * aspectHeight / aspectWidth);
             const aspectStyle = 'aspect-ratio: 4 / 3; width: 100%; height: auto;';
 
             const normalizedImages = getNormalizedProductImages(product);
-            const primarySrc = normalizedImages.length > 0
-                ? normalizedImages[0]
-                : getProductImageSource(product, fallbackIcon);
-
             const variants = getProductImageVariants(product);
+            let primarySrc = normalizedImages.length > 0
+                ? normalizedImages[0]
+                : (variants[0] ? variants[0].url : '');
+
+            if (!primarySrc) {
+                primarySrc = getProductImageSource(product, fallbackIcon);
+            }
             const srcsetEntries = [];
             const seenUrls = new Set();
 
@@ -1528,7 +1540,7 @@
 
             const srcset = srcsetEntries.length > 1 ? srcsetEntries.join(', ') : '';
             const sizes = srcset
-                ? '(max-width: 768px) 90vw, (max-width: 1200px) 45vw, 360px'
+                ? PRODUCT_IMAGE_SIZES_ATTR
                 : '';
 
             return {
@@ -1593,6 +1605,15 @@
                         if (Object.prototype.hasOwnProperty.call(product, 'imageData')) {
                             delete product.imageData;
                         }
+
+                        PRODUCT_IMAGE_VARIANT_CONFIG.forEach(({ key }) => {
+                            const normalizedValue = sanitizeImageValue(product[key]);
+                            if (normalizedValue) {
+                                product[key] = normalizedValue;
+                            } else if (Object.prototype.hasOwnProperty.call(product, key)) {
+                                delete product[key];
+                            }
+                        });
 
                         normalizeProductImages(product);
                     }
@@ -2236,6 +2257,21 @@
                 .filter(url => url.length > 0);
         }
 
+        function collectProductImageVariantValues() {
+            const variants = {};
+
+            PRODUCT_IMAGE_VARIANT_CONFIG.forEach(({ key, inputId }) => {
+                const input = document.getElementById(inputId);
+                const value = sanitizeImageValue(input ? input.value : '');
+
+                if (value) {
+                    variants[key] = value;
+                }
+            });
+
+            return variants;
+        }
+
         function updateProductImageInputsRemoveState() {
             const inputs = getProductImageInputs();
             const total = inputs.length;
@@ -2429,12 +2465,28 @@
             syncProductImagePreviewFromInputs();
         }
 
+        function renderProductImageVariantInputs(product = null) {
+            PRODUCT_IMAGE_VARIANT_CONFIG.forEach(({ key, inputId }) => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    const value = product && typeof product === 'object'
+                        ? sanitizeImageValue(product[key])
+                        : '';
+                    input.value = value;
+                }
+            });
+
+            updateProductImageUsage();
+        }
+
         function syncProductImagePreviewFromInputs() {
             const imageValues = collectProductImageValues();
             currentImageUrl = imageValues.length > 0 ? imageValues[0] : '';
 
             const nameInput = document.getElementById('productName');
             const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
+
+            updateProductImageUsage();
 
             if (currentImageUrl) {
                 updateProductImagePreview(currentImageUrl, displayName);
@@ -2452,6 +2504,70 @@
 
         function handleProductImageInputsChange() {
             syncProductImagePreviewFromInputs();
+        }
+
+        function updateProductImageUsage() {
+            const summaryEl = document.getElementById('productImageUsageSummary');
+            const listEl = document.getElementById('productImageUsageList');
+            const warningEl = document.getElementById('productImageUsageWarning');
+
+            if (!summaryEl || !listEl || !warningEl) {
+                return;
+            }
+
+            const baseImages = collectProductImageValues();
+            const variantEntries = PRODUCT_IMAGE_VARIANT_CONFIG
+                .map(config => {
+                    const input = document.getElementById(config.inputId);
+                    const value = sanitizeImageValue(input ? input.value : '');
+                    return value ? { ...config, url: value } : null;
+                })
+                .filter(Boolean);
+
+            listEl.innerHTML = '';
+
+            if (variantEntries.length === 0 && baseImages.length === 0) {
+                summaryEl.textContent = 'Añade al menos una imagen para generar la vista previa.';
+                warningEl.style.display = 'block';
+                warningEl.textContent = 'Necesitas una imagen principal para el carrusel y el srcset.';
+                return;
+            }
+
+            const usageItems = [];
+            variantEntries.forEach(entry => {
+                usageItems.push({
+                    label: `${entry.label} (${entry.descriptor})`,
+                    url: entry.url
+                });
+            });
+
+            if (baseImages[0]) {
+                usageItems.push({
+                    label: `Principal (${PRODUCT_IMAGE_DEFAULT_WIDTH}w)`,
+                    url: baseImages[0]
+                });
+            }
+
+            summaryEl.textContent = variantEntries.length > 0
+                ? `El catálogo generará este srcset (sizes: ${PRODUCT_IMAGE_SIZES_ATTR}):`
+                : 'Usaremos la imagen principal para todos los tamaños.';
+
+            usageItems.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(item.url)}`;
+                listEl.appendChild(li);
+            });
+
+            let warningText = '';
+
+            if (baseImages.length === 0) {
+                warningText = 'Agrega una imagen principal para que el carrusel y la vista previa funcionen correctamente.';
+            } else if (variantEntries.length === 0 && baseImages.length <= 1) {
+                warningText = 'Solo se cargó una imagen; se reutilizará para móviles, tablet y escritorio.';
+            }
+
+            warningEl.style.display = warningText ? 'block' : 'none';
+            warningEl.textContent = warningText;
         }
 
         function updateLogoPreview(src) {
@@ -2478,12 +2594,14 @@
             currentImageUrl = '';
             currentIconFallback = '';
             renderProductImageInputs([]);
+            renderProductImageVariantInputs(null);
             const logoData = catalogData && catalogData.config ? catalogData.config.logoData : '';
             updateLogoPreview(logoData || null);
             const logoUrlInput = document.getElementById('companyLogoUrl');
             if (logoUrlInput) {
                 logoUrlInput.value = logoData || '';
             }
+            updateProductImageUsage();
         }
 
         function setupImageInput() {
@@ -2496,6 +2614,15 @@
                     updateProductImageInputsRemoveState();
                 });
             }
+        }
+
+        function setupProductImageVariantInputs() {
+            PRODUCT_IMAGE_VARIANT_CONFIG.forEach(({ inputId }) => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', updateProductImageUsage);
+                }
+            });
         }
 
         function setupLogoInput() {
@@ -2844,6 +2971,7 @@
             setupProductFormAssistants();
             renderFeatureInputs();
             setupImageInput();
+            setupProductImageVariantInputs();
             setupLogoInput();
             resetImagePreview();
             updateCatalogPreview();
@@ -4097,6 +4225,7 @@
                     currentIconFallback = product.icon || '';
                     const imageValues = getNormalizedProductImages(product);
                     renderProductImageInputs(imageValues);
+                    renderProductImageVariantInputs(product);
                     currentImageUrl = imageValues.length > 0 ? imageValues[0] : '';
                     renderFeatureInputs(product.features);
                 }
@@ -4109,6 +4238,7 @@
                 currentImageUrl = '';
                 currentIconFallback = '';
                 renderProductImageInputs([]);
+                renderProductImageVariantInputs(null);
                 updateProductImagePreview(null);
                 renderFeatureInputs();
             }
@@ -4162,6 +4292,7 @@
             currentImageUrl = '';
             currentIconFallback = '';
             renderProductImageInputs([]);
+            renderProductImageVariantInputs(null);
             updateProductImagePreview(null);
             renderFeatureInputs();
             refreshProductFormAssistants();
@@ -4232,6 +4363,7 @@
                 .filter(value => value.trim() !== '');
 
             const imageValues = collectProductImageValues();
+            const imageVariants = collectProductImageVariantValues();
             const priceInput = document.getElementById('productPrice');
             const normalizedPrice = formatCurrencyCOP(priceInput ? priceInput.value : '');
 
@@ -4244,6 +4376,8 @@
                 features: features,
                 specs: document.getElementById('productSpecs').value
             };
+
+            Object.assign(productData, imageVariants);
 
             if (Array.isArray(imageValues) && imageValues.length > 0) {
                 productData.images = imageValues;
@@ -4397,6 +4531,7 @@
                         catalogData.products = parsed.products && typeof parsed.products === 'object'
                             ? parsed.products
                             : createDefaultProductsMap(catalogData.categories);
+                        stripLegacyImageData(catalogData.products);
                         catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
 
                         refreshCategoriesUI({ preserveCurrent: false });
