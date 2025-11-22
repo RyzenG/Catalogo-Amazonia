@@ -644,11 +644,26 @@
         const PRODUCT_SEARCH_STORAGE_KEY = 'amazoniaProductSearch';
         let productSearchTerm = '';
 
+        const BACKEND_URL_STORAGE_KEY = 'amazoniaBackendUrl';
+        const ADMIN_TOKEN_STORAGE_KEY = 'amazoniaAdminToken';
+        const DEFAULT_BACKEND_URL = 'http://localhost:4000';
+        let syncState = {
+            status: 'idle',
+            message: 'Sincronización pendiente',
+            lastSaved: null,
+            versionId: null,
+            versions: [],
+        };
+
         let catalogData = {
             config: getNormalizedConfig(),
             categories: defaultCategories.map(category => ({ ...category })),
             products: createDefaultProductsMap(defaultCategories),
-            categoryInfo: {}
+            categoryInfo: {},
+            meta: {
+                updatedAt: new Date().toISOString(),
+                versionId: null,
+            },
         };
 
         let currentCategory = defaultCategories[0] ? defaultCategories[0].id : '';
@@ -2837,6 +2852,33 @@
                 importDataButton.addEventListener('click', importData);
             }
 
+            const backendUrlInput = document.getElementById('backendUrl');
+            if (backendUrlInput) {
+                backendUrlInput.addEventListener('change', persistBackendSettingsFromInputs);
+            }
+
+            const adminTokenInput = document.getElementById('adminToken');
+            if (adminTokenInput) {
+                adminTokenInput.addEventListener('change', persistBackendSettingsFromInputs);
+            }
+
+            const syncNowButton = document.getElementById('syncNowButton');
+            if (syncNowButton) {
+                syncNowButton.addEventListener('click', () => {
+                    syncFromBackend().then(() => syncToBackend());
+                });
+            }
+
+            const versionHistoryList = document.getElementById('versionHistoryList');
+            if (versionHistoryList) {
+                versionHistoryList.addEventListener('click', event => {
+                    const button = event.target.closest('button[data-version-id]');
+                    if (button) {
+                        restoreRemoteVersion(button.getAttribute('data-version-id'));
+                    }
+                });
+            }
+
             const clearProcessStatusButton = document.getElementById('clearProcessStatusButton');
             if (clearProcessStatusButton) {
                 clearProcessStatusButton.addEventListener('click', () => {
@@ -2977,8 +3019,328 @@
             updateCatalogPreview();
         });
 
-        // Load saved data from localStorage
-        function loadData() {
+        function readStoredBackendSettings() {
+            const storedUrl = localStorage.getItem(BACKEND_URL_STORAGE_KEY);
+            const storedToken = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+            return {
+                backendUrl: storedUrl || DEFAULT_BACKEND_URL,
+                adminToken: storedToken || '',
+            };
+        }
+
+        function persistBackendSettingsFromInputs() {
+            const backendUrlInput = document.getElementById('backendUrl');
+            const adminTokenInput = document.getElementById('adminToken');
+            if (backendUrlInput && typeof backendUrlInput.value === 'string') {
+                localStorage.setItem(BACKEND_URL_STORAGE_KEY, backendUrlInput.value.trim());
+            }
+            if (adminTokenInput && typeof adminTokenInput.value === 'string') {
+                localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, adminTokenInput.value.trim());
+            }
+            updateSyncUI();
+        }
+
+        function getBackendSettings() {
+            const stored = readStoredBackendSettings();
+            const backendUrlInput = document.getElementById('backendUrl');
+            const adminTokenInput = document.getElementById('adminToken');
+
+            const backendUrl = backendUrlInput && backendUrlInput.value
+                ? backendUrlInput.value.trim()
+                : stored.backendUrl;
+            const adminToken = adminTokenInput && adminTokenInput.value
+                ? adminTokenInput.value.trim()
+                : stored.adminToken;
+
+            return { backendUrl: backendUrl || DEFAULT_BACKEND_URL, adminToken };
+        }
+
+        function applyStoredBackendSettings() {
+            const stored = readStoredBackendSettings();
+            const backendUrlInput = document.getElementById('backendUrl');
+            const adminTokenInput = document.getElementById('adminToken');
+
+            if (backendUrlInput) {
+                backendUrlInput.value = stored.backendUrl || '';
+            }
+            if (adminTokenInput) {
+                adminTokenInput.value = stored.adminToken || '';
+            }
+        }
+
+        function formatSyncDate(value) {
+            if (!value) {
+                return '--';
+            }
+            const parsed = new Date(value);
+            if (Number.isNaN(parsed.getTime())) {
+                return value;
+            }
+            return parsed.toLocaleString('es-CO', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+            });
+        }
+
+        function renderVersionHistory() {
+            const list = document.getElementById('versionHistoryList');
+            const empty = document.getElementById('versionHistoryEmpty');
+            if (!list || !empty) {
+                return;
+            }
+
+            list.innerHTML = '';
+            if (!Array.isArray(syncState.versions) || syncState.versions.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            syncState.versions.forEach(version => {
+                const item = document.createElement('div');
+                item.className = 'version-history__item';
+                const meta = document.createElement('div');
+                meta.className = 'version-history__meta';
+                meta.innerHTML = `<strong>${formatSyncDate(version.updatedAt)}</strong><span>Búsqueda: ${version.searchTerm || 'N/A'}</span>`;
+
+                const actions = document.createElement('div');
+                actions.className = 'version-history__actions';
+                const restoreButton = document.createElement('button');
+                restoreButton.className = 'btn btn-secondary btn-sm';
+                restoreButton.textContent = 'Restaurar';
+                restoreButton.setAttribute('data-version-id', version.id);
+                actions.appendChild(restoreButton);
+
+                item.appendChild(meta);
+                item.appendChild(actions);
+                list.appendChild(item);
+            });
+        }
+
+        function updateSyncUI() {
+            const badge = document.getElementById('syncBadge');
+            const lastSavedElement = document.getElementById('syncLastSaved');
+            const messageElement = document.getElementById('syncStateMessage');
+
+            if (lastSavedElement) {
+                const label = syncState.status === 'success'
+                    ? 'Último guardado'
+                    : 'Último guardado (local)';
+                lastSavedElement.textContent = `${label}: ${formatSyncDate(syncState.lastSaved || catalogData.meta && catalogData.meta.updatedAt)}`;
+            }
+
+            if (messageElement) {
+                messageElement.textContent = syncState.message || 'Sincronización pendiente';
+            }
+
+            if (badge) {
+                badge.classList.remove('is-success', 'is-error');
+                if (syncState.status === 'success') {
+                    badge.textContent = 'En línea';
+                    badge.classList.add('is-success');
+                } else if (syncState.status === 'error' || syncState.status === 'conflict') {
+                    badge.textContent = 'Revisar';
+                    badge.classList.add('is-error');
+                } else {
+                    badge.textContent = 'Sin conexión';
+                }
+            }
+
+            renderVersionHistory();
+        }
+
+        function setSyncState(partial) {
+            syncState = { ...syncState, ...partial };
+            updateSyncUI();
+        }
+
+        async function fetchBackendJson(endpoint, options = {}) {
+            const { backendUrl, adminToken } = getBackendSettings();
+            if (!backendUrl) {
+                return null;
+            }
+
+            const url = `${backendUrl.replace(/\/$/, '')}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers,
+            };
+
+            if (adminToken) {
+                headers.Authorization = `Bearer ${adminToken}`;
+            }
+
+            const response = await fetch(url, { ...options, headers });
+            const data = await response.json();
+            return { response, data };
+        }
+
+        async function loadVersionHistory() {
+            try {
+                const result = await fetchBackendJson('/api/catalog/versions');
+                if (!result || !result.response.ok) {
+                    return;
+                }
+                const { versions } = result.data || {};
+                if (Array.isArray(versions)) {
+                    setSyncState({ versions });
+                }
+            } catch (error) {
+                console.warn('No se pudieron cargar las versiones remotas', error);
+            }
+        }
+
+        function updateLocalCacheFromRemote(remote) {
+            const remoteCatalog = remote && remote.catalogData ? remote.catalogData : null;
+            if (!remoteCatalog) {
+                return false;
+            }
+
+            catalogData = {
+                ...remoteCatalog,
+                meta: {
+                    updatedAt: remote.updatedAt || new Date().toISOString(),
+                    versionId: remote.id || (remoteCatalog.meta && remoteCatalog.meta.versionId) || null,
+                },
+            };
+            productSearchTerm = remote.searchTerm || '';
+            localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
+            localStorage.setItem(PRODUCT_SEARCH_STORAGE_KEY, productSearchTerm || '');
+            refreshCategoriesUI({ preserveCurrent: false });
+            renderCategoryManagerList();
+            loadConfig();
+            loadProducts();
+            setSyncState({
+                status: 'success',
+                message: 'Datos sincronizados desde el backend',
+                lastSaved: catalogData.meta.updatedAt,
+                versionId: catalogData.meta.versionId,
+            });
+            return true;
+        }
+
+        async function syncFromBackend() {
+            try {
+                const result = await fetchBackendJson('/api/catalog');
+                if (!result || !result.response.ok) {
+                    setSyncState({ status: 'error', message: 'No se pudo conectar con el backend' });
+                    return;
+                }
+                const { data } = result.data || {};
+                if (!data || !data.catalogData) {
+                    setSyncState({ status: 'idle', message: 'Backend vacío, usando caché local' });
+                    return;
+                }
+
+                const localDate = catalogData.meta && catalogData.meta.updatedAt
+                    ? new Date(catalogData.meta.updatedAt)
+                    : null;
+                const remoteDate = data.updatedAt ? new Date(data.updatedAt) : null;
+
+                if (remoteDate && (!localDate || remoteDate > localDate)) {
+                    updateLocalCacheFromRemote(data);
+                } else {
+                    setSyncState({
+                        status: 'success',
+                        message: 'La caché local está al día',
+                        lastSaved: catalogData.meta && catalogData.meta.updatedAt,
+                        versionId: catalogData.meta && catalogData.meta.versionId,
+                    });
+                }
+            } catch (error) {
+                console.warn('Error al sincronizar con el backend', error);
+                setSyncState({ status: 'error', message: 'No se pudo sincronizar con el backend' });
+            }
+        }
+
+        async function syncToBackend() {
+            try {
+                const { backendUrl, adminToken } = getBackendSettings();
+                if (!backendUrl || !adminToken) {
+                    setSyncState({ status: 'idle', message: 'Agrega el token para habilitar la escritura remota' });
+                    return;
+                }
+
+                const payload = {
+                    catalogData,
+                    searchTerm: productSearchTerm || '',
+                    baseVersion: syncState.versionId || (catalogData.meta && catalogData.meta.versionId) || null,
+                };
+
+                const result = await fetchBackendJson('/api/catalog', {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                });
+
+                if (!result || !result.response) {
+                    setSyncState({ status: 'error', message: 'No se pudo contactar el backend' });
+                    return;
+                }
+
+                if (result.response.status === 409) {
+                    setSyncState({
+                        status: 'conflict',
+                        message: 'Conflicto detectado, hay una versión más reciente',
+                    });
+                    return;
+                }
+
+                if (!result.response.ok) {
+                    setSyncState({ status: 'error', message: 'No se pudo guardar en el backend' });
+                    return;
+                }
+
+                const { versionId, updatedAt } = result.data || {};
+                catalogData.meta = {
+                    updatedAt: updatedAt || new Date().toISOString(),
+                    versionId: versionId || catalogData.meta.versionId,
+                };
+                localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
+
+                setSyncState({
+                    status: 'success',
+                    message: 'Datos guardados en el backend',
+                    lastSaved: catalogData.meta.updatedAt,
+                    versionId,
+                });
+                await loadVersionHistory();
+            } catch (error) {
+                console.error('No se pudo sincronizar con el backend', error);
+                setSyncState({ status: 'error', message: 'No se pudo guardar en el backend' });
+            }
+        }
+
+        async function restoreRemoteVersion(versionId) {
+            if (!versionId) {
+                return;
+            }
+            try {
+                const result = await fetchBackendJson(`/api/catalog/versions/${versionId}`);
+                if (!result || !result.response.ok) {
+                    showMessage('No se pudo recuperar la versión seleccionada', 'error');
+                    return;
+                }
+
+                const { data } = result.data || {};
+                if (!data) {
+                    showMessage('No se encontró información de la versión', 'warning');
+                    return;
+                }
+
+                const updated = updateLocalCacheFromRemote(data);
+                if (updated) {
+                    saveData({ silent: true, skipBackend: true });
+                    showMessage('Versión restaurada desde el backend', 'success');
+                }
+            } catch (error) {
+                console.error('Error al restaurar la versión', error);
+                showMessage('Ocurrió un error al restaurar la versión', 'error');
+            }
+        }
+
+        // Load saved data from localStorage and backend
+        async function loadData() {
+            applyStoredBackendSettings();
             const saved = localStorage.getItem('amazoniaData');
 
             if (saved) {
@@ -2999,6 +3361,9 @@
                             : createDefaultProductsMap(catalogData.categories);
                         stripLegacyImageData(catalogData.products);
                         catalogData.categoryInfo = isPlainObject(parsed.categoryInfo) ? parsed.categoryInfo : {};
+                        catalogData.meta = isPlainObject(parsed.meta)
+                            ? parsed.meta
+                            : { updatedAt: new Date().toISOString(), versionId: null };
                     }
                 } catch (error) {
                     console.error('No se pudieron leer los datos guardados', error);
@@ -3006,7 +3371,8 @@
                         config: getNormalizedConfig(),
                         categories: defaultCategories.map(category => ({ ...category })),
                         products: createDefaultProductsMap(defaultCategories),
-                        categoryInfo: {}
+                        categoryInfo: {},
+                        meta: { updatedAt: new Date().toISOString(), versionId: null }
                     };
                 }
             } else {
@@ -3014,7 +3380,8 @@
                     config: getNormalizedConfig(),
                     categories: defaultCategories.map(category => ({ ...category })),
                     products: createDefaultProductsMap(defaultCategories),
-                    categoryInfo: {}
+                    categoryInfo: {},
+                    meta: { updatedAt: new Date().toISOString(), versionId: null }
                 };
             }
 
@@ -3025,11 +3392,14 @@
             renderCategoryManagerList();
             loadConfig();
             loadProducts();
+            updateSyncUI();
+            await syncFromBackend();
+            await loadVersionHistory();
         }
 
-        // Save data to localStorage
+        // Save data to localStorage and backend
         function saveData(options = {}) {
-            const { silent = false } = options;
+            const { silent = false, skipBackend = false } = options;
             ensureCategoryStructure();
             let configSource = catalogData.config;
 
@@ -3050,13 +3420,26 @@
             }
 
             catalogData.config = getNormalizedConfig(configSource);
+            catalogData.meta = {
+                updatedAt: new Date().toISOString(),
+                versionId: syncState.versionId || (catalogData.meta && catalogData.meta.versionId) || null,
+            };
             stripLegacyImageData(catalogData.products);
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             localStorage.setItem(PRODUCT_SEARCH_STORAGE_KEY, productSearchTerm || '');
             if (!silent) {
                 showMessage('Datos guardados correctamente', 'success');
             }
+            setSyncState({
+                status: 'cached',
+                message: 'Guardado en caché local',
+                lastSaved: catalogData.meta.updatedAt,
+            });
             updateCatalogPreview();
+
+            if (!skipBackend) {
+                syncToBackend();
+            }
         }
 
         const EMAIL_VALIDATION_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -45,6 +45,27 @@
                     <button class="btn btn-secondary btn-block" id="exportDataButton">📤 Exportar Datos</button>
                     <button class="btn btn-secondary btn-block" id="importDataButton">📥 Importar Datos</button>
                 </div>
+
+                <div class="sidebar-section" aria-live="polite">
+                    <h4 class="sidebar-section-title">Sincronización</h4>
+                    <div class="sync-status" id="syncStatus">
+                        <div class="sync-status__badge" id="syncBadge">Sin conexión</div>
+                        <div class="sync-status__meta">
+                            <div id="syncLastSaved">Último guardado: --</div>
+                            <div id="syncStateMessage" class="sync-status__message">Sincronización pendiente</div>
+                        </div>
+                    </div>
+                    <label class="form-label" for="backendUrl">Endpoint del backend</label>
+                    <input type="url" id="backendUrl" placeholder="http://localhost:4000" class="form-control">
+                    <label class="form-label" for="adminToken">Token de administrador</label>
+                    <input type="password" id="adminToken" placeholder="Ingresa tu token" class="form-control">
+                    <button class="btn btn-secondary btn-block" id="syncNowButton">🔃 Sincronizar ahora</button>
+                    <div class="version-history" id="versionHistory" aria-label="Versiones guardadas recientemente">
+                        <div class="version-history__header">Versiones recientes</div>
+                        <div class="version-history__list" id="versionHistoryList"></div>
+                        <div class="version-history__empty" id="versionHistoryEmpty">Sin versiones remotas por mostrar</div>
+                    </div>
+                </div>
             </aside>
 
             <!-- Main Content -->
