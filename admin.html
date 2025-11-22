@@ -464,33 +464,6 @@
 
                 <section id="previewSection" class="preview-section">
                     <h2 class="section-title">👀 Vista previa del catálogo</h2>
-                    <div class="preview-toolbar" aria-label="Controles de vista previa">
-                        <div class="preview-control-group" role="group" aria-label="Seleccionar tamaño">
-                            <span class="preview-control-label">Tamaño</span>
-                            <div class="preview-chip-group">
-                                <button type="button" class="preview-chip" data-preview-size="mobile">📱 Móvil</button>
-                                <button type="button" class="preview-chip" data-preview-size="tablet">📲 Tablet</button>
-                                <button type="button" class="preview-chip" data-preview-size="desktop">💻 Escritorio</button>
-                            </div>
-                        </div>
-                        <div class="preview-control-group" role="group" aria-label="Orientación del dispositivo">
-                            <span class="preview-control-label">Orientación</span>
-                            <button type="button" class="btn btn-secondary preview-orientation" id="previewOrientationToggle">↔️ Horizontal</button>
-                        </div>
-                        <div class="preview-control-group" role="group" aria-label="Zoom de la vista previa">
-                            <span class="preview-control-label">Zoom</span>
-                            <div class="preview-zoom-controls">
-                                <button type="button" class="btn btn-secondary" data-zoom-step="-0.1">➖</button>
-                                <span class="preview-zoom-value" id="previewZoomValue">100%</span>
-                                <button type="button" class="btn btn-secondary" data-zoom-step="0.1">➕</button>
-                                <button type="button" class="btn btn-secondary" id="previewZoomReset">Reset</button>
-                            </div>
-                        </div>
-                        <div class="preview-control-group preview-breakpoint" aria-live="polite">
-                            <span class="preview-control-label">Breakpoint</span>
-                            <span class="preview-badge" id="previewBreakpointBadge">Escritorio</span>
-                        </div>
-                    </div>
                     <div class="meta-preview" id="metaPreview" aria-live="polite">
                         <div class="meta-preview__header">
                             <h3 class="meta-preview__title">🧭 Metadatos listos para compartir</h3>
@@ -517,14 +490,7 @@
                             </div>
                         </dl>
                     </div>
-                    <div class="preview-stage">
-                        <div class="preview-device" id="previewDevice">
-                            <iframe id="catalogPreview" title="Vista previa del catálogo"></iframe>
-                        </div>
-                    </div>
-                    <div class="preview-alert" id="previewOverflowAlert" role="status" aria-live="polite" hidden>
-                        <strong>⚠️ Atención:</strong> Detectamos elementos que se desbordan en el modo móvil. Revisa los márgenes o textos demasiado largos.
-                    </div>
+                    <iframe id="catalogPreview" title="Vista previa del catálogo"></iframe>
                 </section>
             </div>
         </div>
