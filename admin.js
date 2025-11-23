@@ -5662,7 +5662,7 @@
 
         .policies-page__main {
             max-width: 1200px;
-            margin: -70px auto 3rem;
+            margin: 2rem auto 3rem;
             padding: 0 1.5rem;
         }
 
