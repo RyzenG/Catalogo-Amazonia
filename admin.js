@@ -6466,16 +6466,23 @@ ${formatCssBlock(headerBackground)}
             margin: 0 auto;
             padding: 0 2rem;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             gap: 2.5rem;
             position: relative;
             z-index: 1;
+            width: 100%;
+            flex-wrap: wrap;
         }
 
         .header-content {
-            text-align: center;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            max-width: 640px;
         }
 
         .primary-nav {
@@ -6542,21 +6549,24 @@ ${formatCssBlock(headerBackground)}
         }
 
         .logo-container {
-            width: clamp(160px, 18vw, 240px);
-            max-height: 240px;
+            width: clamp(180px, 20vw, 260px);
+            max-height: 220px;
             background: transparent;
             border: none;
             box-shadow: none;
             padding: 0;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
         }
 
         .logo-container img {
             width: 100%;
             height: auto;
             display: block;
+            object-fit: contain;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimizeQuality;
         }
 
         h1 {
@@ -8273,11 +8283,20 @@ ${formatCssBlock(footerBackground)}
             }
 
             .header-inner {
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
                 gap: 2rem;
             }
 
+            .header-content {
+                align-items: center;
+                text-align: center;
+            }
+
             .logo-container {
-                width: clamp(140px, 45vw, 200px);
+                width: clamp(150px, 45vw, 220px);
                 max-height: 200px;
                 padding: 0;
                 background: transparent;
