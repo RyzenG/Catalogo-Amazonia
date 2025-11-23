@@ -5436,9 +5436,7 @@
 
             const currentYear = new Date().getFullYear();
 
-            const heroTitleText = trimmedConfig.companyName
-                ? `Políticas corporativas de ${trimmedConfig.companyName}`
-                : 'Políticas corporativas';
+            const heroTitleText = 'POLÍTICAS CORPORATIVAS';
             const heroLeadText = trimmedConfig.tagline
                 ? trimmedConfig.tagline
                 : 'Administra y comunica tus políticas de envíos, reembolsos, privacidad y lineamientos especiales desde un mismo lugar.';
