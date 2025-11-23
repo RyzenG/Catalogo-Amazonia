@@ -193,14 +193,30 @@
         const APPEARANCE_COLOR_KEYS = APPEARANCE_FIELDS.map(field => field.key);
 
         const APPEARANCE_IMAGE_FIELDS = [
-            { id: 'appearanceBackgroundImage', key: 'backgroundImage' },
-            { id: 'appearanceHeaderImage', key: 'headerImage' },
-            { id: 'appearanceFooterImage', key: 'footerImage' }
+            {
+                id: 'appearanceBackgroundImage',
+                key: 'backgroundImage',
+                label: 'la imagen de fondo del catálogo',
+                previewAlt: 'Vista previa de la imagen de fondo del catálogo'
+            },
+            {
+                id: 'appearanceHeaderImage',
+                key: 'headerImage',
+                label: 'la imagen del encabezado',
+                previewAlt: 'Vista previa de la imagen del encabezado'
+            },
+            {
+                id: 'appearanceFooterImage',
+                key: 'footerImage',
+                label: 'la imagen del pie de página',
+                previewAlt: 'Vista previa de la imagen del pie de página'
+            }
         ];
 
         const APPEARANCE_IMAGE_KEYS = APPEARANCE_IMAGE_FIELDS.map(field => field.key);
 
         const APPEARANCE_FIELD_MAP = new Map(APPEARANCE_FIELDS.map(field => [field.id, field]));
+        const APPEARANCE_IMAGE_FIELD_MAP = new Map(APPEARANCE_IMAGE_FIELDS.map(field => [field.id, field]));
 
         function normalizeAbout(candidate) {
             const normalized = {
@@ -662,6 +678,7 @@
         let editingProductId = null;
         let currentImageUrl = '';
         let currentIconFallback = '';
+        const appearancePreviewTokens = new Map();
         let lastFocusedElement = null;
         let modalKeydownHandler = null;
         const processStatusEntries = new Map();
@@ -3237,6 +3254,154 @@
             }
         }
 
+        function getAppearancePreviewElements(fieldId) {
+            const container = document.querySelector(`[data-appearance-preview="${fieldId}"]`);
+            const imageEl = document.querySelector(`[data-appearance-thumb="${fieldId}"]`);
+            const messageEl = document.querySelector(`[data-appearance-message="${fieldId}"]`);
+
+            if (!container || !imageEl || !messageEl) {
+                return null;
+            }
+
+            return { container, imageEl, messageEl };
+        }
+
+        function setAppearancePreviewState(fieldId, { src = '', status = 'idle', message = '' } = {}) {
+            const elements = getAppearancePreviewElements(fieldId);
+            if (!elements) {
+                return;
+            }
+
+            const { container, imageEl, messageEl } = elements;
+            const stateClasses = [
+                'appearance-preview--ready',
+                'appearance-preview--warning',
+                'appearance-preview--error',
+                'appearance-preview--loading'
+            ];
+
+            container.classList.remove(...stateClasses);
+
+            if (status && status !== 'idle') {
+                container.classList.add(`appearance-preview--${status}`);
+            }
+
+            messageEl.textContent = message || '';
+
+            if (src) {
+                imageEl.src = src;
+                imageEl.style.display = 'block';
+            } else {
+                imageEl.removeAttribute('src');
+                imageEl.style.display = 'none';
+            }
+        }
+
+        async function isAppearanceImageHeavy(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+
+                if (!response.ok) {
+                    return false;
+                }
+
+                const contentLength = response.headers.get('content-length');
+                if (!contentLength) {
+                    return false;
+                }
+
+                const sizeInBytes = Number(contentLength);
+                if (Number.isNaN(sizeInBytes)) {
+                    return false;
+                }
+
+                const HEAVY_IMAGE_THRESHOLD = 2.5 * 1024 * 1024;
+                return sizeInBytes > HEAVY_IMAGE_THRESHOLD;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function updateAppearanceImagePreview(fieldId, url) {
+            const elements = getAppearancePreviewElements(fieldId);
+            const fieldInfo = APPEARANCE_IMAGE_FIELD_MAP.get(fieldId);
+
+            if (!elements) {
+                return;
+            }
+
+            const normalizedUrl = typeof url === 'string' ? url.trim() : '';
+            const requestId = Date.now();
+            appearancePreviewTokens.set(fieldId, requestId);
+
+            elements.imageEl.alt = fieldInfo && fieldInfo.previewAlt
+                ? fieldInfo.previewAlt
+                : 'Vista previa de la imagen seleccionada';
+
+            if (!normalizedUrl) {
+                setAppearancePreviewState(fieldId, {
+                    status: 'idle',
+                    message: 'Agrega una URL de imagen para ver la miniatura.'
+                });
+                return;
+            }
+
+            if (!isValidUrl(normalizedUrl)) {
+                setAppearancePreviewState(fieldId, {
+                    status: 'error',
+                    message: `Ingresa un enlace válido para ${fieldInfo && fieldInfo.label ? fieldInfo.label : 'la imagen seleccionada'}.`
+                });
+                return;
+            }
+
+            setAppearancePreviewState(fieldId, {
+                status: 'loading',
+                message: 'Cargando vista previa...'
+            });
+
+            const cleanupHandlers = () => {
+                elements.imageEl.onload = null;
+                elements.imageEl.onerror = null;
+            };
+
+            elements.imageEl.onload = async () => {
+                if (appearancePreviewTokens.get(fieldId) !== requestId) {
+                    cleanupHandlers();
+                    return;
+                }
+
+                const isHeavy = normalizedUrl.startsWith('data:')
+                    ? false
+                    : await isAppearanceImageHeavy(normalizedUrl);
+
+                setAppearancePreviewState(fieldId, {
+                    src: normalizedUrl,
+                    status: isHeavy ? 'warning' : 'ready',
+                    message: isHeavy
+                        ? 'Imagen cargada pero parece pesada. Considera optimizarla para un mejor desempeño.'
+                        : 'Vista previa cargada correctamente.'
+                });
+
+                cleanupHandlers();
+            };
+
+            elements.imageEl.onerror = () => {
+                if (appearancePreviewTokens.get(fieldId) !== requestId) {
+                    cleanupHandlers();
+                    return;
+                }
+
+                setAppearancePreviewState(fieldId, {
+                    status: 'error',
+                    message: 'No se pudo cargar la imagen. Verifica la URL o intenta con otra fuente.'
+                });
+
+                cleanupHandlers();
+            };
+
+            elements.imageEl.src = normalizedUrl;
+        }
+
         function applyAppearanceToInputs(appearance) {
             const normalized = normalizeAppearance(appearance);
 
@@ -3258,6 +3423,7 @@
                 }
 
                 input.value = normalized[key] || '';
+                updateAppearanceImagePreview(id, input.value);
             });
         }
 
@@ -3282,6 +3448,7 @@
 
                 input.addEventListener('input', () => {
                     updateCatalogPreview();
+                    updateAppearanceImagePreview(id, input.value);
                 });
             });
 
