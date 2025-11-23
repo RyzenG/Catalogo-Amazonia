@@ -5443,13 +5443,6 @@
             const heroTitleHtml = escapeHtml(heroTitleText);
             const heroLeadHtml = escapeHtml(heroLeadText);
 
-            const heroMetaItems = [
-                trimmedConfig.companyName ? trimmedConfig.companyName : ''
-            ].filter(Boolean);
-            const heroMetaMarkup = heroMetaItems.length > 0
-                ? `<div class="policy-hero__meta">${heroMetaItems.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>`
-                : '';
-
             const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : 'images/logo.webp';
             const logoAltName = trimmedConfig.companyName || defaultConfig.companyName || 'la empresa';
             const logoContainerStyle = trimmedConfig.logoData ? '' : 'display: none;';
@@ -5636,14 +5629,6 @@
             gap: 0.75rem;
         }
 
-        .policies-hero__eyebrow {
-            text-transform: uppercase;
-            letter-spacing: 0.18em;
-            font-size: 0.85rem;
-            opacity: 0.85;
-            font-weight: 700;
-        }
-
         .policies-hero__title {
             font-size: clamp(2rem, 4vw, 3.1rem);
             letter-spacing: 0.08em;
@@ -5652,15 +5637,6 @@
         .policies-hero__lead {
             max-width: 760px;
             margin: 0 auto;
-            opacity: 0.9;
-        }
-
-        .policy-hero__meta {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 1rem;
-            font-weight: 600;
             opacity: 0.9;
         }
 
@@ -5947,10 +5923,8 @@
         <div class="header-inner">
             ${headerLogoMarkup}
             <div class="header-content policies-hero__content">
-                <p class="policies-hero__eyebrow">Centro de políticas</p>
                 <h1 class="policies-hero__title">${heroTitleHtml}</h1>
                 <p class="policies-hero__lead">${heroLeadHtml}</p>
-                ${heroMetaMarkup}
                 <div class="quick-links">${quickLinksMarkup}</div>
             </div>
         </div>
