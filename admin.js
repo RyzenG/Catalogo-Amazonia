@@ -5395,6 +5395,7 @@
         function generatePoliciesHTML(configOverride) {
             const config = getNormalizedConfig(configOverride || catalogData.config);
             const appearance = normalizeAppearance(config.appearance);
+            const theme = buildThemeTokens(appearance);
             const policies = normalizePolicies(config.policies);
             const aboutConfig = normalizeAbout(config.about);
 
@@ -5436,6 +5437,47 @@
             const backgroundWash = hexToRgba(appearance.header, 0.12);
             const accentGlow = hexToRgba(appearance.accent, 0.16);
             const headerGlass = hexToRgba(appearance.header, 0.22);
+
+            const formatCssBlock = (value) => {
+                if (typeof value !== 'string' || value.length === 0) {
+                    return '';
+                }
+
+                return value
+                    .split('\n')
+                    .map(line => line ? `            ${line}` : '')
+                    .join('\n');
+            };
+
+            const backgroundOverlayStart = theme.backgroundOverlayStart || hexToRgba(theme.backgroundStart, 0.85);
+            const backgroundOverlayEnd = theme.backgroundOverlayEnd || hexToRgba(theme.backgroundEnd, 0.85);
+            const headerOverlayStart = theme.headerImageOverlayStart || hexToRgba(theme.headerStart, 0.85);
+            const headerOverlayEnd = theme.headerImageOverlayEnd || hexToRgba(theme.headerEnd, 0.85);
+
+            const bodyBackground = theme.backgroundImage
+                ? [
+                    `background-color: ${theme.backgroundStart};`,
+                    'background-image:',
+                    `    linear-gradient(135deg, ${backgroundOverlayStart} 0%, ${backgroundOverlayEnd} 100%),`,
+                    `    url("${escapeCssUrl(theme.backgroundImage)}");`,
+                    'background-size: cover;',
+                    'background-position: center;',
+                    'background-repeat: no-repeat;',
+                    'background-attachment: fixed;'
+                ].join('\n')
+                : `background: linear-gradient(135deg, ${theme.backgroundStart} 0%, ${theme.backgroundEnd} 100%);`;
+
+            const headerBackground = theme.headerImage
+                ? [
+                    `background-color: ${theme.headerStart};`,
+                    'background-image:',
+                    `    linear-gradient(135deg, ${headerOverlayStart} 0%, ${headerOverlayEnd} 100%),`,
+                    `    url("${escapeCssUrl(theme.headerImage)}");`,
+                    'background-size: cover;',
+                    'background-position: center;',
+                    'background-repeat: no-repeat;'
+                ].join('\n')
+                : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`;
 
             const currentYear = new Date().getFullYear();
 
@@ -5639,20 +5681,15 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: radial-gradient(circle at 12% 20%, ${backgroundWash} 0%, transparent 32%),
-                        radial-gradient(circle at 88% 8%, ${accentGlow} 0%, transparent 30%),
-                        linear-gradient(140deg, var(--policy-bg) 0%, ${backgroundWash} 45%, #ffffff 100%);
+${formatCssBlock(bodyBackground)}
             color: var(--policy-text);
             line-height: 1.6;
             min-height: 100vh;
         }
 
         header {
-            background:
-                linear-gradient(120deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.24) 45%, rgba(0,0,0,0.05) 100%),
-                linear-gradient(135deg, var(--policy-header-start), var(--policy-header-end)),
-                url('images/fondo%20principal.webp');
-            color: #fff;
+${formatCssBlock(headerBackground)}
+            color: ${theme.headerText};
             padding: 3rem 1rem 4.5rem;
             border-bottom-left-radius: 40px;
             border-bottom-right-radius: 40px;
@@ -5751,7 +5788,7 @@
             padding: 0.5rem 1.25rem;
             border-radius: 999px;
             border: 1px solid rgba(255,255,255,0.45);
-            color: white;
+            color: ${theme.textOnDark};
             text-decoration: none;
             font-weight: 600;
             letter-spacing: 0.05em;
@@ -5785,7 +5822,7 @@
         }
 
         .primary-nav__link {
-            color: white;
+            color: ${theme.textOnDark};
             text-decoration: none;
             font-weight: 700;
             opacity: 0.9;
