@@ -148,6 +148,20 @@ body {
     line-height: 1.5;
 }
 
+.section-hint {
+    margin: 0 0 1.25rem;
+    color: #3b4a3a;
+    font-size: 0.97rem;
+    background: #f3f7f2;
+    border: 1px solid #dde6d9;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+}
+
+.section-hint strong {
+    color: #2d4a2b;
+}
+
 .policies-stack {
     display: flex;
     flex-direction: column;
