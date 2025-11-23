@@ -5470,17 +5470,7 @@
                 })
                 .join('');
 
-            const quickLinksMarkup = POLICY_IDS
-                .map(policyId => {
-                    const info = POLICY_DISPLAY_INFO[policyId] || {};
-                    const policyState = policies[policyId];
-                    const customTitle = policyId === 'extra'
-                        ? (typeof policyState.customTitle === 'string' ? policyState.customTitle.trim() : '')
-                        : '';
-                    const label = customTitle || info.quickLink || info.defaultTitle || `Política ${policyId}`;
-                    return `<a href="#policy-${policyId}" data-quick-link>${escapeHtml(label)}</a>`;
-                })
-                .join('');
+            const quickLinksMarkup = '';
 
             const globalNoteText = trimmedConfig.footerMessage ? trimmedConfig.footerMessage.trim() : '';
 
@@ -5991,7 +5981,7 @@
             <div class="header-content policies-hero__content">
                 <h1 class="policies-hero__title">${heroTitleHtml}</h1>
                 <p class="policies-hero__lead">${heroLeadHtml}</p>
-                <div class="quick-links">${quickLinksMarkup}</div>
+                ${quickLinksMarkup ? `<div class="quick-links">${quickLinksMarkup}</div>` : ''}
             </div>
         </div>
         <nav class="primary-nav" id="primaryNav" aria-label="Navegación principal">
