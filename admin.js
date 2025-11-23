@@ -6468,7 +6468,7 @@ ${formatCssBlock(headerBackground)}
             display: flex;
             flex-direction: row;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             gap: 2.5rem;
             position: relative;
             z-index: 1;
@@ -6477,10 +6477,10 @@ ${formatCssBlock(headerBackground)}
         }
 
         .header-content {
-            text-align: left;
+            text-align: center;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             gap: 0.5rem;
             max-width: 640px;
         }
