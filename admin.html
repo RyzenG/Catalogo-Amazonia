@@ -159,6 +159,10 @@
                                     <input type="url" id="appearanceBackgroundImage" name="appearanceBackgroundImage" placeholder="https://ejemplo.com/fondo.jpg">
                                     <div class="field-hint field-hint--muted">Si lo dejas vacío se mostrará el degradado configurado con los colores.</div>
                                 </div>
+                                <div class="appearance-preview" data-appearance-preview="appearanceBackgroundImage" aria-live="polite">
+                                    <img class="appearance-preview__thumb" data-appearance-thumb="appearanceBackgroundImage" alt="Vista previa de la imagen de fondo del catálogo" loading="lazy">
+                                    <p class="appearance-preview__message" data-appearance-message="appearanceBackgroundImage" role="status">Agrega una URL de imagen para ver la miniatura.</p>
+                                </div>
                             </div>
                             <div class="appearance-item">
                                 <label for="appearanceHeaderImage">Imagen del encabezado (opcional)</label>
@@ -166,12 +170,20 @@
                                     <input type="url" id="appearanceHeaderImage" name="appearanceHeaderImage" placeholder="https://ejemplo.com/encabezado.jpg">
                                     <div class="field-hint field-hint--muted">Se mezcla con los colores del encabezado para mantener la legibilidad.</div>
                                 </div>
+                                <div class="appearance-preview" data-appearance-preview="appearanceHeaderImage" aria-live="polite">
+                                    <img class="appearance-preview__thumb" data-appearance-thumb="appearanceHeaderImage" alt="Vista previa de la imagen del encabezado" loading="lazy">
+                                    <p class="appearance-preview__message" data-appearance-message="appearanceHeaderImage" role="status">Agrega una URL de imagen para ver la miniatura.</p>
+                                </div>
                             </div>
                             <div class="appearance-item">
                                 <label for="appearanceFooterImage">Imagen del pie de página (opcional)</label>
                                 <div class="input-meta">
                                     <input type="url" id="appearanceFooterImage" name="appearanceFooterImage" placeholder="https://ejemplo.com/footer.jpg">
                                     <div class="field-hint field-hint--muted">Úsalo para personalizar el fondo del cierre del catálogo.</div>
+                                </div>
+                                <div class="appearance-preview" data-appearance-preview="appearanceFooterImage" aria-live="polite">
+                                    <img class="appearance-preview__thumb" data-appearance-thumb="appearanceFooterImage" alt="Vista previa de la imagen del pie de página" loading="lazy">
+                                    <p class="appearance-preview__message" data-appearance-message="appearanceFooterImage" role="status">Agrega una URL de imagen para ver la miniatura.</p>
                                 </div>
                             </div>
                         </div>
