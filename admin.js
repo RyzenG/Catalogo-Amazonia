@@ -5427,57 +5427,12 @@
                 logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
             };
 
-            const headerStart = adjustColorBrightness(appearance.header, -8);
-            const headerEnd = adjustColorBrightness(appearance.header, 12);
             const cardBorder = hexToRgba(appearance.text, 0.08);
             const cardShadow = hexToRgba(appearance.text, 0.08);
             const previewBackground = hexToRgba(appearance.primary, 0.12);
             const mutedText = hexToRgba(appearance.text, 0.6);
             const switchOff = hexToRgba(appearance.text, 0.2);
-            const backgroundWash = hexToRgba(appearance.header, 0.12);
             const accentGlow = hexToRgba(appearance.accent, 0.16);
-            const headerGlass = hexToRgba(appearance.header, 0.22);
-
-            const formatCssBlock = (value) => {
-                if (typeof value !== 'string' || value.length === 0) {
-                    return '';
-                }
-
-                return value
-                    .split('\n')
-                    .map(line => line ? `            ${line}` : '')
-                    .join('\n');
-            };
-
-            const backgroundOverlayStart = theme.backgroundOverlayStart || hexToRgba(theme.backgroundStart, 0.85);
-            const backgroundOverlayEnd = theme.backgroundOverlayEnd || hexToRgba(theme.backgroundEnd, 0.85);
-            const headerOverlayStart = theme.headerImageOverlayStart || hexToRgba(theme.headerStart, 0.85);
-            const headerOverlayEnd = theme.headerImageOverlayEnd || hexToRgba(theme.headerEnd, 0.85);
-
-            const bodyBackground = theme.backgroundImage
-                ? [
-                    `background-color: ${theme.backgroundStart};`,
-                    'background-image:',
-                    `    linear-gradient(135deg, ${backgroundOverlayStart} 0%, ${backgroundOverlayEnd} 100%),`,
-                    `    url("${escapeCssUrl(theme.backgroundImage)}");`,
-                    'background-size: cover;',
-                    'background-position: center;',
-                    'background-repeat: no-repeat;',
-                    'background-attachment: fixed;'
-                ].join('\n')
-                : `background: linear-gradient(135deg, ${theme.backgroundStart} 0%, ${theme.backgroundEnd} 100%);`;
-
-            const headerBackground = theme.headerImage
-                ? [
-                    `background-color: ${theme.headerStart};`,
-                    'background-image:',
-                    `    linear-gradient(135deg, ${headerOverlayStart} 0%, ${headerOverlayEnd} 100%),`,
-                    `    url("${escapeCssUrl(theme.headerImage)}");`,
-                    'background-size: cover;',
-                    'background-position: center;',
-                    'background-repeat: no-repeat;'
-                ].join('\n')
-                : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`;
 
             const currentYear = new Date().getFullYear();
 
@@ -5494,11 +5449,16 @@
                 trimmedConfig.companyName ? trimmedConfig.companyName : ''
             ].filter(Boolean);
             const heroMetaMarkup = heroMetaItems.length > 0
-                ? `<div class="meta">${heroMetaItems.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>`
+                ? `<div class="policy-hero__meta">${heroMetaItems.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>`
                 : '';
 
             const sanitizedLogoData = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : 'images/logo.webp';
             const logoAltName = trimmedConfig.companyName || defaultConfig.companyName || 'la empresa';
+            const logoContainerStyle = trimmedConfig.logoData ? '' : 'display: none;';
+            const headerLogoMarkup = `
+        <div class="logo-container" id="headerLogoContainer" style="${logoContainerStyle}">
+            <img id="headerLogo" src="${sanitizedLogoData}" alt="Logo de ${escapeHtml(logoAltName)}">
+        </div>`;
 
             const primaryNavItems = [
                 { id: 'primaryNavHome', label: 'Inicio', href: 'index.html', visible: true, external: true, icon: 'home' },
@@ -5657,227 +5617,97 @@
             const companyNameFooter = trimmedConfig.companyName || defaultConfig.companyName || 'Tu empresa';
 
             const policyStyles = `
+        ${getCatalogStyles(theme)}
+
         :root {
             color-scheme: light;
-            font-size: 16px;
-            --policy-bg: ${appearance.background};
-            --policy-text: ${appearance.text};
-            --policy-header-start: ${headerStart};
-            --policy-header-end: ${headerEnd};
-            --policy-primary: ${appearance.primary};
-            --policy-accent: ${appearance.accent};
             --policy-card-border: ${cardBorder};
             --policy-card-shadow: ${cardShadow};
             --policy-preview-bg: ${previewBackground};
             --policy-muted: ${mutedText};
             --policy-switch-off: ${switchOff};
+            --policy-accent: ${appearance.accent};
+            --policy-primary: ${appearance.primary};
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-${formatCssBlock(bodyBackground)}
-            color: var(--policy-text);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        header {
-${formatCssBlock(headerBackground)}
-            color: ${theme.headerText};
-            padding: 3rem 1rem 4.5rem;
-            border-bottom-left-radius: 40px;
-            border-bottom-right-radius: 40px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.22);
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: saturate(120%) blur(2px);
-        }
-
-        header::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at 18% 15%, rgba(255,255,255,0.25), transparent 45%),
-                radial-gradient(circle at 82% 10%, rgba(255,255,255,0.2), transparent 50%);
-            opacity: 0.9;
-            pointer-events: none;
-        }
-
-        .header-inner {
-            position: relative;
-            z-index: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 2rem;
-            align-items: center;
-            background: ${headerGlass};
-            border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 30px;
-            padding: 1.5rem;
-            box-shadow: 0 18px 48px rgba(0,0,0,0.18);
-            backdrop-filter: blur(8px);
-        }
-
-        .logo-panel {
-            background: rgba(255,255,255,0.14);
-            border-radius: 24px;
-            padding: 1.75rem;
+        .policies-hero__content {
+            text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1rem;
-            min-height: 240px;
-            justify-content: center;
-            text-align: center;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+            gap: 0.75rem;
         }
 
-        .logo-panel img {
-            width: 180px;
-            height: auto;
-            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.35));
-        }
-
-        .header-copy h1 {
-            font-size: clamp(2rem, 4vw, 3.2rem);
-            letter-spacing: 1px;
-        }
-
-        .header-copy p {
-            opacity: 0.9;
-            margin-top: 0.75rem;
-        }
-
-        .eyebrow {
+        .policies-hero__eyebrow {
             text-transform: uppercase;
-            letter-spacing: 0.2em;
-            font-size: 0.8rem;
-            opacity: 0.8;
+            letter-spacing: 0.18em;
+            font-size: 0.85rem;
+            opacity: 0.85;
+            font-weight: 700;
         }
 
-        .meta {
+        .policies-hero__title {
+            font-size: clamp(2rem, 4vw, 3.1rem);
+            letter-spacing: 0.08em;
+        }
+
+        .policies-hero__lead {
+            max-width: 760px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+
+        .policy-hero__meta {
             display: flex;
             flex-wrap: wrap;
+            justify-content: center;
             gap: 1rem;
-            margin-top: 1rem;
-            font-size: 0.95rem;
-            opacity: 0.85;
+            font-weight: 600;
+            opacity: 0.9;
         }
 
         .quick-links {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.8rem;
+            gap: 0.75rem;
+            justify-content: center;
             margin-top: 1.5rem;
-            background: rgba(255,255,255,0.12);
-            padding: 0.75rem 0.85rem;
-            border-radius: 14px;
-            border: 1px solid rgba(255,255,255,0.2);
         }
 
         .quick-links a {
-            padding: 0.5rem 1.25rem;
+            padding: 0.55rem 1.25rem;
             border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.45);
-            color: ${theme.textOnDark};
+            border: 1px solid rgba(0,0,0,0.08);
+            background: #ffffff;
+            color: ${theme.headerStart};
             text-decoration: none;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
 
         .quick-links a:hover,
         .quick-links a:focus-visible {
-            background: rgba(255,255,255,0.2);
             transform: translateY(-2px);
-            border-color: white;
-        }
-
-        .primary-nav {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            gap: 1rem;
-            margin: 2rem auto 0;
-            max-width: 1200px;
-            padding: 0.35rem 1rem 0.85rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-            backdrop-filter: blur(10px);
-        }
-
-        .primary-nav__link {
-            color: ${theme.textOnDark};
-            text-decoration: none;
-            font-weight: 700;
-            opacity: 0.9;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.65rem 1.1rem;
-            border: 1px solid rgba(255,255,255,0.35);
-            border-radius: 999px;
-            letter-spacing: 0.05em;
-            background: linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.12) 100%);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
-        }
-
-        .primary-nav__link:hover,
-        .primary-nav__link:focus-visible {
-            opacity: 1;
-            transform: translateY(-1px);
-            box-shadow: 0 18px 32px rgba(0,0,0,0.2);
+            border-color: ${appearance.primary};
+            box-shadow: 0 16px 36px rgba(0,0,0,0.12);
             outline: none;
         }
 
-        .primary-nav__icon {
-            width: 1.1rem;
-            height: 1.1rem;
-            display: inline-flex;
-        }
-
-        .primary-nav__icon svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .primary-nav__icon svg path {
-            fill: currentColor;
-        }
-
-        .primary-nav__label {
-            line-height: 1;
-        }
-
-        main {
+        .policies-page__main {
             max-width: 1200px;
-            margin: -80px auto 3rem;
+            margin: -70px auto 3rem;
             padding: 0 1.5rem;
         }
 
         .card {
-            background: rgba(255,255,255,0.9);
-            border-radius: 28px;
+            background: #ffffff;
+            border-radius: 22px;
             padding: 2rem;
-            box-shadow: 0 30px 70px rgba(15, 23, 42, 0.15);
-            margin-bottom: 2rem;
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
+            margin-bottom: 1.75rem;
             border: 1px solid var(--policy-card-border);
-            backdrop-filter: blur(6px);
         }
 
         .policy-card__grid {
@@ -5885,12 +5715,6 @@ ${formatCssBlock(headerBackground)}
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 2rem;
             align-items: flex-start;
-        }
-
-        .policy-header {
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
         }
 
         .policy-card__header {
@@ -5927,7 +5751,7 @@ ${formatCssBlock(headerBackground)}
 
         .policy-status--inactive {
             background: var(--policy-switch-off);
-            color: var(--policy-text);
+            color: inherit;
         }
 
         .policy-summary--empty,
@@ -5952,9 +5776,9 @@ ${formatCssBlock(headerBackground)}
 
         .policy-highlights {
             background: var(--policy-preview-bg);
-            border-radius: 20px;
-            padding: 1.5rem;
-            border: 1px solid rgba(52, 76, 51, 0.15);
+            border-radius: 18px;
+            padding: 1.35rem;
+            border: 1px solid var(--policy-card-border);
         }
 
         .policy-highlights h3 {
@@ -5988,13 +5812,13 @@ ${formatCssBlock(headerBackground)}
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1rem;
-            margin-top: 1.5rem;
+            margin-top: 1.25rem;
         }
 
         .general-details li {
             background: rgba(0,0,0,0.03);
             padding: 1rem;
-            border-radius: 16px;
+            border-radius: 14px;
         }
 
         .general-details__empty {
@@ -6013,83 +5837,71 @@ ${formatCssBlock(headerBackground)}
 
         .general-details strong {
             display: block;
-            margin-top: 0.4rem;
+            margin-top: 0.35rem;
         }
 
         .global-note {
-            margin-top: 1.25rem;
-            font-size: 0.95rem;
-            color: var(--policy-muted);
+            margin-top: 1.1rem;
+            padding: 1rem 1.25rem;
+            background: rgba(0,0,0,0.03);
+            border-left: 4px solid var(--policy-accent);
+            border-radius: 12px;
         }
 
-        footer {
-            padding: 3rem 1rem;
-            background: var(--policy-header-start);
-            color: #fff;
+        .policy-preview {
+            background: linear-gradient(135deg, ${hexToRgba(theme.backgroundEnd, 0.35)} 0%, ${hexToRgba(theme.headerStart, 0.2)} 100%);
+            color: ${theme.textOnDark};
+            padding: 1.35rem;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 18px 36px rgba(0,0,0,0.14);
         }
 
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
+        .policy-preview__text {
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 0.75rem;
         }
 
-        .contact-info h3 {
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
+        .policy-preview__list {
+            margin: 0.75rem 0 0;
+            padding-left: 1.2rem;
         }
 
-        .social-links {
+        .policy-preview__list li {
+            margin-top: 0.35rem;
+            line-height: 1.4;
+        }
+
+        .policy-preview__meta {
+            margin-top: 0.9rem;
             display: flex;
-            justify-content: center;
-            gap: 1rem;
             flex-wrap: wrap;
-            margin: 1.5rem 0 1rem;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            opacity: 0.9;
         }
 
-        .social-link {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 50%;
+        .policy-preview__meta span {
             display: inline-flex;
+            gap: 0.4rem;
             align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: #fff;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .social-link svg {
-            width: 1.5rem;
-            height: 1.5rem;
+        .policy-preview__meta svg {
+            width: 1rem;
+            height: 1rem;
         }
 
-        .social-link svg path {
-            fill: currentColor;
+        .policy-preview--inactive {
+            background: linear-gradient(135deg, ${hexToRgba(theme.backgroundStart, 0.2)} 0%, ${hexToRgba(theme.backgroundEnd, 0.2)} 100%);
+            color: ${appearance.text};
+            border-color: var(--policy-card-border);
         }
 
-        .social-link:hover,
-        .social-link:focus-visible {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-        }
-
-        .social-link--whatsapp {
-            background: #25d366;
-        }
-
-        .social-link--instagram {
-            background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
-        }
-
-        .social-link--facebook {
-            background: #1877f2;
-        }
-
-        .social-link--tiktok {
-            background: #010101;
+        .policy-preview--inactive .policy-preview__meta,
+        .policy-preview--inactive .policy-preview__meta svg path {
+            color: var(--policy-muted);
         }
 
         .sr-only {
@@ -6104,16 +5916,16 @@ ${formatCssBlock(headerBackground)}
             border: 0;
         }
 
-
         @media (max-width: 640px) {
             .card {
                 padding: 1.5rem;
             }
 
-            .preview {
-                padding: 1rem;
+            .quick-links {
+                justify-content: flex-start;
             }
         }`;
+
 
             return `<!DOCTYPE html>
 <html lang="es">
@@ -6126,16 +5938,20 @@ ${formatCssBlock(headerBackground)}
     </style>
 </head>
 <body>
-    <header id="pageTop">
+    <div class="loader" id="loader">
+        <svg class="leaf-spinner" viewBox="0 0 100 100">
+            <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="${theme.loaderPrimary}"/>
+            <path d="M50 40 Q30 60 50 80 Q70 60 50 40" fill="${theme.loaderSecondary}"/>
+        </svg>
+    </div>
+
+    <header id="pageTop" class="policies-hero">
         <div class="header-inner">
-            <div class="logo-panel">
-                <img src="${sanitizedLogoData}" alt="Logo de ${escapeHtml(logoAltName)}">
-                <p>${escapeHtml(trimmedConfig.tagline || 'Transparencia y soporte para tus proyectos.')}</p>
-            </div>
-            <div class="header-copy">
-                <p class="eyebrow">Centro de políticas</p>
-                <h1>${heroTitleHtml}</h1>
-                <p>${heroLeadHtml}</p>
+            ${headerLogoMarkup}
+            <div class="header-content policies-hero__content">
+                <p class="policies-hero__eyebrow">Centro de políticas</p>
+                <h1 class="policies-hero__title">${heroTitleHtml}</h1>
+                <p class="policies-hero__lead">${heroLeadHtml}</p>
                 ${heroMetaMarkup}
                 <div class="quick-links">${quickLinksMarkup}</div>
             </div>
@@ -6145,7 +5961,7 @@ ${formatCssBlock(headerBackground)}
         </nav>
     </header>
 
-    <main id="policyMain">
+    <main class="policies-page__main" id="policyMain">
         <section class="card" aria-labelledby="general-config-title">
             <div class="policy-card__header policy-card__header--simple">
                 <div>
@@ -6171,6 +5987,13 @@ ${formatCssBlock(headerBackground)}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            var loader = document.getElementById('loader');
+            if (loader) {
+                requestAnimationFrame(function() {
+                    loader.classList.add('hidden');
+                });
+            }
+
             var homeLink = document.getElementById('primaryNavHome');
             if (homeLink) {
                 var href = window.location.href || '';
