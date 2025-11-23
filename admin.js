@@ -5482,28 +5482,7 @@
                 })
                 .join('');
 
-            const generalDetails = [];
-            if (trimmedConfig.companyName) {
-                generalDetails.push(`<li><span>Nombre comercial</span><strong>${escapeHtml(trimmedConfig.companyName)}</strong></li>`);
-            }
-            if (trimmedConfig.email) {
-                generalDetails.push(`<li><span>Correo</span><strong>${escapeHtml(trimmedConfig.email)}</strong></li>`);
-            }
-            if (trimmedConfig.phone) {
-                generalDetails.push(`<li><span>Teléfono</span><strong>${escapeHtml(trimmedConfig.phone)}</strong></li>`);
-            }
-            if (trimmedConfig.address) {
-                generalDetails.push(`<li><span>Ubicación</span><strong>${escapeHtml(trimmedConfig.address)}</strong></li>`);
-            }
-
-            const generalDetailsMarkup = generalDetails.length > 0
-                ? `<ul class="general-details">${generalDetails.join('')}</ul>`
-                : '<p class="general-details__empty">Estamos actualizando los datos de contacto de esta sección.</p>';
-
             const globalNoteText = trimmedConfig.footerMessage ? trimmedConfig.footerMessage.trim() : '';
-            const globalNoteMarkup = globalNoteText
-                ? `<p class="global-note">${escapeHtml(globalNoteText)}</p>`
-                : '';
 
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
             const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '';
@@ -5542,7 +5521,9 @@
                     </a>
                 </div>`;
 
-            const policySectionsMarkup = POLICY_IDS.map(policyId => {
+            const policyTabsMarkup = [];
+
+            const policySectionsMarkup = POLICY_IDS.map((policyId, index) => {
                 const info = POLICY_DISPLAY_INFO[policyId] || { category: 'General', defaultTitle: `Política ${policyId}`, icon: '📄' };
                 const policyState = policies[policyId];
                 const active = Boolean(policyState.active);
@@ -5585,12 +5566,18 @@
                         ${highlightsContent}
                     </div>`;
 
+                const isFirstSlide = index === 0;
+                const tabLabel = `${icon} ${sectionTitle}`;
+                policyTabsMarkup.push(
+                    `<button type="button" role="tab" class="policy-slider__tab${isFirstSlide ? ' is-active' : ''}" id="policy-tab-${policyId}" data-policy-tab="${policyId}" aria-controls="policy-${policyId}" aria-selected="${isFirstSlide ? 'true' : 'false'}">${escapeHtml(tabLabel)}</button>`
+                );
+
                 return `
-        <section class="card policy-card${active ? '' : ' policy-card--inactive'}" id="policy-${policyId}">
+        <section class="card policy-card${active ? '' : ' policy-card--inactive'} policy-slide${isFirstSlide ? ' is-active' : ''}" id="policy-${policyId}" data-policy-slide="${policyId}" role="tabpanel" aria-labelledby="policy-tab-${policyId}" aria-hidden="${isFirstSlide ? 'false' : 'true'}">
             <div class="policy-card__header">
                 <div>
                     <p class="policy-eyebrow">${escapeHtml(info.category || 'General')}</p>
-                    <h2>${escapeHtml(`${icon} ${sectionTitle}`)}</h2>
+                    <h2>${escapeHtml(tabLabel)}</h2>
                 </div>
                 <span class="policy-status ${statusClass}">${escapeHtml(statusLabel)}</span>
             </div>
@@ -5604,6 +5591,20 @@
             </div>
         </section>`;
             }).join('');
+
+            const policySliderMarkup = `
+        <section class="policy-slider" data-policy-slider>
+            <div class="policy-slider__controls">
+                <button type="button" class="policy-slider__arrow" data-policy-direction="prev" aria-label="Política anterior">←</button>
+                <div class="policy-slider__tabs" role="tablist" aria-label="Navegación de políticas">
+                    ${policyTabsMarkup.join('')}
+                </div>
+                <button type="button" class="policy-slider__arrow" data-policy-direction="next" aria-label="Siguiente política">→</button>
+            </div>
+            <div class="policy-slider__slides">
+                ${policySectionsMarkup}
+            </div>
+        </section>`;
 
             const companyNameFooter = trimmedConfig.companyName || defaultConfig.companyName || 'Tu empresa';
 
@@ -5781,45 +5782,110 @@
             opacity: 0.92;
         }
 
-        .general-details {
-            list-style: none;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin-top: 1.25rem;
+        .policy-slider {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
         }
 
-        .general-details li {
-            background: rgba(0,0,0,0.03);
-            padding: 1rem;
-            border-radius: 14px;
+        .policy-slider__controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0.5rem;
+            z-index: 2;
         }
 
-        .general-details__empty {
-            margin-top: 1rem;
-            color: var(--policy-muted);
-            font-style: italic;
+        .policy-slider__tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            flex: 1;
         }
 
-        .general-details span {
-            display: block;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--policy-muted);
+        .policy-slider__tab {
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 999px;
+            padding: 0.5rem 0.95rem;
+            background: #f7f9f7;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: var(--policy-primary);
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
 
-        .general-details strong {
-            display: block;
-            margin-top: 0.35rem;
+        .policy-slider__tab.is-active {
+            background: ${hexToRgba(appearance.primary, 0.12)};
+            border-color: ${hexToRgba(appearance.primary, 0.35)};
+            color: ${appearance.primary};
+            transform: translateY(-1px);
         }
 
-        .global-note {
-            margin-top: 1.1rem;
-            padding: 1rem 1.25rem;
-            background: rgba(0,0,0,0.03);
-            border-left: 4px solid var(--policy-accent);
+        .policy-slider__tab:focus-visible {
+            outline: 2px solid ${appearance.accent};
+            outline-offset: 2px;
+        }
+
+        .policy-slider__arrow {
+            border: 1px solid rgba(0,0,0,0.1);
+            background: #ffffff;
+            color: var(--policy-primary);
             border-radius: 12px;
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .policy-slider__arrow:hover,
+        .policy-slider__arrow:focus-visible {
+            background: ${hexToRgba(appearance.primary, 0.1)};
+            box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+            transform: translateY(-1px);
+        }
+
+        .policy-slider__slides {
+            position: relative;
+        }
+
+        .policy-slide {
+            display: none;
+        }
+
+        .policy-slide.is-active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .policy-slider__controls {
+                position: static;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .policy-slider__arrow {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .policy-slider__tabs {
+                width: 100%;
+            }
+
+            .policy-slider__tab {
+                width: 100%;
+                text-align: left;
+            }
         }
 
         .policy-preview {
@@ -5934,17 +6000,7 @@
     </header>
 
     <main class="policies-page__main" id="policyMain">
-        <section class="card" aria-labelledby="general-config-title">
-            <div class="policy-card__header policy-card__header--simple">
-                <div>
-                    <p class="policy-eyebrow">Información general</p>
-                    <h2 id="general-config-title">Contacto y soporte</h2>
-                </div>
-            </div>
-            ${generalDetailsMarkup}
-            ${globalNoteMarkup}
-        </section>
-        ${policySectionsMarkup}
+        ${policySliderMarkup}
     </main>
 
     <footer>
@@ -6018,6 +6074,86 @@
                 });
             }
 
+            var policySlider = document.querySelector('[data-policy-slider]');
+            var policySlides = policySlider ? Array.from(policySlider.querySelectorAll('[data-policy-slide]')) : [];
+            var policyTabs = policySlider ? Array.from(policySlider.querySelectorAll('[data-policy-tab]')) : [];
+            var prevArrow = policySlider ? policySlider.querySelector('[data-policy-direction="prev"]') : null;
+            var nextArrow = policySlider ? policySlider.querySelector('[data-policy-direction="next"]') : null;
+            var activePolicyIndex = policySlides.findIndex(function(slide) { return slide.classList.contains('is-active'); });
+            if (activePolicyIndex < 0) {
+                activePolicyIndex = 0;
+            }
+
+            function setActivePolicy(index, options) {
+                if (!policySlides.length) {
+                    return;
+                }
+                var clampedIndex = Math.max(0, Math.min(index, policySlides.length - 1));
+                activePolicyIndex = clampedIndex;
+
+                policySlides.forEach(function(slide, slideIndex) {
+                    var isActive = slideIndex === clampedIndex;
+                    slide.classList.toggle('is-active', isActive);
+                    slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+                });
+
+                policyTabs.forEach(function(tab, tabIndex) {
+                    var isActiveTab = tabIndex === clampedIndex;
+                    tab.classList.toggle('is-active', isActiveTab);
+                    tab.setAttribute('aria-selected', isActiveTab ? 'true' : 'false');
+                    tab.setAttribute('tabindex', isActiveTab ? '0' : '-1');
+                });
+
+                if (prevArrow) {
+                    prevArrow.disabled = clampedIndex === 0;
+                }
+
+                if (nextArrow) {
+                    nextArrow.disabled = clampedIndex === policySlides.length - 1;
+                }
+
+                if (!options || options.scroll !== false) {
+                    var activeSlide = policySlides[clampedIndex];
+                    if (activeSlide && typeof activeSlide.scrollIntoView === 'function') {
+                        activeSlide.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            }
+
+            function setActivePolicyById(policyId, options) {
+                if (!policySlides.length || !policyId) {
+                    return;
+                }
+                var targetIndex = policySlides.findIndex(function(slide) {
+                    return slide.getAttribute('data-policy-slide') === policyId || slide.id === policyId;
+                });
+                if (targetIndex >= 0) {
+                    setActivePolicy(targetIndex, options);
+                }
+            }
+
+            if (policySlider && policySlides.length) {
+                setActivePolicy(activePolicyIndex, { scroll: false });
+
+                policyTabs.forEach(function(tab, tabIndex) {
+                    tab.addEventListener('click', function() {
+                        setActivePolicy(tabIndex);
+                    });
+                });
+
+                if (prevArrow) {
+                    prevArrow.addEventListener('click', function() {
+                        setActivePolicy(activePolicyIndex - 1);
+                    });
+                }
+
+                if (nextArrow) {
+                    nextArrow.addEventListener('click', function() {
+                        setActivePolicy(activePolicyIndex + 1);
+                    });
+                }
+            }
+
             var quickLinks = document.querySelectorAll('[data-quick-link]');
             quickLinks.forEach(function(link) {
                 link.addEventListener('click', function(event) {
@@ -6028,6 +6164,15 @@
                     }
                     var targetId = href.slice(1);
                     var target = document.getElementById(targetId);
+
+                    if (policySlider && target && target.hasAttribute('data-policy-slide')) {
+                        setActivePolicyById(targetId);
+                        if (typeof policySlider.scrollIntoView === 'function') {
+                            policySlider.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                        return;
+                    }
+
                     if (target && typeof target.scrollIntoView === 'function') {
                         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     } else if (targetId) {
