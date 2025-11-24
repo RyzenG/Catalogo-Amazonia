@@ -611,6 +611,14 @@
                             <button type="button" class="icon-btn remove-image-button" data-action="remove-image" aria-label="Eliminar imagen" title="Eliminar imagen">✕</button>
                         </div>
                     </div>
+                    <div class="image-thumbnail-panel" aria-live="polite">
+                        <div class="image-thumbnail-panel__header">
+                            <strong>Miniaturas y portada</strong>
+                            <span class="image-thumbnail-panel__hint">Arrastra para reordenar y marca la portada.</span>
+                        </div>
+                        <div id="productThumbnailsCarousel" class="image-thumbnail-list" role="list" aria-label="Miniaturas de imágenes"></div>
+                        <p class="image-thumbnail-empty" id="productThumbnailsEmpty">Añade URLs para ver las miniaturas.</p>
+                    </div>
                     <button type="button" id="addProductImageButton" class="btn btn-secondary image-add-button">➕ Añadir imagen</button>
                     <div class="image-preview" id="productImagePreviewWrapper">
                         <img id="productImagePreview" alt="Vista previa del producto" src="" />
