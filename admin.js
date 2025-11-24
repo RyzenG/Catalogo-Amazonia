@@ -677,7 +677,9 @@
         let currentCategory = defaultCategories[0] ? defaultCategories[0].id : '';
         let editingProductId = null;
         let currentImageUrl = '';
+        let currentPrimaryImage = '';
         let currentIconFallback = '';
+        let draggedThumbnailIndex = null;
         const appearancePreviewTokens = new Map();
         let lastFocusedElement = null;
         let modalKeydownHandler = null;
@@ -1490,17 +1492,15 @@
             }
 
             const fromArray = Array.isArray(product.images) ? product.images : [];
-            const fallback = typeof product.image === 'string' ? product.image : '';
+            const primaryCandidate = sanitizeImageValue(product.primaryImage || product.image || '');
 
             const combined = fromArray.slice();
 
-            if (fallback && combined.length === 0) {
-                combined.push(fallback);
+            if (primaryCandidate && !combined.includes(primaryCandidate)) {
+                combined.unshift(primaryCandidate);
             }
 
-            return combined
-                .map(sanitizeImageValue)
-                .filter(url => url.length > 0);
+            return ensurePrimaryImageFirst(combined, primaryCandidate);
         }
 
         function getProductImageVariants(product) {
@@ -1616,12 +1616,16 @@
             }
 
             const normalized = getNormalizedProductImages(product);
+            const primaryImage = sanitizeImageValue(product.primaryImage || product.image || normalized[0] || '');
 
             if (normalized.length > 0) {
-                product.images = normalized;
-                product.image = normalized[0];
+                const ordered = ensurePrimaryImageFirst(normalized, primaryImage);
+                product.images = ordered;
+                product.primaryImage = primaryImage || ordered[0];
+                product.image = product.primaryImage;
             } else {
                 product.images = [];
+                delete product.primaryImage;
                 delete product.image;
             }
         }
@@ -2284,6 +2288,39 @@
                 .filter(url => url.length > 0);
         }
 
+        function resolvePrimaryImage(imageValues = []) {
+            const sanitizedPrimary = sanitizeImageValue(currentPrimaryImage);
+
+            if (sanitizedPrimary && imageValues.includes(sanitizedPrimary)) {
+                return sanitizedPrimary;
+            }
+
+            const resolved = imageValues[0] || '';
+            currentPrimaryImage = resolved;
+            return resolved;
+        }
+
+        function collectProductImagesData() {
+            const images = collectProductImageValues();
+            const primaryImage = resolvePrimaryImage(images);
+
+            return { images, primaryImage };
+        }
+
+        function ensurePrimaryImageFirst(images = [], primaryImage = '') {
+            const sanitizedPrimary = sanitizeImageValue(primaryImage);
+            const sanitizedImages = Array.isArray(images)
+                ? images.map(sanitizeImageValue).filter(url => url.length > 0)
+                : [];
+
+            if (sanitizedPrimary && sanitizedImages.includes(sanitizedPrimary)) {
+                const remaining = sanitizedImages.filter(url => url !== sanitizedPrimary);
+                return [sanitizedPrimary, ...remaining];
+            }
+
+            return sanitizedImages;
+        }
+
         function updateProductImageInputsRemoveState() {
             const inputs = getProductImageInputs();
             const total = inputs.length;
@@ -2389,7 +2426,7 @@
 
             container.appendChild(item);
             updateProductImageInputsRemoveState();
-            syncProductImagePreviewFromInputs();
+            syncProductImagesUI();
 
             if (input && typeof input.focus === 'function') {
                 input.focus();
@@ -2398,7 +2435,7 @@
             return input;
         }
 
-        function renderProductImageInputs(values = []) {
+        function renderProductImageInputs(values = [], primaryImage = '') {
             const container = getProductImagesContainer();
 
             if (!container) {
@@ -2409,6 +2446,8 @@
                 ? values.map(sanitizeImageValue).filter(url => url.length > 0)
                 : [];
 
+            const sanitizedPrimary = sanitizeImageValue(primaryImage);
+
             container.innerHTML = '';
 
             const valuesToRender = sanitizedValues.length > 0 ? sanitizedValues : [''];
@@ -2418,8 +2457,14 @@
                 container.appendChild(item);
             });
 
+            if (sanitizedPrimary && valuesToRender.includes(sanitizedPrimary)) {
+                currentPrimaryImage = sanitizedPrimary;
+            } else {
+                currentPrimaryImage = valuesToRender[0] || '';
+            }
+
             updateProductImageInputsRemoveState();
-            syncProductImagePreviewFromInputs();
+            syncProductImagesUI();
         }
 
         function removeProductImageInput(item) {
@@ -2441,7 +2486,7 @@
             }
 
             updateProductImageInputsRemoveState();
-            syncProductImagePreviewFromInputs();
+            syncProductImagesUI();
         }
 
         function moveProductImageInput(item, direction) {
@@ -2474,18 +2519,121 @@
             }
 
             updateProductImageInputsRemoveState();
-            syncProductImagePreviewFromInputs();
+            syncProductImagesUI();
         }
 
-        function syncProductImagePreviewFromInputs() {
-            const imageValues = collectProductImageValues();
-            currentImageUrl = imageValues.length > 0 ? imageValues[0] : '';
+        function updateThumbnailEmptyState(hasImages) {
+            const emptyEl = document.getElementById('productThumbnailsEmpty');
 
+            if (!emptyEl) {
+                return;
+            }
+
+            emptyEl.hidden = hasImages;
+        }
+
+        function renderProductImageThumbnails(imageValues = [], primaryImage = '') {
+            const container = document.getElementById('productThumbnailsCarousel');
+
+            if (!container) {
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (!Array.isArray(imageValues) || imageValues.length === 0) {
+                updateThumbnailEmptyState(false);
+                return;
+            }
+
+            updateThumbnailEmptyState(true);
+
+            imageValues.forEach((url, index) => {
+                const item = document.createElement('div');
+                item.className = 'image-thumbnail';
+                item.dataset.index = String(index);
+                item.dataset.primary = url === primaryImage ? 'true' : 'false';
+                item.setAttribute('role', 'listitem');
+                item.draggable = true;
+                item.addEventListener('dragstart', event => {
+                    draggedThumbnailIndex = index;
+                    item.classList.add('is-dragging');
+                    if (event && event.dataTransfer) {
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData('text/plain', String(index));
+                    }
+                });
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('is-dragging');
+                    draggedThumbnailIndex = null;
+                });
+                item.addEventListener('dragover', event => {
+                    event.preventDefault();
+                    item.classList.add('is-drop-target');
+                    if (event && event.dataTransfer) {
+                        event.dataTransfer.dropEffect = 'move';
+                    }
+                });
+                item.addEventListener('dragleave', () => {
+                    item.classList.remove('is-drop-target');
+                });
+                item.addEventListener('drop', event => {
+                    event.preventDefault();
+                    item.classList.remove('is-drop-target');
+                    const targetIndex = Number(item.dataset.index);
+                    const sourceIndex = draggedThumbnailIndex !== null ? draggedThumbnailIndex : Number(event.dataTransfer && event.dataTransfer.getData('text/plain'));
+
+                    if (Number.isInteger(sourceIndex) && Number.isInteger(targetIndex) && sourceIndex !== targetIndex) {
+                        reorderProductImageInputs(sourceIndex, targetIndex);
+                    }
+                });
+
+                const media = document.createElement('div');
+                media.className = 'image-thumbnail__media';
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = `Imagen ${index + 1}`;
+                media.appendChild(img);
+
+                const coverButton = document.createElement('button');
+                coverButton.type = 'button';
+                coverButton.className = 'image-thumbnail__cover-toggle';
+                coverButton.textContent = url === primaryImage ? 'Portada' : 'Marcar portada';
+                coverButton.setAttribute('aria-pressed', url === primaryImage ? 'true' : 'false');
+                coverButton.addEventListener('click', () => {
+                    currentPrimaryImage = url;
+                    syncProductImagesUI();
+                });
+                media.appendChild(coverButton);
+
+                const footer = document.createElement('div');
+                footer.className = 'image-thumbnail__footer';
+
+                const handle = document.createElement('span');
+                handle.className = 'image-thumbnail__handle';
+                handle.textContent = '⠿';
+                handle.title = 'Arrastra para reordenar';
+                footer.appendChild(handle);
+
+                const label = document.createElement('span');
+                label.className = 'image-thumbnail__label';
+                label.textContent = url === primaryImage ? 'Portada' : `Imagen ${index + 1}`;
+                footer.appendChild(label);
+
+                item.appendChild(media);
+                item.appendChild(footer);
+
+                container.appendChild(item);
+            });
+        }
+
+        function updateProductImagePreviewFromValues(primaryImage) {
             const nameInput = document.getElementById('productName');
             const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
 
-            if (currentImageUrl) {
-                updateProductImagePreview(currentImageUrl, displayName);
+            if (primaryImage) {
+                currentImageUrl = primaryImage;
+                updateProductImagePreview(primaryImage, displayName);
                 return;
             }
 
@@ -2498,8 +2646,31 @@
             updateProductImagePreview(null);
         }
 
+        function syncProductImagesUI() {
+            const { images, primaryImage } = collectProductImagesData();
+            updateProductImagePreviewFromValues(primaryImage);
+            renderProductImageThumbnails(images, primaryImage);
+            return { images, primaryImage };
+        }
+
+        function reorderProductImageInputs(fromIndex, toIndex) {
+            const container = getProductImagesContainer();
+            const items = container ? Array.from(container.querySelectorAll('.image-url-item')) : [];
+
+            if (!container || fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
+                return;
+            }
+
+            const [moved] = items.splice(fromIndex, 1);
+            items.splice(toIndex, 0, moved);
+
+            items.forEach(item => container.appendChild(item));
+            updateProductImageInputsRemoveState();
+            syncProductImagesUI();
+        }
+
         function handleProductImageInputsChange() {
-            syncProductImagePreviewFromInputs();
+            syncProductImagesUI();
         }
 
         function updateLogoPreview(src) {
@@ -4237,8 +4408,9 @@
 
                     currentIconFallback = product.icon || '';
                     const imageValues = getNormalizedProductImages(product);
-                    renderProductImageInputs(imageValues);
-                    currentImageUrl = imageValues.length > 0 ? imageValues[0] : '';
+                    const primaryImage = sanitizeImageValue(product.primaryImage || product.image || imageValues[0] || '');
+                    renderProductImageInputs(imageValues, primaryImage);
+                    currentImageUrl = primaryImage || '';
                     renderFeatureInputs(product.features);
                 }
             } else {
@@ -4301,6 +4473,7 @@
             form.reset();
             editingProductId = null;
             currentImageUrl = '';
+            currentPrimaryImage = '';
             currentIconFallback = '';
             renderProductImageInputs([]);
             updateProductImagePreview(null);
@@ -4372,7 +4545,7 @@
                 .map(input => input.value)
                 .filter(value => value.trim() !== '');
 
-            const imageValues = collectProductImageValues();
+            const { images: imageValues, primaryImage } = collectProductImagesData();
             const priceInput = document.getElementById('productPrice');
             const normalizedPrice = formatCurrencyCOP(priceInput ? priceInput.value : '');
 
@@ -4387,10 +4560,13 @@
             };
 
             if (Array.isArray(imageValues) && imageValues.length > 0) {
-                productData.images = imageValues;
-                productData.image = imageValues[0];
+                const orderedImages = ensurePrimaryImageFirst(imageValues, primaryImage);
+                productData.images = orderedImages;
+                productData.image = primaryImage || orderedImages[0];
+                productData.primaryImage = primaryImage || orderedImages[0];
             } else {
                 productData.images = [];
+                delete productData.primaryImage;
             }
 
             normalizeProductImages(productData);
