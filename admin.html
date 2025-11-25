@@ -547,113 +547,131 @@
 
     <!-- Product Modal -->
     <div class="modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true" tabindex="-1">
-        <div class="modal-content">
+        <div class="modal-content modal-content--product">
             <div class="modal-header">
                 <h2 id="modalTitle">Añadir Producto</h2>
                 <button class="close-modal" type="button" id="closeProductModalButton" aria-label="Cerrar formulario de producto">✕</button>
             </div>
 
-            <form id="productForm">
-                <input type="hidden" id="productId">
-                
-                <div class="form-group">
-                    <label for="productCategory">Categoría:</label>
-                    <select id="productCategory"></select>
-                </div>
+            <div class="product-modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="productId">
 
-                <div class="form-group">
-                    <label for="productName">Nombre del producto:</label>
-                    <input type="text" id="productName" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="productShortDesc">Descripción corta:</label>
-                    <div class="input-meta">
-                        <textarea id="productShortDesc" required aria-describedby="shortDescHint shortDescCounter"></textarea>
-                        <div class="field-hint" id="shortDescHint">
-                            Resume en una o dos frases el valor principal del producto.
-                        </div>
-                        <div class="char-counter" id="shortDescCounter" aria-live="polite">0 / 140 caracteres</div>
+                    <div class="form-group">
+                        <label for="productCategory">Categoría:</label>
+                        <select id="productCategory"></select>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="productLongDesc">Descripción detallada:</label>
-                    <div class="input-meta">
-                        <textarea id="productLongDesc" rows="4" aria-describedby="longDescHint longDescCounter"></textarea>
-                        <div class="field-hint" id="longDescHint">
-                            Utiliza viñetas o frases cortas para resaltar usos, materiales y cuidados.
-                        </div>
-                        <div class="char-counter" id="longDescCounter" aria-live="polite">0 / 400 caracteres</div>
+                    <div class="form-group">
+                        <label for="productName">Nombre del producto:</label>
+                        <input type="text" id="productName" required>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="productPrice">Precio:</label>
-                    <div class="input-meta">
-                        <input type="text" id="productPrice" placeholder="$45.000 o $85.000/m²" aria-describedby="priceHint pricePreview">
-                        <div class="field-hint" id="priceHint">
-                            Ejemplos válidos: $45.000, 125000 o 85.000/m².
-                        </div>
-                        <div class="field-hint field-hint--muted" id="pricePreview" aria-live="polite">Vista previa: —</div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="productImageUrl">Imágenes del producto:</label>
-                    <div class="field-hint field-hint--muted">
-                        Usa enlaces directos (por ejemplo, de <code>raw.githubusercontent.com</code>) y añade todas las tomas que necesites.
-                        El catálogo mostrará flechas para avanzar entre ellas.
-                    </div>
-                    <div id="productImagesList" class="image-url-list">
-                        <div class="image-url-item">
-                            <input type="url" class="product-image-url-input" id="productImageUrl" placeholder="https://raw.githubusercontent.com/...">
-                            <button type="button" class="icon-btn remove-image-button" data-action="remove-image" aria-label="Eliminar imagen" title="Eliminar imagen">✕</button>
+                    <div class="form-group">
+                        <label for="productShortDesc">Descripción corta:</label>
+                        <div class="input-meta">
+                            <textarea id="productShortDesc" required aria-describedby="shortDescHint shortDescCounter"></textarea>
+                            <div class="field-hint" id="shortDescHint">
+                                Resume en una o dos frases el valor principal del producto.
+                            </div>
+                            <div class="char-counter" id="shortDescCounter" aria-live="polite">0 / 140 caracteres</div>
                         </div>
                     </div>
-                    <div class="image-thumbnail-panel" aria-live="polite">
-                        <div class="image-thumbnail-panel__header">
-                            <strong>Miniaturas y portada</strong>
-                            <span class="image-thumbnail-panel__hint">Arrastra para reordenar y marca la portada.</span>
+
+                    <div class="form-group">
+                        <label for="productLongDesc">Descripción detallada:</label>
+                        <div class="input-meta">
+                            <textarea id="productLongDesc" rows="4" aria-describedby="longDescHint longDescCounter"></textarea>
+                            <div class="field-hint" id="longDescHint">
+                                Utiliza viñetas o frases cortas para resaltar usos, materiales y cuidados.
+                            </div>
+                            <div class="char-counter" id="longDescCounter" aria-live="polite">0 / 400 caracteres</div>
                         </div>
-                        <div id="productThumbnailsCarousel" class="image-thumbnail-list" role="list" aria-label="Miniaturas de imágenes"></div>
-                        <p class="image-thumbnail-empty" id="productThumbnailsEmpty">Añade URLs para ver las miniaturas.</p>
                     </div>
-                    <button type="button" id="addProductImageButton" class="btn btn-secondary image-add-button">➕ Añadir imagen</button>
-                    <div class="image-preview" id="productImagePreviewWrapper">
-                        <img id="productImagePreview" alt="Vista previa del producto" src="" />
-                        <span class="image-placeholder" id="productImagePlaceholder">Sin imagen seleccionada</span>
-                    </div>
-                </div>
 
-                <div class="form-group">
-                    <label>Características (etiquetas):</label>
-                    <div id="featuresList" class="feature-list"></div>
-                    <button type="button" class="btn btn-secondary" id="addFeatureButton">+ Añadir característica</button>
-                </div>
-
-                <div class="form-group">
-                    <label for="productSpecs">Especificaciones técnicas:</label>
-                    <div class="warning-box">
-                        Formato: Nombre: Valor (una por línea)<br>
-                        Ejemplo:<br>
-                        Material: Concreto reforzado<br>
-                        Peso: 8 kg
-                    </div>
-                    <div class="input-meta">
-                        <textarea id="productSpecs" rows="6" placeholder="Material: Concreto reforzado&#10;Dimensiones: 30cm x 25cm&#10;Peso: 8 kg" aria-describedby="specsHint specsCounter"></textarea>
-                        <div class="field-hint" id="specsHint">
-                            Añade cada especificación en el formato <strong>Nombre: Valor</strong> para que se muestre correctamente.
+                    <div class="form-group">
+                        <label for="productPrice">Precio:</label>
+                        <div class="input-meta">
+                            <input type="text" id="productPrice" placeholder="$45.000 o $85.000/m²" aria-describedby="priceHint pricePreview">
+                            <div class="field-hint" id="priceHint">
+                                Ejemplos válidos: $45.000, 125000 o 85.000/m².
+                            </div>
+                            <div class="field-hint field-hint--muted" id="pricePreview" aria-live="polite">Vista previa: —</div>
                         </div>
-                        <div class="char-counter" id="specsCounter" aria-live="polite">0 / 800 caracteres</div>
                     </div>
-                </div>
 
-                <div style="display: flex; gap: 1rem; justify-content: flex-end">
-                    <button type="button" class="btn btn-secondary" id="cancelProductButton">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Producto</button>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label for="productImageUrl">Imágenes del producto:</label>
+                        <div class="field-hint field-hint--muted">
+                            Usa enlaces directos (por ejemplo, de <code>raw.githubusercontent.com</code>) y añade todas las tomas que necesites.
+                            El catálogo mostrará flechas para avanzar entre ellas.
+                        </div>
+                        <div id="productImagesList" class="image-url-list">
+                            <div class="image-url-item">
+                                <input type="url" class="product-image-url-input" id="productImageUrl" placeholder="https://raw.githubusercontent.com/...">
+                                <button type="button" class="icon-btn remove-image-button" data-action="remove-image" aria-label="Eliminar imagen" title="Eliminar imagen">✕</button>
+                            </div>
+                        </div>
+                        <div class="image-thumbnail-panel" aria-live="polite">
+                            <div class="image-thumbnail-panel__header">
+                                <strong>Miniaturas y portada</strong>
+                                <span class="image-thumbnail-panel__hint">Arrastra para reordenar y marca la portada.</span>
+                            </div>
+                            <div id="productThumbnailsCarousel" class="image-thumbnail-list" role="list" aria-label="Miniaturas de imágenes"></div>
+                            <p class="image-thumbnail-empty" id="productThumbnailsEmpty">Añade URLs para ver las miniaturas.</p>
+                        </div>
+                        <button type="button" id="addProductImageButton" class="btn btn-secondary image-add-button">➕ Añadir imagen</button>
+                        <div class="image-preview" id="productImagePreviewWrapper">
+                            <img id="productImagePreview" alt="Vista previa del producto" src="" />
+                            <span class="image-placeholder" id="productImagePlaceholder">Sin imagen seleccionada</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Características (etiquetas):</label>
+                        <div id="featuresList" class="feature-list"></div>
+                        <button type="button" class="btn btn-secondary" id="addFeatureButton">+ Añadir característica</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productSpecs">Especificaciones técnicas:</label>
+                        <div class="warning-box">
+                            Formato: Nombre: Valor (una por línea)<br>
+                            Ejemplo:<br>
+                            Material: Concreto reforzado<br>
+                            Peso: 8 kg
+                        </div>
+                        <div class="input-meta">
+                            <textarea id="productSpecs" rows="6" placeholder="Material: Concreto reforzado&#10;Dimensiones: 30cm x 25cm&#10;Peso: 8 kg" aria-describedby="specsHint specsCounter"></textarea>
+                            <div class="field-hint" id="specsHint">
+                                Añade cada especificación en el formato <strong>Nombre: Valor</strong> para que se muestre correctamente.
+                            </div>
+                            <div class="char-counter" id="specsCounter" aria-live="polite">0 / 800 caracteres</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end">
+                        <button type="button" class="btn btn-secondary" id="cancelProductButton">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Producto</button>
+                    </div>
+                </form>
+
+                <aside class="product-preview-panel" aria-live="polite">
+                    <div class="product-preview-panel__header">Vista previa en el catálogo</div>
+                    <div class="product-preview-card" id="productPreviewCard">
+                        <div class="product-preview-media">
+                            <img id="productPreviewImage" alt="Vista previa del catálogo" />
+                            <span class="image-placeholder" id="productPreviewPlaceholder">Añade una imagen principal</span>
+                        </div>
+                        <div class="product-preview-body">
+                            <div class="product-preview-tags" id="productPreviewTags"></div>
+                            <h3 class="product-preview-name" id="productPreviewName">Producto Amazonia</h3>
+                            <p class="product-preview-desc" id="productPreviewShortDesc">Información disponible próximamente.</p>
+                            <p class="product-preview-price" id="productPreviewPrice">Precio a confirmar</p>
+                        </div>
+                    </div>
+                </aside>
+            </div>
         </div>
     </div>
 

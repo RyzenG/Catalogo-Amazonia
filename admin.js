@@ -1184,6 +1184,12 @@
             specs: 800
         };
 
+        const PRODUCT_PREVIEW_DEFAULTS = {
+            name: 'Producto Amazonia',
+            shortDesc: 'Información disponible próximamente.',
+            price: 'Precio a confirmar'
+        };
+
         const productFormAssistantRefreshers = [];
         let productFormAssistantsInitialized = false;
 
@@ -2532,6 +2538,107 @@
             emptyEl.hidden = hasImages;
         }
 
+        function updateProductPreviewImage(src, altText) {
+            const imageEl = document.getElementById('productPreviewImage');
+            const placeholderEl = document.getElementById('productPreviewPlaceholder');
+
+            if (!imageEl || !placeholderEl) {
+                return;
+            }
+
+            if (src) {
+                imageEl.src = src;
+                imageEl.alt = altText || 'Vista previa del catálogo';
+                imageEl.style.display = 'block';
+                placeholderEl.style.display = 'none';
+                return;
+            }
+
+            imageEl.removeAttribute('src');
+            imageEl.style.display = 'none';
+            placeholderEl.textContent = 'Añade una imagen principal';
+            placeholderEl.style.display = 'flex';
+        }
+
+        function collectFeatureInputValues() {
+            const featuresList = document.getElementById('featuresList');
+
+            if (!featuresList) {
+                return [];
+            }
+
+            return Array.from(featuresList.querySelectorAll('input'))
+                .map(input => (input ? input.value.trim() : ''))
+                .filter(value => value.length > 0);
+        }
+
+        function renderProductPreviewTags(features = []) {
+            const container = document.getElementById('productPreviewTags');
+
+            if (!container) {
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (!Array.isArray(features) || features.length === 0) {
+                const placeholder = document.createElement('span');
+                placeholder.className = 'product-preview-tag product-preview-tag--placeholder';
+                placeholder.textContent = 'Añade etiquetas para destacar beneficios';
+                container.appendChild(placeholder);
+                return;
+            }
+
+            features.forEach(feature => {
+                const tag = document.createElement('span');
+                tag.className = 'product-preview-tag';
+                tag.textContent = feature;
+                container.appendChild(tag);
+            });
+        }
+
+        function updateProductPreviewCard() {
+            const nameInput = document.getElementById('productName');
+            const shortDescInput = document.getElementById('productShortDesc');
+            const priceInput = document.getElementById('productPrice');
+
+            const previewName = nameInput && nameInput.value.trim()
+                ? nameInput.value.trim()
+                : PRODUCT_PREVIEW_DEFAULTS.name;
+            const previewShortDesc = shortDescInput && shortDescInput.value.trim()
+                ? shortDescInput.value.trim()
+                : PRODUCT_PREVIEW_DEFAULTS.shortDesc;
+            const priceRaw = priceInput ? priceInput.value : '';
+            const formattedPrice = formatCurrencyCOP(priceRaw);
+            const previewPrice = formattedPrice || PRODUCT_PREVIEW_DEFAULTS.price;
+            const features = collectFeatureInputValues();
+
+            const nameEl = document.getElementById('productPreviewName');
+            const shortDescEl = document.getElementById('productPreviewShortDesc');
+            const priceEl = document.getElementById('productPreviewPrice');
+
+            if (nameEl) {
+                nameEl.textContent = previewName;
+            }
+
+            if (shortDescEl) {
+                shortDescEl.textContent = previewShortDesc;
+            }
+
+            if (priceEl) {
+                priceEl.textContent = previewPrice;
+            }
+
+            renderProductPreviewTags(features);
+
+            const imageSource = currentPrimaryImage || currentImageUrl || '';
+            const resolvedImage = imageSource || (currentIconFallback
+                ? createIconPlaceholder(currentIconFallback, previewName)
+                : '');
+
+            updateProductPreviewImage(resolvedImage, previewName);
+        }
+
         function renderProductImageThumbnails(imageValues = [], primaryImage = '') {
             const container = document.getElementById('productThumbnailsCarousel');
 
@@ -2630,20 +2737,12 @@
         function updateProductImagePreviewFromValues(primaryImage) {
             const nameInput = document.getElementById('productName');
             const displayName = nameInput && nameInput.value ? nameInput.value : 'Producto Amazonia';
+            const resolvedImage = primaryImage
+                || (currentIconFallback ? createIconPlaceholder(currentIconFallback, displayName) : '');
 
-            if (primaryImage) {
-                currentImageUrl = primaryImage;
-                updateProductImagePreview(primaryImage, displayName);
-                return;
-            }
-
-            if (currentIconFallback) {
-                const placeholder = createIconPlaceholder(currentIconFallback, displayName);
-                updateProductImagePreview(placeholder, displayName);
-                return;
-            }
-
-            updateProductImagePreview(null);
+            currentImageUrl = resolvedImage || '';
+            updateProductImagePreview(resolvedImage || null, displayName);
+            updateProductPreviewCard();
         }
 
         function syncProductImagesUI() {
@@ -2907,6 +3006,20 @@
             const addFeatureButton = document.getElementById('addFeatureButton');
             if (addFeatureButton) {
                 addFeatureButton.addEventListener('click', addFeature);
+            }
+
+            const productForm = document.getElementById('productForm');
+            if (productForm) {
+                productForm.addEventListener('input', event => {
+                    const target = event && event.target ? event.target : null;
+                    if (!target) {
+                        return;
+                    }
+
+                    if (['productName', 'productShortDesc', 'productPrice'].includes(target.id)) {
+                        updateProductPreviewCard();
+                    }
+                });
             }
 
             const manageCategoriesButton = document.getElementById('manageCategoriesButton');
@@ -4082,6 +4195,7 @@
             if (!value) {
                 input.placeholder = placeholder;
             }
+            input.addEventListener('input', updateProductPreviewCard);
 
             const removeButton = document.createElement('button');
             removeButton.type = 'button';
@@ -4103,12 +4217,15 @@
 
             if (!Array.isArray(features) || features.length === 0) {
                 featuresList.appendChild(createFeatureRow());
+                updateProductPreviewCard();
                 return;
             }
 
             features.forEach(feature => {
                 featuresList.appendChild(createFeatureRow(feature));
             });
+
+            updateProductPreviewCard();
         }
 
         // Load products
@@ -4412,6 +4529,7 @@
                     renderProductImageInputs(imageValues, primaryImage);
                     currentImageUrl = primaryImage || '';
                     renderFeatureInputs(product.features);
+                    updateProductPreviewCard();
                 }
             } else {
                 document.getElementById('modalTitle').textContent = 'Añadir Producto';
@@ -4424,6 +4542,7 @@
                 renderProductImageInputs([]);
                 updateProductImagePreview(null);
                 renderFeatureInputs();
+                updateProductPreviewCard();
             }
 
             refreshProductFormAssistants();
@@ -4479,6 +4598,7 @@
             updateProductImagePreview(null);
             renderFeatureInputs();
             refreshProductFormAssistants();
+            updateProductPreviewCard();
 
             if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                 lastFocusedElement.focus();
@@ -4492,6 +4612,7 @@
             if (!featuresList) return;
 
             featuresList.appendChild(createFeatureRow('', 'Nueva característica'));
+            updateProductPreviewCard();
         }
 
         // Remove feature input
@@ -4508,6 +4629,8 @@
                     input.placeholder = 'Ej: 30cm x 25cm';
                 }
             }
+
+            updateProductPreviewCard();
         }
 
         // Edit product
@@ -4541,9 +4664,7 @@
                 alert('Selecciona una categoría válida para el producto.');
                 return;
             }
-            const features = Array.from(document.querySelectorAll('#featuresList input'))
-                .map(input => input.value)
-                .filter(value => value.trim() !== '');
+            const features = collectFeatureInputValues();
 
             const { images: imageValues, primaryImage } = collectProductImagesData();
             const priceInput = document.getElementById('productPrice');
