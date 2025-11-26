@@ -5518,7 +5518,11 @@
                 companyName: config.companyName ? config.companyName.trim() : '',
                 tagline: config.tagline ? config.tagline.trim() : '',
                 footerMessage: config.footerMessage ? config.footerMessage.trim() : '',
-                logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
+                logoData: typeof config.logoData === 'string' ? config.logoData.trim() : '',
+                whatsapp: (config.whatsapp || '').trim(),
+                instagram: (config.instagram || '').trim(),
+                facebook: (config.facebook || '').trim(),
+                tiktok: (config.tiktok || '').trim()
             };
 
             const heroEyebrow = escapeHtml(news.heroEyebrow || 'Novedades');
@@ -5587,6 +5591,44 @@
             const logoMarkup = trimmedConfig.logoData
                 ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`
                 : '';
+
+            const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
+            const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '#';
+            const whatsappLinkStyle = sanitizedWhatsappNumber ? '' : 'display: none;';
+
+            const instagramUrlRaw = trimmedConfig.instagram;
+            const facebookUrlRaw = trimmedConfig.facebook;
+            const tiktokUrlRaw = trimmedConfig.tiktok;
+
+            const instagramLinkHref = instagramUrlRaw ? escapeHtml(instagramUrlRaw) : '#';
+            const instagramLinkStyle = instagramUrlRaw ? '' : 'display: none;';
+            const facebookLinkHref = facebookUrlRaw ? escapeHtml(facebookUrlRaw) : '#';
+            const facebookLinkStyle = facebookUrlRaw ? '' : 'display: none;';
+            const tiktokLinkHref = tiktokUrlRaw ? escapeHtml(tiktokUrlRaw) : '#';
+            const tiktokLinkStyle = tiktokUrlRaw ? '' : 'display: none;';
+
+            const hasSocialLinks = Boolean(sanitizedWhatsappNumber || instagramUrlRaw || facebookUrlRaw || tiktokUrlRaw);
+            const socialLinksContainerStyle = hasSocialLinks ? '' : 'display: none;';
+
+            const socialLinksMarkup = `
+                <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="${socialLinksContainerStyle}">
+                    <a id="footerSocialWhatsApp" class="social-link social-link--whatsapp" href="${whatsappLinkHref}" target="_blank" rel="noopener noreferrer" style="${whatsappLinkStyle}">
+                        ${getSocialIconSvg('whatsapp')}
+                        <span class="sr-only">WhatsApp</span>
+                    </a>
+                    <a id="footerSocialInstagram" class="social-link social-link--instagram" href="${instagramLinkHref}" target="_blank" rel="noopener noreferrer" style="${instagramLinkStyle}">
+                        ${getSocialIconSvg('instagram')}
+                        <span class="sr-only">Instagram</span>
+                    </a>
+                    <a id="footerSocialFacebook" class="social-link social-link--facebook" href="${facebookLinkHref}" target="_blank" rel="noopener noreferrer" style="${facebookLinkStyle}">
+                        ${getSocialIconSvg('facebook')}
+                        <span class="sr-only">Facebook</span>
+                    </a>
+                    <a id="footerSocialTiktok" class="social-link social-link--tiktok" href="${tiktokLinkHref}" target="_blank" rel="noopener noreferrer" style="${tiktokLinkStyle}">
+                        ${getSocialIconSvg('tiktok')}
+                        <span class="sr-only">TikTok</span>
+                    </a>
+                </div>`;
 
             const catalogHref = 'catalogo.html';
 
@@ -5727,7 +5769,22 @@
         .cta { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .cta__title { margin: 0; font-size: 1.5rem; }
         .cta__description { margin: 0; opacity: 0.9; }
-        .site-footer { padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.95rem; background: rgba(255, 255, 255, 0.7); }
+        .site-footer { padding: 2.5rem 1.25rem; text-align: center; color: ${theme.textOnDark}; font-size: 0.95rem; background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%); }
+        .footer-content { max-width: 1200px; margin: 0 auto; }
+        .footer-content p { margin: 0; }
+        .contact-info { margin-bottom: 1.5rem; }
+        .contact-info h3 { margin: 0 0 1rem; font-size: 1.5rem; color: ${theme.textOnDark}; }
+        .contact-info p { margin: 0; opacity: 0.9; color: ${theme.textOnDark}; }
+        .social-links { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin: 1.5rem 0 1rem; }
+        .social-link { width: 3rem; height: 3rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: #fff; transition: transform 0.3s ease, box-shadow 0.3s ease; position: relative; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); }
+        .social-link svg { width: 1.5rem; height: 1.5rem; }
+        .social-link svg path { fill: currentColor; }
+        .social-link:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25); }
+        .social-link--whatsapp { background: #25d366; }
+        .social-link--instagram { background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%); }
+        .social-link--facebook { background: #1877f2; }
+        .social-link--tiktok { background: #010101; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
         .empty-state { padding: 1rem; border: 1px dashed #cbd5e1; border-radius: 10px; color: #475569; }
         @media (max-width: 720px) {
             .site-header__inner { align-items: flex-start; }
@@ -5805,7 +5862,14 @@
     </main>
 
     <footer class="site-footer">
-        <p>© ${new Date().getFullYear()} ${companyNameHtml}. ${footerMessageHtml}</p>
+        <div class="footer-content">
+            <div class="contact-info">
+                <h3>${companyNameHtml}</h3>
+                ${socialLinksMarkup}
+                <p>${footerMessageHtml}</p>
+            </div>
+            <p style="opacity: 0.85;">© ${new Date().getFullYear()} ${companyNameHtml} - Todos los derechos reservados</p>
+        </div>
     </footer>
     <script>
     (() => {
