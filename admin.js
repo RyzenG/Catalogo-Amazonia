@@ -5444,6 +5444,17 @@
             const config = getNormalizedConfig(configOverride || catalogData.config);
             const theme = buildThemeTokens(config.appearance);
             const news = normalizeNewsPanel(config.newsPanel);
+            const policies = normalizePolicies(config.policies);
+            const aboutConfig = normalizeAbout(config.about);
+
+            const hasAboutSection = Boolean(
+                (aboutConfig && typeof aboutConfig.mission === 'string' && aboutConfig.mission.trim().length > 0)
+                || (aboutConfig && typeof aboutConfig.vision === 'string' && aboutConfig.vision.trim().length > 0)
+                || (aboutConfig && typeof aboutConfig.history === 'string' && aboutConfig.history.trim().length > 0)
+                || (aboutConfig && Array.isArray(aboutConfig.values) && aboutConfig.values.some(value => typeof value === 'string' && value.trim().length > 0))
+            );
+
+            const hasPoliciesSection = hasPoliciesContent(policies);
 
             const trimmedConfig = {
                 companyName: config.companyName ? config.companyName.trim() : '',
@@ -5485,6 +5496,27 @@
                 ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`
                 : '';
 
+            const catalogHref = 'catalogo.html';
+
+            const primaryNavItems = [
+                { id: 'primaryNavHome', label: 'Inicio', href: '#hero', visible: true, icon: 'home' },
+                { id: 'primaryNavProducts', label: 'Catálogo', href: `${catalogHref}#catalogProducts`, visible: true, external: true, icon: 'products' },
+                { id: 'primaryNavAbout', label: 'Nosotros', href: 'nosotros.html', visible: true, external: true, icon: 'about' },
+                { id: 'primaryNavPolicies', label: 'Políticas corporativas', href: 'politicas.html', visible: true, external: true, icon: 'policies' }
+            ];
+
+            const primaryNavLinksMarkup = primaryNavItems
+                .map(item => {
+                    const styleAttr = item.visible ? '' : ' style="display: none;"';
+                    const hiddenAttr = item.visible ? '' : ' aria-hidden="true" tabindex="-1"';
+                    const hrefAttr = item.href ? item.href : `#${item.target}`;
+                    const targetAttr = item.href ? '' : ` data-scroll-target="${item.target}"`;
+                    const externalAttr = item.external && item.href ? ` data-external-url="${item.href}"` : '';
+                    const iconMarkup = item.icon ? `<span class="primary-nav__icon" aria-hidden="true">${getPrimaryNavIconSvg(item.icon)}</span>` : '';
+                    return `<a class="primary-nav__link" id="${item.id}" href="${hrefAttr}"${targetAttr}${externalAttr}${styleAttr}${hiddenAttr}>${iconMarkup}<span class="primary-nav__label">${escapeHtml(item.label)}</span></a>`;
+                })
+                .join('');
+
             const styles = `
         :root {
             --color-bg: ${theme.background};
@@ -5497,14 +5529,19 @@
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--color-bg); color: #1a1f36; }
         a { color: inherit; }
-        .site-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background: var(--color-header); color: #fff; position: sticky; top: 0; z-index: 10; }
+        .site-header { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; background: var(--color-header); color: #fff; position: sticky; top: 0; z-index: 10; align-items: stretch; }
         .site-header__brand { display: flex; gap: 0.75rem; align-items: center; }
         .brand-logo { width: 56px; height: 56px; object-fit: contain; }
         .brand-kicker { margin: 0; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem; }
         .brand-tagline { margin: 0; opacity: 0.9; }
-        .main-nav__list { list-style: none; display: flex; gap: 1rem; margin: 0; padding: 0; }
-        .main-nav__list a { text-decoration: none; color: #f4f7f5; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 999px; transition: background 150ms ease; }
-        .main-nav__list a:hover { background: rgba(255,255,255,0.15); }
+        .primary-nav { max-width: 1200px; margin: 0 auto; padding: 0 1rem 0.25rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+        .primary-nav__link { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem 1.25rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.15); color: ${theme.textOnDark}; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; text-decoration: none; transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; backdrop-filter: blur(4px); }
+        .primary-nav__link:hover, .primary-nav__link:focus-visible { background: rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.6); transform: translateY(-1px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18); color: ${theme.textOnDark}; outline: none; }
+        .primary-nav__link:focus-visible { box-shadow: 0 0 0 3px ${theme.accentSoft}, 0 12px 24px rgba(15, 23, 42, 0.18); }
+        .primary-nav__icon { display: inline-flex; width: 1.1rem; height: 1.1rem; }
+        .primary-nav__icon svg { width: 100%; height: 100%; }
+        .primary-nav__icon svg path { fill: currentColor; }
+        .primary-nav__label { line-height: 1; }
         .hero { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); padding: 3rem 1.5rem; background: linear-gradient(135deg, ${theme.header}, ${theme.accent}); color: #fff; }
         .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.9rem; }
         .hero__title { margin: 0.25rem 0; font-size: clamp(1.8rem, 3vw, 2.6rem); line-height: 1.2; }
@@ -5533,12 +5570,10 @@
         .site-footer { padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.95rem; }
         .empty-state { padding: 1rem; border: 1px dashed #cbd5e1; border-radius: 10px; color: #475569; }
         @media (max-width: 720px) {
-            .site-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .site-header { align-items: flex-start; }
             .cta { flex-direction: column; align-items: flex-start; }
         }
             `;
-
-            const catalogHref = 'catalogo.html';
 
             return `<!DOCTYPE html>
 <html lang="es">
@@ -5557,12 +5592,8 @@
                 <p class="brand-tagline">${escapeHtml(trimmedConfig.tagline || 'Naturaleza y modernidad en concreto')}</p>
             </div>
         </div>
-        <nav class="main-nav" aria-label="Navegación principal">
-            <ul class="main-nav__list">
-                <li><a href="#hero">Inicio</a></li>
-                <li><a href="#novedades">Novedades</a></li>
-                <li><a href="${catalogHref}">Catálogo</a></li>
-            </ul>
+        <nav class="primary-nav" aria-label="Navegación principal">
+            ${primaryNavLinksMarkup}
         </nav>
     </header>
 
