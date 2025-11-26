@@ -22,19 +22,30 @@
                     eyebrow: 'Festival',
                     title: 'Colección Semana de la Tierra',
                     description: 'Edición limitada inspirada en texturas naturales y pigmentos minerales, disponible solo durante abril.',
-                    tags: ['Del 15 al 30 de abril', 'Nuevos acabados']
+                    tags: ['Del 15 al 30 de abril', 'Nuevos acabados'],
+                    media: [
+                        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+                        'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80'
+                    ]
                 },
                 {
                     eyebrow: 'Descuento',
                     title: 'Semana del Cliente',
                     description: 'Hasta 20% de descuento en mobiliario para terrazas y espacios comerciales. Asesoría incluida.',
-                    tags: ['Del 3 al 10 de mayo', '-20%']
+                    tags: ['Del 3 al 10 de mayo', '-20%'],
+                    media: [
+                        'https://images.unsplash.com/photo-1470246973918-29a93221c455?auto=format&fit=crop&w=1200&q=80'
+                    ]
                 },
                 {
                     eyebrow: 'Lanzamiento',
                     title: 'Línea Aurora',
                     description: 'Nuevas lámparas en concreto ultraligero con difusor cálido. Ideal para crear atmósferas relajantes.',
-                    tags: ['Disponible en junio', 'Iluminación']
+                    tags: ['Disponible en junio', 'Iluminación'],
+                    media: [
+                        'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
+                        'https://videos.pexels.com/video-files/3049216/3049216-hd_1920_1080_30fps.mp4'
+                    ]
                 }
             ]
         };
@@ -289,13 +300,26 @@
                         .map(tag => typeof tag === 'string' ? tag.trim() : '')
                         .filter(tag => tag.length > 0);
 
+                    const mediaFromItem = Array.isArray(item.media)
+                        ? item.media
+                        : (Array.isArray(item.mediaUrls)
+                            ? item.mediaUrls
+                            : (typeof item.media === 'string' ? item.media.split(/\r?\n/) : []));
+
+                    const normalizedMedia = mediaFromItem
+                        .map(url => typeof url === 'string' ? url.trim() : '')
+                        .filter(url => url.length > 0 && isValidUrl(url));
+
                     return {
                         eyebrow,
                         title,
                         description,
-                        tags: normalizedTags
+                        tags: normalizedTags,
+                        media: normalizedMedia.length > 0
+                            ? normalizedMedia
+                            : (Array.isArray(base.media) ? base.media.filter(isValidUrl) : [])
                     };
-                }).filter(item => item.eyebrow || item.title || item.description || (Array.isArray(item.tags) && item.tags.length > 0));
+                }).filter(item => item.eyebrow || item.title || item.description || (Array.isArray(item.tags) && item.tags.length > 0) || (Array.isArray(item.media) && item.media.length > 0));
             }
 
             if (!Array.isArray(normalized.items) || normalized.items.length === 0) {
@@ -3387,11 +3411,21 @@
                 <textarea rows="2" data-field="tags" placeholder="Fechas, beneficios, recordatorios">${escapeHtml(tagValue)}</textarea>
             `;
 
+            const mediaField = document.createElement('div');
+            mediaField.className = 'form-group';
+            const mediaValue = Array.isArray(base.media) ? base.media.join('\n') : '';
+            mediaField.innerHTML = `
+                <label>Imágenes o videos (URLs, uno por línea)</label>
+                <textarea rows="3" data-field="media" placeholder="https://ejemplo.com/imagen.jpg&#10;https://ejemplo.com/video.mp4">${escapeHtml(mediaValue)}</textarea>
+                <small class="field-hint">Soporta GIFs, imágenes y videos con https://. Se mostrarán como carrusel si agregas más de un enlace.</small>
+            `;
+
             row.appendChild(header);
             row.appendChild(eyebrowField);
             row.appendChild(titleField);
             row.appendChild(descriptionField);
             row.appendChild(tagsField);
+            row.appendChild(mediaField);
 
             return row;
         }
@@ -3513,6 +3547,7 @@
                     const titleInput = row.querySelector('[data-field="title"]');
                     const descriptionInput = row.querySelector('[data-field="description"]');
                     const tagsInput = row.querySelector('[data-field="tags"]');
+                    const mediaInput = row.querySelector('[data-field="media"]');
 
                     const eyebrow = eyebrowInput && typeof eyebrowInput.value === 'string' ? eyebrowInput.value.trim() : '';
                     const title = titleInput && typeof titleInput.value === 'string' ? titleInput.value.trim() : '';
@@ -3522,9 +3557,12 @@
                     const tags = tagsInput && typeof tagsInput.value === 'string'
                         ? tagsInput.value.split(/\r?\n/).map(tag => tag.trim()).filter(Boolean)
                         : [];
+                    const media = mediaInput && typeof mediaInput.value === 'string'
+                        ? mediaInput.value.split(/\r?\n/).map(url => url.trim()).filter(Boolean)
+                        : [];
 
-                    if (eyebrow || title || description || tags.length > 0) {
-                        items.push({ eyebrow, title, description, tags });
+                    if (eyebrow || title || description || tags.length > 0 || media.length > 0) {
+                        items.push({ eyebrow, title, description, tags, media });
                     }
                 });
 
@@ -4055,6 +4093,26 @@
                     errors.push(`Ingresa un enlace válido para ${label} (asegúrate de incluir http:// o https://).`);
                 }
             });
+
+            const newsMediaInputs = document.querySelectorAll('#newsItemsContainer [data-field="media"]');
+            let invalidNewsMediaCount = 0;
+
+            newsMediaInputs.forEach(input => {
+                const urls = typeof input.value === 'string'
+                    ? input.value.split(/\r?\n/).map(url => url.trim()).filter(Boolean)
+                    : [];
+                const allValid = urls.every(url => isValidUrl(url));
+
+                setFieldValidationState(input, allValid || urls.length === 0);
+
+                if (!allValid) {
+                    invalidNewsMediaCount += 1;
+                }
+            });
+
+            if (invalidNewsMediaCount > 0) {
+                errors.push('Verifica que las URLs de imágenes o videos en Inicio y novedades incluyan http:// o https://.');
+            }
 
             const appearanceValues = isPlainObject(configValues.appearance)
                 ? configValues.appearance
@@ -5469,6 +5527,37 @@
             const primaryCtaText = escapeHtml(news.primaryCta || 'Ver catálogo');
             const secondaryCtaText = escapeHtml(news.secondaryCta || 'Ir a novedades');
 
+            const getMediaType = (url) => {
+                const lowerUrl = typeof url === 'string' ? url.toLowerCase() : '';
+                const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
+                return videoExtensions.some(ext => lowerUrl.includes(ext)) ? 'video' : 'image';
+            };
+
+            const buildNewsMediaMarkup = (mediaList, titleText) => {
+                const validMedia = Array.isArray(mediaList) ? mediaList.filter(isValidUrl) : [];
+                if (!validMedia.length) {
+                    return '';
+                }
+
+                const sanitizedTitle = escapeHtml(titleText || 'Bloque de novedades');
+
+                const slidesMarkup = validMedia.map((url, mediaIndex) => {
+                    const type = getMediaType(url);
+                    const safeUrl = escapeHtml(url);
+                    const activeClass = mediaIndex === 0 ? ' is-active' : '';
+                    const content = type === 'video'
+                        ? `<video class="news-media__video" src="${safeUrl}" preload="metadata" playsinline muted loop controls aria-label="${sanitizedTitle}"></video>`
+                        : `<img class="news-media__image" src="${safeUrl}" alt="${sanitizedTitle}" loading="lazy">`;
+                    return `<div class="news-media__item${activeClass}" data-media-item="${mediaIndex}">${content}</div>`;
+                }).join('');
+
+                const dotsMarkup = validMedia.length > 1
+                    ? `<div class="news-media__dots">${validMedia.map((_, mediaIndex) => `<button type="button" class="news-media__dot${mediaIndex === 0 ? ' is-active' : ''}" data-media-dot="${mediaIndex}" aria-label="Ver imagen ${mediaIndex + 1} de ${validMedia.length}"></button>`).join('')}</div>`
+                    : '';
+
+                return `<div class="news-media" data-news-media>${slidesMarkup}${dotsMarkup}</div>`;
+            };
+
             const newsCards = (Array.isArray(news.items) ? news.items : [])
                 .map(item => {
                     const eyebrow = escapeHtml(item.eyebrow || 'Anuncio');
@@ -5478,9 +5567,12 @@
                     const tagsMarkup = tags.length > 0
                         ? `<div class="card__meta">${tags.map(tag => `<span class="pill">${escapeHtml(tag)}</span>`).join('')}</div>`
                         : '';
+                    const mediaMarkup = buildNewsMediaMarkup(item.media, item.title);
+                    const cardMediaClass = mediaMarkup ? ' card--with-media' : '';
 
                     return `
-                <article class="card">
+                <article class="card${cardMediaClass}">
+                    ${mediaMarkup}
                     <p class="card__eyebrow">${eyebrow}</p>
                     <h3 class="card__title">${title}</h3>
                     <p class="card__description">${description}</p>
@@ -5558,11 +5650,22 @@
         .section__description { margin: 0; color: #425466; }
         .cards-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
         .card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 8px 30px rgba(0,0,0,0.07); border: 1px solid #e5e9ed; }
+        .card--with-media { padding: 0 0 1.25rem; overflow: hidden; }
+        .card--with-media .card__eyebrow, .card--with-media .card__title, .card--with-media .card__description, .card--with-media .card__meta { padding: 0 1.25rem; }
         .card__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.06em; color: ${theme.accent}; font-weight: 700; font-size: 0.85rem; }
         .card__title { margin: 0.4rem 0; font-size: 1.2rem; }
         .card__description { margin: 0; color: #334155; }
         .card__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
         .pill { background: rgba(107, 142, 104, 0.15); color: #2d4a2b; padding: 0.35rem 0.6rem; border-radius: 999px; font-weight: 600; font-size: 0.9rem; }
+        .news-media { position: relative; overflow: hidden; border-radius: 12px; background: #0f172a; }
+        .news-media__item { display: none; }
+        .news-media__item.is-active { display: block; }
+        .news-media__image, .news-media__video { display: block; width: 100%; height: 240px; object-fit: cover; background: #0f172a; }
+        .news-media__video { background: #000; }
+        .news-media__dots { position: absolute; inset-inline: 0; bottom: 10px; display: flex; justify-content: center; gap: 0.35rem; }
+        .news-media__dot { width: 10px; height: 10px; border-radius: 999px; border: none; background: rgba(255,255,255,0.6); cursor: pointer; transition: transform 0.2s ease, background 0.2s ease; }
+        .news-media__dot.is-active { transform: scale(1.1); background: #fff; }
+        .news-media__dot:focus-visible { outline: 2px solid ${theme.accent}; outline-offset: 2px; }
         .section--dark { background: ${theme.header}; color: #fff; }
         .cta { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .cta__title { margin: 0; font-size: 1.5rem; }
@@ -5634,6 +5737,55 @@
     <footer class="site-footer">
         <p>© ${new Date().getFullYear()} ${companyNameHtml}. ${footerMessageHtml}</p>
     </footer>
+    <script>
+    (() => {
+        const sliders = document.querySelectorAll('[data-news-media]');
+
+        sliders.forEach(slider => {
+            const slides = slider.querySelectorAll('[data-media-item]');
+            const dots = slider.querySelectorAll('[data-media-dot]');
+
+            if (slides.length <= 1) {
+                slides.forEach(slide => slide.classList.add('is-active'));
+                return;
+            }
+
+            let currentIndex = 0;
+
+            const activate = (nextIndex) => {
+                currentIndex = nextIndex;
+                slides.forEach((slide, slideIndex) => {
+                    slide.classList.toggle('is-active', slideIndex === currentIndex);
+                });
+                dots.forEach((dot, dotIndex) => {
+                    dot.classList.toggle('is-active', dotIndex === currentIndex);
+                });
+            };
+
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    const nextIndex = Number(dot.dataset.mediaDot);
+                    activate(Number.isNaN(nextIndex) ? 0 : nextIndex);
+                });
+            });
+
+            const rotate = () => {
+                const nextIndex = (currentIndex + 1) % slides.length;
+                activate(nextIndex);
+            };
+
+            let intervalId = setInterval(rotate, 4500);
+
+            slider.addEventListener('mouseenter', () => {
+                clearInterval(intervalId);
+            });
+
+            slider.addEventListener('mouseleave', () => {
+                intervalId = setInterval(rotate, 4500);
+            });
+        });
+    })();
+    </script>
 </body>
 </html>`;
         }
