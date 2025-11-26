@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo | Amazonia Concrete</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body class="page page--catalog">
+    <header class="site-header">
+        <div class="site-header__brand">
+            <img src="images/logo-amazonia.svg" alt="Logo Amazonia Concrete" class="brand-logo" loading="lazy">
+            <div>
+                <p class="brand-kicker">Amazonia Concrete</p>
+                <p class="brand-tagline">Catálogo principal</p>
+            </div>
+        </div>
+        <nav class="main-nav" aria-label="Navegación principal">
+            <ul class="main-nav__list">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="index.html#novedades">Novedades</a></li>
+                <li><a href="#catalogo">Catálogo</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="catalog-hero" id="catalogo">
+        <p class="section__eyebrow">Productos</p>
+        <h1 class="section__title">Catálogo completo por categorías</h1>
+        <p class="section__description">Filtra por categoría, busca por nombre o revisa los productos destacados con los mismos colores y tono del panel de administración.</p>
+    </section>
+
+    <main class="catalog-layout">
+        <aside class="catalog-sidebar" aria-label="Filtros y navegación del catálogo">
+            <div class="filter-group">
+                <label for="searchInput">Buscar</label>
+                <input id="searchInput" class="search-input" type="search" placeholder="Nombre o descripción">
+            </div>
+            <div class="filter-group">
+                <label for="priceSelect">Precio</label>
+                <select id="priceSelect" class="select-input">
+                    <option value="all">Todos</option>
+                    <option value="low">Hasta $150.000</option>
+                    <option value="mid">$150.000 - $400.000</option>
+                    <option value="high">Más de $400.000</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Categorías</label>
+                <div id="categoryTags" class="catalog-tags" role="list"></div>
+            </div>
+        </aside>
+
+        <section class="catalog-products" id="catalogProducts" aria-live="polite"></section>
+    </main>
+
+    <footer class="site-footer">
+        <p>© 2025 Amazonia Concrete. Selecciona un producto y coordina tu pedido con el equipo comercial.</p>
+    </footer>
+
+    <script src="catalogo.js"></script>
+</body>
+</html>
