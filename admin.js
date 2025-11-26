@@ -11,6 +11,34 @@
             footerImage: ''
         };
 
+        const defaultNewsPanel = {
+            heroEyebrow: 'Concreto sostenible',
+            heroTitle: 'Diseños hechos para durar y conectar con la naturaleza',
+            heroDescription: 'Explora piezas inspiradas en la selva amazónica, creadas para proyectos residenciales y corporativos con altos estándares de calidad.',
+            primaryCta: 'Ver catálogo',
+            secondaryCta: 'Ir a novedades',
+            items: [
+                {
+                    eyebrow: 'Festival',
+                    title: 'Colección Semana de la Tierra',
+                    description: 'Edición limitada inspirada en texturas naturales y pigmentos minerales, disponible solo durante abril.',
+                    tags: ['Del 15 al 30 de abril', 'Nuevos acabados']
+                },
+                {
+                    eyebrow: 'Descuento',
+                    title: 'Semana del Cliente',
+                    description: 'Hasta 20% de descuento en mobiliario para terrazas y espacios comerciales. Asesoría incluida.',
+                    tags: ['Del 3 al 10 de mayo', '-20%']
+                },
+                {
+                    eyebrow: 'Lanzamiento',
+                    title: 'Línea Aurora',
+                    description: 'Nuevas lámparas en concreto ultraligero con difusor cálido. Ideal para crear atmósferas relajantes.',
+                    tags: ['Disponible en junio', 'Iluminación']
+                }
+            ]
+        };
+
         const defaultAbout = {
             heroTitle: '',
             history: '',
@@ -218,6 +246,65 @@
         const APPEARANCE_FIELD_MAP = new Map(APPEARANCE_FIELDS.map(field => [field.id, field]));
         const APPEARANCE_IMAGE_FIELD_MAP = new Map(APPEARANCE_IMAGE_FIELDS.map(field => [field.id, field]));
 
+        function normalizeNewsPanel(candidate) {
+            const normalized = {
+                heroEyebrow: defaultNewsPanel.heroEyebrow,
+                heroTitle: defaultNewsPanel.heroTitle,
+                heroDescription: defaultNewsPanel.heroDescription,
+                primaryCta: defaultNewsPanel.primaryCta,
+                secondaryCta: defaultNewsPanel.secondaryCta,
+                items: []
+            };
+
+            if (isPlainObject(candidate)) {
+                ['heroEyebrow', 'heroTitle', 'heroDescription', 'primaryCta', 'secondaryCta']
+                    .forEach(key => {
+                        const value = typeof candidate[key] === 'string' ? candidate[key].trim() : '';
+                        if (value) {
+                            normalized[key] = value;
+                        }
+                    });
+
+                const itemsSource = Array.isArray(candidate.items) ? candidate.items : [];
+                normalized.items = itemsSource.map((item, index) => {
+                    const base = defaultNewsPanel.items[index] || {};
+                    const eyebrow = typeof item.eyebrow === 'string' && item.eyebrow.trim()
+                        ? item.eyebrow.trim()
+                        : (base.eyebrow || '');
+                    const title = typeof item.title === 'string' && item.title.trim()
+                        ? item.title.trim()
+                        : (base.title || '');
+                    const description = typeof item.description === 'string' && item.description.trim()
+                        ? item.description.trim()
+                        : (base.description || '');
+
+                    let tags = [];
+                    if (Array.isArray(item.tags)) {
+                        tags = item.tags;
+                    } else if (typeof item.tags === 'string') {
+                        tags = item.tags.split(/\r?\n/);
+                    }
+
+                    const normalizedTags = tags
+                        .map(tag => typeof tag === 'string' ? tag.trim() : '')
+                        .filter(tag => tag.length > 0);
+
+                    return {
+                        eyebrow,
+                        title,
+                        description,
+                        tags: normalizedTags
+                    };
+                }).filter(item => item.eyebrow || item.title || item.description || (Array.isArray(item.tags) && item.tags.length > 0));
+            }
+
+            if (!Array.isArray(normalized.items) || normalized.items.length === 0) {
+                normalized.items = defaultNewsPanel.items.slice();
+            }
+
+            return normalized;
+        }
+
         function normalizeAbout(candidate) {
             const normalized = {
                 heroTitle: defaultAbout.heroTitle,
@@ -411,6 +498,7 @@
             logoData: '',
             appearance: { ...defaultAppearance },
             about: normalizeAbout(defaultAbout),
+            newsPanel: normalizeNewsPanel(defaultNewsPanel),
             shippingPolicy: normalizeShippingPolicy(defaultShippingPolicy),
             policies: normalizePolicies(defaultPolicies)
         };
@@ -503,6 +591,7 @@
 
             base.appearance = normalizeAppearance(base.appearance);
             base.about = normalizeAbout(base.about);
+            base.newsPanel = normalizeNewsPanel(base.newsPanel);
             base.shippingPolicy = normalizeShippingPolicy(base.shippingPolicy);
             base.policies = normalizePolicies(base.policies);
             return base;
@@ -2961,6 +3050,26 @@
                 savePoliciesButton.addEventListener('click', saveConfig);
             }
 
+            const saveNewsButton = document.getElementById('saveNewsButton');
+            if (saveNewsButton) {
+                saveNewsButton.addEventListener('click', saveConfig);
+            }
+
+            const addNewsItemButton = document.getElementById('addNewsItemButton');
+            if (addNewsItemButton) {
+                addNewsItemButton.addEventListener('click', () => {
+                    const container = document.getElementById('newsItemsContainer');
+                    if (!container) {
+                        return;
+                    }
+
+                    const nextIndex = container.querySelectorAll('[data-news-item]').length;
+                    const row = createNewsItemRow({}, nextIndex);
+                    container.appendChild(row);
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            }
+
             setupPolicyFormListeners();
 
             const companyNameInput = document.getElementById('companyName');
@@ -3216,6 +3325,92 @@
             }
         }
 
+        function createNewsItemRow(item = {}, index = 0) {
+            const base = isPlainObject(item) ? item : {};
+            const row = document.createElement('div');
+            row.className = 'news-item';
+            row.setAttribute('data-news-item', '');
+
+            const header = document.createElement('div');
+            header.className = 'news-item__header';
+            const title = document.createElement('p');
+            title.className = 'news-item__label';
+            title.textContent = `Bloque ${index + 1}`;
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'icon-btn news-item__remove';
+            removeButton.textContent = '✕';
+            removeButton.setAttribute('aria-label', `Eliminar bloque ${index + 1}`);
+            removeButton.addEventListener('click', () => {
+                const container = row.parentElement;
+                row.remove();
+                if (container && container.querySelectorAll('[data-news-item]').length === 0) {
+                    renderNewsItems([{}]);
+                } else {
+                    Array.from(container.querySelectorAll('[data-news-item]')).forEach((node, nodeIndex) => {
+                        const label = node.querySelector('.news-item__label');
+                        if (label) {
+                            label.textContent = `Bloque ${nodeIndex + 1}`;
+                        }
+                    });
+                }
+            });
+            header.appendChild(title);
+            header.appendChild(removeButton);
+
+            const eyebrowField = document.createElement('div');
+            eyebrowField.className = 'form-group';
+            eyebrowField.innerHTML = `
+                <label>Etiqueta corta</label>
+                <input type="text" data-field="eyebrow" placeholder="Lanzamiento, Descuento, Festival" value="${escapeHtml(base.eyebrow || '')}">
+            `;
+
+            const titleField = document.createElement('div');
+            titleField.className = 'form-group';
+            titleField.innerHTML = `
+                <label>Título</label>
+                <input type="text" data-field="title" placeholder="Texto principal" value="${escapeHtml(base.title || '')}">
+            `;
+
+            const descriptionField = document.createElement('div');
+            descriptionField.className = 'form-group';
+            descriptionField.innerHTML = `
+                <label>Descripción</label>
+                <textarea rows="3" data-field="description" placeholder="Detalle breve">${escapeHtml(base.description || '')}</textarea>
+            `;
+
+            const tagsField = document.createElement('div');
+            tagsField.className = 'form-group';
+            const tagValue = Array.isArray(base.tags) ? base.tags.join('\n') : '';
+            tagsField.innerHTML = `
+                <label>Etiquetas o notas (una por línea)</label>
+                <textarea rows="2" data-field="tags" placeholder="Fechas, beneficios, recordatorios">${escapeHtml(tagValue)}</textarea>
+            `;
+
+            row.appendChild(header);
+            row.appendChild(eyebrowField);
+            row.appendChild(titleField);
+            row.appendChild(descriptionField);
+            row.appendChild(tagsField);
+
+            return row;
+        }
+
+        function renderNewsItems(items) {
+            const container = document.getElementById('newsItemsContainer');
+            if (!container) {
+                return;
+            }
+
+            container.innerHTML = '';
+            const list = Array.isArray(items) && items.length > 0 ? items : defaultNewsPanel.items;
+
+            list.forEach((item, index) => {
+                const row = createNewsItemRow(item, index);
+                container.appendChild(row);
+            });
+        }
+
         function collectConfigValues() {
             const readValue = (id) => {
                 const element = document.getElementById(id);
@@ -3305,6 +3500,37 @@
                     ? catalogData.config.shippingPolicy
                     : defaultShippingPolicy);
 
+            const readNewsItems = () => {
+                const container = document.getElementById('newsItemsContainer');
+                if (!container) {
+                    return defaultNewsPanel.items.slice();
+                }
+
+                const items = [];
+                const rows = container.querySelectorAll('[data-news-item]');
+                rows.forEach(row => {
+                    const eyebrowInput = row.querySelector('[data-field="eyebrow"]');
+                    const titleInput = row.querySelector('[data-field="title"]');
+                    const descriptionInput = row.querySelector('[data-field="description"]');
+                    const tagsInput = row.querySelector('[data-field="tags"]');
+
+                    const eyebrow = eyebrowInput && typeof eyebrowInput.value === 'string' ? eyebrowInput.value.trim() : '';
+                    const title = titleInput && typeof titleInput.value === 'string' ? titleInput.value.trim() : '';
+                    const description = descriptionInput && typeof descriptionInput.value === 'string'
+                        ? descriptionInput.value.trim()
+                        : '';
+                    const tags = tagsInput && typeof tagsInput.value === 'string'
+                        ? tagsInput.value.split(/\r?\n/).map(tag => tag.trim()).filter(Boolean)
+                        : [];
+
+                    if (eyebrow || title || description || tags.length > 0) {
+                        items.push({ eyebrow, title, description, tags });
+                    }
+                });
+
+                return items;
+            };
+
             return {
                 whatsapp: readValue('whatsapp'),
                 email: readValue('email'),
@@ -3317,6 +3543,14 @@
                 tagline: readValue('tagline'),
                 footerMessage: readValue('footerMessage'),
                 logoData: readValue('companyLogoUrl'),
+                newsPanel: normalizeNewsPanel({
+                    heroEyebrow: readValue('newsHeroEyebrow'),
+                    heroTitle: readValue('newsHeroTitle'),
+                    heroDescription: readValue('newsHeroDescription'),
+                    primaryCta: readValue('newsPrimaryCta'),
+                    secondaryCta: readValue('newsSecondaryCta'),
+                    items: readNewsItems()
+                }),
                 about: normalizeAbout({
                     heroTitle: readValue('aboutHeroTitle'),
                     history: readValue('aboutHistory'),
@@ -3949,6 +4183,21 @@
                 aboutValuesInput.value = aboutValues.values.join('\n');
             }
 
+            const newsValues = normalizeNewsPanel(catalogData.config.newsPanel);
+            const setNewsValue = (id, value) => {
+                const element = document.getElementById(id);
+                if (element && typeof element.value === 'string') {
+                    element.value = value || '';
+                }
+            };
+
+            setNewsValue('newsHeroEyebrow', newsValues.heroEyebrow || '');
+            setNewsValue('newsHeroTitle', newsValues.heroTitle || '');
+            setNewsValue('newsHeroDescription', newsValues.heroDescription || '');
+            setNewsValue('newsPrimaryCta', newsValues.primaryCta || '');
+            setNewsValue('newsSecondaryCta', newsValues.secondaryCta || '');
+            renderNewsItems(newsValues.items || []);
+
             const shippingPolicyValues = normalizeShippingPolicy(catalogData.config.shippingPolicy);
             const setInputValue = (id, value) => {
                 const element = document.getElementById(id);
@@ -4112,6 +4361,11 @@
                     element: document.getElementById('aboutConfigSection'),
                     button: document.querySelector('button[data-section="about"]'),
                     label: 'Nosotros'
+                },
+                news: {
+                    element: document.getElementById('newsSection'),
+                    button: document.querySelector('button[data-section="news"]'),
+                    label: 'Inicio y novedades'
                 },
                 policies: {
                     element: document.getElementById('policiesSection'),
@@ -4890,7 +5144,8 @@
                     detail: 'Compilando catálogo con tus productos…'
                 });
                 // Generate the HTML content
-                const indexHtmlContent = generateCatalogHTML(catalogData.config);
+                const homeHtmlContent = generateHomePageHTML(catalogData.config);
+                const catalogHtmlContent = generateCatalogHTML(catalogData.config);
                 const policiesHtmlContent = generatePoliciesHTML(catalogData.config);
                 const aboutHtmlContent = generateAboutPageHTML(catalogData.config);
 
@@ -4908,15 +5163,16 @@
                     URL.revokeObjectURL(url);
                 };
 
-                triggerDownload('index.html', indexHtmlContent);
+                triggerDownload('index.html', homeHtmlContent);
+                triggerDownload('catalogo.html', catalogHtmlContent);
                 triggerDownload('politicas.html', policiesHtmlContent);
                 triggerDownload('nosotros.html', aboutHtmlContent);
 
                 updateProcessStatusEntry(processEntryId, {
                     state: 'success',
-                    detail: 'Descarga completada. Se generaron index.html, politicas.html y nosotros.html.'
+                    detail: 'Descarga completada. Se generaron index.html, catalogo.html, politicas.html y nosotros.html.'
                 });
-                showMessage('¡Catálogo, políticas corporativas y página de "Nosotros" generados correctamente! Revisa tu carpeta de descargas para encontrar index.html, politicas.html y nosotros.html.', 'success');
+                showMessage('¡Catálogo, inicio, políticas corporativas y página de "Nosotros" generados correctamente! Revisa tu carpeta de descargas para encontrar index.html, catalogo.html, politicas.html y nosotros.html.', 'success');
             } catch (error) {
                 console.error('No se pudo generar el catálogo', error);
                 updateProcessStatusEntry(processEntryId, {
@@ -5182,6 +5438,173 @@
             if (faviconElement) {
                 faviconElement.textContent = faviconText;
             }
+        }
+
+        function generateHomePageHTML(configOverride) {
+            const config = getNormalizedConfig(configOverride || catalogData.config);
+            const theme = buildThemeTokens(config.appearance);
+            const news = normalizeNewsPanel(config.newsPanel);
+
+            const trimmedConfig = {
+                companyName: config.companyName ? config.companyName.trim() : '',
+                tagline: config.tagline ? config.tagline.trim() : '',
+                footerMessage: config.footerMessage ? config.footerMessage.trim() : '',
+                logoData: typeof config.logoData === 'string' ? config.logoData.trim() : ''
+            };
+
+            const heroEyebrow = escapeHtml(news.heroEyebrow || 'Novedades');
+            const heroTitle = escapeHtml(news.heroTitle || 'Panel de novedades');
+            const heroDescription = escapeHtml(news.heroDescription || 'Comparte lanzamientos, promociones y noticias clave.');
+            const primaryCtaText = escapeHtml(news.primaryCta || 'Ver catálogo');
+            const secondaryCtaText = escapeHtml(news.secondaryCta || 'Ir a novedades');
+
+            const newsCards = (Array.isArray(news.items) ? news.items : [])
+                .map(item => {
+                    const eyebrow = escapeHtml(item.eyebrow || 'Anuncio');
+                    const title = escapeHtml(item.title || 'Título pendiente');
+                    const description = escapeHtml(item.description || 'Agrega un detalle breve del anuncio.');
+                    const tags = Array.isArray(item.tags) ? item.tags.filter(Boolean) : [];
+                    const tagsMarkup = tags.length > 0
+                        ? `<div class="card__meta">${tags.map(tag => `<span class="pill">${escapeHtml(tag)}</span>`).join('')}</div>`
+                        : '';
+
+                    return `
+                <article class="card">
+                    <p class="card__eyebrow">${eyebrow}</p>
+                    <h3 class="card__title">${title}</h3>
+                    <p class="card__description">${description}</p>
+                    ${tagsMarkup}
+                </article>`;
+                })
+                .join('');
+
+            const cardsMarkup = newsCards || '<p class="empty-state">Añade bloques de novedades para mostrarlos en la página de inicio.</p>';
+            const companyNameHtml = escapeHtml(trimmedConfig.companyName || 'Amazonia Concrete');
+            const footerMessageHtml = escapeHtml(trimmedConfig.footerMessage || 'Creando espacios únicos con concreto sostenible');
+            const logoMarkup = trimmedConfig.logoData
+                ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`
+                : '';
+
+            const styles = `
+        :root {
+            --color-bg: ${theme.background};
+            --color-surface: #ffffff;
+            --color-header: ${theme.header};
+            --color-primary: ${theme.primary};
+            --color-accent: ${theme.accent};
+            --color-text: ${theme.text};
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--color-bg); color: #1a1f36; }
+        a { color: inherit; }
+        .site-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background: var(--color-header); color: #fff; position: sticky; top: 0; z-index: 10; }
+        .site-header__brand { display: flex; gap: 0.75rem; align-items: center; }
+        .brand-logo { width: 56px; height: 56px; object-fit: contain; }
+        .brand-kicker { margin: 0; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem; }
+        .brand-tagline { margin: 0; opacity: 0.9; }
+        .main-nav__list { list-style: none; display: flex; gap: 1rem; margin: 0; padding: 0; }
+        .main-nav__list a { text-decoration: none; color: #f4f7f5; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 999px; transition: background 150ms ease; }
+        .main-nav__list a:hover { background: rgba(255,255,255,0.15); }
+        .hero { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); padding: 3rem 1.5rem; background: linear-gradient(135deg, ${theme.header}, ${theme.accent}); color: #fff; }
+        .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.9rem; }
+        .hero__title { margin: 0.25rem 0; font-size: clamp(1.8rem, 3vw, 2.6rem); line-height: 1.2; }
+        .hero__description { margin: 0; opacity: 0.95; font-size: 1.05rem; }
+        .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+        .button { padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid transparent; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
+        .button--primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+        .button--ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,0.6); }
+        .section { padding: 3rem 1.5rem; }
+        .section--light { background: var(--color-bg); }
+        .section__header { max-width: 720px; margin-bottom: 1.5rem; }
+        .section__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; color: ${theme.header}; font-weight: 700; font-size: 0.9rem; }
+        .section__title { margin: 0.35rem 0 0.5rem; font-size: clamp(1.4rem, 2.5vw, 2rem); }
+        .section__description { margin: 0; color: #425466; }
+        .cards-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+        .card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 8px 30px rgba(0,0,0,0.07); border: 1px solid #e5e9ed; }
+        .card__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.06em; color: ${theme.accent}; font-weight: 700; font-size: 0.85rem; }
+        .card__title { margin: 0.4rem 0; font-size: 1.2rem; }
+        .card__description { margin: 0; color: #334155; }
+        .card__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+        .pill { background: rgba(107, 142, 104, 0.15); color: #2d4a2b; padding: 0.35rem 0.6rem; border-radius: 999px; font-weight: 600; font-size: 0.9rem; }
+        .section--dark { background: ${theme.header}; color: #fff; }
+        .cta { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .cta__title { margin: 0; font-size: 1.5rem; }
+        .cta__description { margin: 0; opacity: 0.9; }
+        .site-footer { padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.95rem; }
+        .empty-state { padding: 1rem; border: 1px dashed #cbd5e1; border-radius: 10px; color: #475569; }
+        @media (max-width: 720px) {
+            .site-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .cta { flex-direction: column; align-items: flex-start; }
+        }
+            `;
+
+            const catalogHref = 'catalogo.html';
+
+            return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${companyNameHtml} | Inicio</title>
+    <style>${styles}</style>
+</head>
+<body class="page page--home">
+    <header class="site-header">
+        <div class="site-header__brand">
+            ${logoMarkup}
+            <div>
+                <p class="brand-kicker">${companyNameHtml}</p>
+                <p class="brand-tagline">${escapeHtml(trimmedConfig.tagline || 'Naturaleza y modernidad en concreto')}</p>
+            </div>
+        </div>
+        <nav class="main-nav" aria-label="Navegación principal">
+            <ul class="main-nav__list">
+                <li><a href="#hero">Inicio</a></li>
+                <li><a href="#novedades">Novedades</a></li>
+                <li><a href="${catalogHref}">Catálogo</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="hero">
+            <div class="hero__content">
+                <p class="hero__eyebrow">${heroEyebrow}</p>
+                <h1 class="hero__title">${heroTitle}</h1>
+                <p class="hero__description">${heroDescription}</p>
+                <div class="hero__actions">
+                    <a class="button button--primary" href="${catalogHref}">${primaryCtaText}</a>
+                    <a class="button button--ghost" href="#novedades">${secondaryCtaText}</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="novedades" class="section section--light">
+            <div class="section__header">
+                <p class="section__eyebrow">Actualizaciones</p>
+                <h2 class="section__title">Novedades y momentos especiales</h2>
+                <p class="section__description">Panel de lanzamientos y anuncios destacados. Los productos solo se muestran en la página de catálogo.</p>
+            </div>
+            <div class="cards-grid">${cardsMarkup}</div>
+        </section>
+
+        <section class="section section--dark">
+            <div class="cta">
+                <div>
+                    <p class="section__eyebrow" style="color: #e2e8f0;">Catálogo principal</p>
+                    <h2 class="cta__title">Explora las categorías y arma tu selección ideal</h2>
+                    <p class="cta__description">Productos clasificados por uso, precio y estilo. Selecciónalos en la pestaña de catálogo.</p>
+                </div>
+                <a class="button button--primary" href="${catalogHref}">Abrir catálogo</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>© ${new Date().getFullYear()} ${companyNameHtml}. ${footerMessageHtml}</p>
+    </footer>
+</body>
+</html>`;
         }
 
         // Generate catalog HTML
@@ -5490,7 +5913,7 @@
                 .join('');
 
             const primaryNavItems = [
-                { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true, icon: 'home' },
+                { id: 'primaryNavHome', label: 'Inicio', href: 'index.html', external: true, visible: true, icon: 'home' },
                 { id: 'primaryNavProducts', label: 'Productos', target: 'catalogProducts', visible: hasProductNavigation, icon: 'products' },
                 { id: 'primaryNavAbout', label: 'Nosotros', href: 'nosotros.html', external: true, visible: shouldShowAboutSection, icon: 'about' },
                 { id: 'primaryNavPolicies', label: 'Políticas corporativas', href: 'politicas.html', external: true, visible: hasPoliciesSection, icon: 'policies' }

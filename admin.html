@@ -24,6 +24,7 @@
                 <h3 class="section-title">Menú</h3>
                 <button class="btn btn-primary btn-block" data-section="config" aria-controls="configSection" aria-expanded="true">⚙️ Configuración</button>
                 <button class="btn btn-primary btn-block" data-section="about" aria-controls="aboutConfigSection" aria-expanded="false">👥 Nosotros</button>
+                <button class="btn btn-primary btn-block" data-section="news" aria-controls="newsSection" aria-expanded="false">📰 Inicio y novedades</button>
                 <button class="btn btn-primary btn-block" data-section="policies" aria-controls="policiesSection" aria-expanded="false">📄 Políticas corporativas</button>
                 <button class="btn btn-primary btn-block" data-section="products" aria-controls="productsSection" aria-expanded="false">📦 Productos</button>
                 <button class="btn btn-success btn-block mt-md" data-action="generate-catalog">📥 Generar Catálogo</button>
@@ -190,12 +191,59 @@
                         <button type="button" class="btn btn-secondary" id="resetAppearanceButton">Restaurar colores de fábrica</button>
                     </div>
 
-                    <button class="btn btn-primary" id="saveConfigButton">Guardar Configuración</button>
+                <button class="btn btn-primary" id="saveConfigButton">Guardar Configuración</button>
+            </div>
+
+            <!-- News Section -->
+            <div id="newsSection" class="section" role="region" aria-labelledby="newsSectionTitle" aria-hidden="true" hidden>
+                <h2 class="section-title" id="newsSectionTitle">📰 Inicio y panel de novedades</h2>
+                <p class="section-description">Define el contenido que aparecerá en la página de inicio. Esta sección no muestra productos, solo anuncios y llamadas a la acción hacia el catálogo.</p>
+
+                <div class="config-section">
+                    <h3 style="margin-bottom: 1rem">Encabezado del inicio</h3>
+                    <div class="two-columns">
+                        <div class="form-group">
+                            <label for="newsHeroEyebrow">Etiqueta superior</label>
+                            <input type="text" id="newsHeroEyebrow" placeholder="Concreto sostenible">
+                        </div>
+                        <div class="form-group">
+                            <label for="newsHeroTitle">Título principal</label>
+                            <input type="text" id="newsHeroTitle" placeholder="Diseños hechos para durar y conectar con la naturaleza">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="newsHeroDescription">Descripción corta</label>
+                        <textarea id="newsHeroDescription" rows="3" placeholder="Explora piezas inspiradas en la selva amazónica…"></textarea>
+                    </div>
+                    <div class="two-columns">
+                        <div class="form-group">
+                            <label for="newsPrimaryCta">Texto del botón principal</label>
+                            <input type="text" id="newsPrimaryCta" placeholder="Ver catálogo">
+                        </div>
+                        <div class="form-group">
+                            <label for="newsSecondaryCta">Texto del botón secundario</label>
+                            <input type="text" id="newsSecondaryCta" placeholder="Ir a novedades">
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Shipping Policy Section -->
-                <div id="aboutConfigSection" class="section" role="region" aria-labelledby="aboutConfigSectionTitle" aria-hidden="true" hidden>
-                    <h2 class="section-title" id="aboutConfigSectionTitle">👥 Sección Nosotros</h2>
+                <div class="config-section">
+                    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <h3 style="margin: 0">Bloques de novedades</h3>
+                            <p class="section-description" style="margin: 0">Edita los anuncios que se mostrarán en la cuadrícula de la página de inicio.</p>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="addNewsItemButton">➕ Añadir bloque</button>
+                    </div>
+                    <div id="newsItemsContainer" class="news-items" aria-live="polite"></div>
+                </div>
+
+                <button class="btn btn-primary" id="saveNewsButton" type="button">Guardar novedades</button>
+            </div>
+
+            <!-- Shipping Policy Section -->
+            <div id="aboutConfigSection" class="section" role="region" aria-labelledby="aboutConfigSectionTitle" aria-hidden="true" hidden>
+                <h2 class="section-title" id="aboutConfigSectionTitle">👥 Sección Nosotros</h2>
                     <p class="section-description">Configura la información de misión, visión y valores que aparecerá en la página independiente de "Nosotros". Esta información ya no ocupa espacio dentro del catálogo principal.</p>
 
                     <div class="config-section">
