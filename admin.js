@@ -5590,6 +5590,54 @@
 
             const catalogHref = 'catalogo.html';
 
+            const backgroundImageValue = typeof theme.backgroundImage === 'string' ? theme.backgroundImage : '';
+            const headerImageValue = typeof theme.headerImage === 'string' ? theme.headerImage : '';
+
+            const hasBackgroundImage = Boolean(theme.hasBackgroundImage && backgroundImageValue);
+            const hasHeaderImage = Boolean(theme.hasHeaderImage && headerImageValue);
+
+            const bodyBackground = hasBackgroundImage
+                ? [
+                    `background-color: ${theme.backgroundStart};`,
+                    `background-image: url("${escapeCssUrl(backgroundImageValue)}");`,
+                    'background-size: cover;',
+                    'background-position: center;',
+                    'background-repeat: no-repeat;',
+                    'background-attachment: fixed;'
+                ].join(' ')
+                : (backgroundImageValue
+                    ? [
+                        `background-color: ${theme.backgroundStart};`,
+                        'background-image:',
+                        `    linear-gradient(135deg, ${theme.backgroundOverlayStart} 0%, ${theme.backgroundOverlayEnd} 100%),`,
+                        `    url("${escapeCssUrl(backgroundImageValue)}");`,
+                        'background-size: cover;',
+                        'background-position: center;',
+                        'background-repeat: no-repeat;',
+                        'background-attachment: fixed;'
+                    ].join(' ')
+                    : `background: linear-gradient(135deg, ${theme.backgroundStart} 0%, ${theme.backgroundEnd} 100%);`);
+
+            const headerBackground = hasHeaderImage
+                ? [
+                    `background-color: ${theme.headerStart};`,
+                    `background-image: url("${escapeCssUrl(headerImageValue)}");`,
+                    'background-size: cover;',
+                    'background-position: center;',
+                    'background-repeat: no-repeat;'
+                ].join(' ')
+                : (headerImageValue
+                    ? [
+                        `background-color: ${theme.headerStart};`,
+                        'background-image:',
+                        `    linear-gradient(135deg, ${theme.headerImageOverlayStart} 0%, ${theme.headerImageOverlayEnd} 100%),`,
+                        `    url("${escapeCssUrl(headerImageValue)}");`,
+                        'background-size: cover;',
+                        'background-position: center;',
+                        'background-repeat: no-repeat;'
+                    ].join(' ')
+                    : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`);
+
             const primaryNavItems = [
                 { id: 'primaryNavHome', label: 'Inicio', href: '#hero', visible: true, icon: 'home' },
                 { id: 'primaryNavProducts', label: 'Catálogo', href: `${catalogHref}#catalogProducts`, visible: true, external: true, icon: 'products' },
@@ -5619,9 +5667,11 @@
             --color-text: ${theme.text};
         }
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--color-bg); color: #1a1f36; }
+        body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1a1f36; ${bodyBackground} }
         a { color: inherit; }
-        .site-header { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; background: var(--color-header); color: #fff; position: sticky; top: 0; z-index: 10; align-items: stretch; }
+        .page-shell { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
+        .site-header { position: sticky; top: 0; z-index: 10; ${headerBackground} color: ${theme.headerText}; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); }
+        .site-header__inner { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem 0; }
         .site-header__brand { display: flex; gap: 0.75rem; align-items: center; }
         .brand-logo { width: 56px; height: 56px; object-fit: contain; }
         .brand-kicker { margin: 0; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem; }
@@ -5634,16 +5684,23 @@
         .primary-nav__icon svg { width: 100%; height: 100%; }
         .primary-nav__icon svg path { fill: currentColor; }
         .primary-nav__label { line-height: 1; }
-        .hero { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); padding: 3rem 1.5rem; background: linear-gradient(135deg, ${theme.header}, ${theme.accent}); color: #fff; }
-        .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.9rem; }
-        .hero__title { margin: 0.25rem 0; font-size: clamp(1.8rem, 3vw, 2.6rem); line-height: 1.2; }
-        .hero__description { margin: 0; opacity: 0.95; font-size: 1.05rem; }
-        .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+        .hero { position: relative; color: ${theme.textOnDark}; padding: 3.5rem 0; overflow: hidden; }
+        .hero::before { content: ''; position: absolute; inset: 0; ${headerBackground}; opacity: 0.95; }
+        .hero__grid { position: relative; z-index: 1; display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: center; }
+        .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.95rem; }
+        .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; }
+        .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; }
+        .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
+        .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); }
+        .hero__badge { position: absolute; top: 1rem; left: 1rem; background: rgba(255, 255, 255, 0.15); color: ${theme.textOnDark}; padding: 0.4rem 0.95rem; border-radius: 999px; font-weight: 700; letter-spacing: 0.08em; border: 1px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(6px); }
+        .hero__leaf { position: absolute; width: 160px; height: 160px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.18)); border-radius: 50% 40% 60% 50%; top: 18%; right: 18%; opacity: 0.9; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15)); }
+        .hero__stone { position: absolute; width: 260px; height: 260px; background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)); border-radius: 45% 55% 40% 60%; bottom: -60px; left: 12%; }
         .button { padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid transparent; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
         .button--primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-        .button--ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,0.6); }
-        .section { padding: 3rem 1.5rem; }
-        .section--light { background: var(--color-bg); }
+        .button--ghost { background: transparent; color: ${theme.textOnDark}; border-color: rgba(255,255,255,0.6); }
+        .section { padding: 3rem 0; }
+        .section--light { background: transparent; }
+        .section__inner { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
         .section__header { max-width: 720px; margin-bottom: 1.5rem; }
         .section__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; color: ${theme.header}; font-weight: 700; font-size: 0.9rem; }
         .section__title { margin: 0.35rem 0 0.5rem; font-size: clamp(1.4rem, 2.5vw, 2rem); }
@@ -5666,14 +5723,14 @@
         .news-media__dot { width: 10px; height: 10px; border-radius: 999px; border: none; background: rgba(255,255,255,0.6); cursor: pointer; transition: transform 0.2s ease, background 0.2s ease; }
         .news-media__dot.is-active { transform: scale(1.1); background: #fff; }
         .news-media__dot:focus-visible { outline: 2px solid ${theme.accent}; outline-offset: 2px; }
-        .section--dark { background: ${theme.header}; color: #fff; }
+        .section--dark { ${headerBackground}; color: ${theme.textOnDark}; }
         .cta { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .cta__title { margin: 0; font-size: 1.5rem; }
         .cta__description { margin: 0; opacity: 0.9; }
-        .site-footer { padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.95rem; }
+        .site-footer { padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.95rem; background: rgba(255, 255, 255, 0.7); }
         .empty-state { padding: 1rem; border: 1px dashed #cbd5e1; border-radius: 10px; color: #475569; }
         @media (max-width: 720px) {
-            .site-header { align-items: flex-start; }
+            .site-header__inner { align-items: flex-start; }
             .cta { flex-direction: column; align-items: flex-start; }
         }
             `;
@@ -5688,48 +5745,61 @@
 </head>
 <body class="page page--home">
     <header class="site-header">
-        <div class="site-header__brand">
-            ${logoMarkup}
-            <div>
-                <p class="brand-kicker">${companyNameHtml}</p>
-                <p class="brand-tagline">${escapeHtml(trimmedConfig.tagline || 'Naturaleza y modernidad en concreto')}</p>
+        <div class="page-shell site-header__inner">
+            <div class="site-header__brand">
+                ${logoMarkup}
+                <div>
+                    <p class="brand-kicker">${companyNameHtml}</p>
+                    <p class="brand-tagline">${escapeHtml(trimmedConfig.tagline || 'Naturaleza y modernidad en concreto')}</p>
+                </div>
             </div>
+            <nav class="primary-nav" aria-label="Navegación principal">
+                ${primaryNavLinksMarkup}
+            </nav>
         </div>
-        <nav class="primary-nav" aria-label="Navegación principal">
-            ${primaryNavLinksMarkup}
-        </nav>
     </header>
 
     <main>
         <section id="hero" class="hero">
-            <div class="hero__content">
-                <p class="hero__eyebrow">${heroEyebrow}</p>
-                <h1 class="hero__title">${heroTitle}</h1>
-                <p class="hero__description">${heroDescription}</p>
-                <div class="hero__actions">
-                    <a class="button button--primary" href="${catalogHref}">${primaryCtaText}</a>
-                    <a class="button button--ghost" href="#novedades">${secondaryCtaText}</a>
+            <div class="page-shell hero__grid">
+                <div class="hero__content">
+                    <p class="hero__eyebrow">${heroEyebrow}</p>
+                    <h1 class="hero__title">${heroTitle}</h1>
+                    <p class="hero__description">${heroDescription}</p>
+                    <div class="hero__actions">
+                        <a class="button button--primary" href="${catalogHref}">${primaryCtaText}</a>
+                        <a class="button button--ghost" href="#novedades">${secondaryCtaText}</a>
+                    </div>
+                </div>
+                <div class="hero__visual" aria-hidden="true">
+                    <span class="hero__badge">AMAZONIA</span>
+                    <span class="hero__leaf"></span>
+                    <span class="hero__stone"></span>
                 </div>
             </div>
         </section>
 
         <section id="novedades" class="section section--light">
-            <div class="section__header">
-                <p class="section__eyebrow">Actualizaciones</p>
-                <h2 class="section__title">Novedades y momentos especiales</h2>
-                <p class="section__description">Panel de lanzamientos y anuncios destacados. Los productos solo se muestran en la página de catálogo.</p>
+            <div class="section__inner">
+                <div class="section__header">
+                    <p class="section__eyebrow">Actualizaciones</p>
+                    <h2 class="section__title">Novedades y momentos especiales</h2>
+                    <p class="section__description">Panel de lanzamientos y anuncios destacados. Los productos solo se muestran en la página de catálogo.</p>
+                </div>
+                <div class="cards-grid">${cardsMarkup}</div>
             </div>
-            <div class="cards-grid">${cardsMarkup}</div>
         </section>
 
         <section class="section section--dark">
-            <div class="cta">
-                <div>
-                    <p class="section__eyebrow" style="color: #e2e8f0;">Catálogo principal</p>
-                    <h2 class="cta__title">Explora las categorías y arma tu selección ideal</h2>
-                    <p class="cta__description">Productos clasificados por uso, precio y estilo. Selecciónalos en la pestaña de catálogo.</p>
+            <div class="page-shell">
+                <div class="cta">
+                    <div>
+                        <p class="section__eyebrow" style="color: ${theme.textOnDark}; opacity: 0.8;">Catálogo principal</p>
+                        <h2 class="cta__title">Explora las categorías y arma tu selección ideal</h2>
+                        <p class="cta__description">Productos clasificados por uso, precio y estilo. Selecciónalos en la pestaña de catálogo.</p>
+                    </div>
+                    <a class="button button--primary" href="${catalogHref}">Abrir catálogo</a>
                 </div>
-                <a class="button button--primary" href="${catalogHref}">Abrir catálogo</a>
             </div>
         </section>
     </main>
