@@ -5588,8 +5588,12 @@
             const cardsMarkup = newsCards || '<p class="empty-state">Añade bloques de novedades para mostrarlos en la página de inicio.</p>';
             const companyNameHtml = escapeHtml(trimmedConfig.companyName || 'Amazonia Concrete');
             const footerMessageHtml = escapeHtml(trimmedConfig.footerMessage || 'Creando espacios únicos con concreto sostenible');
+            const taglineHtml = escapeHtml(trimmedConfig.tagline || 'Naturaleza y modernidad en concreto');
             const logoMarkup = trimmedConfig.logoData
                 ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`
+                : '';
+            const heroLogoMarkup = trimmedConfig.logoData
+                ? `<div class="hero__logo" aria-hidden="true">${logoMarkup}</div>`
                 : '';
 
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
@@ -5714,9 +5718,9 @@
         .page-shell { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
         .site-header { position: sticky; top: 0; z-index: 10; ${headerBackground} color: ${theme.headerText}; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); }
         .site-header__inner { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem 0; }
-        .site-header__brand { display: flex; gap: 0.75rem; align-items: center; }
+        .site-header__brand { display: flex; gap: 0.5rem; align-items: center; }
         .brand-logo { width: 56px; height: 56px; object-fit: contain; }
-        .brand-kicker { margin: 0; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem; }
+        .brand-kicker { margin: 0; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.95rem; }
         .brand-tagline { margin: 0; opacity: 0.9; }
         .primary-nav { max-width: 1200px; margin: 0 auto; padding: 0 1rem 0.25rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
         .primary-nav__link { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem 1.25rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.15); color: ${theme.textOnDark}; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; text-decoration: none; transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; backdrop-filter: blur(4px); }
@@ -5733,8 +5737,13 @@
         .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; }
         .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; }
         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
-        .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); }
-        .hero__badge { position: absolute; top: 1rem; left: 1rem; background: rgba(255, 255, 255, 0.15); color: ${theme.textOnDark}; padding: 0.4rem 0.95rem; border-radius: 999px; font-weight: 700; letter-spacing: 0.08em; border: 1px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(6px); }
+        .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); padding: 1rem; display: flex; align-items: flex-start; }
+        .hero__identity { position: relative; display: inline-flex; align-items: center; gap: 0.85rem; background: rgba(255, 255, 255, 0.12); color: ${theme.textOnDark}; padding: 0.85rem 1rem; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(8px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); }
+        .hero__badge-text { display: flex; flex-direction: column; gap: 0.2rem; max-width: 220px; }
+        .hero__badge-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.95rem; line-height: 1.1; }
+        .hero__badge-tagline { font-size: 0.95rem; opacity: 0.9; line-height: 1.35; }
+        .hero__logo { width: 68px; height: 68px; border-radius: 14px; background: rgba(255, 255, 255, 0.12); display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.12); padding: 0.4rem; }
+        .hero__logo img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.18)); }
         .hero__leaf { position: absolute; width: 160px; height: 160px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.18)); border-radius: 50% 40% 60% 50%; top: 18%; right: 18%; opacity: 0.9; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15)); }
         .hero__stone { position: absolute; width: 260px; height: 260px; background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)); border-radius: 45% 55% 40% 60%; bottom: -60px; left: 12%; }
         .button { padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid transparent; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -5800,20 +5809,16 @@
     <title>${companyNameHtml} | Inicio</title>
     <style>${styles}</style>
 </head>
-<body class="page page--home">
-    <header class="site-header">
-        <div class="page-shell site-header__inner">
-            <div class="site-header__brand">
-                ${logoMarkup}
-                <div>
+    <body class="page page--home">
+        <header class="site-header">
+            <div class="page-shell site-header__inner">
+                <div class="site-header__brand">
                     <p class="brand-kicker">${companyNameHtml}</p>
-                    <p class="brand-tagline">${escapeHtml(trimmedConfig.tagline || 'Naturaleza y modernidad en concreto')}</p>
                 </div>
+                <nav class="primary-nav" aria-label="Navegación principal">
+                    ${primaryNavLinksMarkup}
+                </nav>
             </div>
-            <nav class="primary-nav" aria-label="Navegación principal">
-                ${primaryNavLinksMarkup}
-            </nav>
-        </div>
     </header>
 
     <main>
@@ -5828,8 +5833,14 @@
                         <a class="button button--ghost" href="#novedades">${secondaryCtaText}</a>
                     </div>
                 </div>
-                <div class="hero__visual" aria-hidden="true">
-                    <span class="hero__badge">AMAZONIA</span>
+                <div class="hero__visual">
+                    <div class="hero__identity">
+                        <div class="hero__badge-text">
+                            <span class="hero__badge-title">${companyNameHtml}</span>
+                            <span class="hero__badge-tagline">${taglineHtml}</span>
+                        </div>
+                        ${heroLogoMarkup}
+                    </div>
                     <span class="hero__leaf"></span>
                     <span class="hero__stone"></span>
                 </div>
