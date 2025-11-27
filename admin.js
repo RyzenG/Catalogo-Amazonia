@@ -5737,12 +5737,12 @@
         .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; }
         .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; }
         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
-        .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); padding: 1rem; display: flex; align-items: flex-start; }
-        .hero__identity { position: relative; display: inline-flex; align-items: center; gap: 0.85rem; background: rgba(255, 255, 255, 0.12); color: ${theme.textOnDark}; padding: 0.85rem 1rem; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(8px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); }
-        .hero__badge-text { display: flex; flex-direction: column; gap: 0.2rem; max-width: 220px; }
-        .hero__badge-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.95rem; line-height: 1.1; }
-        .hero__badge-tagline { font-size: 0.95rem; opacity: 0.9; line-height: 1.35; }
-        .hero__logo { width: 68px; height: 68px; border-radius: 14px; background: rgba(255, 255, 255, 0.12); display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.12); padding: 0.4rem; }
+        .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); padding: 1.5rem; display: flex; align-items: center; justify-content: center; }
+        .hero__identity { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 1rem 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; }
+        .hero__badge-text { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: none; text-align: left; }
+        .hero__badge-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 1.05rem; line-height: 1.1; }
+        .hero__badge-tagline { font-size: 1rem; opacity: 0.95; line-height: 1.5; }
+        .hero__logo { width: 84px; height: 84px; border-radius: 14px; background: rgba(255, 255, 255, 0.12); display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.12); padding: 0.4rem; }
         .hero__logo img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.18)); }
         .hero__leaf { position: absolute; width: 160px; height: 160px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.18)); border-radius: 50% 40% 60% 50%; top: 18%; right: 18%; opacity: 0.9; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15)); }
         .hero__stone { position: absolute; width: 260px; height: 260px; background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)); border-radius: 45% 55% 40% 60%; bottom: -60px; left: 12%; }
@@ -5813,7 +5813,7 @@
         <header class="site-header">
             <div class="page-shell site-header__inner">
                 <div class="site-header__brand">
-                    <p class="brand-kicker">${companyNameHtml}</p>
+                    ${logoMarkup}
                 </div>
                 <nav class="primary-nav" aria-label="Navegación principal">
                     ${primaryNavLinksMarkup}
@@ -5828,19 +5828,19 @@
                     <p class="hero__eyebrow">${heroEyebrow}</p>
                     <h1 class="hero__title">${heroTitle}</h1>
                     <p class="hero__description">${heroDescription}</p>
+                    <div class="hero__identity">
+                        ${heroLogoMarkup}
+                        <div class="hero__badge-text">
+                            <span class="hero__badge-title">${companyNameHtml}</span>
+                            <span class="hero__badge-tagline">${taglineHtml}</span>
+                        </div>
+                    </div>
                     <div class="hero__actions">
                         <a class="button button--primary" href="${catalogHref}">${primaryCtaText}</a>
                         <a class="button button--ghost" href="#novedades">${secondaryCtaText}</a>
                     </div>
                 </div>
                 <div class="hero__visual">
-                    <div class="hero__identity">
-                        <div class="hero__badge-text">
-                            <span class="hero__badge-title">${companyNameHtml}</span>
-                            <span class="hero__badge-tagline">${taglineHtml}</span>
-                        </div>
-                        ${heroLogoMarkup}
-                    </div>
                     <span class="hero__leaf"></span>
                     <span class="hero__stone"></span>
                 </div>
