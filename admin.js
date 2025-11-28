@@ -5738,6 +5738,7 @@
         .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; }
         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
         .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); padding: 1.5rem; display: flex; align-items: center; justify-content: center; }
+        .hero__visual .hero__logo { width: 160px; height: 160px; background: rgba(255, 255, 255, 0.12); }
         .hero__identity { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 1rem 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; }
         .hero__badge-text { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: none; text-align: left; }
         .hero__badge-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 1.05rem; line-height: 1.1; }
@@ -5812,9 +5813,6 @@
     <body class="page page--home">
         <header class="site-header">
             <div class="page-shell site-header__inner">
-                <div class="site-header__brand">
-                    ${logoMarkup}
-                </div>
                 <nav class="primary-nav" aria-label="Navegación principal">
                     ${primaryNavLinksMarkup}
                 </nav>
@@ -5828,19 +5826,13 @@
                     <p class="hero__eyebrow">${heroEyebrow}</p>
                     <h1 class="hero__title">${heroTitle}</h1>
                     <p class="hero__description">${heroDescription}</p>
-                    <div class="hero__identity">
-                        ${heroLogoMarkup}
-                        <div class="hero__badge-text">
-                            <span class="hero__badge-title">${companyNameHtml}</span>
-                            <span class="hero__badge-tagline">${taglineHtml}</span>
-                        </div>
-                    </div>
                     <div class="hero__actions">
                         <a class="button button--primary" href="${catalogHref}">${primaryCtaText}</a>
                         <a class="button button--ghost" href="#novedades">${secondaryCtaText}</a>
                     </div>
                 </div>
                 <div class="hero__visual">
+                    ${heroLogoMarkup}
                     <span class="hero__leaf"></span>
                     <span class="hero__stone"></span>
                 </div>
