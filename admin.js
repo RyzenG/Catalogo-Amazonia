@@ -5595,6 +5595,9 @@
             const heroLogoMarkup = trimmedConfig.logoData
                 ? `<div class="hero__logo" aria-hidden="true">${logoMarkup}</div>`
                 : '';
+            const heroTaglineMarkup = trimmedConfig.tagline
+                ? `<p class="hero__tagline">${taglineHtml}</p>`
+                : '';
 
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
             const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '#';
@@ -5737,15 +5740,15 @@
         .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; }
         .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; }
         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
-        .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); padding: 1.5rem; display: flex; align-items: center; justify-content: center; }
-        .hero__visual .hero__logo { width: 160px; height: 160px; background: rgba(255, 255, 255, 0.12); }
+        .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); padding: 0; display: grid; place-items: center; }
+        .hero__visual .hero__logo { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.06); padding: 1.25rem; }
         .hero__identity { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 1rem 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; }
         .hero__badge-text { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: none; text-align: left; }
         .hero__badge-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 1.05rem; line-height: 1.1; }
         .hero__badge-tagline { font-size: 1rem; opacity: 0.95; line-height: 1.5; }
         .hero__logo { width: 84px; height: 84px; border-radius: 14px; background: rgba(255, 255, 255, 0.12); display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.12); padding: 0.4rem; }
         .hero__logo img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.18)); }
-        .hero__leaf { position: absolute; width: 160px; height: 160px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.18)); border-radius: 50% 40% 60% 50%; top: 18%; right: 18%; opacity: 0.9; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15)); }
+        .hero__tagline { position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); margin: 0; background: linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.35)); color: #fff; padding: 0.75rem 1rem; border-radius: 12px; font-weight: 700; line-height: 1.4; max-width: 55%; box-shadow: 0 10px 25px rgba(0,0,0,0.25); backdrop-filter: blur(6px); }
         .hero__stone { position: absolute; width: 260px; height: 260px; background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)); border-radius: 45% 55% 40% 60%; bottom: -60px; left: 12%; }
         .button { padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid transparent; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
         .button--primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
@@ -5833,7 +5836,7 @@
                 </div>
                 <div class="hero__visual">
                     ${heroLogoMarkup}
-                    <span class="hero__leaf"></span>
+                    ${heroTaglineMarkup}
                     <span class="hero__stone"></span>
                 </div>
             </div>
