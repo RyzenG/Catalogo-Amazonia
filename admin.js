@@ -5740,16 +5740,16 @@
         .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; }
         .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; }
         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
-        .hero__visual { position: relative; min-height: 260px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); padding: 1.25rem; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 1.25rem; }
-        .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 360px; border-radius: 20px; background: rgba(255, 255, 255, 0.06); padding: 1.1rem; display: grid; place-items: center; justify-self: flex-start; box-shadow: inset 0 1px 0 rgba(255,255,255,0.25); }
+        .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 1.25rem; }
+        .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 360px; border-radius: 20px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
         .hero__identity { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 1rem 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; }
         .hero__badge-text { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: none; text-align: left; }
         .hero__badge-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 1.05rem; line-height: 1.1; }
         .hero__badge-tagline { font-size: 1rem; opacity: 0.95; line-height: 1.5; }
-        .hero__logo { width: 100%; height: 100%; max-width: 360px; border-radius: 14px; background: rgba(255, 255, 255, 0.12); display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.12); padding: 0.75rem; }
+        .hero__logo { width: 100%; height: 100%; max-width: 360px; border-radius: 14px; background: transparent; display: grid; place-items: center; box-shadow: none; padding: 0; }
         .hero__visual .brand-logo { width: 100%; height: 100%; object-fit: contain; }
-        .hero__tagline { position: relative; right: auto; top: auto; transform: none; margin: 0; background: linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.35)); color: #fff; padding: 0.9rem 1.15rem; border-radius: 12px; font-weight: 700; line-height: 1.4; max-width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.25); backdrop-filter: blur(6px); justify-self: end; }
-        .hero__stone { position: absolute; width: 260px; height: 260px; background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)); border-radius: 45% 55% 40% 60%; bottom: -60px; left: 12%; }
+        .hero__tagline { position: relative; right: auto; top: auto; transform: none; margin: 0; background: transparent; color: ${theme.textOnDark}; padding: 0; border-radius: 0; font-weight: 700; line-height: 1.4; max-width: 100%; box-shadow: none; backdrop-filter: none; justify-self: end; }
+        .hero__stone { display: none; }
         .button { padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid transparent; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
         .button--primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
         .button--ghost { background: transparent; color: ${theme.textOnDark}; border-color: rgba(255,255,255,0.6); }
