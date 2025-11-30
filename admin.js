@@ -7164,7 +7164,8 @@
                 : [];
             const hasProducts = productSources.some(list => Array.isArray(list) && list.length > 0);
 
-            const hasPoliciesSection = hasPoliciesContent(policies);
+            const policiesWithContent = getPoliciesWithContent(policies);
+            const hasPoliciesSection = policiesWithContent.length > 0;
 
             const trimmedConfig = {
                 whatsapp: (config.whatsapp || '').trim(),
