@@ -797,6 +797,33 @@ function renderProducts(filteredProducts, activeCategory) {
             const media = document.createElement('div');
             media.className = 'product-card__media';
 
+            const badges = document.createElement('div');
+            badges.className = 'product-card__badges';
+
+            const categoryBadge = document.createElement('span');
+            categoryBadge.className = 'badge badge--category';
+            categoryBadge.textContent = category.name;
+            badges.appendChild(categoryBadge);
+
+            const labelStyles = {
+                nuevo: 'badge--new',
+                premium: 'badge--premium',
+                stock: 'badge--stock'
+            };
+
+            const addedLabels = new Set();
+            product.tags.forEach(tag => {
+                const normalized = tag.toLowerCase();
+                const labelClass = labelStyles[normalized];
+                if (labelClass && !addedLabels.has(normalized)) {
+                    const label = document.createElement('span');
+                    label.className = `badge ${labelClass}`;
+                    label.textContent = tag;
+                    badges.appendChild(label);
+                    addedLabels.add(normalized);
+                }
+            });
+
             if (product.imageUrl) {
                 const image = document.createElement('img');
                 image.className = 'product-card__image';
@@ -804,6 +831,7 @@ function renderProducts(filteredProducts, activeCategory) {
                 image.alt = `Vista de ${product.name}`;
                 image.loading = 'lazy';
                 image.decoding = 'async';
+                media.appendChild(badges);
                 media.appendChild(image);
             } else {
                 const placeholder = document.createElement('div');
@@ -811,6 +839,7 @@ function renderProducts(filteredProducts, activeCategory) {
                 placeholder.setAttribute('role', 'img');
                 placeholder.setAttribute('aria-label', `Imagen pendiente para ${product.name}`);
                 placeholder.textContent = 'Imagen en preparación';
+                media.appendChild(badges);
                 media.appendChild(placeholder);
             }
 
