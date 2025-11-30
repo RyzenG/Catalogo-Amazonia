@@ -6,6 +6,7 @@ Utilice esta tabla para documentar ajustes en la estructura de datos, nuevas fun
 |-------|-------------|------------------------|------------------|
 | 2025-02-14 | Equipo catálogo | Se retira el `index.html` generado para que el panel admin vuelva a ser la única fuente del catálogo público | No |
 | 2025-03-03 | Equipo catálogo | Se incorporan atributos de carga diferida, dimensiones y `srcset/sizes` opcionales para imágenes de productos; nuevos campos `imageSmall`/`imageMedium`/`imageLarge`/`imageFull` alimentan esas variantes | No |
+| 2025-05-29 | Equipo catálogo | Se añade soporte de `imageUrl` y CTA de contacto por producto para el catálogo público, incluyendo botón de contacto alimentado por la configuración general | No |
 | AAAA-MM-DD | Nombre Apellido | Resumen del ajuste (p. ej. "Se añade campo `product.warranty`") | ¿Requiere migrar datos existentes? |
 
 **Formato esperado para variantes responsive de imágenes:**
