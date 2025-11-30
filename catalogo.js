@@ -1,4 +1,16 @@
-const categories = [
+const STORAGE_KEY = 'amazoniaData';
+const DEFAULT_APPEARANCE = {
+    background: '#f5f5f5',
+    header: '#2d4a2b',
+    primary: '#6b8e68',
+    accent: '#8fa68c',
+    text: '#2d4a2b',
+    backgroundImage: '',
+    headerImage: '',
+    footerImage: ''
+};
+
+const DEFAULT_CATEGORIES = [
     {
         id: 'mobiliario',
         name: 'Mobiliario',
@@ -19,7 +31,7 @@ const categories = [
     }
 ];
 
-const products = [
+const DEFAULT_PRODUCTS = [
     {
         id: 'mesa-rio',
         name: 'Mesa Río',
@@ -70,6 +82,259 @@ const products = [
     }
 ];
 
+let categories = [];
+let products = [];
+let appearance = { ...DEFAULT_APPEARANCE };
+
+function sanitizeText(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+    return value.trim();
+}
+
+function sanitizeEmoji(value, fallback = '📦') {
+    const text = sanitizeText(value);
+    return text || fallback;
+}
+
+function toSlug(value, fallback = 'categoria') {
+    const text = sanitizeText(value).toLowerCase();
+    const slug = text
+        .normalize('NFD')
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-');
+    return slug || fallback;
+}
+
+function normalizeCategory(rawCategory, index, usedIds) {
+    const category = rawCategory && typeof rawCategory === 'object' ? rawCategory : {};
+    const baseName = sanitizeText(category.name || category.title || category.label);
+    const generatedId = toSlug(category.id || baseName || `categoria-${index + 1}`);
+    let finalId = generatedId;
+    let counter = 1;
+
+    while (usedIds.has(finalId)) {
+        finalId = `${generatedId}-${counter}`;
+        counter += 1;
+    }
+
+    usedIds.add(finalId);
+
+    return {
+        id: finalId,
+        name: baseName || `Categoría ${index + 1}`,
+        description: sanitizeText(category.description || category.desc),
+        icon: sanitizeEmoji(category.icon)
+    };
+}
+
+function normalizeCategories(rawCategories) {
+    const usedIds = new Set();
+
+    if (Array.isArray(rawCategories)) {
+        return rawCategories.map((category, index) => normalizeCategory(category, index, usedIds));
+    }
+
+    return DEFAULT_CATEGORIES.map((category, index) => normalizeCategory(category, index, usedIds));
+}
+
+function normalizePrice(value) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+        return numeric;
+    }
+    return 0;
+}
+
+function normalizeTags(rawTags) {
+    if (!Array.isArray(rawTags)) {
+        return [];
+    }
+    return rawTags
+        .map(tag => sanitizeText(tag))
+        .filter(Boolean);
+}
+
+function normalizeProduct(rawProduct, index, categoryId) {
+    const product = rawProduct && typeof rawProduct === 'object' ? rawProduct : {};
+    const baseName = sanitizeText(product.name || product.title);
+    const slugSource = product.id || product.sku || baseName || `producto-${index + 1}`;
+    return {
+        id: toSlug(slugSource, `producto-${index + 1}`),
+        name: baseName || `Producto ${index + 1}`,
+        category: sanitizeText(product.category) || categoryId,
+        description: sanitizeText(product.description || product.desc),
+        price: normalizePrice(product.price),
+        tags: normalizeTags(product.tags)
+    };
+}
+
+function normalizeProducts(rawProducts, normalizedCategories) {
+    const categoryIds = new Set(normalizedCategories.map(category => category.id));
+    const normalized = [];
+
+    if (rawProducts && typeof rawProducts === 'object' && !Array.isArray(rawProducts)) {
+        Object.entries(rawProducts).forEach(([categoryId, productList]) => {
+            if (!Array.isArray(productList)) {
+                return;
+            }
+            const targetCategory = categoryIds.has(categoryId) ? categoryId : null;
+            productList.forEach((product, index) => {
+                const normalizedProduct = normalizeProduct(product, index, categoryId);
+                const hasValidCategory = categoryIds.has(normalizedProduct.category) || targetCategory;
+                if (hasValidCategory) {
+                    normalizedProduct.category = normalizedProduct.category || targetCategory;
+                    normalized.push(normalizedProduct);
+                }
+            });
+        });
+    } else if (Array.isArray(rawProducts)) {
+        rawProducts.forEach((product, index) => {
+            const normalizedProduct = normalizeProduct(product, index);
+            if (categoryIds.has(normalizedProduct.category)) {
+                normalized.push(normalizedProduct);
+            }
+        });
+    }
+
+    if (normalized.length === 0) {
+        return DEFAULT_PRODUCTS.filter(product => categoryIds.has(product.category)).map(product => ({ ...product }));
+    }
+
+    return normalized;
+}
+
+function normalizeAppearance(rawAppearance) {
+    const appearanceData = rawAppearance && typeof rawAppearance === 'object'
+        ? rawAppearance
+        : {};
+
+    const normalized = { ...DEFAULT_APPEARANCE };
+    const colorKeys = ['background', 'header', 'primary', 'accent', 'text'];
+    const imageKeys = ['backgroundImage', 'headerImage', 'footerImage'];
+    const colorPattern = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+    colorKeys.forEach(key => {
+        const candidate = sanitizeText(appearanceData[key]);
+        normalized[key] = colorPattern.test(candidate) ? candidate : normalized[key];
+    });
+
+    imageKeys.forEach(key => {
+        normalized[key] = sanitizeText(appearanceData[key]);
+    });
+
+    return normalized;
+}
+
+function parseJsonSafely(value) {
+    try {
+        return JSON.parse(value);
+    } catch (error) {
+        console.warn('No se pudo leer el JSON proporcionado', error);
+        return null;
+    }
+}
+
+function readInlineDataset() {
+    const inlineNode = document.getElementById('amazoniaData');
+    if (!inlineNode || !inlineNode.textContent) {
+        return null;
+    }
+    return parseJsonSafely(inlineNode.textContent);
+}
+
+function readStoredDataset() {
+    if (typeof localStorage === 'undefined') {
+        return null;
+    }
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? parseJsonSafely(stored) : null;
+}
+
+function persistDataset(dataset) {
+    if (typeof localStorage === 'undefined' || !dataset) {
+        return;
+    }
+
+    const { categories: storedCategories, products: storedProducts, appearance: storedAppearance } = dataset;
+    const productMap = storedProducts.reduce((map, product) => {
+        if (!map[product.category]) {
+            map[product.category] = [];
+        }
+        map[product.category].push({ ...product });
+        return map;
+    }, {});
+
+    const payload = {
+        categories: storedCategories,
+        products: productMap,
+        config: {
+            appearance: storedAppearance
+        }
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadDataset() {
+    const stored = readStoredDataset();
+    const inlineData = stored ? null : readInlineDataset();
+    const source = stored || inlineData || { categories: DEFAULT_CATEGORIES, products: DEFAULT_PRODUCTS, config: { appearance: DEFAULT_APPEARANCE } };
+    const normalizedCategories = normalizeCategories(source.categories);
+    const normalizedProducts = normalizeProducts(source.products, normalizedCategories);
+    const normalizedAppearance = normalizeAppearance(source.config ? source.config.appearance : source.appearance);
+
+    const dataset = {
+        categories: normalizedCategories,
+        products: normalizedProducts,
+        appearance: normalizedAppearance
+    };
+
+    if (!stored) {
+        persistDataset(dataset);
+    }
+
+    return dataset;
+}
+
+function applyAppearanceStyles(theme) {
+    const root = document.documentElement;
+    if (!root || !theme) {
+        return;
+    }
+
+    root.style.setProperty('--brand-light', theme.background);
+    root.style.setProperty('--brand-primary', theme.primary);
+    root.style.setProperty('--brand-accent', theme.accent);
+    root.style.setProperty('--brand-dark', theme.header);
+    root.style.setProperty('--text-body', theme.text);
+
+    if (document.body) {
+        document.body.style.backgroundColor = theme.background;
+        document.body.style.backgroundImage = theme.backgroundImage ? `url(${theme.backgroundImage})` : '';
+        document.body.style.backgroundRepeat = theme.backgroundImage ? 'no-repeat' : '';
+        document.body.style.backgroundSize = theme.backgroundImage ? 'cover' : '';
+    }
+
+    const hero = document.querySelector('.hero');
+    if (hero) {
+        hero.style.backgroundImage = theme.headerImage ? `url(${theme.headerImage})` : '';
+        hero.style.backgroundSize = theme.headerImage ? 'cover' : '';
+        hero.style.backgroundRepeat = theme.headerImage ? 'no-repeat' : '';
+        hero.style.backgroundBlendMode = theme.headerImage ? 'multiply' : '';
+    }
+
+    const footer = document.querySelector('.site-footer');
+    if (footer) {
+        footer.style.backgroundImage = theme.footerImage ? `url(${theme.footerImage})` : '';
+        footer.style.backgroundSize = theme.footerImage ? 'cover' : '';
+        footer.style.backgroundRepeat = theme.footerImage ? 'no-repeat' : '';
+    }
+}
+
 function formatCurrency(value) {
     return value.toLocaleString('es-CO', {
         style: 'currency',
@@ -96,7 +361,19 @@ function groupProducts(filteredProducts) {
 
 function renderCategoryTags(activeCategoryId) {
     const container = document.getElementById('categoryTags');
+    if (!container) {
+        return;
+    }
+
     container.innerHTML = '';
+
+    if (categories.length === 0) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.className = 'empty-state';
+        emptyMessage.textContent = 'Aún no hay categorías configuradas. Guarda datos desde el panel de administración.';
+        container.appendChild(emptyMessage);
+        return;
+    }
 
     const allButton = document.createElement('button');
     allButton.textContent = 'Todas';
@@ -124,42 +401,29 @@ function matchesPriceRange(product, priceFilter) {
     return true;
 }
 
-function applyFilters({ search, price, category } = {}) {
-    const searchInput = document.getElementById('searchInput');
-    const priceSelect = document.getElementById('priceSelect');
-
-    if (typeof search === 'string') {
-        searchInput.value = search;
-    }
-    if (typeof price === 'string') {
-        priceSelect.value = price;
-    }
-    if (typeof category === 'string' || category === null) {
-        renderCategoryTags(category || null);
-    }
-
-    const activeSearch = searchInput.value.trim().toLowerCase();
-    const activePrice = priceSelect.value;
-    const activeCategory = typeof category === 'string' || category === null
-        ? category
-        : document.querySelector('.tag.is-active')?.dataset?.category || null;
-
-    const filtered = products.filter(product => {
-        const matchesCategory = !activeCategory || product.category === activeCategory;
-        const matchesSearch = !activeSearch
-            || product.name.toLowerCase().includes(activeSearch)
-            || product.description.toLowerCase().includes(activeSearch);
-        const matchesPrice = matchesPriceRange(product, activePrice);
-        return matchesCategory && matchesSearch && matchesPrice;
-    });
-
-    renderProducts(filtered, activeCategory);
-}
-
 function renderProducts(filteredProducts, activeCategory) {
     const container = document.getElementById('catalogProducts');
-    const grouped = groupProducts(filteredProducts);
+    if (!container) {
+        return;
+    }
+
     container.innerHTML = '';
+
+    if (categories.length === 0) {
+        const emptyCategories = document.createElement('p');
+        emptyCategories.textContent = 'No hay categorías disponibles para mostrar productos.';
+        container.appendChild(emptyCategories);
+        return;
+    }
+
+    if (products.length === 0) {
+        const emptyProducts = document.createElement('p');
+        emptyProducts.textContent = 'Aún no hay productos cargados. Usa el panel de administración para agregarlos.';
+        container.appendChild(emptyProducts);
+        return;
+    }
+
+    const grouped = groupProducts(filteredProducts);
 
     categories.forEach(category => {
         const items = grouped.get(category.id) || [];
@@ -244,17 +508,66 @@ function renderProducts(filteredProducts, activeCategory) {
     }
 }
 
+function applyFilters({ search, price, category } = {}) {
+    const searchInput = document.getElementById('searchInput');
+    const priceSelect = document.getElementById('priceSelect');
+
+    if (!searchInput || !priceSelect) {
+        return;
+    }
+
+    if (typeof search === 'string') {
+        searchInput.value = search;
+    }
+    if (typeof price === 'string') {
+        priceSelect.value = price;
+    }
+    if (typeof category === 'string' || category === null) {
+        renderCategoryTags(category || null);
+    }
+
+    const activeSearch = searchInput.value.trim().toLowerCase();
+    const activePrice = priceSelect.value;
+    const activeCategory = typeof category === 'string' || category === null
+        ? category
+        : document.querySelector('.tag.is-active')?.dataset?.category || null;
+
+    const filtered = products.filter(product => {
+        const matchesCategory = !activeCategory || product.category === activeCategory;
+        const matchesSearch = !activeSearch
+            || product.name.toLowerCase().includes(activeSearch)
+            || product.description.toLowerCase().includes(activeSearch);
+        const matchesPrice = matchesPriceRange(product, activePrice);
+        return matchesCategory && matchesSearch && matchesPrice;
+    });
+
+    renderProducts(filtered, activeCategory);
+}
+
 function initCatalog() {
+    const dataset = loadDataset();
+    categories = dataset.categories;
+    products = dataset.products;
+    appearance = dataset.appearance;
+
+    applyAppearanceStyles(appearance);
     renderCategoryTags(null);
     applyFilters();
 
-    document.getElementById('searchInput').addEventListener('input', event => {
-        applyFilters({ search: event.target.value });
-    });
+    const searchInput = document.getElementById('searchInput');
+    const priceSelect = document.getElementById('priceSelect');
 
-    document.getElementById('priceSelect').addEventListener('change', event => {
-        applyFilters({ price: event.target.value });
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', event => {
+            applyFilters({ search: event.target.value });
+        });
+    }
+
+    if (priceSelect) {
+        priceSelect.addEventListener('change', event => {
+            applyFilters({ price: event.target.value });
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initCatalog);
