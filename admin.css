@@ -521,6 +521,17 @@ input:focus, textarea:focus, select:focus {
     border-color: #6b8e68;
 }
 
+.input-helper {
+    display: block;
+    margin-top: 0.35rem;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.input-helper--error {
+    color: #e74c3c;
+}
+
 input.input-error,
 textarea.input-error,
 select.input-error {
