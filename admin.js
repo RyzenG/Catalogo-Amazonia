@@ -7800,13 +7800,43 @@
                 ? `<p>${escapeHtml(trimmedConfig.footerMessage)}</p>`
                 : '';
 
+            const metaTitle = headerTitleHtml;
+            const metaDescription = heroLeadText ? escapeHtml(heroLeadText) : '';
+            const metaImage = trimmedConfig.logoData ? escapeHtml(trimmedConfig.logoData) : '';
+            const canonicalUrlRaw = typeof config.aboutCanonicalUrl === 'string'
+                ? config.aboutCanonicalUrl.trim()
+                : (typeof config.canonicalUrl === 'string' ? config.canonicalUrl.trim() : '');
+            const canonicalUrl = canonicalUrlRaw && isValidUrl(canonicalUrlRaw) ? escapeHtml(canonicalUrlRaw) : '';
+
+            const metaTags = [];
+            if (metaDescription) {
+                metaTags.push(`<meta name="description" content="${metaDescription}">`);
+            }
+            if (metaTitle) {
+                metaTags.push(`<meta property="og:title" content="${metaTitle}">`);
+                metaTags.push(`<meta name="twitter:title" content="${metaTitle}">`);
+            }
+            if (metaDescription) {
+                metaTags.push(`<meta property="og:description" content="${metaDescription}">`);
+                metaTags.push(`<meta name="twitter:description" content="${metaDescription}">`);
+            }
+            if (metaImage) {
+                metaTags.push(`<meta property="og:image" content="${metaImage}">`);
+                metaTags.push(`<meta name="twitter:image" content="${metaImage}">`);
+            }
+            metaTags.push(`<meta property="og:type" content="website">`);
+            metaTags.push(`<meta name="twitter:card" content="${metaImage ? 'summary_large_image' : 'summary'}">`);
+
+            const canonicalLinkMarkup = canonicalUrl ? `    <link rel="canonical" href="${canonicalUrl}">\n` : '';
+            const metaTagsMarkup = metaTags.length ? `    ${metaTags.join('\n    ')}\n` : '';
+
             return `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${headerTitleHtml}</title>
-    <style>
+${canonicalLinkMarkup}${metaTagsMarkup}    <style>
         ${getCatalogStyles(theme)}
     </style>
 </head>
