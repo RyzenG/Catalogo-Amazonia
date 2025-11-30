@@ -4,6 +4,23 @@
     --brand-accent: #c0dfd9;
     --brand-light: #f5f7f3;
     --text-body: #1a1a1a;
+    --text-muted: rgba(45, 74, 43, 0.7);
+    --text-on-primary: #ffffff;
+    --surface: #ffffff;
+    --surface-alt: #f5f5f5;
+    --border-soft: rgba(0, 0, 0, 0.06);
+    --overlay-strong: rgba(31, 47, 40, 0.5);
+    --overlay-soft: rgba(31, 47, 40, 0.3);
+    --texture-body: none;
+    --texture-section: none;
+}
+
+:root.theme-dark {
+    --text-body: #e8ede7;
+    --text-muted: rgba(232, 237, 231, 0.78);
+    --surface: #111712;
+    --surface-alt: #19211a;
+    --border-soft: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -14,7 +31,9 @@ body {
     margin: 0;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: var(--text-body);
-    background: var(--brand-light);
+    background-color: var(--brand-light);
+    background-image: var(--texture-body);
+    background-attachment: fixed;
 }
 
 a {
@@ -38,11 +57,11 @@ img {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 2rem;
-    background: white;
+    background: var(--surface);
     position: sticky;
     top: 0;
     z-index: 10;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 6px 24px var(--border-soft);
 }
 
 .site-header__brand {
@@ -102,12 +121,10 @@ img {
     gap: 2rem;
     padding: 3rem 2rem;
     color: #f7faf5;
-    background-color: #0f1612;
-    background-image: linear-gradient(120deg, rgba(15, 24, 18, 0.8) 0%, rgba(31, 47, 40, 0.55) 45%, rgba(74, 124, 89, 0.45) 100%),
-        url('images/fondo principal.webp'),
-        radial-gradient(circle at 30% 20%, rgba(74, 124, 89, 0.12), transparent 35%),
-        radial-gradient(circle at 80% 10%, rgba(192, 223, 217, 0.4), transparent 38%);
-    background-size: cover, cover, 120% 120%, 120% 120%;
+    background-color: var(--brand-dark);
+    background-image: linear-gradient(120deg, var(--overlay-strong) 0%, rgba(31, 47, 40, 0.55) 45%, rgba(74, 124, 89, 0.45) 100%),
+        var(--texture-section);
+    background-size: cover, cover;
     background-position: center;
     background-repeat: no-repeat;
     overflow: hidden;
@@ -118,7 +135,7 @@ img {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(12, 18, 15, 0.15) 0%, rgba(12, 18, 15, 0.4) 35%, rgba(12, 18, 15, 0.65) 100%);
+    background: linear-gradient(180deg, var(--overlay-soft) 0%, rgba(12, 18, 15, 0.4) 35%, rgba(12, 18, 15, 0.65) 100%);
     pointer-events: none;
     z-index: 0;
 }
@@ -241,7 +258,9 @@ img {
 }
 
 .section--light {
-    background: white;
+    background: var(--surface);
+    color: var(--text-body);
+    background-image: var(--texture-section);
 }
 
 .section--dark {
@@ -274,7 +293,7 @@ img {
 
 .section__description {
     margin: 0;
-    color: rgba(0, 0, 0, 0.72);
+    color: var(--text-muted);
 }
 
 .section--dark .section__description {
@@ -392,17 +411,18 @@ img {
 
 .site-footer {
     padding: 1.5rem 2rem;
-    background: #0f1612;
-    color: rgba(255, 255, 255, 0.8);
+    background: var(--brand-dark);
+    color: var(--text-muted);
     text-align: center;
     margin-top: auto;
 }
 
 /* Catálogo */
 .catalog-hero {
-    background: white;
+    background: var(--surface);
+    background-image: var(--texture-section);
     padding: 3rem 2rem 2rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--border-soft);
 }
 
 .catalog-layout {
@@ -413,14 +433,14 @@ img {
 }
 
 .catalog-sidebar {
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
     border-radius: 16px;
     padding: 1rem;
     position: sticky;
     top: 90px;
     height: fit-content;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 30px var(--border-soft);
 }
 
 .catalog-sidebar h3 {
@@ -442,8 +462,10 @@ img {
     width: 100%;
     padding: 0.65rem 0.75rem;
     border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--border-soft);
     font-size: 1rem;
+    background: var(--surface);
+    color: var(--text-body);
 }
 
 .catalog-tags {
@@ -474,11 +496,11 @@ img {
 }
 
 .category-block {
-    background: white;
+    background: var(--surface);
     border-radius: 18px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-soft);
     padding: 1.25rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 30px var(--border-soft);
 }
 
 .category-block__header {
@@ -503,8 +525,8 @@ img {
 .product-card {
     padding: 1rem;
     border-radius: 14px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    background: linear-gradient(180deg, #ffffff 0%, #f9fbf8 100%);
+    border: 1px solid var(--border-soft);
+    background: linear-gradient(180deg, var(--surface) 0%, var(--surface-alt) 100%);
     display: grid;
     gap: 0.75rem;
     grid-template-rows: auto auto 1fr auto auto;
@@ -521,7 +543,7 @@ img {
     border-radius: 12px;
     object-fit: cover;
     aspect-ratio: 4 / 3;
-    background: #f4f6f3;
+    background: var(--surface-alt);
     transition: transform 0.35s ease, filter 0.35s ease;
 }
 
@@ -529,9 +551,9 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6b6b6b;
+    color: var(--text-muted);
     font-weight: 600;
-    border: 1px dashed rgba(0, 0, 0, 0.08);
+    border: 1px dashed var(--border-soft);
 }
 
 .product-card__badges {
@@ -554,7 +576,7 @@ img {
     font-size: 0.8rem;
     letter-spacing: 0.01em;
     background: rgba(31, 47, 40, 0.82);
-    color: #f7faf5;
+    color: var(--text-on-primary);
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 }
 
@@ -593,7 +615,7 @@ img {
     font-size: 1.05rem;
     font-weight: 800;
     letter-spacing: 0.01em;
-    color: var(--brand-dark);
+    color: var(--text-body);
 }
 
 .product-card__price {
@@ -605,7 +627,7 @@ img {
 
 .product-card__desc {
     margin: 0;
-    color: #2f312f;
+    color: var(--text-muted);
     line-height: 1.65;
     font-size: 0.95rem;
 }
@@ -614,6 +636,25 @@ img {
     display: flex;
     gap: 0.35rem;
     flex-wrap: wrap;
+}
+
+.theme-toggle {
+    border: 1px solid var(--border-soft);
+    background: var(--surface);
+    color: var(--text-body);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-left: 1rem;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+    outline: none;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px var(--border-soft);
 }
 
 .product-card__actions {
@@ -629,7 +670,7 @@ img {
     gap: 0.35rem;
     padding: 0.65rem 0.95rem;
     background: var(--brand-primary);
-    color: #fff;
+    color: var(--text-on-primary);
     border-radius: 12px;
     font-weight: 700;
     text-decoration: none;

@@ -7,8 +7,22 @@ const DEFAULT_APPEARANCE = {
     text: '#2d4a2b',
     backgroundImage: '',
     headerImage: '',
-    footerImage: ''
+    footerImage: '',
+    mode: 'light',
+    backgroundPattern: 'concrete-soft',
+    sectionPattern: '',
+    overlayStrength: 0.48
 };
+
+const TEXTURE_LIBRARY = {
+    none: '',
+    'concrete-soft': 'radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.12), transparent 28%), radial-gradient(circle at 80% 10%, rgba(0, 0, 0, 0.04), transparent 25%), linear-gradient(135deg, rgba(0, 0, 0, 0.02) 25%, transparent 25%)',
+    'concrete-fibers': 'linear-gradient(90deg, rgba(255, 255, 255, 0.04) 5%, transparent 5%), linear-gradient(0deg, rgba(0, 0, 0, 0.03) 10%, transparent 10%), radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.08), transparent 20%)',
+    'jungle-gradient': 'linear-gradient(135deg, rgba(74, 124, 89, 0.08), rgba(31, 47, 40, 0.14))'
+};
+
+const THEME_MODE_KEY = 'amazoniaThemeMode';
+let activeThemeMode = 'light';
 
 const DEFAULT_CONTACT = {
     whatsapp: '',
@@ -118,6 +132,62 @@ function sanitizeText(value) {
         return '';
     }
     return value.trim();
+}
+
+function clamp(value, min, max) {
+    if (!Number.isFinite(value)) {
+        return min;
+    }
+    return Math.min(max, Math.max(min, value));
+}
+
+function hexToRgb(hex) {
+    if (typeof hex !== 'string') {
+        return null;
+    }
+
+    const normalized = hex.trim();
+    const match = normalized.match(/^#?([0-9a-f]{6}|[0-9a-f]{3})$/i);
+    if (!match) {
+        return null;
+    }
+
+    const value = match[1].length === 3
+        ? match[1].split('').map(char => char + char).join('')
+        : match[1];
+
+    const intValue = Number.parseInt(value, 16);
+    return {
+        r: (intValue >> 16) & 255,
+        g: (intValue >> 8) & 255,
+        b: intValue & 255
+    };
+}
+
+function mixColors(baseHex, targetHex, weight) {
+    const base = hexToRgb(baseHex);
+    const target = hexToRgb(targetHex);
+    if (!base || !target) {
+        return baseHex;
+    }
+
+    const factor = clamp(weight, 0, 1);
+    const mixChannel = (from, to) => Math.round(from + (to - from) * factor);
+
+    const r = mixChannel(base.r, target.r).toString(16).padStart(2, '0');
+    const g = mixChannel(base.g, target.g).toString(16).padStart(2, '0');
+    const b = mixChannel(base.b, target.b).toString(16).padStart(2, '0');
+    return `#${r}${g}${b}`;
+}
+
+function getReadableTextColor(backgroundHex, lightColor = '#ffffff', darkColor = '#0d0d0d') {
+    const rgb = hexToRgb(backgroundHex);
+    if (!rgb) {
+        return darkColor;
+    }
+
+    const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+    return luminance > 0.55 ? darkColor : lightColor;
 }
 
 function sanitizeEmoji(value, fallback = '📦') {
@@ -294,6 +364,7 @@ function normalizeAppearance(rawAppearance) {
     const normalized = { ...DEFAULT_APPEARANCE };
     const colorKeys = ['background', 'header', 'primary', 'accent', 'text'];
     const imageKeys = ['backgroundImage', 'headerImage', 'footerImage'];
+    const patternKeys = ['backgroundPattern', 'sectionPattern'];
     const colorPattern = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
     colorKeys.forEach(key => {
@@ -304,6 +375,19 @@ function normalizeAppearance(rawAppearance) {
     imageKeys.forEach(key => {
         normalized[key] = sanitizeText(appearanceData[key]);
     });
+
+    patternKeys.forEach(key => {
+        const candidate = sanitizeText(appearanceData[key]);
+        normalized[key] = candidate || normalized[key];
+    });
+
+    const mode = sanitizeText(appearanceData.mode).toLowerCase();
+    normalized.mode = mode === 'dark' ? 'dark' : 'light';
+
+    const overlayValue = Number.parseFloat(appearanceData.overlayStrength);
+    normalized.overlayStrength = Number.isFinite(overlayValue)
+        ? clamp(overlayValue, 0, 0.85)
+        : normalized.overlayStrength;
 
     return normalized;
 }
@@ -451,38 +535,106 @@ function loadDataset() {
     return dataset;
 }
 
-function applyAppearanceStyles(theme) {
+function resolvePattern(patternKey) {
+    if (typeof patternKey !== 'string') {
+        return '';
+    }
+    const sanitized = patternKey.trim();
+    return TEXTURE_LIBRARY[sanitized] || '';
+}
+
+function buildLayeredBackground(imageUrl, pattern) {
+    const layers = [];
+    if (imageUrl) {
+        layers.push(`linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), url(${imageUrl})`);
+    }
+    if (pattern) {
+        layers.push(pattern);
+    }
+    return layers.join(', ');
+}
+
+function resolveThemeMode(theme) {
+    const storedMode = typeof localStorage !== 'undefined'
+        ? localStorage.getItem(THEME_MODE_KEY)
+        : null;
+
+    if (storedMode === 'dark' || storedMode === 'light') {
+        return storedMode;
+    }
+
+    return theme.mode === 'dark' ? 'dark' : 'light';
+}
+
+function applyAppearanceStyles(theme, forcedMode) {
     const root = document.documentElement;
     if (!root || !theme) {
         return;
     }
 
-    root.style.setProperty('--brand-light', theme.background);
+    const mode = forcedMode || resolveThemeMode(theme);
+    activeThemeMode = mode;
+
+    root.classList.toggle('theme-dark', mode === 'dark');
+    root.classList.toggle('theme-light', mode !== 'dark');
+    root.setAttribute('data-theme-mode', mode);
+
+    const readableText = getReadableTextColor(theme.background, '#f8f9f7', '#0f1612');
+    const mutedText = mode === 'dark'
+        ? 'rgba(232, 237, 231, 0.78)'
+        : 'rgba(45, 74, 43, 0.7)';
+    const backgroundBase = mode === 'dark'
+        ? mixColors(theme.background, '#0b100c', 0.65)
+        : theme.background;
+    const surface = mode === 'dark'
+        ? mixColors(theme.background, '#0b100c', 0.55)
+        : '#ffffff';
+    const surfaceAlt = mode === 'dark'
+        ? mixColors(theme.background, '#141c15', 0.4)
+        : mixColors(theme.background, '#ffffff', 0.4);
+    const borderSoft = mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
+    root.style.setProperty('--brand-light', backgroundBase);
     root.style.setProperty('--brand-primary', theme.primary);
     root.style.setProperty('--brand-accent', theme.accent);
     root.style.setProperty('--brand-dark', theme.header);
-    root.style.setProperty('--text-body', theme.text);
+    root.style.setProperty('--text-body', mode === 'dark' ? readableText : theme.text);
+    root.style.setProperty('--text-muted', mutedText);
+    root.style.setProperty('--surface', surface);
+    root.style.setProperty('--surface-alt', surfaceAlt);
+    root.style.setProperty('--border-soft', borderSoft);
+    root.style.setProperty('--text-on-primary', getReadableTextColor(theme.primary));
+
+    const headerRgb = hexToRgb(theme.header) || { r: 31, g: 47, b: 40 };
+    const overlayStrength = clamp(Number(theme.overlayStrength) || DEFAULT_APPEARANCE.overlayStrength, 0, 0.85);
+    root.style.setProperty('--overlay-strong', `rgba(${headerRgb.r}, ${headerRgb.g}, ${headerRgb.b}, ${overlayStrength})`);
+    root.style.setProperty('--overlay-soft', `rgba(${headerRgb.r}, ${headerRgb.g}, ${headerRgb.b}, ${Math.max(0.12, overlayStrength - 0.2)})`);
+
+    const backgroundPattern = resolvePattern(theme.backgroundPattern);
+    const sectionPattern = resolvePattern(theme.sectionPattern);
+    root.style.setProperty('--texture-body', backgroundPattern || '');
+    root.style.setProperty('--texture-section', sectionPattern || '');
 
     if (document.body) {
-        document.body.style.backgroundColor = theme.background;
-        document.body.style.backgroundImage = theme.backgroundImage ? `url(${theme.backgroundImage})` : '';
-        document.body.style.backgroundRepeat = theme.backgroundImage ? 'no-repeat' : '';
-        document.body.style.backgroundSize = theme.backgroundImage ? 'cover' : '';
+        document.body.style.backgroundColor = backgroundBase;
+        document.body.style.backgroundImage = buildLayeredBackground(theme.backgroundImage, backgroundPattern);
+        document.body.style.backgroundRepeat = 'no-repeat';
+        document.body.style.backgroundSize = 'cover';
     }
 
     const hero = document.querySelector('.hero');
     if (hero) {
-        hero.style.backgroundImage = theme.headerImage ? `url(${theme.headerImage})` : '';
-        hero.style.backgroundSize = theme.headerImage ? 'cover' : '';
-        hero.style.backgroundRepeat = theme.headerImage ? 'no-repeat' : '';
+        hero.style.backgroundImage = buildLayeredBackground(theme.headerImage, sectionPattern || backgroundPattern);
+        hero.style.backgroundSize = 'cover';
+        hero.style.backgroundRepeat = 'no-repeat';
         hero.style.backgroundBlendMode = theme.headerImage ? 'multiply' : '';
     }
 
     const footer = document.querySelector('.site-footer');
     if (footer) {
-        footer.style.backgroundImage = theme.footerImage ? `url(${theme.footerImage})` : '';
-        footer.style.backgroundSize = theme.footerImage ? 'cover' : '';
-        footer.style.backgroundRepeat = theme.footerImage ? 'no-repeat' : '';
+        footer.style.backgroundImage = buildLayeredBackground(theme.footerImage, sectionPattern || backgroundPattern);
+        footer.style.backgroundSize = 'cover';
+        footer.style.backgroundRepeat = 'no-repeat';
     }
 }
 
@@ -947,6 +1099,47 @@ function applyFilters({ search, price, category } = {}) {
     renderProducts(filtered, activeCategory);
 }
 
+function updateThemeToggleLabel(toggleButton, mode) {
+    if (!toggleButton) {
+        return;
+    }
+
+    const isDark = mode === 'dark';
+    toggleButton.textContent = isDark ? '☀️ Modo claro' : '🌙 Modo oscuro';
+    toggleButton.setAttribute('aria-pressed', String(isDark));
+    toggleButton.title = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+}
+
+function setupThemeToggle(theme) {
+    const target = document.querySelector('.site-header') || document.body;
+    if (!target) {
+        return;
+    }
+
+    let toggle = document.getElementById('themeToggle');
+    if (!toggle) {
+        toggle = document.createElement('button');
+        toggle.id = 'themeToggle';
+        toggle.className = 'theme-toggle';
+        toggle.type = 'button';
+        toggle.setAttribute('aria-live', 'polite');
+        target.appendChild(toggle);
+    }
+
+    updateThemeToggleLabel(toggle, activeThemeMode);
+
+    toggle.addEventListener('click', () => {
+        const nextMode = activeThemeMode === 'dark' ? 'light' : 'dark';
+        activeThemeMode = nextMode;
+        applyAppearanceStyles(theme, nextMode);
+        updateThemeToggleLabel(toggle, nextMode);
+
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(THEME_MODE_KEY, nextMode);
+        }
+    });
+}
+
 function initCatalog() {
     const dataset = loadDataset();
     categories = dataset.categories;
@@ -957,6 +1150,8 @@ function initCatalog() {
     renderPriceFilterOptions();
     renderCategoryTags(null);
     applyFilters();
+
+    setupThemeToggle(config.appearance);
 
     const searchInput = document.getElementById('searchInput');
     const priceSelect = document.getElementById('priceSelect');

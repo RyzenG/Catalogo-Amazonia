@@ -8,7 +8,11 @@
             text: '#2d4a2b',
             backgroundImage: '',
             headerImage: '',
-            footerImage: ''
+            footerImage: '',
+            mode: 'light',
+            backgroundPattern: 'concrete-soft',
+            sectionPattern: '',
+            overlayStrength: 0.48
         };
 
         const defaultNewsPanel = {
@@ -242,6 +246,13 @@
             { id: 'appearancePrimary', key: 'primary' },
             { id: 'appearanceAccent', key: 'accent' },
             { id: 'appearanceText', key: 'text' }
+        ];
+
+        const PATTERN_OPTIONS = [
+            { value: 'none', label: 'Sin textura' },
+            { value: 'concrete-soft', label: 'Concreto suave' },
+            { value: 'concrete-fibers', label: 'Fibras finas' },
+            { value: 'jungle-gradient', label: 'Neblina selvática' }
         ];
 
         const APPEARANCE_COLOR_KEYS = APPEARANCE_FIELDS.map(field => field.key);
@@ -683,6 +694,19 @@
                         ? value.trim()
                         : defaultAppearance[key];
                 });
+
+                const mode = typeof candidate.mode === 'string' ? candidate.mode.trim().toLowerCase() : defaultAppearance.mode;
+                normalized.mode = mode === 'dark' ? 'dark' : 'light';
+
+                ['backgroundPattern', 'sectionPattern'].forEach(key => {
+                    const value = typeof candidate[key] === 'string' ? candidate[key].trim() : '';
+                    normalized[key] = value || normalized[key];
+                });
+
+                const overlayValue = Number.parseFloat(candidate.overlayStrength);
+                normalized.overlayStrength = Number.isFinite(overlayValue)
+                    ? Math.min(0.85, Math.max(0, overlayValue))
+                    : normalized.overlayStrength;
             }
 
             return normalized;
@@ -4193,6 +4217,10 @@
                     primary: readColor('appearancePrimary'),
                     accent: readColor('appearanceAccent'),
                     text: readColor('appearanceText'),
+                    mode: readValue('appearanceMode'),
+                    backgroundPattern: readValue('appearanceBackgroundPattern'),
+                    sectionPattern: readValue('appearanceSectionPattern'),
+                    overlayStrength: readValue('appearanceOverlayStrength'),
                     backgroundImage: readValue('appearanceBackgroundImage'),
                     headerImage: readValue('appearanceHeaderImage'),
                     footerImage: readValue('appearanceFooterImage')
@@ -4563,6 +4591,21 @@
             elements.imageEl.src = normalizedUrl;
         }
 
+        function populatePatternSelect(selectId) {
+            const select = document.getElementById(selectId);
+            if (!select) {
+                return;
+            }
+
+            select.innerHTML = '';
+            PATTERN_OPTIONS.forEach(option => {
+                const optionNode = document.createElement('option');
+                optionNode.value = option.value;
+                optionNode.textContent = option.label;
+                select.appendChild(optionNode);
+            });
+        }
+
         function applyAppearanceToInputs(appearance) {
             const normalized = normalizeAppearance(appearance);
 
@@ -4586,9 +4629,32 @@
                 input.value = normalized[key] || '';
                 updateAppearanceImagePreview(id, input.value);
             });
+
+            const modeSelect = document.getElementById('appearanceMode');
+            if (modeSelect) {
+                modeSelect.value = normalized.mode || defaultAppearance.mode;
+            }
+
+            const backgroundPattern = document.getElementById('appearanceBackgroundPattern');
+            if (backgroundPattern) {
+                backgroundPattern.value = normalized.backgroundPattern || 'none';
+            }
+
+            const sectionPattern = document.getElementById('appearanceSectionPattern');
+            if (sectionPattern) {
+                sectionPattern.value = normalized.sectionPattern || 'none';
+            }
+
+            const overlayStrength = document.getElementById('appearanceOverlayStrength');
+            if (overlayStrength) {
+                overlayStrength.value = normalized.overlayStrength ?? defaultAppearance.overlayStrength;
+            }
         }
 
         function setupAppearanceControls() {
+            populatePatternSelect('appearanceBackgroundPattern');
+            populatePatternSelect('appearanceSectionPattern');
+
             APPEARANCE_FIELDS.forEach(({ id }) => {
                 const input = document.getElementById(id);
                 if (!input) {
@@ -4612,6 +4678,25 @@
                     updateAppearanceImagePreview(id, input.value);
                 });
             });
+
+            const modeSelect = document.getElementById('appearanceMode');
+            if (modeSelect) {
+                modeSelect.addEventListener('change', updateCatalogPreview);
+            }
+
+            const patternSelects = [
+                document.getElementById('appearanceBackgroundPattern'),
+                document.getElementById('appearanceSectionPattern')
+            ].filter(Boolean);
+
+            patternSelects.forEach(select => {
+                select.addEventListener('change', updateCatalogPreview);
+            });
+
+            const overlayStrength = document.getElementById('appearanceOverlayStrength');
+            if (overlayStrength) {
+                overlayStrength.addEventListener('input', updateCatalogPreview);
+            }
 
             const resetButton = document.getElementById('resetAppearanceButton');
             if (resetButton) {
