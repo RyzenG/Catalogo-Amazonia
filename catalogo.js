@@ -10,6 +10,15 @@ const DEFAULT_APPEARANCE = {
     footerImage: ''
 };
 
+const DEFAULT_CONTACT = {
+    whatsapp: '',
+    email: '',
+    phone: '',
+    address: '',
+    ctaText: 'Solicitar información',
+    ctaLink: ''
+};
+
 const DEFAULT_CATEGORIES = [
     {
         id: 'mobiliario',
@@ -38,7 +47,9 @@ const DEFAULT_PRODUCTS = [
         category: 'mobiliario',
         description: 'Cubierta sellada con resina natural, patas de acero grafito.',
         price: 380000,
-        tags: ['interior', 'premium']
+        tags: ['interior', 'premium'],
+        imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
+        ctaText: 'Agendar asesoría'
     },
     {
         id: 'banca-selva',
@@ -46,7 +57,8 @@ const DEFAULT_PRODUCTS = [
         category: 'mobiliario',
         description: 'Textura inspirada en corteza amazónica, ideal para exteriores.',
         price: 180000,
-        tags: ['exterior', 'stock']
+        tags: ['exterior', 'stock'],
+        imageUrl: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=1200&q=80'
     },
     {
         id: 'lampara-aurora',
@@ -54,7 +66,9 @@ const DEFAULT_PRODUCTS = [
         category: 'iluminacion',
         description: 'Difusor cálido y cuerpo de concreto ultraligero pigmentado.',
         price: 240000,
-        tags: ['nuevo', 'tendencia']
+        tags: ['nuevo', 'tendencia'],
+        imageUrl: 'https://images.unsplash.com/photo-1493663284031-b66af44d7c0e?auto=format&fit=crop&w=1200&q=80',
+        ctaLink: 'mailto:info@amazoniaconcrete.com?subject=Consulta%20L%C3%A1mpara%20Aurora'
     },
     {
         id: 'pendulo-bruma',
@@ -62,7 +76,8 @@ const DEFAULT_PRODUCTS = [
         category: 'iluminacion',
         description: 'Colgante con acabado gris humo y cable textil verde musgo.',
         price: 460000,
-        tags: ['premium']
+        tags: ['premium'],
+        imageUrl: 'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80'
     },
     {
         id: 'maceta-lago',
@@ -70,7 +85,8 @@ const DEFAULT_PRODUCTS = [
         category: 'accesorios',
         description: 'Maceta cilíndrica en concreto pigmentado, resistente a exteriores.',
         price: 95000,
-        tags: ['exterior', 'stock']
+        tags: ['exterior', 'stock'],
+        imageUrl: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80'
     },
     {
         id: 'bowl-ceniza',
@@ -78,13 +94,17 @@ const DEFAULT_PRODUCTS = [
         category: 'accesorios',
         description: 'Pieza decorativa con sello hidrófugo y textura fina.',
         price: 65000,
-        tags: ['interior']
+        tags: ['interior'],
+        imageUrl: 'https://images.unsplash.com/photo-1470246973918-29a93221c455?auto=format&fit=crop&w=1200&q=80'
     }
 ];
 
 let categories = [];
 let products = [];
-let appearance = { ...DEFAULT_APPEARANCE };
+let config = {
+    appearance: { ...DEFAULT_APPEARANCE },
+    contact: { ...DEFAULT_CONTACT }
+};
 
 function sanitizeText(value) {
     if (typeof value !== 'string') {
@@ -162,13 +182,36 @@ function normalizeProduct(rawProduct, index, categoryId) {
     const product = rawProduct && typeof rawProduct === 'object' ? rawProduct : {};
     const baseName = sanitizeText(product.name || product.title);
     const slugSource = product.id || product.sku || baseName || `producto-${index + 1}`;
+
+    const imageCandidates = [];
+    if (Array.isArray(product.images) && product.images.length > 0) {
+        const primaryImage = sanitizeText(product.primaryImage || product.image);
+        const firstImage = sanitizeText(product.images[0]);
+        if (primaryImage) {
+            imageCandidates.push(primaryImage);
+        }
+        if (firstImage) {
+            imageCandidates.push(firstImage);
+        }
+    }
+    if (typeof product.image === 'string') {
+        imageCandidates.push(sanitizeText(product.image));
+    }
+    if (typeof product.imageUrl === 'string') {
+        imageCandidates.push(sanitizeText(product.imageUrl));
+    }
+    const imageUrl = imageCandidates.find(Boolean) || '';
+
     return {
         id: toSlug(slugSource, `producto-${index + 1}`),
         name: baseName || `Producto ${index + 1}`,
         category: sanitizeText(product.category) || categoryId,
         description: sanitizeText(product.description || product.desc),
         price: normalizePrice(product.price),
-        tags: normalizeTags(product.tags)
+        tags: normalizeTags(product.tags),
+        imageUrl,
+        ctaText: sanitizeText(product.ctaText),
+        ctaLink: sanitizeText(product.ctaLink || product.contactLink)
     };
 }
 
@@ -229,6 +272,37 @@ function normalizeAppearance(rawAppearance) {
     return normalized;
 }
 
+function normalizeContact(rawContact) {
+    const contactData = rawContact && typeof rawContact === 'object'
+        ? rawContact
+        : {};
+
+    const sanitizePhone = value => sanitizeText(value).replace(/[^\d+]/g, '');
+
+    return {
+        whatsapp: sanitizePhone(contactData.whatsapp || contactData.phone || ''),
+        email: sanitizeText(contactData.email),
+        phone: sanitizeText(contactData.phone || contactData.whatsapp || ''),
+        address: sanitizeText(contactData.address),
+        ctaText: sanitizeText(contactData.ctaText || contactData.contactText) || DEFAULT_CONTACT.ctaText,
+        ctaLink: sanitizeText(contactData.ctaLink || contactData.contactLink)
+    };
+}
+
+function normalizeConfig(rawConfig) {
+    const configData = rawConfig && typeof rawConfig === 'object'
+        ? rawConfig
+        : {};
+
+    const appearanceConfig = configData.appearance || configData.theme || rawConfig || {};
+    const contactConfig = configData.contact || configData || {};
+
+    return {
+        appearance: normalizeAppearance(appearanceConfig),
+        contact: { ...DEFAULT_CONTACT, ...normalizeContact(contactConfig) }
+    };
+}
+
 function parseJsonSafely(value) {
     try {
         return JSON.parse(value);
@@ -259,7 +333,7 @@ function persistDataset(dataset) {
         return;
     }
 
-    const { categories: storedCategories, products: storedProducts, appearance: storedAppearance } = dataset;
+    const { categories: storedCategories, products: storedProducts, config: storedConfig } = dataset;
     const productMap = storedProducts.reduce((map, product) => {
         if (!map[product.category]) {
             map[product.category] = [];
@@ -271,9 +345,7 @@ function persistDataset(dataset) {
     const payload = {
         categories: storedCategories,
         products: productMap,
-        config: {
-            appearance: storedAppearance
-        }
+        config: storedConfig
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -282,15 +354,20 @@ function persistDataset(dataset) {
 function loadDataset() {
     const stored = readStoredDataset();
     const inlineData = stored ? null : readInlineDataset();
-    const source = stored || inlineData || { categories: DEFAULT_CATEGORIES, products: DEFAULT_PRODUCTS, config: { appearance: DEFAULT_APPEARANCE } };
+    const source = stored || inlineData || {
+        categories: DEFAULT_CATEGORIES,
+        products: DEFAULT_PRODUCTS,
+        config: { appearance: DEFAULT_APPEARANCE, contact: DEFAULT_CONTACT }
+    };
+
     const normalizedCategories = normalizeCategories(source.categories);
     const normalizedProducts = normalizeProducts(source.products, normalizedCategories);
-    const normalizedAppearance = normalizeAppearance(source.config ? source.config.appearance : source.appearance);
+    const normalizedConfig = normalizeConfig(source.config || source);
 
     const dataset = {
         categories: normalizedCategories,
         products: normalizedProducts,
-        appearance: normalizedAppearance
+        config: normalizedConfig
     };
 
     if (!stored) {
@@ -357,6 +434,56 @@ function groupProducts(filteredProducts) {
     });
 
     return grouped;
+}
+
+function buildContactLink(product) {
+    if (!config || !config.contact) {
+        return null;
+    }
+
+    const preferredText = product.ctaText || config.contact.ctaText || 'Solicitar información';
+    const normalizedProductName = product && product.name ? product.name : 'este producto';
+    const sanitizedCustomLink = sanitizeText(product.ctaLink);
+
+    const whatsappNumber = config.contact.whatsapp.replace(/\D/g, '');
+    const email = config.contact.email;
+    const phone = config.contact.phone;
+
+    if (sanitizedCustomLink) {
+        return {
+            label: preferredText,
+            href: sanitizedCustomLink,
+            target: '_blank'
+        };
+    }
+
+    const encodedMessage = encodeURIComponent(`Hola, quiero saber más sobre ${normalizedProductName}.`);
+
+    if (whatsappNumber) {
+        return {
+            label: preferredText || 'Escribir por WhatsApp',
+            href: `https://wa.me/${whatsappNumber}?text=${encodedMessage}`,
+            target: '_blank'
+        };
+    }
+
+    if (email) {
+        return {
+            label: preferredText || 'Solicitar por correo',
+            href: `mailto:${email}?subject=${encodeURIComponent(`Consulta sobre ${normalizedProductName}`)}`,
+            target: '_self'
+        };
+    }
+
+    if (phone) {
+        return {
+            label: preferredText || 'Llamar',
+            href: `tel:${phone}`,
+            target: '_self'
+        };
+    }
+
+    return null;
 }
 
 function renderCategoryTags(activeCategoryId) {
@@ -454,8 +581,29 @@ function renderProducts(filteredProducts, activeCategory) {
         grid.className = 'product-grid';
 
         items.forEach(product => {
-            const card = document.createElement('div');
+            const card = document.createElement('article');
             card.className = 'product-card';
+            card.setAttribute('aria-label', product.name);
+
+            const media = document.createElement('div');
+            media.className = 'product-card__media';
+
+            if (product.imageUrl) {
+                const image = document.createElement('img');
+                image.className = 'product-card__image';
+                image.src = product.imageUrl;
+                image.alt = `Vista de ${product.name}`;
+                image.loading = 'lazy';
+                image.decoding = 'async';
+                media.appendChild(image);
+            } else {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'product-card__image product-card__image--placeholder';
+                placeholder.setAttribute('role', 'img');
+                placeholder.setAttribute('aria-label', `Imagen pendiente para ${product.name}`);
+                placeholder.textContent = 'Imagen en preparación';
+                media.appendChild(placeholder);
+            }
 
             const headerRow = document.createElement('div');
             headerRow.className = 'product-card__header';
@@ -484,9 +632,26 @@ function renderProducts(filteredProducts, activeCategory) {
                 meta.appendChild(chip);
             });
 
+            const actions = document.createElement('div');
+            actions.className = 'product-card__actions';
+            const contactLink = buildContactLink(product);
+
+            if (contactLink) {
+                const actionButton = document.createElement('a');
+                actionButton.className = 'button product-card__cta';
+                actionButton.href = contactLink.href;
+                actionButton.target = contactLink.target;
+                actionButton.rel = contactLink.target === '_blank' ? 'noopener noreferrer' : '';
+                actionButton.textContent = contactLink.label;
+                actionButton.setAttribute('aria-label', `${contactLink.label} para ${product.name}`);
+                actions.appendChild(actionButton);
+            }
+
+            card.appendChild(media);
             card.appendChild(headerRow);
             card.appendChild(description);
             card.appendChild(meta);
+            card.appendChild(actions);
             grid.appendChild(card);
         });
 
@@ -548,9 +713,9 @@ function initCatalog() {
     const dataset = loadDataset();
     categories = dataset.categories;
     products = dataset.products;
-    appearance = dataset.appearance;
+    config = dataset.config;
 
-    applyAppearanceStyles(appearance);
+    applyAppearanceStyles(config.appearance);
     renderCategoryTags(null);
     applyFilters();
 
