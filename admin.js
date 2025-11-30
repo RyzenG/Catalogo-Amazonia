@@ -15,6 +15,9 @@
             heroEyebrow: 'Concreto sostenible',
             heroTitle: 'Diseños hechos para durar y conectar con la naturaleza',
             heroDescription: 'Explora piezas inspiradas en la selva amazónica, creadas para proyectos residenciales y corporativos con altos estándares de calidad.',
+            sectionEyebrow: 'Actualizaciones',
+            sectionTitle: 'Novedades y momentos especiales',
+            sectionDescription: 'Panel de lanzamientos y anuncios destacados. Los productos solo se muestran en la página de catálogo.',
             primaryCta: 'Ver catálogo',
             secondaryCta: 'Ir a novedades',
             primaryCtaUrl: '',
@@ -270,6 +273,9 @@
                 heroEyebrow: defaultNewsPanel.heroEyebrow,
                 heroTitle: defaultNewsPanel.heroTitle,
                 heroDescription: defaultNewsPanel.heroDescription,
+                sectionEyebrow: defaultNewsPanel.sectionEyebrow,
+                sectionTitle: defaultNewsPanel.sectionTitle,
+                sectionDescription: defaultNewsPanel.sectionDescription,
                 primaryCta: defaultNewsPanel.primaryCta,
                 secondaryCta: defaultNewsPanel.secondaryCta,
                 primaryCtaUrl: defaultNewsPanel.primaryCtaUrl,
@@ -278,7 +284,7 @@
             };
 
             if (isPlainObject(candidate)) {
-                ['heroEyebrow', 'heroTitle', 'heroDescription', 'primaryCta', 'secondaryCta']
+                ['heroEyebrow', 'heroTitle', 'heroDescription', 'sectionEyebrow', 'sectionTitle', 'sectionDescription', 'primaryCta', 'secondaryCta']
                     .forEach(key => {
                         const value = typeof candidate[key] === 'string' ? candidate[key].trim() : '';
                         if (value) {
@@ -3855,6 +3861,9 @@
                     heroEyebrow: readValue('newsHeroEyebrow'),
                     heroTitle: readValue('newsHeroTitle'),
                     heroDescription: readValue('newsHeroDescription'),
+                    sectionEyebrow: readValue('newsSectionEyebrow'),
+                    sectionTitle: readValue('newsSectionTitle'),
+                    sectionDescription: readValue('newsSectionDescription'),
                     primaryCta: readValue('newsPrimaryCta'),
                     secondaryCta: readValue('newsSecondaryCta'),
                     primaryCtaUrl: readValue('newsPrimaryCtaUrl'),
@@ -4649,6 +4658,9 @@
             setNewsValue('newsHeroEyebrow', newsValues.heroEyebrow || '');
             setNewsValue('newsHeroTitle', newsValues.heroTitle || '');
             setNewsValue('newsHeroDescription', newsValues.heroDescription || '');
+            setNewsValue('newsSectionEyebrow', newsValues.sectionEyebrow || '');
+            setNewsValue('newsSectionTitle', newsValues.sectionTitle || '');
+            setNewsValue('newsSectionDescription', newsValues.sectionDescription || '');
             setNewsValue('newsPrimaryCta', newsValues.primaryCta || '');
             setNewsValue('newsSecondaryCta', newsValues.secondaryCta || '');
             setNewsValue('newsPrimaryCtaUrl', newsValues.primaryCtaUrl || '');
@@ -5929,6 +5941,9 @@
             const heroEyebrow = escapeHtml(news.heroEyebrow || 'Novedades');
             const heroTitle = escapeHtml(news.heroTitle || 'Panel de novedades');
             const heroDescription = escapeHtml(news.heroDescription || 'Comparte lanzamientos, promociones y noticias clave.');
+            const newsSectionEyebrow = escapeHtml(news.sectionEyebrow || 'Actualizaciones');
+            const newsSectionTitle = escapeHtml(news.sectionTitle || 'Novedades y momentos especiales');
+            const newsSectionDescription = escapeHtml(news.sectionDescription || 'Panel de lanzamientos y anuncios destacados. Los productos solo se muestran en la página de catálogo.');
             const primaryCtaText = escapeHtml(news.primaryCta || 'Ver catálogo');
             const secondaryCtaText = escapeHtml(news.secondaryCta || 'Ir a novedades');
             const primaryCtaHref = news.primaryCtaUrl ? escapeHtml(news.primaryCtaUrl) : catalogHref;
@@ -6249,9 +6264,9 @@
         <section id="novedades" class="section section--light">
             <div class="section__inner">
                 <div class="section__header">
-                    <p class="section__eyebrow">Actualizaciones</p>
-                    <h2 class="section__title">Novedades y momentos especiales</h2>
-                    <p class="section__description">Panel de lanzamientos y anuncios destacados. Los productos solo se muestran en la página de catálogo.</p>
+                    <p class="section__eyebrow">${newsSectionEyebrow}</p>
+                    <h2 class="section__title">${newsSectionTitle}</h2>
+                    <p class="section__description">${newsSectionDescription}</p>
                 </div>
                 <div class="cards-grid">${cardsMarkup}</div>
             </div>
