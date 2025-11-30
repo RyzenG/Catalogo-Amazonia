@@ -7830,13 +7830,54 @@
             const canonicalLinkMarkup = canonicalUrl ? `    <link rel="canonical" href="${canonicalUrl}">\n` : '';
             const metaTagsMarkup = metaTags.length ? `    ${metaTags.join('\n    ')}\n` : '';
 
+            const organizationName = trimmedConfig.companyName || headerTitleText || 'Nuestra marca';
+            const socialUrls = [instagramUrlRaw, facebookUrlRaw, tiktokUrlRaw, whatsappLinkHref].filter(Boolean);
+            const contactPointEntry = {};
+
+            if (trimmedConfig.phone) {
+                contactPointEntry.telephone = trimmedConfig.phone;
+            }
+            if (trimmedConfig.email) {
+                contactPointEntry.email = trimmedConfig.email;
+            }
+            if (Object.keys(contactPointEntry).length > 0) {
+                contactPointEntry['@type'] = 'ContactPoint';
+                contactPointEntry.contactType = 'customer support';
+            }
+
+            const organizationData = {
+                '@context': 'https://schema.org',
+                '@type': 'Organization',
+                name: organizationName
+            };
+
+            if (canonicalUrlRaw && isValidUrl(canonicalUrlRaw)) {
+                organizationData.url = canonicalUrlRaw;
+            }
+            if (trimmedConfig.logoData) {
+                organizationData.logo = trimmedConfig.logoData;
+            }
+            if (Object.keys(contactPointEntry).length > 0) {
+                organizationData.contactPoint = [contactPointEntry];
+            }
+            if (socialUrls.length > 0) {
+                organizationData.sameAs = socialUrls;
+            }
+
+            const organizationJson = JSON.stringify(organizationData, null, 4)
+                .replace(/</g, '\\u003c')
+                .replace(/>/g, '\\u003e')
+                .replace(/&/g, '\\u0026');
+
+            const organizationJsonLdMarkup = `    <script type="application/ld+json">\n${organizationJson}\n    </script>\n`;
+
             return `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${headerTitleHtml}</title>
-${canonicalLinkMarkup}${metaTagsMarkup}    <style>
+${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
         ${getCatalogStyles(theme)}
     </style>
 </head>
