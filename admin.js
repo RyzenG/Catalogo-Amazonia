@@ -208,9 +208,9 @@
 
         const POLICY_IDS = Object.keys(defaultPolicies);
 
-        function hasPoliciesContent(policies) {
+        function getPoliciesWithContent(policies) {
             const normalized = normalizePolicies(policies);
-            return POLICY_IDS.some(policyId => {
+            return POLICY_IDS.filter(policyId => {
                 const policy = normalized[policyId];
 
                 if (!policy || typeof policy !== 'object') {
@@ -230,6 +230,10 @@
 
                 return Boolean(policy.active || summary || details || hasPoints || hasMeta || extraTitle);
             });
+        }
+
+        function hasPoliciesContent(policies) {
+            return getPoliciesWithContent(policies).length > 0;
         }
 
         const APPEARANCE_FIELDS = [
@@ -5914,6 +5918,7 @@
             const theme = buildThemeTokens(config.appearance);
             const news = normalizeNewsPanel(config.newsPanel);
             const policies = normalizePolicies(config.policies);
+            const policiesWithContent = getPoliciesWithContent(policies);
             const aboutConfig = normalizeAbout(config.about);
 
             const hasAboutSection = Boolean(
@@ -5923,7 +5928,7 @@
                 || (aboutConfig && Array.isArray(aboutConfig.values) && aboutConfig.values.some(value => typeof value === 'string' && value.trim().length > 0))
             );
 
-            const hasPoliciesSection = hasPoliciesContent(policies);
+            const hasPoliciesSection = policiesWithContent.length > 0;
 
             const trimmedConfig = {
                 companyName: config.companyName ? config.companyName.trim() : '',
@@ -6949,7 +6954,7 @@
 
             const policyTabsMarkup = [];
 
-            const policySectionsMarkup = POLICY_IDS.map((policyId, index) => {
+            const policySectionsMarkup = policiesWithContent.map((policyId, index) => {
                 const info = POLICY_DISPLAY_INFO[policyId] || { category: 'General', defaultTitle: `Política ${policyId}`, icon: '📄' };
                 const policyState = policies[policyId];
                 const active = Boolean(policyState.active);
@@ -7018,7 +7023,8 @@
         </section>`;
             }).join('');
 
-            const policySliderMarkup = `
+            const policySliderMarkup = hasPoliciesSection
+                ? `
         <section class="policy-slider" data-policy-slider>
             <div class="policy-slider__controls">
                 <button type="button" class="policy-slider__arrow" data-policy-direction="prev" aria-label="Política anterior">←</button>
@@ -7029,6 +7035,14 @@
             </div>
             <div class="policy-slider__slides">
                 ${policySectionsMarkup}
+            </div>
+        </section>`
+                : `
+        <section class="policy-slider policy-slider--empty" data-policy-slider>
+            <div class="policy-empty">
+                <span class="policy-empty__icon" aria-hidden="true">📄</span>
+                <h2 class="policy-empty__title">Políticas en preparación</h2>
+                <p class="policy-empty__message">Aún no hay políticas activas o con contenido para mostrar.</p>
             </div>
         </section>`;
 
@@ -7282,6 +7296,37 @@
 
         .policy-slider__slides {
             position: relative;
+        }
+
+        .policy-slider--empty {
+            border: 1px dashed var(--policy-muted);
+            border-radius: 18px;
+            padding: 2rem;
+            text-align: center;
+            color: var(--policy-muted);
+            background: ${hexToRgba(appearance.primary, 0.04)};
+        }
+
+        .policy-empty {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .policy-empty__icon {
+            font-size: 2rem;
+        }
+
+        .policy-empty__title {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--policy-primary);
+        }
+
+        .policy-empty__message {
+            margin: 0;
+            max-width: 560px;
         }
 
         .policy-slide {
