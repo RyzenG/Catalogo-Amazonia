@@ -17,6 +17,8 @@
             heroDescription: 'Explora piezas inspiradas en la selva amazónica, creadas para proyectos residenciales y corporativos con altos estándares de calidad.',
             primaryCta: 'Ver catálogo',
             secondaryCta: 'Ir a novedades',
+            primaryCtaUrl: '',
+            secondaryCtaUrl: '',
             items: [
                 {
                     eyebrow: 'Festival',
@@ -270,6 +272,8 @@
                 heroDescription: defaultNewsPanel.heroDescription,
                 primaryCta: defaultNewsPanel.primaryCta,
                 secondaryCta: defaultNewsPanel.secondaryCta,
+                primaryCtaUrl: defaultNewsPanel.primaryCtaUrl,
+                secondaryCtaUrl: defaultNewsPanel.secondaryCtaUrl,
                 items: []
             };
 
@@ -281,6 +285,13 @@
                             normalized[key] = value;
                         }
                     });
+
+                ['primaryCtaUrl', 'secondaryCtaUrl'].forEach(key => {
+                    const value = typeof candidate[key] === 'string' ? candidate[key].trim() : '';
+                    if (value && isValidUrl(value)) {
+                        normalized[key] = value;
+                    }
+                });
 
                 const itemsSource = Array.isArray(candidate.items) ? candidate.items : [];
                 normalized.items = itemsSource.map((item, index) => {
@@ -3846,6 +3857,8 @@
                     heroDescription: readValue('newsHeroDescription'),
                     primaryCta: readValue('newsPrimaryCta'),
                     secondaryCta: readValue('newsSecondaryCta'),
+                    primaryCtaUrl: readValue('newsPrimaryCtaUrl'),
+                    secondaryCtaUrl: readValue('newsSecondaryCtaUrl'),
                     items: readNewsItems()
                 }),
                 about: normalizeAbout({
@@ -4447,6 +4460,28 @@
                 }
             });
 
+            const newsCtaFields = [
+                { id: 'newsPrimaryCtaUrl', label: 'botón principal de inicio' },
+                { id: 'newsSecondaryCtaUrl', label: 'botón secundario de inicio' }
+            ];
+
+            newsCtaFields.forEach(({ id, label }) => {
+                const fieldValue = configValues.newsPanel && configValues.newsPanel[id] ? configValues.newsPanel[id] : '';
+                const input = document.getElementById(id);
+
+                if (!fieldValue) {
+                    setFieldValidationState(input, true);
+                    return;
+                }
+
+                const valid = isValidUrl(fieldValue);
+                setFieldValidationState(input, valid);
+
+                if (!valid) {
+                    errors.push(`Ingresa una URL válida (http:// o https://) para el ${label}.`);
+                }
+            });
+
             const priceRangeValidation = validatePriceRanges(configValues.priceRanges);
             updatePriceRangeValidationUI(priceRangeValidation);
             if (!priceRangeValidation.valid) {
@@ -4616,6 +4651,8 @@
             setNewsValue('newsHeroDescription', newsValues.heroDescription || '');
             setNewsValue('newsPrimaryCta', newsValues.primaryCta || '');
             setNewsValue('newsSecondaryCta', newsValues.secondaryCta || '');
+            setNewsValue('newsPrimaryCtaUrl', newsValues.primaryCtaUrl || '');
+            setNewsValue('newsSecondaryCtaUrl', newsValues.secondaryCtaUrl || '');
             renderNewsItems(newsValues.items || []);
 
             const shippingPolicyValues = normalizeShippingPolicy(catalogData.config.shippingPolicy);
@@ -5887,11 +5924,15 @@
                 tiktok: (config.tiktok || '').trim()
             };
 
+            const catalogHref = 'catalogo.html';
+
             const heroEyebrow = escapeHtml(news.heroEyebrow || 'Novedades');
             const heroTitle = escapeHtml(news.heroTitle || 'Panel de novedades');
             const heroDescription = escapeHtml(news.heroDescription || 'Comparte lanzamientos, promociones y noticias clave.');
             const primaryCtaText = escapeHtml(news.primaryCta || 'Ver catálogo');
             const secondaryCtaText = escapeHtml(news.secondaryCta || 'Ir a novedades');
+            const primaryCtaHref = news.primaryCtaUrl ? escapeHtml(news.primaryCtaUrl) : catalogHref;
+            const secondaryCtaHref = news.secondaryCtaUrl ? escapeHtml(news.secondaryCtaUrl) : '#novedades';
 
             const getMediaType = (url) => {
                 const lowerUrl = typeof url === 'string' ? url.toLowerCase() : '';
@@ -5998,8 +6039,6 @@
                         <span class="sr-only">TikTok</span>
                     </a>
                 </div>`;
-
-            const catalogHref = 'catalogo.html';
 
             const backgroundImageValue = typeof theme.backgroundImage === 'string' ? theme.backgroundImage : '';
             const headerImageValue = typeof theme.headerImage === 'string' ? theme.headerImage : '';
@@ -6195,8 +6234,8 @@
                     <h1 class="hero__title">${heroTitle}</h1>
                     <p class="hero__description">${heroDescription}</p>
                     <div class="hero__actions">
-                        <a class="button button--primary" href="${catalogHref}">${primaryCtaText}</a>
-                        <a class="button button--ghost" href="#novedades">${secondaryCtaText}</a>
+                        <a class="button button--primary" href="${primaryCtaHref}">${primaryCtaText}</a>
+                        <a class="button button--ghost" href="${secondaryCtaHref}">${secondaryCtaText}</a>
                     </div>
                 </div>
                 <div class="hero__visual">
