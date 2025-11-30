@@ -399,6 +399,63 @@
         }
 
         function normalizeShippingPolicy(candidate) {
+            const normalizeSection = (section, index, fallbackId, usedIds) => {
+                const base = isPlainObject(section) ? section : {};
+                const idCandidate = typeof base.id === 'string' ? base.id.trim() : '';
+                const title = typeof base.title === 'string' ? base.title.trim() : '';
+                const description = typeof base.description === 'string' ? base.description.trim() : '';
+                const noteCandidate = typeof base.note === 'string'
+                    ? base.note.trim()
+                    : (typeof base.notes === 'string' ? base.notes.trim() : '');
+
+                let itemsSource = [];
+                if (Array.isArray(base.items)) {
+                    itemsSource = base.items;
+                } else if (typeof base.items === 'string') {
+                    itemsSource = base.items.split(/\r?\n/);
+                }
+
+                const items = itemsSource
+                    .map(item => typeof item === 'string' ? item.trim() : '')
+                    .filter(item => item.length > 0);
+
+                if (!title && !description && items.length === 0 && !noteCandidate) {
+                    return null;
+                }
+
+                let id = idCandidate || fallbackId || `section-${index + 1}`;
+                while (usedIds.has(id)) {
+                    id = `${id}-${index + 1}`;
+                }
+                usedIds.add(id);
+
+                return {
+                    id,
+                    title,
+                    description,
+                    items,
+                    note: noteCandidate
+                };
+            };
+
+            const buildSections = (source, fallbackSource) => {
+                const usedIds = new Set();
+                const fallbackList = Array.isArray(fallbackSource) ? fallbackSource : [];
+
+                return source.reduce((acc, section, index) => {
+                    const fallbackId = fallbackList[index]
+                        && typeof fallbackList[index].id === 'string'
+                        ? fallbackList[index].id.trim()
+                        : `section-${index + 1}`;
+
+                    const normalizedSection = normalizeSection(section, index, fallbackId, usedIds);
+                    if (normalizedSection) {
+                        acc.push(normalizedSection);
+                    }
+                    return acc;
+                }, []);
+            };
+
             const normalized = {
                 heroTitle: defaultShippingPolicy.heroTitle,
                 heroDescription: defaultShippingPolicy.heroDescription,
@@ -439,39 +496,14 @@
             }
 
             const sectionsSource = Array.isArray(candidate.sections) ? candidate.sections : [];
-            if (sectionsSource.length > 0) {
-                normalized.sections = sectionsSource.map((section, index) => {
-                    const fallbackId = defaultShippingPolicy.sections[index]
-                        && typeof defaultShippingPolicy.sections[index].id === 'string'
-                        ? defaultShippingPolicy.sections[index].id
-                        : `section-${index + 1}`;
+            const normalizedSections = sectionsSource.length > 0
+                ? buildSections(sectionsSource, defaultShippingPolicy.sections)
+                : [];
 
-                    const idCandidate = typeof section.id === 'string' ? section.id.trim() : '';
-                    const titleCandidate = typeof section.title === 'string' ? section.title.trim() : '';
-                    const descriptionCandidate = typeof section.description === 'string' ? section.description.trim() : '';
-                    const noteCandidate = typeof section.note === 'string'
-                        ? section.note.trim()
-                        : (typeof section.notes === 'string' ? section.notes.trim() : '');
-
-                    let itemsSource = [];
-                    if (Array.isArray(section.items)) {
-                        itemsSource = section.items;
-                    } else if (typeof section.items === 'string') {
-                        itemsSource = section.items.split(/\r?\n/);
-                    }
-
-                    const items = itemsSource
-                        .map(item => typeof item === 'string' ? item.trim() : '')
-                        .filter(item => item.length > 0);
-
-                    return {
-                        id: idCandidate || fallbackId,
-                        title: titleCandidate,
-                        description: descriptionCandidate,
-                        items,
-                        note: noteCandidate
-                    };
-                });
+            if (normalizedSections.length > 0) {
+                normalized.sections = normalizedSections;
+            } else {
+                normalized.sections = buildSections(defaultShippingPolicy.sections, defaultShippingPolicy.sections);
             }
 
             return normalized;
@@ -3233,6 +3265,22 @@
                 });
             }
 
+            const addShippingSectionButton = document.getElementById('addShippingSectionButton');
+            if (addShippingSectionButton) {
+                addShippingSectionButton.addEventListener('click', () => {
+                    const container = document.getElementById('shippingPolicySectionsContainer');
+                    if (!container) {
+                        return;
+                    }
+
+                    const nextIndex = container.querySelectorAll('[data-shipping-section]').length;
+                    const row = createShippingSectionRow({}, nextIndex);
+                    container.appendChild(row);
+                    updateShippingSectionLabels(container);
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            }
+
             setupPolicyFormListeners();
 
             const companyNameInput = document.getElementById('companyName');
@@ -3651,6 +3699,111 @@
             });
         }
 
+        function updateShippingSectionLabels(container) {
+            const nodes = container ? Array.from(container.querySelectorAll('[data-shipping-section]')) : [];
+            nodes.forEach((node, index) => {
+                const label = node.querySelector('.shipping-section__label');
+                if (label) {
+                    label.textContent = `Sección ${index + 1}`;
+                }
+            });
+        }
+
+        function createShippingSectionRow(section = {}, index = 0) {
+            const base = isPlainObject(section) ? section : {};
+            const row = document.createElement('div');
+            row.className = 'shipping-section-form';
+            row.setAttribute('data-shipping-section', '');
+
+            const baseId = typeof base.id === 'string' && base.id.trim().length > 0
+                ? base.id.trim()
+                : `section-${index + 1}`;
+            row.setAttribute('data-section-id', baseId);
+
+            const header = document.createElement('div');
+            header.className = 'shipping-section-form__header';
+            header.style.display = 'flex';
+            header.style.justifyContent = 'space-between';
+            header.style.alignItems = 'center';
+            header.style.gap = '1rem';
+
+            const title = document.createElement('p');
+            title.className = 'shipping-section__label';
+            title.textContent = `Sección ${index + 1}`;
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'icon-btn';
+            removeButton.textContent = '✕';
+            removeButton.setAttribute('aria-label', `Eliminar sección ${index + 1}`);
+            removeButton.addEventListener('click', () => {
+                const container = row.parentElement;
+                row.remove();
+                if (container) {
+                    updateShippingSectionLabels(container);
+                }
+            });
+
+            header.appendChild(title);
+            header.appendChild(removeButton);
+
+            const titleField = document.createElement('div');
+            titleField.className = 'form-group';
+            titleField.innerHTML = `
+                <label>Título</label>
+                <input type="text" data-field="title" placeholder="Cobertura y tiempos de entrega" value="${escapeHtml(base.title || '')}">
+            `;
+
+            const descriptionField = document.createElement('div');
+            descriptionField.className = 'form-group';
+            descriptionField.innerHTML = `
+                <label>Descripción</label>
+                <textarea rows="2" data-field="description" placeholder="Planificamos cada despacho según la ciudad y la complejidad del pedido.">${escapeHtml(base.description || '')}</textarea>
+            `;
+
+            const itemsField = document.createElement('div');
+            itemsField.className = 'form-group';
+            const itemsValue = Array.isArray(base.items) ? base.items.join('\n') : '';
+            itemsField.innerHTML = `
+                <label>Lista de puntos (uno por línea)</label>
+                <textarea rows="3" data-field="items" placeholder="Envíos en Bogotá y municipios aledaños&#10;Despachos nacionales con aliados estratégicos&#10;Tiempo estimado entre 5 y 10 días hábiles">${escapeHtml(itemsValue)}</textarea>
+            `;
+
+            const noteField = document.createElement('div');
+            noteField.className = 'form-group';
+            noteField.innerHTML = `
+                <label>Nota o aclaración</label>
+                <input type="text" data-field="note" placeholder="Los tiempos pueden variar en temporadas de alta demanda" value="${escapeHtml(base.note || '')}">
+            `;
+
+            row.appendChild(header);
+            row.appendChild(titleField);
+            row.appendChild(descriptionField);
+            row.appendChild(itemsField);
+            row.appendChild(noteField);
+
+            return row;
+        }
+
+        function renderShippingSections(sections) {
+            const container = document.getElementById('shippingPolicySectionsContainer');
+            if (!container) {
+                return;
+            }
+
+            container.innerHTML = '';
+            const list = Array.isArray(sections) && sections.length > 0
+                ? sections
+                : defaultShippingPolicy.sections;
+
+            list.forEach((section, index) => {
+                const row = createShippingSectionRow(section, index);
+                container.appendChild(row);
+            });
+
+            updateShippingSectionLabels(container);
+        }
+
         function createNewsItemRow(item = {}, index = 0) {
             const base = isPlainObject(item) ? item : {};
             const row = document.createElement('div');
@@ -3907,44 +4060,41 @@
             };
 
             const readShippingSectionValues = () => {
+                const container = document.getElementById('shippingPolicySectionsContainer');
+                if (!container) {
+                    return [];
+                }
+
                 const sections = [];
-                const existingSections = catalogData
-                    && catalogData.config
-                    && catalogData.config.shippingPolicy
-                    && Array.isArray(catalogData.config.shippingPolicy.sections)
-                    ? catalogData.config.shippingPolicy.sections
-                    : [];
+                const nodes = container.querySelectorAll('[data-shipping-section]');
 
-                const fallbackSections = Array.isArray(defaultShippingPolicy.sections)
-                    ? defaultShippingPolicy.sections
-                    : [];
+                nodes.forEach((node, index) => {
+                    const readField = (field) => {
+                        const element = node.querySelector(`[data-field="${field}"]`);
+                        return element && typeof element.value === 'string' ? element.value.trim() : '';
+                    };
 
-                const maxSections = Math.max(fallbackSections.length, existingSections.length, 3);
+                    const id = (node.getAttribute('data-section-id') || '').trim() || `section-${index + 1}`;
+                    const title = readField('title');
+                    const description = readField('description');
+                    const note = readField('note');
+                    const itemsSource = readField('items');
+                    const items = itemsSource
+                        ? itemsSource.split(/\r?\n/).map(item => item.trim()).filter(item => item.length > 0)
+                        : [];
 
-                for (let index = 0; index < maxSections; index += 1) {
-                    const base = fallbackSections[index] || existingSections[index] || {};
-                    const baseId = typeof base.id === 'string' && base.id.trim().length > 0
-                        ? base.id.trim()
-                        : `section-${index + 1}`;
-                    const sectionPrefix = `shippingPolicySection${index + 1}`;
-
-                    const title = readValue(`${sectionPrefix}Title`);
-                    const description = readValue(`${sectionPrefix}Description`);
-                    const items = readMultilineList(`${sectionPrefix}Items`);
-                    const note = readValue(`${sectionPrefix}Note`);
-
-                    if (!title && !description && items.length === 0 && !note && !baseId) {
-                        continue;
+                    if (!title && !description && items.length === 0 && !note) {
+                        return;
                     }
 
                     sections.push({
-                        id: baseId,
+                        id,
                         title,
                         description,
                         items,
                         note
                     });
-                }
+                });
 
                 return sections;
             };
@@ -4869,35 +5019,7 @@
             setInputValue('shippingPolicyHeroTitle', shippingPolicyValues.heroTitle || '');
             setInputValue('shippingPolicyHeroDescription', shippingPolicyValues.heroDescription || '');
 
-            const sections = Array.isArray(shippingPolicyValues.sections)
-                ? shippingPolicyValues.sections
-                : [];
-
-            sections.forEach((section, index) => {
-                const prefix = `shippingPolicySection${index + 1}`;
-                setInputValue(`${prefix}Title`, section && section.title ? section.title : '');
-                setInputValue(`${prefix}Description`, section && section.description ? section.description : '');
-                const itemsInput = document.getElementById(`${prefix}Items`);
-                if (itemsInput && typeof itemsInput.value === 'string') {
-                    const items = Array.isArray(section && section.items)
-                        ? section.items.map(item => typeof item === 'string' ? item : '').filter(Boolean)
-                        : [];
-                    itemsInput.value = items.join('\n');
-                }
-                setInputValue(`${prefix}Note`, section && section.note ? section.note : '');
-            });
-
-            const maxSections = Math.max(sections.length, Array.isArray(defaultShippingPolicy.sections) ? defaultShippingPolicy.sections.length : 0);
-            for (let index = sections.length; index < maxSections; index += 1) {
-                const prefix = `shippingPolicySection${index + 1}`;
-                setInputValue(`${prefix}Title`, '');
-                setInputValue(`${prefix}Description`, '');
-                const itemsInput = document.getElementById(`${prefix}Items`);
-                if (itemsInput && typeof itemsInput.value === 'string') {
-                    itemsInput.value = '';
-                }
-                setInputValue(`${prefix}Note`, '');
-            }
+            renderShippingSections(shippingPolicyValues.sections);
 
             setInputValue('shippingPolicyClosingTitle', shippingPolicyValues.closingTitle || '');
             setInputValue('shippingPolicyClosingDescription', shippingPolicyValues.closingDescription || '');
