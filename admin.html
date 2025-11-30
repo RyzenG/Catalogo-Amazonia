@@ -191,6 +191,17 @@
                         <button type="button" class="btn btn-secondary" id="resetAppearanceButton">Restaurar colores de fábrica</button>
                     </div>
 
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 0.75rem">Rangos de precios</h3>
+                        <p class="section-description">Define los rangos que aparecerán en el filtro de precios del catálogo. Evita solapamientos para que cada producto solo coincida con un rango.</p>
+                        <div id="priceRangesList" class="price-range-list" aria-label="Rangos de precios configurados"></div>
+                        <div class="price-range-actions">
+                            <button type="button" class="btn btn-secondary" id="addPriceRangeButton">➕ Añadir rango</button>
+                            <p class="field-hint" id="priceRangeHint">Usa números enteros y deja vacío el campo "Hasta" para rangos abiertos.</p>
+                        </div>
+                        <p class="field-hint field-hint--error" id="priceRangeError" aria-live="polite" style="display: none;"></p>
+                    </div>
+
                 <button class="btn btn-primary" id="saveConfigButton">Guardar Configuración</button>
             </div>
 

@@ -158,6 +158,12 @@
             }
         };
 
+        const defaultPriceRanges = [
+            { id: 'low', label: 'Hasta $150.000', min: 0, max: 150000 },
+            { id: 'mid', label: '$150.001 - $400.000', min: 150001, max: 400000 },
+            { id: 'high', label: 'Más de $400.000', min: 400001, max: null }
+        ];
+
         const POLICY_META_LABELS = {
             shipping: {
                 coverage: 'Cobertura',
@@ -521,6 +527,7 @@
             footerMessage: 'Creando espacios únicos con concreto sostenible',
             logoData: '',
             appearance: { ...defaultAppearance },
+            priceRanges: normalizePriceRanges(defaultPriceRanges),
             about: normalizeAbout(defaultAbout),
             newsPanel: normalizeNewsPanel(defaultNewsPanel),
             shippingPolicy: normalizeShippingPolicy(defaultShippingPolicy),
@@ -608,6 +615,75 @@
             return normalized;
         }
 
+        function parsePriceValue(rawValue) {
+            if (typeof rawValue === 'number' && Number.isFinite(rawValue)) {
+                return rawValue;
+            }
+
+            if (typeof rawValue !== 'string') {
+                return null;
+            }
+
+            const match = rawValue.match(/-?[\d][\d.,]*/);
+            if (!match) {
+                return null;
+            }
+
+            const candidate = match[0];
+            const commaCount = (candidate.match(/,/g) || []).length;
+            const dotCount = (candidate.match(/\./g) || []).length;
+            const usesCommaDecimal = commaCount === 1 && dotCount === 0;
+            const decimalSeparator = usesCommaDecimal ? ',' : '.';
+            const thousandsSeparator = usesCommaDecimal ? '.' : ',';
+
+            const normalized = candidate
+                .replace(new RegExp(`\\${thousandsSeparator}`, 'g'), '')
+                .replace(decimalSeparator, '.');
+
+            const parsed = Number.parseFloat(normalized);
+            return Number.isFinite(parsed) ? parsed : null;
+        }
+
+        function normalizePriceRangeConfig(range, index, usedIds) {
+            const base = isPlainObject(range) ? range : {};
+            const idCandidate = typeof base.id === 'string' ? base.id.trim() : '';
+            const sanitizedId = idCandidate || `price-${index + 1}`;
+            const label = typeof base.label === 'string' ? base.label.trim() : '';
+            const currency = typeof base.currency === 'string'
+                ? base.currency.trim().toUpperCase() || 'COP'
+                : 'COP';
+            const minValue = parsePriceValue(base.min);
+            const maxValue = parsePriceValue(base.max);
+            const uniqueId = sanitizedId;
+
+            if (uniqueId) {
+                usedIds.add(uniqueId);
+            }
+
+            return {
+                id: uniqueId,
+                label,
+                min: Number.isFinite(minValue) && minValue >= 0 ? minValue : 0,
+                max: Number.isFinite(maxValue) && maxValue >= 0 ? maxValue : null,
+                currency
+            };
+        }
+
+        function normalizePriceRanges(rawRanges) {
+            const usedIds = new Set();
+            const source = Array.isArray(rawRanges) && rawRanges.length > 0 ? rawRanges : defaultPriceRanges;
+
+            const normalized = source
+                .map((range, index) => normalizePriceRangeConfig(range, index, usedIds))
+                .filter(range => Number.isFinite(range.min) || Number.isFinite(range.max));
+
+            if (normalized.length === 0) {
+                return defaultPriceRanges.map((range, index) => normalizePriceRangeConfig(range, index, usedIds));
+            }
+
+            return normalized;
+        }
+
         function getNormalizedConfig(rawConfig) {
             const base = isPlainObject(rawConfig)
                 ? { ...defaultConfig, ...rawConfig }
@@ -618,6 +694,7 @@
             base.newsPanel = normalizeNewsPanel(base.newsPanel);
             base.shippingPolicy = normalizeShippingPolicy(base.shippingPolicy);
             base.policies = normalizePolicies(base.policies);
+            base.priceRanges = normalizePriceRanges(base.priceRanges);
             return base;
         }
 
@@ -3112,6 +3189,58 @@
             setupAppearanceControls();
             setupConfigValidationWatchers();
 
+            const addPriceRangeButton = document.getElementById('addPriceRangeButton');
+            if (addPriceRangeButton) {
+                addPriceRangeButton.addEventListener('click', () => {
+                    const ranges = readPriceRangesFromInputs();
+                    const lastRange = ranges[ranges.length - 1];
+                    const nextMin = lastRange && Number.isFinite(lastRange.max)
+                        ? lastRange.max + 1
+                        : lastRange && Number.isFinite(lastRange.min)
+                            ? lastRange.min + 1
+                            : 0;
+
+                    const newRange = {
+                        id: `price-${Date.now()}`,
+                        label: '',
+                        min: nextMin,
+                        max: null,
+                        currency: (lastRange && lastRange.currency) || 'COP'
+                    };
+
+                    renderPriceRanges([...ranges, newRange]);
+                    validatePriceRangeInputs();
+                    updateCatalogPreview();
+                });
+            }
+
+            const priceRangesList = document.getElementById('priceRangesList');
+            if (priceRangesList) {
+                const handlePriceRangeChange = () => {
+                    validatePriceRangeInputs();
+                    updateCatalogPreview();
+                };
+
+                priceRangesList.addEventListener('input', handlePriceRangeChange);
+                priceRangesList.addEventListener('blur', handlePriceRangeChange, true);
+
+                priceRangesList.addEventListener('click', event => {
+                    const target = event.target;
+                    if (target && target.getAttribute('data-action') === 'remove-price-range') {
+                        const row = target.closest('[data-price-range-row]');
+                        if (row) {
+                            row.remove();
+                        }
+
+                        if (!priceRangesList.querySelector('[data-price-range-row]')) {
+                            renderPriceRanges(defaultPriceRanges);
+                        }
+
+                        handlePriceRangeChange();
+                    }
+                });
+            }
+
             const productSearchInput = document.getElementById('productSearch');
             if (productSearchInput) {
                 productSearchInput.addEventListener('input', event => {
@@ -3445,6 +3574,135 @@
             });
         }
 
+        function formatPriceForInput(value) {
+            if (!Number.isFinite(value)) {
+                return '';
+            }
+
+            return Math.round(value).toString();
+        }
+
+        function createPriceRangeRow(range, index) {
+            const safeRange = normalizePriceRangeConfig(range, index, new Set());
+            const row = document.createElement('div');
+            row.className = 'price-range-row';
+            row.dataset.priceRangeRow = 'true';
+            row.dataset.rangeId = safeRange.id || `price-${index + 1}`;
+
+            row.innerHTML = `
+                <div class="price-range-field">
+                    <label>Etiqueta</label>
+                    <input type="text" data-price-range-field="label" value="${escapeHtml(safeRange.label || '')}" placeholder="Ej: Hasta $150.000">
+                </div>
+                <div class="price-range-field">
+                    <label>Desde</label>
+                    <input type="text" data-price-range-field="min" inputmode="numeric" value="${escapeHtml(formatPriceForInput(safeRange.min))}" placeholder="0">
+                </div>
+                <div class="price-range-field">
+                    <label>Hasta</label>
+                    <input type="text" data-price-range-field="max" inputmode="numeric" value="${escapeHtml(formatPriceForInput(safeRange.max))}" placeholder="Opcional">
+                </div>
+                <div class="price-range-field">
+                    <label>Moneda</label>
+                    <input type="text" data-price-range-field="currency" maxlength="6" value="${escapeHtml(safeRange.currency || 'COP')}" placeholder="COP">
+                </div>
+                <button type="button" class="btn btn-text price-range-remove" data-action="remove-price-range" aria-label="Eliminar rango">✕</button>
+            `;
+
+            return row;
+        }
+
+        function renderPriceRanges(ranges) {
+            const container = document.getElementById('priceRangesList');
+            if (!container) {
+                return;
+            }
+
+            const normalized = normalizePriceRanges(ranges);
+            container.innerHTML = '';
+
+            normalized.forEach((range, index) => {
+                const row = createPriceRangeRow(range, index);
+                container.appendChild(row);
+            });
+        }
+
+        function readPriceRangesFromInputs() {
+            const container = document.getElementById('priceRangesList');
+            if (!container) {
+                return defaultPriceRanges.map(range => ({ ...range }));
+            }
+
+            const rows = Array.from(container.querySelectorAll('[data-price-range-row]'));
+            const usedIds = new Set();
+
+            const ranges = rows.map((row, index) => {
+                const id = row.dataset.rangeId || `price-${index + 1}`;
+                usedIds.add(id);
+
+                const labelInput = row.querySelector('[data-price-range-field="label"]');
+                const minInput = row.querySelector('[data-price-range-field="min"]');
+                const maxInput = row.querySelector('[data-price-range-field="max"]');
+                const currencyInput = row.querySelector('[data-price-range-field="currency"]');
+
+                return {
+                    id,
+                    label: labelInput && typeof labelInput.value === 'string' ? labelInput.value.trim() : '',
+                    min: minInput && typeof minInput.value === 'string' ? parsePriceValue(minInput.value) : null,
+                    max: maxInput && typeof maxInput.value === 'string' ? parsePriceValue(maxInput.value) : null,
+                    currency: currencyInput && typeof currencyInput.value === 'string'
+                        ? currencyInput.value.trim().toUpperCase() || 'COP'
+                        : 'COP'
+                };
+            });
+
+            return ranges;
+        }
+
+        function formatPriceRangeLabel(range) {
+            const label = typeof range.label === 'string' ? range.label.trim() : '';
+            if (label) {
+                return label;
+            }
+
+            const currency = typeof range.currency === 'string' && range.currency.trim()
+                ? range.currency.trim().toUpperCase()
+                : 'COP';
+            const formatWithCurrency = (value) => {
+                if (!Number.isFinite(value)) {
+                    return '';
+                }
+
+                try {
+                    return new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency,
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(value);
+                } catch (error) {
+                    return formatCurrencyCOP(value);
+                }
+            };
+
+            const min = Number.isFinite(range.min) ? range.min : null;
+            const max = Number.isFinite(range.max) ? range.max : null;
+
+            if (min !== null && max !== null) {
+                return `${formatWithCurrency(min)} - ${formatWithCurrency(max)}`;
+            }
+
+            if (min !== null) {
+                return `Desde ${formatWithCurrency(min)}`;
+            }
+
+            if (max !== null) {
+                return `Hasta ${formatWithCurrency(max)}`;
+            }
+
+            return '';
+        }
+
         function collectConfigValues() {
             const readValue = (id) => {
                 const element = document.getElementById(id);
@@ -3581,6 +3839,7 @@
                 tagline: readValue('tagline'),
                 footerMessage: readValue('footerMessage'),
                 logoData: readValue('companyLogoUrl'),
+                priceRanges: normalizePriceRanges(readPriceRangesFromInputs()),
                 newsPanel: normalizeNewsPanel({
                     heroEyebrow: readValue('newsHeroEyebrow'),
                     heroTitle: readValue('newsHeroTitle'),
@@ -4033,6 +4292,100 @@
             }
         }
 
+        function validatePriceRanges(ranges) {
+            const rawRanges = Array.isArray(ranges) ? ranges : [];
+            const normalized = normalizePriceRanges(rawRanges);
+            const errors = [];
+            const invalidIds = new Set();
+            const seenIds = new Map();
+
+            rawRanges.forEach(range => {
+                const rawId = typeof range.id === 'string' ? range.id.trim() : '';
+                if (!rawId) {
+                    return;
+                }
+
+                seenIds.set(rawId, (seenIds.get(rawId) || 0) + 1);
+                if ((seenIds.get(rawId) || 0) > 1) {
+                    invalidIds.add(rawId);
+                }
+            });
+
+            normalized.forEach(range => {
+                if (Number.isFinite(range.max) && Number.isFinite(range.min) && range.max < range.min) {
+                    invalidIds.add(range.id);
+                    errors.push('Cada rango debe tener un valor "Hasta" mayor o igual al valor "Desde".');
+                }
+            });
+
+            const sorted = normalized
+                .map((range, index) => ({ ...range, index }))
+                .sort((a, b) => (Number.isFinite(a.min) ? a.min : 0) - (Number.isFinite(b.min) ? b.min : 0));
+
+            let hasOverlap = false;
+            sorted.forEach((range, index) => {
+                if (index === 0) {
+                    return;
+                }
+
+                const prev = sorted[index - 1];
+                const currentMin = Number.isFinite(range.min) ? range.min : 0;
+                const previousMax = Number.isFinite(prev.max) ? prev.max : Infinity;
+
+                if (currentMin <= previousMax) {
+                    hasOverlap = true;
+                    invalidIds.add(range.id);
+                    invalidIds.add(prev.id);
+                }
+            });
+
+            if (hasOverlap) {
+                errors.push('Los rangos de precio no deben solaparse. Ajusta los valores para que no se crucen.');
+            }
+
+            const duplicateIds = Array.from(seenIds.entries()).filter(([, count]) => count > 1).map(([id]) => id);
+            if (duplicateIds.length > 0) {
+                errors.push('Usa identificadores únicos para cada rango de precios.');
+                duplicateIds.forEach(id => invalidIds.add(id));
+            }
+
+            return {
+                valid: errors.length === 0,
+                message: errors.join(' '),
+                invalidIds: Array.from(invalidIds),
+                normalized
+            };
+        }
+
+        function updatePriceRangeValidationUI(result) {
+            const errorElement = document.getElementById('priceRangeError');
+            const rows = document.querySelectorAll('[data-price-range-row]');
+
+            rows.forEach(row => {
+                const isInvalid = Array.isArray(result.invalidIds)
+                    ? result.invalidIds.includes(row.dataset.rangeId)
+                    : false;
+                const inputs = row.querySelectorAll('input');
+                inputs.forEach(input => setFieldValidationState(input, !isInvalid));
+            });
+
+            if (errorElement) {
+                if (result.message) {
+                    errorElement.textContent = result.message;
+                    errorElement.style.display = 'block';
+                } else {
+                    errorElement.textContent = '';
+                    errorElement.style.display = 'none';
+                }
+            }
+        }
+
+        function validatePriceRangeInputs() {
+            const validation = validatePriceRanges(readPriceRangesFromInputs());
+            updatePriceRangeValidationUI(validation);
+            return validation;
+        }
+
         function validateConfiguration({ values, forExport = false } = {}) {
             const configValues = values || collectConfigValues();
             const errors = [];
@@ -4093,6 +4446,12 @@
                     errors.push(`Ingresa un enlace válido para ${label} (asegúrate de incluir http:// o https://).`);
                 }
             });
+
+            const priceRangeValidation = validatePriceRanges(configValues.priceRanges);
+            updatePriceRangeValidationUI(priceRangeValidation);
+            if (!priceRangeValidation.valid) {
+                errors.push(priceRangeValidation.message || 'Revisa los rangos de precios configurados.');
+            }
 
             const newsMediaInputs = document.querySelectorAll('#newsItemsContainer [data-field="media"]');
             let invalidNewsMediaCount = 0;
@@ -4182,6 +4541,7 @@
 
             configValues.appearance = normalizeAppearance(configValues.appearance);
             configValues.about = normalizeAbout(configValues.about);
+            configValues.priceRanges = normalizePriceRanges(configValues.priceRanges);
 
             return {
                 valid: errors.length === 0,
@@ -4217,6 +4577,8 @@
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
+            renderPriceRanges(normalizePriceRanges(catalogData.config.priceRanges));
+            validatePriceRangeInputs();
             const aboutValues = normalizeAbout(catalogData.config.about);
             const aboutHeroTitleInput = document.getElementById('aboutHeroTitle');
             if (aboutHeroTitleInput) {
@@ -5983,7 +6345,6 @@
             // Generate products HTML for each category
             let productsHTML = '';
             let productDataJS = {};
-            const priceValues = [];
             const baseImageAttributes = buildProductImageAttributes(
                 { name: trimmedConfig.companyName || defaultConfig.companyName || 'Producto Amazonia' },
                 '🛠️'
@@ -6036,9 +6397,6 @@
                                 .replace(',', '.');
                             const parsedPrice = Number.parseFloat(priceDigits);
                             numericPrice = Number.isFinite(parsedPrice) ? parsedPrice : Number.NaN;
-                        }
-                        if (Number.isFinite(numericPrice)) {
-                            priceValues.push(numericPrice);
                         }
                         const productPriceHtml = escapeHtml(formattedPrice);
                         const featuresAttr = featureValues.map(feature => escapeHtml(feature)).join('||');
@@ -6105,41 +6463,19 @@
                 }
             });
 
-            const uniquePriceValues = Array.from(new Set(priceValues.filter(value => Number.isFinite(value) && value >= 0)))
-                .sort((a, b) => a - b);
-            let priceOptionsMarkup = '';
+            const priceOptionsMarkup = normalizePriceRanges(config.priceRanges)
+                .map(range => {
+                    const value = escapeHtml(range.id);
+                    const label = escapeHtml(formatPriceRangeLabel(range));
 
-            if (uniquePriceValues.length > 0) {
-                const minPrice = uniquePriceValues[0];
-                const medianPrice = uniquePriceValues[Math.floor(uniquePriceValues.length / 2)];
-                const upperPrice = uniquePriceValues[Math.floor(uniquePriceValues.length * 0.75)];
-                const maxPrice = uniquePriceValues[uniquePriceValues.length - 1];
-
-                const formattedMedian = escapeHtml(formatCurrencyCOP(medianPrice));
-                const formattedUpper = escapeHtml(formatCurrencyCOP(upperPrice));
-                const formattedMax = escapeHtml(formatCurrencyCOP(maxPrice));
-
-                const ranges = [];
-
-                if (minPrice === maxPrice) {
-                    ranges.push({ value: `${minPrice}+`, label: `Precio: ${formattedMax}` });
-                } else {
-                    if (medianPrice > minPrice) {
-                        ranges.push({ value: `${Math.max(0, Math.floor(minPrice))}-${Math.ceil(medianPrice)}`, label: `Hasta ${formattedMedian}` });
+                    if (!value || !label) {
+                        return '';
                     }
 
-                    if (upperPrice > medianPrice) {
-                        ranges.push({ value: `${Math.ceil(medianPrice)}-${Math.ceil(upperPrice)}`, label: `${formattedMedian} - ${formattedUpper}` });
-                    }
-
-                    ranges.push({ value: `${Math.ceil(upperPrice)}+`, label: `Desde ${formattedUpper}` });
-                }
-
-                priceOptionsMarkup = ranges
-                    .filter((range, index, array) => range && range.value && array.findIndex(candidate => candidate.value === range.value) === index)
-                    .map(range => `<option value="${range.value}">${range.label}</option>`)
-                    .join('');
-            }
+                    return `<option value="${value}">${label}</option>`;
+                })
+                .filter(Boolean)
+                .join('');
 
             const filtersMarkup = `
         <div class="catalog-filters" id="catalogFilters">
@@ -10382,8 +10718,18 @@ ${formatCssBlock(footerBackground)}
 
             const trimmed = value.trim();
 
+            const configuredRange = normalizePriceRanges(catalogData.config.priceRanges || [])
+                .find(range => range.id === trimmed);
+
+            if (configuredRange) {
+                return {
+                    min: Number.isFinite(configuredRange.min) ? configuredRange.min : 0,
+                    max: Number.isFinite(configuredRange.max) ? configuredRange.max : Infinity
+                };
+            }
+
             if (trimmed.endsWith('+')) {
-                const minValue = Number.parseFloat(trimmed.slice(0, -1));
+                const minValue = parsePriceValue(trimmed.slice(0, -1));
                 return Number.isFinite(minValue)
                     ? { min: minValue, max: Infinity }
                     : null;
@@ -10394,8 +10740,8 @@ ${formatCssBlock(footerBackground)}
                 return null;
             }
 
-            const minValue = Number.parseFloat(minPart);
-            const maxValue = Number.parseFloat(maxPart);
+            const minValue = parsePriceValue(minPart);
+            const maxValue = parsePriceValue(maxPart);
 
             if (!Number.isFinite(minValue) && !Number.isFinite(maxValue)) {
                 return null;
