@@ -173,6 +173,29 @@
                                 </div>
                             </div>
                             <div class="appearance-item">
+                                <label for="appearanceMode">Modo preferido</label>
+                                <select id="appearanceMode" name="appearanceMode">
+                                    <option value="light">Claro</option>
+                                    <option value="dark">Oscuro</option>
+                                </select>
+                                <div class="field-hint field-hint--muted">El usuario podrá alternar, pero aquí defines el modo inicial.</div>
+                            </div>
+                            <div class="appearance-item">
+                                <label for="appearanceBackgroundPattern">Textura o degradado para el fondo general</label>
+                                <select id="appearanceBackgroundPattern" name="appearanceBackgroundPattern"></select>
+                                <div class="field-hint field-hint--muted">Ideal para simular concreto suave o gradientes ligeros.</div>
+                            </div>
+                            <div class="appearance-item">
+                                <label for="appearanceSectionPattern">Textura para secciones y héroe</label>
+                                <select id="appearanceSectionPattern" name="appearanceSectionPattern"></select>
+                                <div class="field-hint field-hint--muted">Se combina con la imagen de cabecera y los overlays.</div>
+                            </div>
+                            <div class="appearance-item">
+                                <label for="appearanceOverlayStrength">Intensidad del overlay</label>
+                                <input type="range" id="appearanceOverlayStrength" name="appearanceOverlayStrength" min="0" max="0.85" step="0.01" value="0.48">
+                                <div class="field-hint field-hint--muted">Ajusta la opacidad de los degradados sobre imágenes y patrones.</div>
+                            </div>
+                            <div class="appearance-item">
                                 <label for="appearanceBackgroundImage">Imagen de fondo del catálogo (opcional)</label>
                                 <div class="input-meta">
                                     <input type="url" id="appearanceBackgroundImage" name="appearanceBackgroundImage" placeholder="https://ejemplo.com/fondo.jpg">
