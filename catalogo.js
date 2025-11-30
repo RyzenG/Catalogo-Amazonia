@@ -19,6 +19,12 @@ const DEFAULT_CONTACT = {
     ctaLink: ''
 };
 
+const DEFAULT_PRICE_RANGES = [
+    { id: 'low', label: 'Hasta $150.000', min: 0, max: 150000 },
+    { id: 'mid', label: '$150.001 - $400.000', min: 150001, max: 400000 },
+    { id: 'high', label: 'Más de $400.000', min: 400001, max: null }
+];
+
 const DEFAULT_CATEGORIES = [
     {
         id: 'mobiliario',
@@ -103,7 +109,8 @@ let categories = [];
 let products = [];
 let config = {
     appearance: { ...DEFAULT_APPEARANCE },
-    contact: { ...DEFAULT_CONTACT }
+    contact: { ...DEFAULT_CONTACT },
+    priceRanges: DEFAULT_PRICE_RANGES
 };
 
 function sanitizeText(value) {
@@ -162,11 +169,40 @@ function normalizeCategories(rawCategories) {
 }
 
 function normalizePrice(value) {
-    const numeric = Number(value);
+    const numeric = parsePriceValue(value);
     if (Number.isFinite(numeric) && numeric >= 0) {
         return numeric;
     }
     return 0;
+}
+
+function parsePriceValue(rawValue) {
+    if (typeof rawValue === 'number' && Number.isFinite(rawValue)) {
+        return rawValue;
+    }
+
+    if (typeof rawValue !== 'string') {
+        return null;
+    }
+
+    const match = rawValue.match(/-?[\d][\d.,]*/);
+    if (!match) {
+        return null;
+    }
+
+    const candidate = match[0];
+    const commaCount = (candidate.match(/,/g) || []).length;
+    const dotCount = (candidate.match(/\./g) || []).length;
+    const usesCommaDecimal = commaCount === 1 && dotCount === 0;
+    const decimalSeparator = usesCommaDecimal ? ',' : '.';
+    const thousandsSeparator = usesCommaDecimal ? '.' : ',';
+
+    const normalized = candidate
+        .replace(new RegExp(`\\${thousandsSeparator}`, 'g'), '')
+        .replace(decimalSeparator, '.');
+
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
 }
 
 function normalizeTags(rawTags) {
@@ -289,6 +325,43 @@ function normalizeContact(rawContact) {
     };
 }
 
+function normalizePriceRange(range, index, usedIds) {
+    const baseRange = range && typeof range === 'object' ? range : {};
+    const idCandidate = sanitizeText(baseRange.id) || `price-${index + 1}`;
+    const label = sanitizeText(baseRange.label);
+    const currency = sanitizeText(baseRange.currency || 'COP').toUpperCase() || 'COP';
+    const minValue = parsePriceValue(baseRange.min);
+    const maxValue = parsePriceValue(baseRange.max);
+    const normalizedId = idCandidate;
+
+    if (normalizedId) {
+        usedIds.add(normalizedId);
+    }
+
+    return {
+        id: normalizedId,
+        label: label || '',
+        min: Number.isFinite(minValue) && minValue >= 0 ? minValue : 0,
+        max: Number.isFinite(maxValue) && maxValue >= 0 ? maxValue : null,
+        currency
+    };
+}
+
+function normalizePriceRanges(rawRanges) {
+    const usedIds = new Set();
+    const ranges = Array.isArray(rawRanges) && rawRanges.length > 0 ? rawRanges : DEFAULT_PRICE_RANGES;
+
+    const normalized = ranges
+        .map((range, index) => normalizePriceRange(range, index, usedIds))
+        .filter(range => Number.isFinite(range.min) || Number.isFinite(range.max));
+
+    if (normalized.length === 0) {
+        return DEFAULT_PRICE_RANGES.map((range, index) => normalizePriceRange(range, index, usedIds));
+    }
+
+    return normalized;
+}
+
 function normalizeConfig(rawConfig) {
     const configData = rawConfig && typeof rawConfig === 'object'
         ? rawConfig
@@ -299,7 +372,8 @@ function normalizeConfig(rawConfig) {
 
     return {
         appearance: normalizeAppearance(appearanceConfig),
-        contact: { ...DEFAULT_CONTACT, ...normalizeContact(contactConfig) }
+        contact: { ...DEFAULT_CONTACT, ...normalizeContact(contactConfig) },
+        priceRanges: normalizePriceRanges(configData.priceRanges || configData.priceFilters)
     };
 }
 
@@ -357,7 +431,7 @@ function loadDataset() {
     const source = stored || inlineData || {
         categories: DEFAULT_CATEGORIES,
         products: DEFAULT_PRODUCTS,
-        config: { appearance: DEFAULT_APPEARANCE, contact: DEFAULT_CONTACT }
+        config: { appearance: DEFAULT_APPEARANCE, contact: DEFAULT_CONTACT, priceRanges: DEFAULT_PRICE_RANGES }
     };
 
     const normalizedCategories = normalizeCategories(source.categories);
@@ -521,11 +595,146 @@ function renderCategoryTags(activeCategoryId) {
     });
 }
 
+function getConfiguredPriceRanges() {
+    const ranges = normalizePriceRanges(config && Array.isArray(config.priceRanges)
+        ? config.priceRanges
+        : DEFAULT_PRICE_RANGES);
+
+    config.priceRanges = ranges;
+    return ranges;
+}
+
+function formatPriceLabel(value, currency = 'COP') {
+    if (!Number.isFinite(value)) {
+        return '';
+    }
+
+    try {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: currency || 'COP',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    } catch (error) {
+        return formatCurrency(value);
+    }
+}
+
+function buildPriceRangeLabel(range) {
+    const label = sanitizeText(range.label);
+    if (label) {
+        return label;
+    }
+
+    const min = Number.isFinite(range.min) ? range.min : null;
+    const max = Number.isFinite(range.max) ? range.max : null;
+    const formatterCurrency = sanitizeText(range.currency || 'COP').toUpperCase() || 'COP';
+
+    if (min !== null && max !== null) {
+        return `${formatPriceLabel(min, formatterCurrency)} - ${formatPriceLabel(max, formatterCurrency)}`;
+    }
+
+    if (min !== null) {
+        return `Desde ${formatPriceLabel(min, formatterCurrency)}`;
+    }
+
+    if (max !== null) {
+        return `Hasta ${formatPriceLabel(max, formatterCurrency)}`;
+    }
+
+    return '';
+}
+
+function renderPriceFilterOptions() {
+    const priceSelect = document.getElementById('priceSelect');
+    if (!priceSelect) {
+        return;
+    }
+
+    const currentValue = priceSelect.value;
+    priceSelect.innerHTML = '';
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Todos los precios';
+    priceSelect.appendChild(defaultOption);
+
+    getConfiguredPriceRanges().forEach(range => {
+        const option = document.createElement('option');
+        option.value = range.id;
+        option.textContent = buildPriceRangeLabel(range);
+        option.dataset.min = Number.isFinite(range.min) ? range.min : '';
+        option.dataset.max = Number.isFinite(range.max) ? range.max : '';
+        priceSelect.appendChild(option);
+    });
+
+    const hasCurrentValue = priceSelect.querySelector(`option[value="${currentValue}"]`);
+    if (hasCurrentValue) {
+        priceSelect.value = currentValue;
+    }
+}
+
+function resolvePriceFilter(priceFilter) {
+    if (!priceFilter) {
+        return null;
+    }
+
+    const ranges = getConfiguredPriceRanges();
+    const directMatch = ranges.find(range => range.id === priceFilter);
+    if (directMatch) {
+        return directMatch;
+    }
+
+    const trimmed = typeof priceFilter === 'string' ? priceFilter.trim() : '';
+    if (!trimmed) {
+        return null;
+    }
+
+    if (trimmed.endsWith('+')) {
+        const minValue = parsePriceValue(trimmed.slice(0, -1));
+        return Number.isFinite(minValue)
+            ? { min: minValue, max: null, id: trimmed, label: '' }
+            : null;
+    }
+
+    const [minPart, maxPart] = trimmed.split('-');
+    if (typeof minPart === 'undefined' || typeof maxPart === 'undefined') {
+        return null;
+    }
+
+    const minValue = parsePriceValue(minPart);
+    const maxValue = parsePriceValue(maxPart);
+    if (!Number.isFinite(minValue) && !Number.isFinite(maxValue)) {
+        return null;
+    }
+
+    return {
+        min: Number.isFinite(minValue) ? minValue : 0,
+        max: Number.isFinite(maxValue) ? maxValue : null,
+        id: trimmed,
+        label: ''
+    };
+}
+
 function matchesPriceRange(product, priceFilter) {
-    if (priceFilter === 'low') return product.price <= 150000;
-    if (priceFilter === 'mid') return product.price > 150000 && product.price <= 400000;
-    if (priceFilter === 'high') return product.price > 400000;
-    return true;
+    if (!priceFilter) {
+        return true;
+    }
+
+    const priceValue = parsePriceValue(product.price);
+    if (!Number.isFinite(priceValue)) {
+        return false;
+    }
+
+    const range = resolvePriceFilter(priceFilter);
+    if (!range) {
+        return true;
+    }
+
+    const min = Number.isFinite(range.min) ? range.min : 0;
+    const max = Number.isFinite(range.max) ? range.max : Infinity;
+    return priceValue >= min && priceValue <= max;
 }
 
 function renderProducts(filteredProducts, activeCategory) {
@@ -716,6 +925,7 @@ function initCatalog() {
     config = dataset.config;
 
     applyAppearanceStyles(config.appearance);
+    renderPriceFilterOptions();
     renderCategoryTags(null);
     applyFilters();
 
