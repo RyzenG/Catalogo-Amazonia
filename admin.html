@@ -337,6 +337,50 @@
                     <p class="section-description">Gestiona la información que alimenta las políticas de envíos, reembolsos, privacidad y lineamientos extra desde un solo lugar. Los cambios se guardan con el botón "Guardar políticas".</p>
                     <p class="section-hint" id="policyGenerationMeta" role="status" aria-live="polite"></p>
 
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 0.75rem">Página de política de envíos</h3>
+                        <p class="section-description">Edita el contenido que se mostrará en la página dedicada a envíos, incluyendo encabezado, bloques descriptivos y notas finales.</p>
+
+                        <div class="two-columns">
+                            <div class="form-group">
+                                <label for="shippingPolicyHeroTitle">Título principal</label>
+                                <input type="text" id="shippingPolicyHeroTitle" placeholder="Política de envíos">
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingPolicyHeroDescription">Descripción corta</label>
+                                <textarea id="shippingPolicyHeroDescription" rows="2" placeholder="Coordinamos entregas seguras y puntuales para cada pedido."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 1.5rem 0 1rem;">
+                            <div>
+                                <h4 style="margin: 0">Bloques de información</h4>
+                                <p class="section-description" style="margin: 0">Agrega, reordena o elimina las secciones que detallan cobertura, empaque, costos u otros temas logísticos.</p>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="addShippingSectionButton">➕ Añadir sección</button>
+                        </div>
+
+                        <div id="shippingPolicySectionsContainer" class="shipping-policy-sections" aria-live="polite"></div>
+
+                        <div class="config-section" style="margin-top: 1.5rem;">
+                            <h4 style="margin: 0 0 1rem 0">Cierre de la página</h4>
+                            <div class="two-columns">
+                                <div class="form-group">
+                                    <label for="shippingPolicyClosingTitle">Título de cierre</label>
+                                    <input type="text" id="shippingPolicyClosingTitle" placeholder="¿Listo para coordinar tu envío?">
+                                </div>
+                                <div class="form-group">
+                                    <label for="shippingPolicyClosingDescription">Descripción final</label>
+                                    <textarea id="shippingPolicyClosingDescription" rows="2" placeholder="Escríbenos y recibe asesoría personalizada para definir la mejor opción de entrega."></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingPolicyClosingNote">Nota complementaria</label>
+                                <input type="text" id="shippingPolicyClosingNote" placeholder="Atendemos solicitudes de lunes a viernes de 8:00 a.m. a 6:00 p.m.">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="policies-stack">
                         <article class="policy-panel" data-policy-panel="shipping">
                             <div class="policy-panel__form">
