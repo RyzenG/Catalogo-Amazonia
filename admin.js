@@ -557,6 +557,24 @@
             policies: normalizePolicies(defaultPolicies)
         };
 
+        const SOCIAL_URL_PATTERNS = {
+            instagram: {
+                baseUrl: 'https://www.instagram.com/',
+                hosts: ['instagram.com', 'instagr.am'],
+                appendAt: false
+            },
+            facebook: {
+                baseUrl: 'https://www.facebook.com/',
+                hosts: ['facebook.com', 'fb.com'],
+                appendAt: false
+            },
+            tiktok: {
+                baseUrl: 'https://www.tiktok.com/',
+                hosts: ['tiktok.com'],
+                appendAt: true
+            }
+        };
+
         const defaultCategories = [
             {
                 id: 'macetas',
@@ -716,6 +734,11 @@
             const base = isPlainObject(rawConfig)
                 ? { ...defaultConfig, ...rawConfig }
                 : { ...defaultConfig };
+
+            ['instagram', 'facebook', 'tiktok'].forEach(key => {
+                const { normalized, isValid } = normalizeSocialLink(base[key], key);
+                base[key] = isValid ? normalized : '';
+            });
 
             base.appearance = normalizeAppearance(base.appearance);
             base.about = normalizeAbout(base.about);
@@ -3176,6 +3199,15 @@
                 saveConfigButton.addEventListener('click', saveConfig);
             }
 
+            ['instagram', 'facebook', 'tiktok'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    const updatePreview = () => refreshSocialPreviews(collectConfigValues());
+                    input.addEventListener('input', updatePreview);
+                    input.addEventListener('blur', updatePreview);
+                }
+            });
+
             const savePoliciesButton = document.getElementById('savePoliciesButton');
             if (savePoliciesButton) {
                 savePoliciesButton.addEventListener('click', saveConfig);
@@ -3490,6 +3522,84 @@
             }
         }
 
+        function ensureHttpsUrl(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+
+            const trimmed = value.trim();
+            if (!trimmed) {
+                return '';
+            }
+
+            if (/^[a-zA-Z][\w+.-]*:\/\//.test(trimmed)) {
+                return trimmed;
+            }
+
+            if (trimmed.startsWith('//')) {
+                return `https:${trimmed}`;
+            }
+
+            return `https://${trimmed}`;
+        }
+
+        function normalizeSocialHandle(handle, config) {
+            if (!config) {
+                return '';
+            }
+
+            const cleaned = handle
+                .replace(/^@+/, '')
+                .replace(/^\/+/, '')
+                .replace(/\/+$/, '');
+
+            if (!cleaned || /\s/.test(cleaned)) {
+                return '';
+            }
+
+            const path = config.appendAt ? `@${cleaned}` : cleaned;
+            return `${config.baseUrl}${path}`;
+        }
+
+        function normalizeSocialLink(value, platform) {
+            const config = SOCIAL_URL_PATTERNS[platform];
+            const trimmed = typeof value === 'string' ? value.trim() : '';
+
+            if (!trimmed || !config) {
+                return { normalized: '', isValid: true };
+            }
+
+            const withProtocol = ensureHttpsUrl(trimmed);
+
+            try {
+                const parsed = new URL(withProtocol);
+                const hostMatch = config.hosts.some(host => parsed.hostname.toLowerCase().includes(host));
+
+                if (hostMatch && parsed.pathname && parsed.pathname !== '/') {
+                    const normalizedUrl = parsed.href;
+                    return { normalized: normalizedUrl, isValid: isValidUrl(normalizedUrl) };
+                }
+
+                if (hostMatch) {
+                    return { normalized: '', isValid: false };
+                }
+            } catch (error) {
+                // Continue to attempt handle normalization
+            }
+
+            const withoutProtocol = trimmed
+                .replace(/^https?:\/\//i, '')
+                .replace(/^www\./i, '');
+
+            const strippedHandle = config.hosts.reduce((acc, host) => {
+                const pattern = new RegExp(`^${host}`, 'i');
+                return acc.replace(pattern, '');
+            }, withoutProtocol);
+
+            const normalized = normalizeSocialHandle(strippedHandle, config);
+            return { normalized, isValid: Boolean(normalized) && isValidUrl(normalized) };
+        }
+
         function isValidUrl(value) {
             if (typeof value !== 'string') {
                 return false;
@@ -3506,6 +3616,39 @@
             } catch (error) {
                 return false;
             }
+        }
+
+        function updateSocialPreview(id, normalizedUrl, isValid, hasInput) {
+            const previewElement = document.getElementById(`${id}Preview`);
+
+            if (!previewElement) {
+                return;
+            }
+
+            previewElement.classList.remove('input-helper--error');
+
+            if (!hasInput) {
+                previewElement.textContent = 'No se publicará enlace para esta red.';
+                return;
+            }
+
+            if (isValid && normalizedUrl) {
+                previewElement.textContent = `Se publicará: ${normalizedUrl}`;
+                return;
+            }
+
+            previewElement.textContent = 'No pudimos interpretar este enlace. Verifica el formato.';
+            previewElement.classList.add('input-helper--error');
+        }
+
+        function refreshSocialPreviews(sourceValues = {}) {
+            const values = isPlainObject(sourceValues) ? sourceValues : {};
+
+            ['instagram', 'facebook', 'tiktok'].forEach(id => {
+                const rawValue = values[id] || '';
+                const { normalized, isValid } = normalizeSocialLink(rawValue, id);
+                updateSocialPreview(id, normalized, isValid, Boolean(rawValue));
+            });
         }
 
         function createNewsItemRow(item = {}, index = 0) {
@@ -4470,17 +4613,24 @@
             socialFields.forEach(({ id, label }) => {
                 const fieldValue = configValues[id] || '';
                 const input = document.getElementById(id);
+                const { normalized, isValid } = normalizeSocialLink(fieldValue, id);
 
-                if (!fieldValue) {
+                const hasValue = Boolean(fieldValue);
+                updateSocialPreview(id, normalized, isValid, hasValue);
+
+                if (isValid) {
+                    configValues[id] = normalized;
+                }
+
+                if (!hasValue) {
                     setFieldValidationState(input, true);
                     return;
                 }
 
-                const isValid = isValidUrl(fieldValue);
                 setFieldValidationState(input, isValid);
 
                 if (!isValid) {
-                    errors.push(`Ingresa un enlace válido para ${label} (asegúrate de incluir http:// o https://).`);
+                    errors.push(`Ingresa un enlace válido para ${label} (puedes usar @usuario o la URL completa).`);
                 }
             });
 
@@ -4660,6 +4810,7 @@
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
+            refreshSocialPreviews(catalogData.config);
             renderPriceRanges(normalizePriceRanges(catalogData.config.priceRanges));
             validatePriceRangeInputs();
             const aboutValues = normalizeAbout(catalogData.config.about);
