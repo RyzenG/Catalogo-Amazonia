@@ -543,6 +543,8 @@
             instagram: '',
             facebook: '',
             tiktok: '',
+            canonicalUrl: '',
+            aboutCanonicalUrl: '',
             companyName: 'AMAZONIA CONCRETE',
             tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
             footerMessage: 'Creando espacios únicos con concreto sostenible',
@@ -705,6 +707,11 @@
             return normalized;
         }
 
+        function normalizeCanonicalUrl(value) {
+            const trimmed = typeof value === 'string' ? value.trim() : '';
+            return trimmed && isValidUrl(trimmed) ? trimmed : '';
+        }
+
         function getNormalizedConfig(rawConfig) {
             const base = isPlainObject(rawConfig)
                 ? { ...defaultConfig, ...rawConfig }
@@ -716,6 +723,8 @@
             base.shippingPolicy = normalizeShippingPolicy(base.shippingPolicy);
             base.policies = normalizePolicies(base.policies);
             base.priceRanges = normalizePriceRanges(base.priceRanges);
+            base.canonicalUrl = normalizeCanonicalUrl(base.canonicalUrl);
+            base.aboutCanonicalUrl = normalizeCanonicalUrl(base.aboutCanonicalUrl);
             return base;
         }
 
@@ -3856,6 +3865,8 @@
                 instagram: readValue('instagram'),
                 facebook: readValue('facebook'),
                 tiktok: readValue('tiktok'),
+                canonicalUrl: readValue('canonicalUrl'),
+                aboutCanonicalUrl: readValue('aboutCanonicalUrl'),
                 companyName: readValue('companyName'),
                 tagline: readValue('tagline'),
                 footerMessage: readValue('footerMessage'),
@@ -4473,6 +4484,28 @@
                 }
             });
 
+            const canonicalFields = [
+                { id: 'canonicalUrl', label: 'la URL canónica del catálogo' },
+                { id: 'aboutCanonicalUrl', label: 'la URL canónica de la página "Sobre nosotros"' }
+            ];
+
+            canonicalFields.forEach(({ id, label }) => {
+                const fieldValue = configValues[id] || '';
+                const input = document.getElementById(id);
+
+                if (!fieldValue) {
+                    setFieldValidationState(input, true);
+                    return;
+                }
+
+                const isValid = isValidUrl(fieldValue);
+                setFieldValidationState(input, isValid);
+
+                if (!isValid) {
+                    errors.push(`Ingresa un enlace válido para ${label} (asegúrate de incluir http:// o https://).`);
+                }
+            });
+
             const newsCtaFields = [
                 { id: 'newsPrimaryCtaUrl', label: 'botón principal de inicio' },
                 { id: 'newsSecondaryCtaUrl', label: 'botón secundario de inicio' }
@@ -4622,6 +4655,8 @@
             document.getElementById('instagram').value = catalogData.config.instagram || '';
             document.getElementById('facebook').value = catalogData.config.facebook || '';
             document.getElementById('tiktok').value = catalogData.config.tiktok || '';
+            document.getElementById('canonicalUrl').value = catalogData.config.canonicalUrl || '';
+            document.getElementById('aboutCanonicalUrl').value = catalogData.config.aboutCanonicalUrl || '';
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
