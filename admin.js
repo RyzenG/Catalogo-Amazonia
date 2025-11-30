@@ -6462,12 +6462,13 @@
         .primary-nav__icon svg { width: 100%; height: 100%; }
         .primary-nav__icon svg path { fill: currentColor; }
         .primary-nav__label { line-height: 1; }
-        .hero { position: relative; color: ${theme.textOnDark}; padding: 3.5rem 0; overflow: hidden; }
-        .hero::before { content: ''; position: absolute; inset: 0; ${headerBackground}; opacity: 0.95; }
+        .hero { position: relative; color: #f7faf5; padding: 3.5rem 0; overflow: hidden; background: radial-gradient(circle at 30% 20%, rgba(74, 124, 89, 0.12), transparent 35%), radial-gradient(circle at 80% 10%, rgba(192, 223, 217, 0.4), transparent 38%), #0f1612; }
+        .hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(120deg, rgba(15, 24, 18, 0.8) 0%, rgba(31, 47, 40, 0.55) 45%, rgba(74, 124, 89, 0.45) 100%), url("images/fondo principal.webp"); background-size: cover; background-position: center; background-repeat: no-repeat; opacity: 0.92; z-index: 0; }
+        .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12, 18, 15, 0.15) 0%, rgba(12, 18, 15, 0.4) 35%, rgba(12, 18, 15, 0.65) 100%); pointer-events: none; z-index: 0; }
         .hero__grid { position: relative; z-index: 1; display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: center; }
-        .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.95rem; }
-        .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; }
-        .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; }
+        .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.95rem; color: ${theme.accent}; }
+        .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; color: #fdfefc; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.45); }
+        .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; color: rgba(247, 250, 245, 0.9); }
         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
         .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 1.25rem; }
         .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 360px; border-radius: 20px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
@@ -6480,8 +6481,9 @@
         .hero__tagline { position: relative; right: auto; top: auto; transform: none; margin: 0; background: transparent; color: ${theme.textOnDark}; padding: 0; border-radius: 0; font-weight: 700; line-height: 1.4; max-width: 100%; box-shadow: none; backdrop-filter: none; justify-self: end; }
         .hero__stone { display: none; }
         .button { padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid transparent; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
-        .button--primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-        .button--ghost { background: transparent; color: ${theme.textOnDark}; border-color: rgba(255,255,255,0.6); }
+        .button--primary { background: ${theme.accent}; color: ${theme.text}; border-color: ${theme.accent}; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18); }
+        .button--ghost { background: rgba(255,255,255,0.08); color: #f7faf5; border-color: rgba(255,255,255,0.65); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12); }
+        .hero__stamp { position: absolute; bottom: 1.5rem; right: 1.75rem; padding: 0.75rem 1rem; border-radius: 14px; background: rgba(12, 18, 15, 0.5); color: #fdfefc; border: 1px solid rgba(255, 255, 255, 0.18); backdrop-filter: blur(6px); box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; z-index: 1; }
         .section { padding: 3rem 0; }
         .section--light { background: transparent; }
         .section__inner { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
@@ -6534,6 +6536,7 @@
             .hero__visual { grid-template-columns: 1fr; padding: 1rem; }
             .hero__visual .hero__logo { max-width: 260px; justify-self: center; }
             .hero__tagline { justify-self: center; text-align: center; margin-top: 0.5rem; }
+            .hero__stamp { right: 1rem; left: 1rem; text-align: center; }
         }
             `;
 
@@ -6572,6 +6575,7 @@
                     <span class="hero__stone"></span>
                 </div>
             </div>
+            <div class="hero__stamp" aria-label="Colección 2024">Colección 2024</div>
         </section>
 
         <section id="novedades" class="section section--light">
