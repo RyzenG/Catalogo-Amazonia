@@ -269,6 +269,31 @@
                     </div>
                     <div class="two-columns">
                         <div class="form-group">
+                            <label for="newsHeroStamp">Sello o nombre de la colección</label>
+                            <input type="text" id="newsHeroStamp" placeholder="Colección 2024">
+                            <p class="field-hint">Se muestra en la esquina del héroe para actualizarlo cada año.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox">
+                                <input type="checkbox" id="newsHeroBrandPanelEnabled">
+                                <span>Mostrar recuadro translúcido para logo y eslogan</span>
+                            </label>
+                            <p class="field-hint">Activa un fondo suave que agrupa el logo y el eslogan para mejorar su legibilidad.</p>
+                        </div>
+                    </div>
+                    <div class="two-columns">
+                        <div class="form-group">
+                            <label for="newsHeroBrandPanelColor">Color del recuadro</label>
+                            <input type="color" id="newsHeroBrandPanelColor" value="#0c120f">
+                        </div>
+                        <div class="form-group">
+                            <label for="newsHeroBrandPanelOpacity">Opacidad del recuadro</label>
+                            <input type="range" id="newsHeroBrandPanelOpacity" min="0" max="0.85" step="0.01" value="0.45">
+                            <p class="field-hint">0 es completamente transparente y 0.85 es más sólido.</p>
+                        </div>
+                    </div>
+                    <div class="two-columns">
+                        <div class="form-group">
                             <label for="newsPrimaryCta">Texto del botón principal</label>
                             <input type="text" id="newsPrimaryCta" placeholder="Ver catálogo">
                         </div>

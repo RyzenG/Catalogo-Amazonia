@@ -19,6 +19,12 @@
             heroEyebrow: 'Concreto sostenible',
             heroTitle: 'Diseños hechos para durar y conectar con la naturaleza',
             heroDescription: 'Explora piezas inspiradas en la selva amazónica, creadas para proyectos residenciales y corporativos con altos estándares de calidad.',
+            heroStamp: 'Colección 2024',
+            heroBrandPanel: {
+                enabled: true,
+                color: '#0c120f',
+                opacity: 0.45
+            },
             sectionEyebrow: 'Actualizaciones',
             sectionTitle: 'Novedades y momentos especiales',
             sectionDescription: 'Panel de lanzamientos y anuncios destacados. Los productos solo se muestran en la página de catálogo.',
@@ -288,6 +294,8 @@
                 heroEyebrow: defaultNewsPanel.heroEyebrow,
                 heroTitle: defaultNewsPanel.heroTitle,
                 heroDescription: defaultNewsPanel.heroDescription,
+                heroStamp: defaultNewsPanel.heroStamp,
+                heroBrandPanel: { ...defaultNewsPanel.heroBrandPanel },
                 sectionEyebrow: defaultNewsPanel.sectionEyebrow,
                 sectionTitle: defaultNewsPanel.sectionTitle,
                 sectionDescription: defaultNewsPanel.sectionDescription,
@@ -306,6 +314,34 @@
                             normalized[key] = value;
                         }
                     });
+
+                if (typeof candidate.heroStamp === 'string') {
+                    const trimmedStamp = candidate.heroStamp.trim();
+                    if (trimmedStamp) {
+                        normalized.heroStamp = trimmedStamp;
+                    }
+                }
+
+                const brandPanelSource = isPlainObject(candidate.heroBrandPanel)
+                    ? candidate.heroBrandPanel
+                    : {};
+
+                normalized.heroBrandPanel = {
+                    enabled: typeof brandPanelSource.enabled === 'boolean'
+                        ? brandPanelSource.enabled
+                        : defaultNewsPanel.heroBrandPanel.enabled,
+                    color: normalizeColorValue(
+                        brandPanelSource.color,
+                        defaultNewsPanel.heroBrandPanel.color
+                    ),
+                    opacity: (() => {
+                        const parsedOpacity = Number.parseFloat(brandPanelSource.opacity);
+                        if (!Number.isFinite(parsedOpacity)) {
+                            return defaultNewsPanel.heroBrandPanel.opacity;
+                        }
+                        return Math.min(0.85, Math.max(0, parsedOpacity));
+                    })()
+                };
 
                 ['primaryCtaUrl', 'secondaryCtaUrl'].forEach(key => {
                     const value = typeof candidate[key] === 'string' ? candidate[key].trim() : '';
@@ -4062,6 +4098,11 @@
                 return element.value.trim();
             };
 
+            const readCheckbox = (id) => {
+                const element = document.getElementById(id);
+                return element ? Boolean(element.checked) : false;
+            };
+
             const readMultilineList = (id) => {
                 const value = readValue(id);
                 if (!value) {
@@ -4193,6 +4234,12 @@
                     heroEyebrow: readValue('newsHeroEyebrow'),
                     heroTitle: readValue('newsHeroTitle'),
                     heroDescription: readValue('newsHeroDescription'),
+                    heroStamp: readValue('newsHeroStamp'),
+                    heroBrandPanel: {
+                        enabled: readCheckbox('newsHeroBrandPanelEnabled'),
+                        color: readColor('newsHeroBrandPanelColor'),
+                        opacity: readValue('newsHeroBrandPanelOpacity')
+                    },
                     sectionEyebrow: readValue('newsSectionEyebrow'),
                     sectionTitle: readValue('newsSectionTitle'),
                     sectionDescription: readValue('newsSectionDescription'),
@@ -5083,6 +5130,22 @@
             setNewsValue('newsHeroEyebrow', newsValues.heroEyebrow || '');
             setNewsValue('newsHeroTitle', newsValues.heroTitle || '');
             setNewsValue('newsHeroDescription', newsValues.heroDescription || '');
+            setNewsValue('newsHeroStamp', newsValues.heroStamp || '');
+            const brandPanelValues = newsValues.heroBrandPanel || defaultNewsPanel.heroBrandPanel;
+            const brandPanelEnabledInput = document.getElementById('newsHeroBrandPanelEnabled');
+            if (brandPanelEnabledInput) {
+                brandPanelEnabledInput.checked = Boolean(brandPanelValues.enabled);
+            }
+            const brandPanelColorInput = document.getElementById('newsHeroBrandPanelColor');
+            if (brandPanelColorInput) {
+                brandPanelColorInput.value = brandPanelValues.color || defaultNewsPanel.heroBrandPanel.color;
+            }
+            const brandPanelOpacityInput = document.getElementById('newsHeroBrandPanelOpacity');
+            if (brandPanelOpacityInput) {
+                brandPanelOpacityInput.value = typeof brandPanelValues.opacity === 'number'
+                    ? brandPanelValues.opacity
+                    : defaultNewsPanel.heroBrandPanel.opacity;
+            }
             setNewsValue('newsSectionEyebrow', newsValues.sectionEyebrow || '');
             setNewsValue('newsSectionTitle', newsValues.sectionTitle || '');
             setNewsValue('newsSectionDescription', newsValues.sectionDescription || '');
@@ -6414,6 +6477,23 @@
             const heroTaglineMarkup = trimmedConfig.tagline
                 ? `<p class="hero__tagline">${taglineHtml}</p>`
                 : '';
+            const heroStampText = escapeHtml(news.heroStamp || defaultNewsPanel.heroStamp || 'Colección 2024');
+            const heroStampMarkup = heroStampText
+                ? `<div class="hero__stamp" aria-label="${heroStampText}">${heroStampText}</div>`
+                : '';
+            const brandPanelConfig = news.heroBrandPanel || defaultNewsPanel.heroBrandPanel;
+            const brandPanelColor = brandPanelConfig && brandPanelConfig.color
+                ? brandPanelConfig.color
+                : defaultNewsPanel.heroBrandPanel.color;
+            const brandPanelOpacity = typeof (brandPanelConfig && brandPanelConfig.opacity) === 'number'
+                ? brandPanelConfig.opacity
+                : defaultNewsPanel.heroBrandPanel.opacity;
+            const heroBrandPanelBg = hexToRgba(brandPanelColor, brandPanelOpacity);
+            const heroBrandPanelText = getReadableTextColor(brandPanelColor, '#fdfefc', '#0f1612');
+            const shouldRenderBrandPanel = Boolean(brandPanelConfig && brandPanelConfig.enabled && (heroLogoMarkup || heroTaglineMarkup));
+            const heroVisualContent = shouldRenderBrandPanel
+                ? `<div class="hero__brand-panel" style="--hero-brand-panel-bg:${heroBrandPanelBg}; --hero-brand-panel-color:${heroBrandPanelText};">${heroLogoMarkup}${heroTaglineMarkup}</div>`
+                : `${heroLogoMarkup}${heroTaglineMarkup}`;
 
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
             const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '#';
@@ -6558,6 +6638,10 @@
         .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 1.25rem; }
         .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 360px; border-radius: 20px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
         .hero__identity { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 1rem 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; }
+        .hero__brand-panel { position: relative; display: grid; gap: 0.65rem; align-self: stretch; padding: 1.1rem 1.25rem; border-radius: 16px; background: var(--hero-brand-panel-bg, rgba(12, 18, 15, 0.45)); color: var(--hero-brand-panel-color, #fdfefc); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22); backdrop-filter: blur(8px); }
+        .hero__brand-panel .hero__logo { max-width: 320px; justify-self: center; background: transparent; box-shadow: none; }
+        .hero__brand-panel .brand-logo { width: 100%; height: 100%; object-fit: contain; }
+        .hero__brand-panel .hero__tagline { color: var(--hero-brand-panel-color, #fdfefc); font-weight: 700; max-width: none; }
         .hero__badge-text { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: none; text-align: left; }
         .hero__badge-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 1.05rem; line-height: 1.1; }
         .hero__badge-tagline { font-size: 1rem; opacity: 0.95; line-height: 1.5; }
@@ -6655,12 +6739,11 @@
                     </div>
                 </div>
                 <div class="hero__visual">
-                    ${heroLogoMarkup}
-                    ${heroTaglineMarkup}
+                    ${heroVisualContent}
                     <span class="hero__stone"></span>
                 </div>
             </div>
-            <div class="hero__stamp" aria-label="Colección 2024">Colección 2024</div>
+            ${heroStampMarkup}
         </section>
 
         <section id="novedades" class="section section--light">
