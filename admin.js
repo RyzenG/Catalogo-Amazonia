@@ -628,6 +628,7 @@
             tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
             footerMessage: 'Creando espacios únicos con concreto sostenible',
             logoData: '',
+            unifiedHomeVisuals: true,
             appearance: { ...defaultAppearance },
             priceRanges: normalizePriceRanges(defaultPriceRanges),
             about: normalizeAbout(defaultAbout),
@@ -840,6 +841,7 @@
             base.priceRanges = normalizePriceRanges(base.priceRanges);
             base.canonicalUrl = normalizeCanonicalUrl(base.canonicalUrl);
             base.aboutCanonicalUrl = normalizeCanonicalUrl(base.aboutCanonicalUrl);
+            base.unifiedHomeVisuals = Boolean(base.unifiedHomeVisuals);
             return base;
         }
 
@@ -4229,6 +4231,7 @@
                 tagline: readValue('tagline'),
                 footerMessage: readValue('footerMessage'),
                 logoData: readValue('companyLogoUrl'),
+                unifiedHomeVisuals: readCheckbox('unifiedHomeVisuals'),
                 priceRanges: normalizePriceRanges(readPriceRangesFromInputs()),
                 newsPanel: normalizeNewsPanel({
                     heroEyebrow: readValue('newsHeroEyebrow'),
@@ -5091,6 +5094,10 @@
             document.getElementById('aboutCanonicalUrl').value = catalogData.config.aboutCanonicalUrl || '';
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
+            const unifiedHomeVisualsInput = document.getElementById('unifiedHomeVisuals');
+            if (unifiedHomeVisualsInput) {
+                unifiedHomeVisualsInput.checked = Boolean(catalogData.config.unifiedHomeVisuals);
+            }
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
             refreshSocialPreviews(catalogData.config);
             renderPriceRanges(normalizePriceRanges(catalogData.config.priceRanges));
@@ -6853,6 +6860,7 @@
                     .replace(/\u2029/g, '\\u2029');
             };
             const theme = buildThemeTokens(config.appearance);
+            const unifiedHomeVisuals = Boolean(config.unifiedHomeVisuals);
 
             const policiesConfig = normalizePolicies(config.policies);
             const about = normalizeAbout(config.about);
@@ -7208,10 +7216,10 @@
     <meta name="twitter:description" content="${metaDescription}">
     ${faviconMarkup}
     <style>
-        ${getCatalogStyles(theme)}
+        ${getCatalogStyles(theme, { unifiedHomeVisuals })}
     </style>
 </head>
-<body>
+<body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}">
     <!-- Loading Screen -->
     <div class="loader" id="loader">
         <svg class="leaf-spinner" viewBox="0 0 100 100">
@@ -7317,6 +7325,7 @@
             const config = getNormalizedConfig(configOverride || catalogData.config);
             const appearance = normalizeAppearance(config.appearance);
             const theme = buildThemeTokens(appearance);
+            const unifiedHomeVisuals = Boolean(config.unifiedHomeVisuals);
             const policies = normalizePolicies(config.policies);
             const aboutConfig = normalizeAbout(config.about);
 
@@ -7530,7 +7539,7 @@
             const companyNameFooter = trimmedConfig.companyName || defaultConfig.companyName || 'Tu empresa';
 
             const policyStyles = `
-        ${getCatalogStyles(theme)}
+        ${getCatalogStyles(theme, { unifiedHomeVisuals })}
 
         :root {
             color-scheme: light;
@@ -7929,7 +7938,7 @@
         ${policyStyles}
     </style>
 </head>
-<body>
+<body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}">
     <div class="loader" id="loader">
         <svg class="leaf-spinner" viewBox="0 0 100 100">
             <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="${theme.loaderPrimary}"/>
@@ -8141,6 +8150,7 @@
         function generateAboutPageHTML(configOverride) {
             const config = getNormalizedConfig(configOverride || catalogData.config);
             const theme = buildThemeTokens(config.appearance);
+            const unifiedHomeVisuals = Boolean(config.unifiedHomeVisuals);
             const about = normalizeAbout(config.about);
 
             const trimmedConfig = {
@@ -8404,10 +8414,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${headerTitleHtml}</title>
 ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
-        ${getCatalogStyles(theme)}
+        ${getCatalogStyles(theme, { unifiedHomeVisuals })}
     </style>
 </head>
-<body>
+<body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}">
     <div class="loader" id="loader">
         <svg class="leaf-spinner" viewBox="0 0 100 100">
             <path d="M50 20 Q30 40 50 60 Q70 40 50 20" fill="${theme.loaderPrimary}"/>
@@ -8522,8 +8532,9 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
         }
 
         // Get catalog styles
-        function getCatalogStyles(themeTokens) {
+        function getCatalogStyles(themeTokens, options = {}) {
             const theme = themeTokens || buildThemeTokens(defaultAppearance);
+            const { unifiedHomeVisuals = false } = options;
             const formatCssBlock = (value) => {
                 if (typeof value !== 'string' || value.length === 0) {
                     return '';
@@ -8605,6 +8616,40 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
                     ].join('\n')
                     : `background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);`);
 
+            const unifiedVisualStyles = unifiedHomeVisuals ? `
+        body.page--unified-visuals {
+${formatCssBlock(bodyBackground)}
+        }
+
+        body.page--unified-visuals header,
+        body.page--unified-visuals .nav-container {
+            background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
+            color: ${theme.textOnDark};
+            box-shadow: 0 20px 50px ${theme.cardShadow};
+        }
+
+        body.page--unified-visuals .filters,
+        body.page--unified-visuals .category,
+        body.page--unified-visuals .policy-card,
+        body.page--unified-visuals .about-section--standalone {
+            background: linear-gradient(135deg, ${hexToRgba(theme.backgroundStart, 0.94)} 0%, ${hexToRgba(theme.backgroundEnd, 0.9)} 100%);
+            border: 1px solid ${theme.borderColor};
+            box-shadow: 0 16px 42px ${theme.cardShadow};
+        }
+
+        body.page--unified-visuals .filter-chip,
+        body.page--unified-visuals .policy-preview,
+        body.page--unified-visuals .about-value,
+        body.page--unified-visuals .product-card {
+            background: rgba(255, 255, 255, 0.92);
+            border-color: ${theme.borderColor};
+        }
+
+        body.page--unified-visuals .filters {
+            backdrop-filter: blur(10px);
+        }
+` : '';
+
             return `
 
         * {
@@ -8622,6 +8667,8 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
 ${formatCssBlock(bodyBackground)}
             overflow-x: hidden;
         }
+
+${unifiedVisualStyles}
 
         /* Loading Screen */
         .loader {
