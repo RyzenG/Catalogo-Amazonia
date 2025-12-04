@@ -194,12 +194,18 @@ img {
     border-radius: 18px;
     overflow: hidden;
     box-shadow: 0 16px 35px rgba(0, 0, 0, 0.12);
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.5rem 1rem;
 }
 
 .hero__brand-panel {
     position: relative;
-    display: grid;
-    gap: 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
     padding: 1.1rem 1.25rem;
     border-radius: 16px;
     background: rgba(12, 18, 15, 0.45);
@@ -207,10 +213,11 @@ img {
     border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
     backdrop-filter: blur(8px);
+    justify-content: space-between;
 }
 
 .hero__brand-panel .hero__logo {
-    max-width: 320px;
+    max-width: 220px;
     justify-self: center;
     background: transparent;
     box-shadow: none;
@@ -226,18 +233,33 @@ img {
     color: inherit;
     font-weight: 700;
     max-width: none;
+    margin: 0;
+}
+
+.hero__identity {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.hero__badge-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
 }
 
 .hero__badge {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
+    position: static;
     background: var(--brand-dark);
     color: white;
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    font-weight: 700;
+    padding: 0.5rem 1.1rem;
+    border-radius: 12px;
+    font-weight: 800;
     letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .hero__leaf {
