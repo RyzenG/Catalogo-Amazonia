@@ -1,11 +1,11 @@
 :root {
-    --brand-dark: #1f2f28;
-    --brand-primary: #4a7c59;
-    --brand-accent: #c0dfd9;
+    --brand-dark: #10241b;
+    --brand-primary: #1f3b2e;
+    --brand-accent: #b7d4c5;
     --brand-light: #f5f7f3;
     --text-body: #1a1a1a;
     --text-muted: rgba(45, 74, 43, 0.7);
-    --text-on-primary: #ffffff;
+    --text-on-primary: #f5f7f3;
     --surface: #ffffff;
     --surface-alt: #f5f5f5;
     --border-soft: rgba(0, 0, 0, 0.06);
@@ -57,11 +57,12 @@ img {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 2rem;
-    background: var(--surface);
+    background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 100%);
     position: sticky;
     top: 0;
     z-index: 10;
     box-shadow: 0 6px 24px var(--border-soft);
+    color: var(--text-on-primary);
 }
 
 .site-header__brand {
@@ -79,7 +80,7 @@ img {
 .brand-kicker {
     margin: 0;
     font-weight: 700;
-    color: var(--brand-dark);
+    color: var(--brand-accent);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-size: 0.9rem;
@@ -87,7 +88,7 @@ img {
 
 .brand-tagline {
     margin: 0.2rem 0 0;
-    color: #4c4c4c;
+    color: #e2efe7;
     font-size: 0.95rem;
 }
 
@@ -104,12 +105,14 @@ img {
     padding: 0.6rem 0.9rem;
     border-radius: 999px;
     font-weight: 600;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease;
+    color: #f5f7f3;
 }
 
 .main-nav__list a:hover,
 .main-nav__list a:focus-visible {
-    background: var(--brand-accent);
+    background: rgba(183, 212, 197, 0.2);
+    color: #ffffff;
     outline: none;
 }
 
@@ -465,8 +468,8 @@ img {
 
 .site-footer {
     padding: 1.5rem 2rem;
-    background: var(--brand-dark);
-    color: var(--text-muted);
+    background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 100%);
+    color: #e6f0e9;
     text-align: center;
     margin-top: auto;
 }
