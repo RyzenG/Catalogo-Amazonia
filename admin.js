@@ -8283,6 +8283,7 @@
 
             const primaryNavItems = [
                 { id: 'primaryNavHome', label: 'Inicio', target: 'pageTop', visible: true },
+                { id: 'primaryNavCatalog', label: 'Catálogo', href: 'catalogo.html', external: true, visible: true },
                 { id: 'primaryNavAbout', label: 'Nosotros', target: 'mainContent', visible: true },
                 { id: 'primaryNavPolicies', label: 'Políticas corporativas', href: 'politicas.html', external: true, visible: hasPoliciesSection }
             ];
