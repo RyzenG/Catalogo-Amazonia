@@ -1,8 +1,8 @@
         const HEX_COLOR_PATTERN = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
         const defaultAppearance = {
-            background: '#f5f5f5',
-            header: '#10241b',
+            background: '#f5f7f3',
+            header: '#1f3b2e',
             primary: '#1f3b2e',
             accent: '#b7d4c5',
             text: '#10241b',
@@ -22,7 +22,7 @@
             heroStamp: 'Colección 2024',
             heroBrandPanel: {
                 enabled: true,
-                color: '#0c120f',
+                color: '#10241b',
                 opacity: 0.45
             },
             sectionEyebrow: 'Actualizaciones',
