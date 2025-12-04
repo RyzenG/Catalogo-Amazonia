@@ -2,10 +2,10 @@
 
         const defaultAppearance = {
             background: '#f5f5f5',
-            header: '#2d4a2b',
-            primary: '#6b8e68',
-            accent: '#8fa68c',
-            text: '#2d4a2b',
+            header: '#10241b',
+            primary: '#1f3b2e',
+            accent: '#b7d4c5',
+            text: '#10241b',
             backgroundImage: '',
             headerImage: '',
             footerImage: '',
