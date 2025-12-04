@@ -6485,8 +6485,8 @@
                 ? `<p class="hero__tagline">${taglineHtml}</p>`
                 : '';
             const heroStampText = escapeHtml(news.heroStamp || defaultNewsPanel.heroStamp || 'Colección 2024');
-            const heroStampMarkup = heroStampText
-                ? `<div class="hero__stamp" aria-label="${heroStampText}">${heroStampText}</div>`
+            const heroBadgeMarkup = heroStampText
+                ? `<span class="hero__badge" aria-label="${heroStampText}">${heroStampText}</span>`
                 : '';
             const brandPanelConfig = news.heroBrandPanel || defaultNewsPanel.heroBrandPanel;
             const brandPanelColor = brandPanelConfig && brandPanelConfig.color
@@ -6497,10 +6497,13 @@
                 : defaultNewsPanel.heroBrandPanel.opacity;
             const heroBrandPanelBg = hexToRgba(brandPanelColor, brandPanelOpacity);
             const heroBrandPanelText = getReadableTextColor(brandPanelColor, '#fdfefc', '#0f1612');
-            const shouldRenderBrandPanel = Boolean(brandPanelConfig && brandPanelConfig.enabled && (heroLogoMarkup || heroTaglineMarkup));
+            const heroIdentityMarkup = (heroLogoMarkup || heroTaglineMarkup || heroBadgeMarkup)
+                ? `<div class="hero__identity">${heroLogoMarkup}<div class="hero__badge-text">${heroTaglineMarkup}${heroBadgeMarkup}</div></div>`
+                : '';
+            const shouldRenderBrandPanel = Boolean(brandPanelConfig && brandPanelConfig.enabled && heroIdentityMarkup);
             const heroVisualContent = shouldRenderBrandPanel
-                ? `<div class="hero__brand-panel" style="--hero-brand-panel-bg:${heroBrandPanelBg}; --hero-brand-panel-color:${heroBrandPanelText};">${heroLogoMarkup}${heroTaglineMarkup}</div>`
-                : `${heroLogoMarkup}${heroTaglineMarkup}`;
+                ? `<div class="hero__brand-panel" style="--hero-brand-panel-bg:${heroBrandPanelBg}; --hero-brand-panel-color:${heroBrandPanelText};">${heroIdentityMarkup}</div>`
+                : heroIdentityMarkup;
 
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
             const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '#';
@@ -6642,16 +6645,15 @@
         .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; color: #fdfefc; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.45); }
         .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; color: rgba(247, 250, 245, 0.9); }
         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
-        .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 1.25rem; }
-        .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 360px; border-radius: 20px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
-        .hero__identity { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 1rem 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; }
-        .hero__brand-panel { position: relative; display: grid; gap: 0.65rem; align-self: stretch; padding: 1.1rem 1.25rem; border-radius: 16px; background: var(--hero-brand-panel-bg, rgba(12, 18, 15, 0.45)); color: var(--hero-brand-panel-color, #fdfefc); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22); backdrop-filter: blur(8px); }
-        .hero__brand-panel .hero__logo { max-width: 320px; justify-self: center; background: transparent; box-shadow: none; }
+        .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: 1fr; align-items: center; gap: 1.25rem; padding: 0.5rem 1rem; }
+        .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 240px; border-radius: 16px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
+        .hero__identity { position: relative; display: flex; align-items: center; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; justify-content: space-between; }
+        .hero__brand-panel { position: relative; display: flex; align-items: center; gap: 1.5rem; align-self: stretch; padding: 1.1rem 1.25rem; border-radius: 16px; background: var(--hero-brand-panel-bg, rgba(12, 18, 15, 0.45)); color: var(--hero-brand-panel-color, #fdfefc); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22); backdrop-filter: blur(8px); }
+        .hero__brand-panel .hero__logo { max-width: 220px; justify-self: center; background: transparent; box-shadow: none; }
         .hero__brand-panel .brand-logo { width: 100%; height: 100%; object-fit: contain; }
-        .hero__brand-panel .hero__tagline { color: var(--hero-brand-panel-color, #fdfefc); font-weight: 700; max-width: none; }
-        .hero__badge-text { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: none; text-align: left; }
-        .hero__badge-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 1.05rem; line-height: 1.1; }
-        .hero__badge-tagline { font-size: 1rem; opacity: 0.95; line-height: 1.5; }
+        .hero__brand-panel .hero__tagline { color: var(--hero-brand-panel-color, #fdfefc); font-weight: 700; max-width: none; margin: 0; }
+        .hero__badge-text { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; max-width: none; text-align: left; }
+        .hero__badge { position: static; align-self: flex-start; background: ${theme.header}; color: ${theme.textOnDark}; padding: 0.5rem 1.1rem; border-radius: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18); }
         .hero__logo { width: 100%; height: 100%; max-width: 360px; border-radius: 14px; background: transparent; display: grid; place-items: center; box-shadow: none; padding: 0; }
         .hero__visual .brand-logo { width: 100%; height: 100%; object-fit: contain; }
         .hero__tagline { position: relative; right: auto; top: auto; transform: none; margin: 0; background: transparent; color: ${theme.textOnDark}; padding: 0; border-radius: 0; font-weight: 700; line-height: 1.4; max-width: 100%; box-shadow: none; backdrop-filter: none; justify-self: end; }
@@ -6750,7 +6752,6 @@
                     <span class="hero__stone"></span>
                 </div>
             </div>
-            ${heroStampMarkup}
         </section>
 
         <section id="novedades" class="section section--light">
