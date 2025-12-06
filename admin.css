@@ -6,6 +6,8 @@
     --surface: #1f312c;
     --surface-alt: #233832;
     --text-body: #eaf2ec;
+    --text-on-primary: #f5f7f3;
+    --text-strong: #fdfefc;
     --text-muted: rgba(234, 242, 236, 0.78);
     --border-soft: rgba(159, 207, 181, 0.22);
     --success: #65c7a1;
@@ -473,7 +475,7 @@ body {
 label {
     display: block;
     margin-bottom: 0.5rem;
-    color: #333;
+    color: var(--text-strong);
     font-weight: 500;
 }
 
@@ -526,15 +528,23 @@ label {
 input, textarea, select {
     width: 100%;
     padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 1px solid var(--border-soft);
+    background: var(--surface-alt);
+    color: var(--text-body);
+    border-radius: 8px;
     font-size: 1rem;
-    transition: border-color 0.3s;
+    transition: border-color 0.3s, box-shadow 0.2s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
 }
 
 input:focus, textarea:focus, select:focus {
     outline: none;
-    border-color: var(--brand-primary);
+    border-color: var(--brand-accent);
+    box-shadow: 0 0 0 3px rgba(159, 207, 181, 0.25);
 }
 
 .input-helper {
