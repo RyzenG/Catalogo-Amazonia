@@ -615,13 +615,13 @@
 
         // Default data structure
         const defaultConfig = {
-            whatsapp: '573000000000',
-            email: 'info@amazoniaconcrete.com',
-            phone: '+57 300 000 0000',
+            whatsapp: '573123456789',
+            email: 'contacto@amazoniaconcrete.com',
+            phone: '+57 300 123 4567',
             address: '',
-            instagram: '',
-            facebook: '',
-            tiktok: '',
+            instagram: 'https://www.instagram.com/amazoniaconcrete/',
+            facebook: 'https://www.facebook.com/amazoniaconcrete/',
+            tiktok: 'https://www.tiktok.com/@amazoniaconcrete',
             canonicalUrl: '',
             aboutCanonicalUrl: '',
             companyName: 'AMAZONIA CONCRETE',
@@ -6279,6 +6279,30 @@
             return `Contáctanos por ${contactPieces.join(', ')} y ${lastPiece}`;
         }
 
+        function buildContactButtons(trimmedConfig, customMessage) {
+            const buttons = [];
+            const companyName = trimmedConfig.companyName || defaultConfig.companyName || 'Amazonia Concrete';
+            const whatsappNumber = (trimmedConfig.whatsapp || '').replace(/\D/g, '');
+            const phoneValue = (trimmedConfig.phone || '').trim();
+            const sanitizedPhoneHref = phoneValue ? phoneValue.replace(/[^+0-9]/g, '') : '';
+            const baseMessage = customMessage || `Hola, quisiera recibir asesoría y el catálogo de ${companyName}.`;
+            const encodedMessage = encodeURIComponent(baseMessage);
+
+            if (whatsappNumber) {
+                buttons.push(`<a class="contact-cta contact-cta--whatsapp" href="https://wa.me/${whatsappNumber}?text=${encodedMessage}" target="_blank" rel="noopener noreferrer">Escríbenos por WhatsApp</a>`);
+            }
+
+            if (sanitizedPhoneHref) {
+                buttons.push(`<a class="contact-cta contact-cta--phone" href="tel:${sanitizedPhoneHref}">Llámanos</a>`);
+            }
+
+            if (buttons.length === 0) {
+                return '';
+            }
+
+            return `<div class="contact-cta-group">${buttons.join('')}</div>`;
+        }
+
         function buildCatalogPageMetadata(trimmedConfig, resolvedCategories, categoriesWithProducts) {
             const defaultName = typeof defaultConfig.companyName === 'string'
                 ? defaultConfig.companyName.trim()
@@ -6399,6 +6423,8 @@
                 footerMessage: config.footerMessage ? config.footerMessage.trim() : '',
                 logoData: typeof config.logoData === 'string' ? config.logoData.trim() : '',
                 whatsapp: (config.whatsapp || '').trim(),
+                phone: (config.phone || '').trim(),
+                email: (config.email || '').trim(),
                 instagram: (config.instagram || '').trim(),
                 facebook: (config.facebook || '').trim(),
                 tiktok: (config.tiktok || '').trim()
@@ -6522,6 +6548,11 @@
 
             const hasSocialLinks = Boolean(sanitizedWhatsappNumber || instagramUrlRaw || facebookUrlRaw || tiktokUrlRaw);
             const socialLinksContainerStyle = hasSocialLinks ? '' : 'display: none;';
+
+            const contactButtonsMarkup = buildContactButtons(
+                trimmedConfig,
+                `Hola, quisiera recibir asesoría y el catálogo de ${trimmedConfig.companyName || defaultConfig.companyName}.`
+            );
 
             const socialLinksMarkup = `
                 <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="${socialLinksContainerStyle}">
@@ -6697,6 +6728,12 @@
         .contact-info { margin-bottom: 1.5rem; }
         .contact-info h3 { margin: 0 0 1rem; font-size: 1.5rem; color: ${theme.textOnDark}; }
         .contact-info p { margin: 0; opacity: 0.9; color: ${theme.textOnDark}; }
+        .contact-cta-group { display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .contact-cta { display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.7rem 1.1rem; border-radius: 10px; font-weight: 700; text-decoration: none; border: 2px solid transparent; transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
+        .contact-cta--whatsapp { background: #25d366; color: #0f2b1d; border-color: #1ca851; box-shadow: 0 12px 24px rgba(37, 211, 102, 0.25); }
+        .contact-cta--phone { background: transparent; color: ${theme.textOnDark}; border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18); }
+        .contact-cta:hover, .contact-cta:focus-visible { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,0.22); }
+        .contact-cta:focus-visible { outline: 3px solid ${theme.accentSoft}; outline-offset: 2px; }
         .social-links { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin: 1.5rem 0 1rem; }
         .social-link { width: 3rem; height: 3rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: #fff; transition: transform 0.3s ease, box-shadow 0.3s ease; position: relative; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); }
         .social-link svg { width: 1.5rem; height: 1.5rem; }
@@ -6784,6 +6821,7 @@
             <div class="contact-info">
                 <h3>${companyNameHtml}</h3>
                 ${socialLinksMarkup}
+                ${contactButtonsMarkup}
                 <p>${footerMessageHtml}</p>
             </div>
             <p style="opacity: 0.85;">© ${new Date().getFullYear()} ${companyNameHtml} - Todos los derechos reservados</p>
@@ -7167,6 +7205,11 @@
             const hasSocialLinks = Boolean(sanitizedWhatsappNumber || instagramUrlRaw || facebookUrlRaw || tiktokUrlRaw);
             const socialLinksContainerStyle = hasSocialLinks ? '' : 'display: none;';
 
+            const contactButtonsMarkup = buildContactButtons(
+                trimmedConfig,
+                `Hola, me gustaría conocer el catálogo y concretar una asesoría con ${trimmedConfig.companyName || defaultConfig.companyName}.`
+            );
+
             const socialLinksMarkup = `
                 <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="${socialLinksContainerStyle}">
                     <a id="footerSocialWhatsApp" class="social-link social-link--whatsapp" href="${whatsappLinkHref}" target="_blank" rel="noopener noreferrer" style="${whatsappLinkStyle}">
@@ -7309,6 +7352,7 @@
             <div class="contact-info" id="contactSection">
                 <h3>${footerCompanyName}</h3>
                 ${socialLinksMarkup}
+                ${contactButtonsMarkup}
                 <p>${footerMessageHtml}</p>
             </div>
             <p style="margin-top: 2rem; opacity: 0.7;">© 2025 ${footerCompanyName} - Todos los derechos reservados</p>
@@ -7422,6 +7466,11 @@
             const whatsappLinkStyle = whatsappLinkHref ? '' : 'display: none;';
             const hasSocialLinks = Boolean(whatsappLinkHref || instagramUrlRaw || facebookUrlRaw || tiktokUrlRaw);
             const socialLinksContainerStyle = hasSocialLinks ? '' : 'display: none;';
+
+            const contactButtonsMarkup = buildContactButtons(
+                trimmedConfig,
+                `Hola, quisiera recibir asesoría y el catálogo de ${trimmedConfig.companyName || defaultConfig.companyName}.`
+            );
 
             const socialLinksMarkup = `
                 <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="${socialLinksContainerStyle}">
@@ -7906,6 +7955,52 @@
             color: var(--policy-muted);
         }
 
+        .contact-cta-group {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .contact-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.7rem 1.1rem;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+            border: 2px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .contact-cta--whatsapp {
+            background: #25d366;
+            color: #0f2b1d;
+            border-color: #1ca851;
+            box-shadow: 0 12px 24px rgba(37, 211, 102, 0.25);
+        }
+
+        .contact-cta--phone {
+            background: transparent;
+            color: ${theme.textOnDark};
+            border-color: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+        }
+
+        .contact-cta:hover,
+        .contact-cta:focus-visible {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        .contact-cta:focus-visible {
+            outline: 3px solid ${theme.accentSoft};
+            outline-offset: 2px;
+        }
+
         .sr-only {
             position: absolute;
             width: 1px;
@@ -7970,6 +8065,7 @@
             <div class="contact-info">
                 <h3>${escapeHtml(companyNameFooter)}</h3>
                 ${socialLinksMarkup}
+                ${contactButtonsMarkup}
                 <p style="margin-top: 1rem; opacity: 0.85;">© ${currentYear} ${escapeHtml(companyNameFooter)} - Todos los derechos reservados</p>
             </div>
         </div>
@@ -8417,6 +8513,12 @@
     <title>${headerTitleHtml}</title>
 ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
         ${getCatalogStyles(theme, { unifiedHomeVisuals })}
+        .contact-cta-group { display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .contact-cta { display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.7rem 1.1rem; border-radius: 10px; font-weight: 700; text-decoration: none; border: 2px solid transparent; transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
+        .contact-cta--whatsapp { background: #25d366; color: #0f2b1d; border-color: #1ca851; box-shadow: 0 12px 24px rgba(37, 211, 102, 0.25); }
+        .contact-cta--phone { background: transparent; color: ${theme.footerText}; border-color: rgba(255, 255, 255, 0.65); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18); }
+        .contact-cta:hover, .contact-cta:focus-visible { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,0.22); }
+        .contact-cta:focus-visible { outline: 3px solid ${theme.accentSoft}; outline-offset: 2px; }
     </style>
 </head>
 <body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}">
@@ -8459,6 +8561,7 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
             <div class="contact-info" id="contactSection">
                 <h3>${footerCompanyName}</h3>
                 ${socialLinksMarkup}
+                ${contactButtonsMarkup}
                 ${footerMessageHtml}
             </div>
             <p style="margin-top: 2rem; opacity: 0.7;">© 2025 ${footerCompanyName} - Todos los derechos reservados</p>
@@ -10075,6 +10178,52 @@ ${formatCssBlock(footerBackground)}
         .contact-info h3 {
             margin-bottom: 1rem;
             font-size: 1.5rem;
+        }
+
+        .contact-cta-group {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .contact-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.7rem 1.1rem;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+            border: 2px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .contact-cta--whatsapp {
+            background: #25d366;
+            color: #0f2b1d;
+            border-color: #1ca851;
+            box-shadow: 0 12px 24px rgba(37, 211, 102, 0.25);
+        }
+
+        .contact-cta--phone {
+            background: transparent;
+            color: ${theme.footerText};
+            border-color: rgba(255, 255, 255, 0.65);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+        }
+
+        .contact-cta:hover,
+        .contact-cta:focus-visible {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        .contact-cta:focus-visible {
+            outline: 3px solid ${theme.accentSoft};
+            outline-offset: 2px;
         }
 
         .social-links {
