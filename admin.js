@@ -41,7 +41,8 @@
                     media: [
                         'images/fondo principal.webp',
                         'images/inferiorverde.webp'
-                    ]
+                    ],
+                    targetUrl: 'catalogo.html#producto-mesa-rio'
                 },
                 {
                     eyebrow: 'Alianza',
@@ -50,7 +51,8 @@
                     tags: ['Contrato 2024', 'Hotelería'],
                     media: [
                         'images/fondonegro.webp'
-                    ]
+                    ],
+                    targetUrl: 'catalogo.html#producto-banca-selva'
                 },
                 {
                     eyebrow: 'CTA directo',
@@ -59,7 +61,8 @@
                     tags: ['Lead time 15 días', 'Atención por WhatsApp'],
                     media: [
                         'images/superior.webp'
-                    ]
+                    ],
+                    targetUrl: 'catalogo.html'
                 }
             ]
         };
@@ -383,6 +386,11 @@
                         .map(url => typeof url === 'string' ? url.trim() : '')
                         .filter(url => url.length > 0 && isValidUrl(url));
 
+                    const normalizedTarget = normalizeNavigationUrl(
+                        typeof item.targetUrl === 'string' ? item.targetUrl : (typeof item.link === 'string' ? item.link : '')
+                    );
+                    const fallbackTarget = normalizeNavigationUrl(base.targetUrl || '');
+
                     return {
                         eyebrow,
                         title,
@@ -390,7 +398,8 @@
                         tags: normalizedTags,
                         media: normalizedMedia.length > 0
                             ? normalizedMedia
-                            : (Array.isArray(base.media) ? base.media.filter(isValidUrl) : [])
+                            : (Array.isArray(base.media) ? base.media.filter(isValidUrl) : []),
+                        targetUrl: normalizedTarget || fallbackTarget
                     };
                 }).filter(item => item.eyebrow || item.title || item.description || (Array.isArray(item.tags) && item.tags.length > 0) || (Array.isArray(item.media) && item.media.length > 0));
             }
@@ -3727,6 +3736,38 @@
             }
         }
 
+        function normalizeNavigationUrl(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+
+            const trimmed = value.trim();
+            if (!trimmed) {
+                return '';
+            }
+
+            const lowered = trimmed.toLowerCase();
+            if (lowered.startsWith('javascript:') || lowered.startsWith('data:')) {
+                return '';
+            }
+
+            if (isValidUrl(trimmed)) {
+                return trimmed;
+            }
+
+            if (lowered.startsWith('mailto:') || lowered.startsWith('tel:')) {
+                return trimmed;
+            }
+
+            const relativePattern = /^(#[-\w]+|(\.\.?\/)?[a-zA-Z0-9][\w./-]*#?[\w-]*)$/;
+            return relativePattern.test(trimmed) ? trimmed : '';
+        }
+
+        function isExternalNavigationUrl(url) {
+            const normalized = typeof url === 'string' ? url.trim().toLowerCase() : '';
+            return normalized.startsWith('http://') || normalized.startsWith('https://');
+        }
+
         function updateSocialPreview(id, normalizedUrl, isValid, hasInput) {
             const previewElement = document.getElementById(`${id}Preview`);
 
@@ -3919,6 +3960,14 @@
                 <textarea rows="3" data-field="description" placeholder="Detalle breve">${escapeHtml(base.description || '')}</textarea>
             `;
 
+            const targetField = document.createElement('div');
+            targetField.className = 'form-group';
+            targetField.innerHTML = `
+                <label>Enlace o destino</label>
+                <input type="text" data-field="targetUrl" placeholder="catalogo.html#producto-id o https://tu-promocion.com" value="${escapeHtml(base.targetUrl || '')}">
+                <small class="field-hint">Usa la ruta al producto o promoción. Acepta enlaces con http/https, mailto:, tel:, rutas relativas y anclas (#).</small>
+            `;
+
             const tagsField = document.createElement('div');
             tagsField.className = 'form-group';
             const tagValue = Array.isArray(base.tags) ? base.tags.join('\n') : '';
@@ -3940,6 +3989,7 @@
             row.appendChild(eyebrowField);
             row.appendChild(titleField);
             row.appendChild(descriptionField);
+            row.appendChild(targetField);
             row.appendChild(tagsField);
             row.appendChild(mediaField);
 
@@ -4193,6 +4243,7 @@
                     const eyebrowInput = row.querySelector('[data-field="eyebrow"]');
                     const titleInput = row.querySelector('[data-field="title"]');
                     const descriptionInput = row.querySelector('[data-field="description"]');
+                    const targetInput = row.querySelector('[data-field="targetUrl"]');
                     const tagsInput = row.querySelector('[data-field="tags"]');
                     const mediaInput = row.querySelector('[data-field="media"]');
 
@@ -4201,6 +4252,9 @@
                     const description = descriptionInput && typeof descriptionInput.value === 'string'
                         ? descriptionInput.value.trim()
                         : '';
+                    const targetUrl = targetInput && typeof targetInput.value === 'string'
+                        ? targetInput.value.trim()
+                        : '';
                     const tags = tagsInput && typeof tagsInput.value === 'string'
                         ? tagsInput.value.split(/\r?\n/).map(tag => tag.trim()).filter(Boolean)
                         : [];
@@ -4208,8 +4262,8 @@
                         ? mediaInput.value.split(/\r?\n/).map(url => url.trim()).filter(Boolean)
                         : [];
 
-                    if (eyebrow || title || description || tags.length > 0 || media.length > 0) {
-                        items.push({ eyebrow, title, description, tags, media });
+                    if (eyebrow || title || description || targetUrl || tags.length > 0 || media.length > 0) {
+                        items.push({ eyebrow, title, description, targetUrl, tags, media });
                     }
                 });
 
@@ -4986,6 +5040,24 @@
 
             if (invalidNewsMediaCount > 0) {
                 errors.push('Verifica que las URLs de imágenes o videos en Inicio y novedades incluyan http:// o https://.');
+            }
+
+            const newsLinkInputs = document.querySelectorAll('#newsItemsContainer [data-field="targetUrl"]');
+            let invalidNewsLinksCount = 0;
+
+            newsLinkInputs.forEach(input => {
+                const linkValue = typeof input.value === 'string' ? input.value.trim() : '';
+                const normalizedLink = normalizeNavigationUrl(linkValue);
+                const isValidLink = !linkValue || Boolean(normalizedLink);
+                setFieldValidationState(input, isValidLink);
+
+                if (!isValidLink) {
+                    invalidNewsLinksCount += 1;
+                }
+            });
+
+            if (invalidNewsLinksCount > 0) {
+                errors.push('Revisa los enlaces de cada bloque de novedades. Usa URLs completas, mailto:/tel:, rutas como catalogo.html#producto-id o anclas internas.');
             }
 
             const appearanceValues = isPlainObject(configValues.appearance)
@@ -6479,6 +6551,11 @@
                     const title = escapeHtml(item.title || 'Título pendiente');
                     const description = escapeHtml(item.description || 'Agrega un detalle breve del anuncio.');
                     const tags = Array.isArray(item.tags) ? item.tags.filter(Boolean) : [];
+                    const targetUrl = normalizeNavigationUrl(item.targetUrl || '');
+                    const linkAttributes = targetUrl
+                        ? ` href="${escapeHtml(targetUrl)}"${isExternalNavigationUrl(targetUrl) ? ' target="_blank" rel="noopener noreferrer"' : ''}`
+                        : '';
+                    const wrapperTag = targetUrl ? 'a' : 'article';
                     const tagsMarkup = tags.length > 0
                         ? `<div class="card__meta">${tags.map(tag => `<span class="pill">${escapeHtml(tag)}</span>`).join('')}</div>`
                         : '';
@@ -6486,13 +6563,13 @@
                     const cardMediaClass = mediaMarkup ? ' card--with-media' : '';
 
                     return `
-                <article class="card${cardMediaClass}">
+                <${wrapperTag} class="card${cardMediaClass}${targetUrl ? ' card--link' : ''}"${linkAttributes}>
                     ${mediaMarkup}
                     <p class="card__eyebrow">${eyebrow}</p>
                     <h3 class="card__title">${title}</h3>
                     <p class="card__description">${description}</p>
                     ${tagsMarkup}
-                </article>`;
+                </${wrapperTag}>`;
                 })
                 .join('');
 
@@ -6701,6 +6778,8 @@
         .section__description { margin: 0; color: #425466; }
         .cards-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
         .card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 8px 30px rgba(0,0,0,0.07); border: 1px solid #e5e9ed; }
+        .card--link { display: block; color: inherit; text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card--link:hover, .card--link:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(15, 23, 42, 0.14); outline: none; }
         .card--with-media { padding: 0 0 1.25rem; overflow: hidden; }
         .card--with-media .card__eyebrow, .card--with-media .card__title, .card--with-media .card__description, .card--with-media .card__meta { padding: 0 1.25rem; }
         .card__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.06em; color: ${theme.accent}; font-weight: 700; font-size: 0.85rem; }
@@ -6950,11 +7029,12 @@
             ${descriptionMarkup}
             <div class="products-grid">`;
 
-                    categoryProducts.forEach(product => {
+                    categoryProducts.forEach((product, productIndex) => {
                         const rawName = typeof product.name === 'string' && product.name.trim()
                             ? product.name
                             : 'Producto Amazonia';
                         const productNameHtml = escapeHtml(rawName);
+                        const productAnchorId = escapeHtml(`producto-${product.id || `item-${productIndex + 1}`}`);
                         const rawShortDesc = typeof product.shortDesc === 'string' && product.shortDesc.trim()
                             ? product.shortDesc
                             : 'Información disponible próximamente.';
@@ -6995,7 +7075,7 @@
                         const productDescriptionAttr = escapeHtml(descriptionAttrSource);
                         const priceAttr = Number.isFinite(numericPrice) ? numericPrice : '';
                     productsHTML += `
-                <div class="product-card" data-category="${category.id}" data-product-id="${product.id}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${product.id}')">
+                <div class="product-card" id="${productAnchorId}" data-category="${category.id}" data-product-id="${product.id}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${product.id}')">
                     <div class="product-image">
                         <img ${productImageAttrString} alt="${imageAlt}">
                     </div>
