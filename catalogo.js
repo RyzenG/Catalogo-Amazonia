@@ -190,6 +190,56 @@ function getReadableTextColor(backgroundHex, lightColor = '#ffffff', darkColor =
     return luminance > 0.55 ? darkColor : lightColor;
 }
 
+function calculateRelativeLuminance(hex) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) {
+        return null;
+    }
+
+    const toLinear = channel => {
+        const normalized = channel / 255;
+        return normalized <= 0.03928
+            ? normalized / 12.92
+            : ((normalized + 0.055) / 1.055) ** 2.4;
+    };
+
+    const r = toLinear(rgb.r);
+    const g = toLinear(rgb.g);
+    const b = toLinear(rgb.b);
+
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function getContrastRatio(hexA, hexB) {
+    const lumA = calculateRelativeLuminance(hexA);
+    const lumB = calculateRelativeLuminance(hexB);
+
+    if (lumA === null || lumB === null) {
+        return null;
+    }
+
+    const lighter = Math.max(lumA, lumB) + 0.05;
+    const darker = Math.min(lumA, lumB) + 0.05;
+    return lighter / darker;
+}
+
+function ensureReadableColor(backgroundHex, preferredHex, minimumRatio = 4.5) {
+    const fallback = getReadableTextColor(backgroundHex, '#f8f9f7', '#0f1612');
+    const preferred = preferredHex || fallback;
+    const contrast = getContrastRatio(backgroundHex, preferred);
+
+    if (contrast !== null && contrast >= minimumRatio) {
+        return preferred;
+    }
+
+    const fallbackContrast = getContrastRatio(backgroundHex, fallback);
+    if (fallbackContrast !== null && fallbackContrast >= (contrast || 0)) {
+        return fallback;
+    }
+
+    return preferred;
+}
+
 function sanitizeEmoji(value, fallback = '📦') {
     const text = sanitizeText(value);
     return text || fallback;
@@ -583,6 +633,7 @@ function applyAppearanceStyles(theme, forcedMode) {
     const mutedText = mode === 'dark'
         ? 'rgba(232, 237, 231, 0.78)'
         : 'rgba(45, 74, 43, 0.7)';
+    const safeBodyText = ensureReadableColor(theme.background, theme.text);
     const backgroundBase = mode === 'dark'
         ? mixColors(theme.background, '#0b100c', 0.65)
         : theme.background;
@@ -598,7 +649,7 @@ function applyAppearanceStyles(theme, forcedMode) {
     root.style.setProperty('--brand-primary', theme.primary);
     root.style.setProperty('--brand-accent', theme.accent);
     root.style.setProperty('--brand-dark', theme.header);
-    root.style.setProperty('--text-body', mode === 'dark' ? readableText : theme.text);
+    root.style.setProperty('--text-body', mode === 'dark' ? readableText : safeBodyText);
     root.style.setProperty('--text-muted', mutedText);
     root.style.setProperty('--surface', surface);
     root.style.setProperty('--surface-alt', surfaceAlt);
