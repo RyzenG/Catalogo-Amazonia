@@ -8488,6 +8488,11 @@
             const hasSocialLinks = Boolean(whatsappLinkHref || instagramUrlRaw || facebookUrlRaw || tiktokUrlRaw);
             const socialLinksContainerStyle = hasSocialLinks ? '' : 'display: none;';
 
+            const contactButtonsMarkup = buildContactButtons(
+                trimmedConfig,
+                `Hola, quiero saber más sobre ${trimmedConfig.companyName || defaultConfig.companyName}.`
+            );
+
             const socialLinksMarkup = `
                 <div class="social-links" id="footerSocialLinks" aria-label="Redes sociales" style="${socialLinksContainerStyle}">
                     <a id="footerSocialWhatsApp" class="social-link social-link--whatsapp" href="${whatsappLinkHref || '#'}" target="_blank" rel="noopener noreferrer" style="${whatsappLinkStyle}">
