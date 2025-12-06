@@ -1,16 +1,16 @@
 :root {
-    --brand-dark: #10241b;
-    --brand-primary: #1f3b2e;
-    --brand-accent: #b7d4c5;
-    --brand-light: #f5f7f3;
-    --surface: #ffffff;
-    --surface-alt: var(--brand-light);
-    --text-body: #1a1f1d;
-    --text-muted: rgba(16, 36, 27, 0.72);
-    --border-soft: #e0e6df;
-    --success: #1f7a45;
-    --warning: #c0392b;
-    --info: #1b4f72;
+    --brand-dark: #1c2f2a;
+    --brand-primary: #2f4a41;
+    --brand-accent: #9fcfb5;
+    --brand-light: #22352f;
+    --surface: #1f312c;
+    --surface-alt: #233832;
+    --text-body: #eaf2ec;
+    --text-muted: rgba(234, 242, 236, 0.78);
+    --border-soft: rgba(159, 207, 181, 0.22);
+    --success: #65c7a1;
+    --warning: #e57373;
+    --info: #7ab0ff;
 }
 
 * {
@@ -21,7 +21,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--brand-light);
+    background: linear-gradient(135deg, rgba(28, 47, 42, 0.95) 0%, rgba(47, 74, 65, 0.9) 55%, rgba(63, 94, 82, 0.82) 100%);
     color: var(--text-body);
     padding: 20px;
 }
@@ -40,7 +40,7 @@ body {
 
 .admin-header {
     background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 100%);
-    color: var(--surface);
+    color: var(--text-on-primary);
     padding: 2rem;
     border-radius: 10px;
     margin-bottom: 2rem;
@@ -69,7 +69,7 @@ body {
 }
 
 .sidebar {
-    background: white;
+    background: var(--surface);
     padding: 1.5rem;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -77,7 +77,7 @@ body {
 }
 
 .main-content {
-    background: white;
+    background: var(--surface);
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -320,10 +320,10 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: white;
+    background: var(--surface-alt);
     padding: 0.75rem;
     border-radius: 8px;
-    border: 1px solid #dcdcdc;
+    border: 1px solid var(--border-soft);
 }
 
 .color-input-wrapper input[type="color"] {
@@ -355,7 +355,7 @@ body {
 .color-value {
     font-family: 'Fira Code', 'Courier New', monospace;
     font-size: 0.9rem;
-    color: #333;
+    color: var(--text-body);
     letter-spacing: 0.5px;
 }
 
@@ -912,7 +912,7 @@ textarea {
 }
 
 .modal-content {
-    background: white;
+    background: var(--surface);
     border-radius: 10px;
     max-width: 600px;
     width: 100%;
@@ -945,18 +945,18 @@ textarea {
 }
 
 .info-box {
-    background: #e8f5e9;
-    border: 1px solid #81c784;
-    color: #2e7d32;
+    background: rgba(101, 199, 161, 0.15);
+    border: 1px solid #65c7a1;
+    color: #eaf2ec;
     padding: 1rem;
     border-radius: 5px;
     margin-bottom: 1.5rem;
 }
 
 .warning-box {
-    background: #fff3e0;
-    border: 1px solid #ffb74d;
-    color: #e65100;
+    background: rgba(229, 115, 115, 0.14);
+    border: 1px solid #e57373;
+    color: #ffecec;
     padding: 1rem;
     border-radius: 5px;
     margin-bottom: 1.5rem;
@@ -1222,16 +1222,16 @@ textarea {
 
 .image-thumbnail-empty {
     margin: 0.5rem 0 0;
-    color: #777;
+    color: var(--text-muted);
     font-size: 0.95rem;
 }
 
 .image-thumbnail {
     position: relative;
-    border: 2px dashed #d2d8d2;
+    border: 2px dashed var(--border-soft);
     border-radius: 8px;
     overflow: hidden;
-    background: white;
+    background: var(--surface-alt);
     min-height: 120px;
     display: flex;
     flex-direction: column;
@@ -1248,7 +1248,7 @@ textarea {
     width: 100%;
     padding-top: 70%;
     overflow: hidden;
-    background: linear-gradient(135deg, #f7f7f7 0%, #ededed 100%);
+    background: linear-gradient(135deg, rgba(159, 207, 181, 0.25) 0%, rgba(47, 74, 65, 0.35) 100%);
 }
 
 .image-thumbnail__media img {
@@ -1378,8 +1378,8 @@ textarea {
     border-radius: 10px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
     border-left: 5px solid transparent;
-    background: white;
-    color: var(--brand-primary);
+    background: var(--surface);
+    color: var(--text-body);
     font-weight: 500;
     opacity: 0;
     transform: translateX(20px);
@@ -1388,21 +1388,21 @@ textarea {
 }
 
 .notification.success {
-    background: #ecf9f0;
-    border-left-color: #27ae60;
-    color: #1f7a45;
+    background: rgba(101, 199, 161, 0.2);
+    border-left-color: #65c7a1;
+    color: #eaf2ec;
 }
 
 .notification.error {
-    background: #fceaea;
-    border-left-color: #e74c3c;
-    color: #8c2f2f;
+    background: rgba(229, 115, 115, 0.18);
+    border-left-color: #e57373;
+    color: #ffecec;
 }
 
 .notification.info {
-    background: #e8f4fd;
-    border-left-color: #3498db;
-    color: #1b4f72;
+    background: rgba(122, 176, 255, 0.18);
+    border-left-color: #7ab0ff;
+    color: #eaf2ec;
 }
 
 .notification.hide {
