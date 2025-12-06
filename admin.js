@@ -16,50 +16,49 @@
         };
 
         const defaultNewsPanel = {
-            heroEyebrow: 'Concreto sostenible',
-            heroTitle: 'Diseños hechos para durar y conectar con la naturaleza',
-            heroDescription: 'Explora piezas inspiradas en la selva amazónica, creadas para proyectos residenciales y corporativos con altos estándares de calidad.',
-            heroStamp: 'Colección 2024',
+            heroEyebrow: 'Lanzamientos Amazonia',
+            heroTitle: 'Colecciones hechas en concreto liviano para proyectos exigentes',
+            heroDescription: 'Estrenamos desarrollos para hotelería, retail y vivienda de lujo con énfasis en personalización y durabilidad.',
+            heroStamp: 'Nuevas líneas 2024',
             heroBrandPanel: {
                 enabled: true,
                 color: '#10241b',
                 opacity: 0.45
             },
             sectionEyebrow: 'Actualizaciones',
-            sectionTitle: 'Novedades y momentos especiales',
-            sectionDescription: 'Panel de lanzamientos y anuncios destacados. Los productos solo se muestran en la página de catálogo.',
-            primaryCta: 'Ver catálogo',
-            secondaryCta: 'Ir a novedades',
-            primaryCtaUrl: '',
-            secondaryCtaUrl: '',
+            sectionTitle: 'Novedades y alianzas estratégicas',
+            sectionDescription: 'Lanzamientos reales, colaboraciones con estudios de arquitectura y ventanas de preventa.',
+            primaryCta: 'Agendar asesoría',
+            secondaryCta: 'Solicitar catálogo curado',
+            primaryCtaUrl: 'https://wa.me/573052009090?text=Quiero%20asesor%C3%ADa%20para%20mobiliario%20a%20medida',
+            secondaryCtaUrl: 'https://forms.gle/QsR6cQMUGdVXLmGSA',
             items: [
                 {
-                    eyebrow: 'Festival',
-                    title: 'Colección Semana de la Tierra',
-                    description: 'Edición limitada inspirada en texturas naturales y pigmentos minerales, disponible solo durante abril.',
-                    tags: ['Del 15 al 30 de abril', 'Nuevos acabados'],
-                    media: [
-                        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
-                        'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80'
-                    ]
-                },
-                {
-                    eyebrow: 'Descuento',
-                    title: 'Semana del Cliente',
-                    description: 'Hasta 20% de descuento en mobiliario para terrazas y espacios comerciales. Asesoría incluida.',
-                    tags: ['Del 3 al 10 de mayo', '-20%'],
-                    media: [
-                        'https://images.unsplash.com/photo-1470246973918-29a93221c455?auto=format&fit=crop&w=1200&q=80'
-                    ]
-                },
-                {
                     eyebrow: 'Lanzamiento',
-                    title: 'Línea Aurora',
-                    description: 'Nuevas lámparas en concreto ultraligero con difusor cálido. Ideal para crear atmósferas relajantes.',
-                    tags: ['Disponible en junio', 'Iluminación'],
+                    title: 'Sistema modular Río Vaupés',
+                    description: 'Mobiliario a medida en concreto aligerado con anclajes ocultos, diseñado para lobby y retail premium.',
+                    tags: ['Disponible bajo pedido', 'Instalación incluida'],
                     media: [
-                        'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
-                        'https://videos.pexels.com/video-files/3049216/3049216-hd_1920_1080_30fps.mp4'
+                        'images/fondo principal.webp',
+                        'images/inferiorverde.webp'
+                    ]
+                },
+                {
+                    eyebrow: 'Alianza',
+                    title: 'Revestimientos para cadena hotelera Selva Viva',
+                    description: 'Paneles texturizados hidrofugados instalados en suites y zonas húmedas con garantía extendida.',
+                    tags: ['Contrato 2024', 'Hotelería'],
+                    media: [
+                        'images/fondonegro.webp'
+                    ]
+                },
+                {
+                    eyebrow: 'CTA directo',
+                    title: 'Producción relámpago para aperturas',
+                    description: 'Agenda un slot de fabricación express para barras, barras cocteleras y tótems de iluminación.',
+                    tags: ['Lead time 15 días', 'Atención por WhatsApp'],
+                    media: [
+                        'images/superior.webp'
                     ]
                 }
             ]
@@ -657,34 +656,34 @@
 
         const defaultCategories = [
             {
-                id: 'macetas',
-                name: 'Macetas de Concreto',
-                icon: '🪴',
-                description: 'Diseños únicos inspirados en la naturaleza amazónica'
+                id: 'mobiliario-medida',
+                name: 'Mobiliario a medida',
+                icon: '🛋️',
+                description: 'Barras, mesas y centros de exhibición en concreto liviano con opciones de herrajes ocultos'
             },
             {
-                id: 'pisos',
-                name: 'Pisos de Concreto',
-                icon: '⬜',
-                description: 'Resistencia y elegancia para tus espacios'
+                id: 'revestimientos-hoteleria',
+                name: 'Revestimientos para hotelería',
+                icon: '🏨',
+                description: 'Lambris texturizados hidrofugados para lobbies, suites y zonas húmedas con alto tráfico'
             },
             {
-                id: 'revestimientos',
-                name: 'Revestimientos',
+                id: 'terrazas-biofilicas',
+                name: 'Terrazas biofílicas',
+                icon: '🌿',
+                description: 'Jardineras, decks y mobiliario outdoor que integra vegetación y concreto reforzado'
+            },
+            {
+                id: 'iluminacion-escenica',
+                name: 'Iluminación escénica',
+                icon: '💡',
+                description: 'Lámparas colgantes y tótems de concreto tallado con difusores cálidos'
+            },
+            {
+                id: 'arte-concreto',
+                name: 'Arte y piezas icónicas',
                 icon: '🗿',
-                description: 'Transforma tus paredes con texturas naturales'
-            },
-            {
-                id: 'mobiliario',
-                name: 'Mobiliario de Concreto',
-                icon: '🪑',
-                description: 'Piezas únicas y duraderas para tu hogar'
-            },
-            {
-                id: 'decoracion',
-                name: 'Decoración',
-                icon: '🎨',
-                description: 'Detalles que marcan la diferencia'
+                description: 'Murales y esculturas colaborativas para proyectos corporativos y residenciales de autor'
             }
         ];
 
