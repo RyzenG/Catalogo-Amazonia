@@ -9058,14 +9058,18 @@ ${formatCssBlock(headerBackground)}
         .catalog-filters {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 2rem 1.5rem;
+            padding: 0.85rem 1.5rem 1.35rem;
             display: flex;
-            justify-content: flex-end;
+            justify-content: center;
             flex-wrap: wrap;
             gap: 0.75rem;
             align-items: center;
             position: relative;
             z-index: 1;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 247, 0.96));
+            border: 1px solid ${theme.borderColor};
+            border-radius: 16px;
+            box-shadow: 0 12px 36px rgba(16, 36, 27, 0.08);
         }
 
         .filter-field {
@@ -9076,10 +9080,10 @@ ${formatCssBlock(headerBackground)}
 
         .filter-chip-row {
             display: inline-flex;
-            gap: 0.75rem;
+            gap: 0.65rem;
             flex-wrap: wrap;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: center;
         }
 
         .filter-chip {
@@ -9090,18 +9094,19 @@ ${formatCssBlock(headerBackground)}
         .filter-chip__button {
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
-            padding: 0.45rem 0.95rem;
+            gap: 0.5rem;
+            padding: 0.55rem 1rem;
             border: 1px solid ${theme.borderColor};
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.95);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 248, 245, 0.95));
             color: ${theme.categoryTitle};
-            font-size: 0.9rem;
-            font-weight: 600;
-            letter-spacing: 0.4px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
             text-transform: uppercase;
             transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, transform 0.2s ease;
             cursor: pointer;
+            box-shadow: 0 8px 24px rgba(16, 36, 27, 0.08);
         }
 
         .filter-chip__icon {
@@ -9109,6 +9114,12 @@ ${formatCssBlock(headerBackground)}
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 10px;
+            background: ${theme.accentSoft};
+            color: ${theme.accentStrong};
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 3px rgba(16, 36, 27, 0.12);
         }
 
         .filter-chip__button::after {
@@ -9127,8 +9138,8 @@ ${formatCssBlock(headerBackground)}
         .filter-chip__button[aria-expanded="true"] {
             border-color: ${theme.accentStrong};
             color: ${theme.accentStrong};
-            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
-            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 12px 26px rgba(16, 36, 27, 0.12);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 245, 241, 0.98));
             transform: translateY(-1px);
         }
 
