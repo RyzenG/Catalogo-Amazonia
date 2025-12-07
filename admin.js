@@ -6579,10 +6579,10 @@
             const logoMarkup = trimmedConfig.logoData
                 ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`
                 : '';
-            const heroInlineLogoMarkup = trimmedConfig.logoData
-                ? `<div class="hero__inline-logo">${logoMarkup}</div>`
+            const heroLogoCardMarkup = logoMarkup
+                ? `<div class="hero__logo-card">${logoMarkup}</div>`
                 : '';
-            const heroVisualContent = '';
+            const heroVisualContent = heroLogoCardMarkup;
 
             const buildHeroSlides = () => {
                 const baseSlides = (Array.isArray(news.items) ? news.items : [])
@@ -6798,8 +6798,11 @@
          .hero__inline-logo .brand-logo { width: 100%; height: 100%; object-fit: contain; }
          .hero__text { display: grid; gap: 0.35rem; }
          .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; justify-content: center; }
-        .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: 1fr; align-items: center; gap: 1.25rem; padding: 0.5rem 0; width: 100%; margin: 0 calc(50% - 50vw); box-sizing: border-box; }
+        .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: minmax(160px, 240px) 1fr; align-items: stretch; gap: 1.25rem; padding: 0.5rem 0; width: 100%; margin: 0 calc(50% - 50vw); box-sizing: border-box; }
         .hero__visual > * { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 1.25rem; box-sizing: border-box; }
+        .hero__logo-card { width: 100%; max-width: 240px; aspect-ratio: 1 / 1; border-radius: 16px; background: rgba(12, 18, 15, 0.55); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2); display: grid; place-items: center; padding: 1rem; justify-self: center; }
+        .hero__logo-card .brand-logo { width: 100%; height: 100%; object-fit: contain; }
+        @media (max-width: 900px) { .hero__visual { grid-template-columns: 1fr; } .hero__logo-card { max-width: 200px; } }
         .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 240px; border-radius: 16px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
         .hero__identity { position: relative; display: flex; align-items: center; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; justify-content: space-between; }
         .hero__brand-panel { position: relative; display: flex; align-items: center; gap: 1.5rem; align-self: stretch; padding: 1.1rem 1.25rem; border-radius: 16px; background: var(--hero-brand-panel-bg, rgba(12, 18, 15, 0.45)); color: var(--hero-brand-panel-color, #fdfefc); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22); backdrop-filter: blur(8px); max-width: 1200px; }
@@ -6918,7 +6921,6 @@
             <div class="page-shell hero__grid">
                 <div class="hero__content">
                     <div class="hero__headline">
-                        ${heroInlineLogoMarkup}
                         <div class="hero__text">
                             <p class="hero__eyebrow">${heroEyebrow}</p>
                             <h1 class="hero__title">${heroTitle}</h1>
@@ -6931,8 +6933,8 @@
                     </div>
                 </div>
                 <div class="hero__visual">
-                    ${heroCarouselMarkup}
                     ${heroVisualContent}
+                    ${heroCarouselMarkup}
                     <span class="hero__stone"></span>
                 </div>
             </div>
