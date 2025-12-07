@@ -172,14 +172,15 @@ img {
 
 .hero__headline {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.9rem;
     flex-wrap: wrap;
+    justify-content: flex-start;
 }
 
 .hero__inline-logo {
-    width: 72px;
-    height: 72px;
+    width: clamp(2rem, 3vw + 1rem, 3rem);
+    height: clamp(2rem, 3vw + 1rem, 3rem);
     object-fit: contain;
     flex-shrink: 0;
     border-radius: 14px;
