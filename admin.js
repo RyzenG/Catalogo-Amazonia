@@ -6831,8 +6831,8 @@
         .hero__visual .brand-logo { width: 100%; height: 100%; object-fit: contain; }
         .hero__tagline { position: relative; right: auto; top: auto; transform: none; margin: 0; background: transparent; color: ${theme.textOnDark}; padding: 0; border-radius: 0; font-weight: 700; line-height: 1.4; max-width: 100%; box-shadow: none; backdrop-filter: none; justify-self: end; }
         .hero-carousel { position: relative; width: 100%; display: grid; gap: 0.75rem; }
-        .hero-carousel__slides { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(12, 18, 15, 0.7), rgba(31, 47, 40, 0.55)); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28); min-height: 340px; }
-        .hero-carousel__slide { position: relative; display: grid; gap: 0.75rem; align-items: flex-end; min-height: 360px; padding: 1.75rem; text-decoration: none; color: #fdfefc; opacity: 0; transform: translateY(6px); transition: opacity 0.45s ease, transform 0.45s ease; }
+        .hero-carousel__slides { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(12, 18, 15, 0.7), rgba(31, 47, 40, 0.55)); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28); min-height: 360px; }
+        .hero-carousel__slide { position: absolute; inset: 0; display: grid; gap: 0.75rem; align-items: flex-end; padding: 1.75rem; text-decoration: none; color: #fdfefc; opacity: 0; transform: translateY(6px); transition: opacity 0.45s ease, transform 0.45s ease; height: 100%; width: 100%; }
         .hero-carousel__slide.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .hero-carousel__slide:not(.is-active) { pointer-events: none; }
         .hero-carousel__media { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.85); }
