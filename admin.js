@@ -6576,36 +6576,13 @@
             const cardsMarkup = newsCards || '<p class="empty-state">Añade bloques de novedades para mostrarlos en la página de inicio.</p>';
             const companyNameHtml = escapeHtml(trimmedConfig.companyName || 'Amazonia Concrete');
             const footerMessageHtml = escapeHtml(trimmedConfig.footerMessage || 'Creando espacios únicos con concreto sostenible');
-            const taglineHtml = escapeHtml(trimmedConfig.tagline || 'Naturaleza y modernidad en concreto');
             const logoMarkup = trimmedConfig.logoData
                 ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`
                 : '';
-            const heroLogoMarkup = trimmedConfig.logoData
-                ? `<div class="hero__logo" aria-hidden="true">${logoMarkup}</div>`
+            const heroInlineLogoMarkup = trimmedConfig.logoData
+                ? `<div class="hero__inline-logo">${logoMarkup}</div>`
                 : '';
-            const heroTaglineMarkup = trimmedConfig.tagline
-                ? `<p class="hero__tagline">${taglineHtml}</p>`
-                : '';
-            const heroStampText = escapeHtml(news.heroStamp || defaultNewsPanel.heroStamp || 'Colección 2024');
-            const heroBadgeMarkup = heroStampText
-                ? `<span class="hero__badge" aria-label="${heroStampText}">${heroStampText}</span>`
-                : '';
-            const brandPanelConfig = news.heroBrandPanel || defaultNewsPanel.heroBrandPanel;
-            const brandPanelColor = brandPanelConfig && brandPanelConfig.color
-                ? brandPanelConfig.color
-                : defaultNewsPanel.heroBrandPanel.color;
-            const brandPanelOpacity = typeof (brandPanelConfig && brandPanelConfig.opacity) === 'number'
-                ? brandPanelConfig.opacity
-                : defaultNewsPanel.heroBrandPanel.opacity;
-            const heroBrandPanelBg = hexToRgba(brandPanelColor, brandPanelOpacity);
-            const heroBrandPanelText = getReadableTextColor(brandPanelColor, '#fdfefc', '#0f1612');
-            const heroIdentityMarkup = (heroLogoMarkup || heroTaglineMarkup || heroBadgeMarkup)
-                ? `<div class="hero__identity">${heroLogoMarkup}<div class="hero__badge-text">${heroTaglineMarkup}${heroBadgeMarkup}</div></div>`
-                : '';
-            const shouldRenderBrandPanel = Boolean(brandPanelConfig && brandPanelConfig.enabled && heroIdentityMarkup);
-            const heroVisualContent = shouldRenderBrandPanel
-                ? `<div class="hero__brand-panel" style="--hero-brand-panel-bg:${heroBrandPanelBg}; --hero-brand-panel-color:${heroBrandPanelText};">${heroIdentityMarkup}</div>`
-                : heroIdentityMarkup;
+            const heroVisualContent = '';
 
             const buildHeroSlides = () => {
                 const baseSlides = (Array.isArray(news.items) ? news.items : [])
@@ -6812,11 +6789,15 @@
         .hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(120deg, rgba(15, 24, 18, 0.8) 0%, rgba(31, 47, 40, 0.55) 45%, rgba(74, 124, 89, 0.45) 100%), url("images/fondo principal.webp"); background-size: cover; background-position: center; background-repeat: no-repeat; opacity: 0.92; z-index: 0; }
         .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12, 18, 15, 0.15) 0%, rgba(12, 18, 15, 0.4) 35%, rgba(12, 18, 15, 0.65) 100%); pointer-events: none; z-index: 0; }
         .hero__grid { position: relative; z-index: 1; display: grid; gap: 1.75rem; grid-template-columns: 1fr; align-items: center; }
-        .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.95rem; color: ${theme.accent}; }
-        .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; color: #fdfefc; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.45); }
-        .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; color: rgba(247, 250, 245, 0.9); }
-        .hero__content { text-align: center; max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
-        .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; justify-content: center; }
+         .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.95rem; color: ${theme.accent}; }
+         .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; color: #fdfefc; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.45); }
+         .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; color: rgba(247, 250, 245, 0.9); }
+         .hero__content { text-align: center; max-width: 900px; margin: 0 auto; padding: 0 1.5rem; display: grid; gap: 0.75rem; }
+         .hero__headline { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+         .hero__inline-logo { width: 88px; height: 88px; border-radius: 16px; background: rgba(255, 255, 255, 0.08); display: grid; place-items: center; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18); padding: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.15); }
+         .hero__inline-logo .brand-logo { width: 100%; height: 100%; object-fit: contain; }
+         .hero__text { display: grid; gap: 0.35rem; }
+         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; justify-content: center; }
         .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: 1fr; align-items: center; gap: 1.25rem; padding: 0.5rem 0; width: 100%; margin: 0 calc(50% - 50vw); box-sizing: border-box; }
         .hero__visual > * { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 1.25rem; box-sizing: border-box; }
         .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 240px; border-radius: 16px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
@@ -6936,8 +6917,13 @@
         <section id="hero" class="hero">
             <div class="page-shell hero__grid">
                 <div class="hero__content">
-                    <p class="hero__eyebrow">${heroEyebrow}</p>
-                    <h1 class="hero__title">${heroTitle}</h1>
+                    <div class="hero__headline">
+                        ${heroInlineLogoMarkup}
+                        <div class="hero__text">
+                            <p class="hero__eyebrow">${heroEyebrow}</p>
+                            <h1 class="hero__title">${heroTitle}</h1>
+                        </div>
+                    </div>
                     <p class="hero__description">${heroDescription}</p>
                     <div class="hero__actions">
                         <a class="button button--primary" href="${primaryCtaHref}">${primaryCtaText}</a>
