@@ -6607,6 +6607,69 @@
                 ? `<div class="hero__brand-panel" style="--hero-brand-panel-bg:${heroBrandPanelBg}; --hero-brand-panel-color:${heroBrandPanelText};">${heroIdentityMarkup}</div>`
                 : heroIdentityMarkup;
 
+            const buildHeroSlides = () => {
+                const baseSlides = (Array.isArray(news.items) ? news.items : [])
+                    .map(item => {
+                        const slideUrl = normalizeNavigationUrl(item.targetUrl || '');
+                        const backgroundUrl = Array.isArray(item.media) && item.media.find(isValidUrl) ? item.media.find(isValidUrl) : '';
+
+                        return {
+                            eyebrow: escapeHtml(item.eyebrow || newsSectionEyebrow || 'Novedad'),
+                            title: escapeHtml(item.title || news.heroTitle || 'Nuevo anuncio'),
+                            description: escapeHtml(item.description || news.heroDescription || ''),
+                            href: slideUrl,
+                            isExternal: isExternalNavigationUrl(slideUrl),
+                            background: backgroundUrl ? escapeHtml(backgroundUrl) : ''
+                        };
+                    })
+                    .filter(slide => slide.title || slide.description || slide.background);
+
+                if (baseSlides.length === 0) {
+                    return [{
+                        eyebrow: heroEyebrow,
+                        title: heroTitle,
+                        description: heroDescription,
+                        href: primaryCtaHref,
+                        isExternal: isExternalNavigationUrl(primaryCtaHref),
+                        background: ''
+                    }];
+                }
+
+                return baseSlides;
+            };
+
+            const heroSlides = buildHeroSlides();
+
+            const heroCarouselSlidesMarkup = heroSlides.map((slide, slideIndex) => {
+                const wrapperTag = slide.href ? 'a' : 'div';
+                const safeHref = slide.href ? escapeHtml(slide.href) : '';
+                const hrefAttributes = safeHref
+                    ? ` href="${safeHref}"${slide.isExternal ? ' target="_blank" rel="noopener noreferrer"' : ''}`
+                    : '';
+                const mediaStyle = slide.background ? ` style="background-image: linear-gradient(135deg, rgba(12,18,15,0.72), rgba(12,18,15,0.48)), url('${slide.background}')"` : '';
+
+                return `<${wrapperTag} class="hero-carousel__slide${slideIndex === 0 ? ' is-active' : ''}" data-hero-slide="${slideIndex}"${hrefAttributes}>
+                    <div class="hero-carousel__media"${mediaStyle}></div>
+                    <div class="hero-carousel__content">
+                        <p class="hero-carousel__eyebrow">${slide.eyebrow || heroEyebrow}</p>
+                        <h3 class="hero-carousel__title">${slide.title || heroTitle}</h3>
+                        ${slide.description ? `<p class="hero-carousel__description">${slide.description}</p>` : ''}
+                        ${slide.href ? `<span class="hero-carousel__cta">Ver más →</span>` : ''}
+                    </div>
+                </${wrapperTag}>`;
+            }).join('');
+
+            const heroCarouselDotsMarkup = heroSlides.length > 1
+                ? `<div class="hero-carousel__dots">${heroSlides.map((_, dotIndex) => `<button type="button" class="hero-carousel__dot${dotIndex === 0 ? ' is-active' : ''}" data-hero-dot="${dotIndex}" aria-label="Ir al slide ${dotIndex + 1}"></button>`).join('')}</div>`
+                : '';
+
+            const heroCarouselMarkup = heroSlides.length
+                ? `<div class="hero-carousel" data-hero-carousel>
+                        <div class="hero-carousel__slides">${heroCarouselSlidesMarkup}</div>
+                        ${heroCarouselDotsMarkup}
+                   </div>`
+                : '';
+
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
             const whatsappLinkHref = sanitizedWhatsappNumber ? `https://wa.me/${sanitizedWhatsappNumber}` : '#';
             const whatsappLinkStyle = sanitizedWhatsappNumber ? '' : 'display: none;';
@@ -6764,6 +6827,22 @@
         .hero__logo { width: 100%; height: 100%; max-width: 360px; border-radius: 14px; background: transparent; display: grid; place-items: center; box-shadow: none; padding: 0; }
         .hero__visual .brand-logo { width: 100%; height: 100%; object-fit: contain; }
         .hero__tagline { position: relative; right: auto; top: auto; transform: none; margin: 0; background: transparent; color: ${theme.textOnDark}; padding: 0; border-radius: 0; font-weight: 700; line-height: 1.4; max-width: 100%; box-shadow: none; backdrop-filter: none; justify-self: end; }
+        .hero-carousel { position: relative; width: 100%; display: grid; gap: 0.75rem; }
+        .hero-carousel__slides { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(12, 18, 15, 0.7), rgba(31, 47, 40, 0.55)); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28); }
+        .hero-carousel__slide { position: relative; display: grid; gap: 0.75rem; align-items: flex-end; min-height: 220px; padding: 1.25rem; text-decoration: none; color: #fdfefc; opacity: 0; transform: translateY(6px); transition: opacity 0.45s ease, transform 0.45s ease; }
+        .hero-carousel__slide.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .hero-carousel__slide:not(.is-active) { pointer-events: none; }
+        .hero-carousel__media { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.85); }
+        .hero-carousel__media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 12, 10, 0.35), rgba(8, 12, 10, 0.75)); }
+        .hero-carousel__content { position: relative; z-index: 1; display: grid; gap: 0.4rem; max-width: 480px; }
+        .hero-carousel__eyebrow { margin: 0; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${theme.accent}; }
+        .hero-carousel__title { margin: 0; font-size: 1.35rem; }
+        .hero-carousel__description { margin: 0; color: rgba(247, 250, 245, 0.9); line-height: 1.5; }
+        .hero-carousel__cta { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; text-decoration: none; color: ${theme.textOnDark}; background: rgba(255,255,255,0.18); border-radius: 999px; padding: 0.35rem 0.75rem; width: fit-content; box-shadow: 0 12px 24px rgba(0,0,0,0.22); }
+        .hero-carousel__dots { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.2rem 0.35rem; border-radius: 999px; background: rgba(12, 18, 15, 0.35); width: fit-content; }
+        .hero-carousel__dot { width: 11px; height: 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.65); background: rgba(255,255,255,0.35); cursor: pointer; transition: background 0.2s ease, transform 0.2s ease; }
+        .hero-carousel__dot.is-active { background: #fff; transform: scale(1.08); }
+        .hero-carousel__dot:focus-visible { outline: 2px solid ${theme.accent}; outline-offset: 2px; }
         .hero__stone { display: none; }
         .button { padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid transparent; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
         .button--primary { background: ${theme.accent}; color: ${theme.text}; border-color: ${theme.accent}; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18); }
@@ -6863,6 +6942,7 @@
                     </div>
                 </div>
                 <div class="hero__visual">
+                    ${heroCarouselMarkup}
                     ${heroVisualContent}
                     <span class="hero__stone"></span>
                 </div>
@@ -6951,6 +7031,57 @@
             slider.addEventListener('mouseleave', () => {
                 intervalId = setInterval(rotate, 4500);
             });
+        });
+
+        const heroCarousels = document.querySelectorAll('[data-hero-carousel]');
+
+        heroCarousels.forEach(carousel => {
+            const slides = carousel.querySelectorAll('[data-hero-slide]');
+            const dots = carousel.querySelectorAll('[data-hero-dot]');
+
+            if (slides.length <= 1) {
+                slides.forEach(slide => slide.classList.add('is-active'));
+                dots.forEach(dot => dot.classList.add('is-active'));
+                return;
+            }
+
+            let currentIndex = 0;
+
+            const activate = (nextIndex) => {
+                currentIndex = nextIndex;
+                slides.forEach((slide, slideIndex) => {
+                    slide.classList.toggle('is-active', slideIndex === currentIndex);
+                });
+                dots.forEach((dot, dotIndex) => {
+                    dot.classList.toggle('is-active', dotIndex === currentIndex);
+                });
+            };
+
+            const rotate = () => {
+                const nextIndex = (currentIndex + 1) % slides.length;
+                activate(nextIndex);
+            };
+
+            let intervalId = setInterval(rotate, 5200);
+
+            const resetInterval = () => {
+                clearInterval(intervalId);
+                intervalId = setInterval(rotate, 5200);
+            };
+
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    const nextIndex = Number(dot.dataset.heroDot);
+                    activate(Number.isNaN(nextIndex) ? 0 : nextIndex);
+                    resetInterval();
+                });
+            });
+
+            carousel.addEventListener('mouseenter', () => {
+                clearInterval(intervalId);
+            });
+
+            carousel.addEventListener('mouseleave', resetInterval);
         });
     })();
     </script>
