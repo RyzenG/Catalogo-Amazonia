@@ -170,6 +170,36 @@ img {
     color: rgba(245, 250, 245, 0.9);
 }
 
+.hero__headline {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.hero__inline-logo {
+    width: 88px;
+    height: 88px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    padding: 0.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.hero__inline-logo .brand-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.hero__text {
+    display: grid;
+    gap: 0.35rem;
+}
+
 .hero__actions {
     display: flex;
     gap: 1rem;
