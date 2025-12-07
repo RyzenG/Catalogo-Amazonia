@@ -1019,6 +1019,23 @@
             categoryInfo: {}
         };
 
+        function isProductAvailable(product) {
+            if (!product || typeof product !== 'object') {
+                return true;
+            }
+
+            if (typeof product.available === 'boolean') {
+                return product.available;
+            }
+
+            if (typeof product.availability === 'string') {
+                const normalized = product.availability.trim().toLowerCase();
+                return normalized !== 'sold-out' && normalized !== 'agotado';
+            }
+
+            return true;
+        }
+
         let currentCategory = defaultCategories[0] ? defaultCategories[0].id : '';
         let editingProductId = null;
         let currentImageUrl = '';
@@ -5633,6 +5650,7 @@
                     const missingPrice = !formattedPrice;
                     const priceHtml = escapeHtml(formattedPrice);
                     const missingShortDesc = trimmedShortDesc.length === 0;
+                    const isSoldOut = !isProductAvailable(product);
                     const issueMessages = [];
 
                     if (missingImage) {
@@ -5653,6 +5671,13 @@
                         issueMessages.push({
                             badgeText: 'Sin descripción breve',
                             ariaLabel: 'Este producto no tiene descripción breve'
+                        });
+                    }
+
+                    if (isSoldOut) {
+                        issueMessages.push({
+                            badgeText: 'Agotado',
+                            ariaLabel: 'Este producto está marcado como agotado'
                         });
                     }
 
@@ -5781,6 +5806,10 @@
                     if (productPriceInput) {
                         productPriceInput.value = formatCurrencyCOP(product.price);
                     }
+                    const soldOutInput = document.getElementById('productSoldOut');
+                    if (soldOutInput) {
+                        soldOutInput.checked = !isProductAvailable(product);
+                    }
                     document.getElementById('productSpecs').value = product.specs || '';
                     document.getElementById('productId').value = productId;
 
@@ -5798,6 +5827,10 @@
                 renderCategoryOptions(currentCategory);
                 document.getElementById('productCategory').value = currentCategory;
                 document.getElementById('productId').value = '';
+                const soldOutInput = document.getElementById('productSoldOut');
+                if (soldOutInput) {
+                    soldOutInput.checked = false;
+                }
                 currentImageUrl = '';
                 currentIconFallback = '';
                 renderProductImageInputs([]);
@@ -5930,6 +5963,8 @@
             const { images: imageValues, primaryImage } = collectProductImagesData();
             const priceInput = document.getElementById('productPrice');
             const normalizedPrice = formatCurrencyCOP(priceInput ? priceInput.value : '');
+            const soldOutCheckbox = document.getElementById('productSoldOut');
+            const isSoldOut = soldOutCheckbox ? soldOutCheckbox.checked : false;
 
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
@@ -5938,7 +5973,9 @@
                 longDesc: document.getElementById('productLongDesc').value,
                 price: normalizedPrice,
                 features: features,
-                specs: document.getElementById('productSpecs').value
+                specs: document.getElementById('productSpecs').value,
+                available: !isSoldOut,
+                availability: isSoldOut ? 'sold-out' : 'available'
             };
 
             if (Array.isArray(imageValues) && imageValues.length > 0) {
@@ -7185,7 +7222,9 @@
                                 .filter(feature => feature.length > 0)
                             : [];
                         const sanitizedFeatures = featureValues.map(feature => `<span class="feature-tag">${escapeHtml(feature)}</span>`);
-                        const featuresHtml = sanitizedFeatures.join('');
+                        const isAvailable = isProductAvailable(product);
+                        const soldOutFeature = isAvailable ? '' : '<span class="feature-tag feature-tag--soldout">Agotado</span>';
+                        const featuresHtml = `${sanitizedFeatures.join('')}${soldOutFeature}`;
                         const imageList = getNormalizedProductImages(product);
                         const productImageAttributes = buildProductImageAttributes(product, categoryIcon);
                         const productImageAttrString = buildImageAttributesString(productImageAttributes);
@@ -7219,16 +7258,16 @@
                     <div class="product-image">
                         <img ${productImageAttrString} alt="${imageAlt}">
                     </div>
-                    <div class="product-info">
-                        <h3 class="product-name">${productNameHtml}</h3>
-                        <p class="product-description">${productShortDescHtml}</p>
-                        <div class="product-features">${featuresHtml}</div>
-                        <p class="product-price">${productPriceHtml}</p>
-                        <div class="product-actions">
-                            <button type="button" class="product-card__select" data-product-id="${product.id}" aria-pressed="false" aria-label="Agregar ${productNameHtml} al carrito">➕ Añadir al carrito</button>
+                        <div class="product-info">
+                            <h3 class="product-name">${productNameHtml}</h3>
+                            <p class="product-description">${productShortDescHtml}</p>
+                            <div class="product-features">${featuresHtml}</div>
+                            <p class="product-price">${productPriceHtml}</p>
+                            <div class="product-actions">
+                                <button type="button" class="product-card__select${isAvailable ? '' : ' product-card__select--disabled'}" data-product-id="${product.id}" aria-pressed="false" aria-label="${isAvailable ? `Agregar ${productNameHtml} al carrito` : `${productNameHtml} está agotado`}" ${isAvailable ? '' : 'disabled aria-disabled="true"'}>${isAvailable ? '➕ Añadir al carrito' : 'Agotado'}</button>
+                            </div>
                         </div>
-                    </div>
-                </div>`;
+                    </div>`;
 
                         // Add to product data for modal
                         const specs = product.specs ? product.specs.split('\n').map(s => {
@@ -7257,7 +7296,9 @@
                                 : rawShortDesc,
                             specs: sanitizedSpecs,
                             price: Number.isFinite(numericPrice) ? numericPrice : null,
-                            priceFormatted: formattedPrice
+                            priceFormatted: formattedPrice,
+                            available: isAvailable,
+                            availability: isAvailable ? 'available' : 'sold-out'
                         };
                     });
 
@@ -9992,6 +10033,12 @@ ${formatCssBlock(headerBackground)}
             font-size: 0.85rem;
         }
 
+        .feature-tag--soldout {
+            background: #f7e8e8;
+            color: #7a2e2e;
+            border: 1px solid rgba(122, 46, 46, 0.15);
+        }
+
         .product-price {
             font-size: 1.5rem;
             color: ${theme.priceColor};
@@ -10034,6 +10081,16 @@ ${formatCssBlock(headerBackground)}
         .product-card__select[aria-pressed="true"] {
             background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
             box-shadow: 0 8px 18px ${theme.accentSoft};
+        }
+
+        .product-card__select--disabled,
+        .product-card__select[disabled],
+        .product-card__select[aria-disabled="true"] {
+            background: ${theme.borderColor};
+            color: ${theme.textSecondary};
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
         }
 
         /* Modal */
@@ -11053,6 +11110,23 @@ ${formatCssBlock(footerBackground)}
         const selectionStorage = getPersistentStorage();
         let selectedProducts = [];
 
+        function isProductAvailable(product) {
+            if (!product || typeof product !== 'object') {
+                return true;
+            }
+
+            if (typeof product.available === 'boolean') {
+                return product.available;
+            }
+
+            if (typeof product.availability === 'string') {
+                const normalized = product.availability.trim().toLowerCase();
+                return normalized !== 'sold-out' && normalized !== 'agotado';
+            }
+
+            return true;
+        }
+
         function getWhatsappStatus() {
             const config = catalogConfig || {};
             const rawValue = typeof config.whatsapp === 'string' ? config.whatsapp.trim() : '';
@@ -12042,7 +12116,7 @@ ${formatCssBlock(footerBackground)}
 
                 const sanitized = parsed
                     .map(sanitizeSelectionItem)
-                    .filter(item => item && productData[item.id]);
+                    .filter(item => item && productData[item.id] && isProductAvailable(productData[item.id]));
 
                 selectedProducts = sanitized;
             } catch (error) {
@@ -12153,6 +12227,16 @@ ${formatCssBlock(footerBackground)}
                     return;
                 }
 
+                const product = productData[productId];
+                const isAvailable = isProductAvailable(product);
+
+                if (!isAvailable) {
+                    button.classList.add('product-card__select--disabled');
+                    button.setAttribute('aria-disabled', 'true');
+                    button.disabled = true;
+                    return;
+                }
+
                 button.addEventListener('click', function(event) {
                     event.stopPropagation();
                     addProductToSelection(productId);
@@ -12161,7 +12245,7 @@ ${formatCssBlock(footerBackground)}
         }
 
         function addProductToSelection(productId) {
-            if (!productId || !productData[productId]) {
+            if (!productId || !productData[productId] || !isProductAvailable(productData[productId])) {
                 return;
             }
 
@@ -12239,7 +12323,7 @@ ${formatCssBlock(footerBackground)}
 
         function renderSelectedProductsList() {
             const list = document.getElementById('selectedProductsList');
-            const filtered = selectedProducts.filter(item => productData[item.id]);
+            const filtered = selectedProducts.filter(item => productData[item.id] && isProductAvailable(productData[item.id]));
 
             if (filtered.length !== selectedProducts.length) {
                 selectedProducts = filtered;
@@ -12377,7 +12461,7 @@ ${formatCssBlock(footerBackground)}
             const checkoutButton = document.getElementById('checkoutButton');
             const whatsappAlert = document.getElementById('whatsappConfigAlert');
 
-            const validItems = selectedProducts.filter(item => productData[item.id]);
+            const validItems = selectedProducts.filter(item => productData[item.id] && isProductAvailable(productData[item.id]));
             const uniqueCount = validItems.length;
             const totalUnits = validItems.reduce((sum, item) => sum + sanitizeQuantity(item.quantity), 0);
             const whatsappStatus = getWhatsappStatus();
@@ -12447,7 +12531,19 @@ ${formatCssBlock(footerBackground)}
                     return;
                 }
 
-                const isSelected = selectedIds.has(productId);
+                const product = productData[productId];
+                const isAvailable = isProductAvailable(product);
+                const isSelected = selectedIds.has(productId) && isAvailable;
+
+                if (!isAvailable) {
+                    button.textContent = 'Agotado';
+                    button.classList.add('product-card__select--disabled');
+                    button.setAttribute('aria-disabled', 'true');
+                    button.setAttribute('aria-pressed', 'false');
+                    button.disabled = true;
+                    return;
+                }
+
                 button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
                 button.textContent = isSelected ? '✔ En el carrito' : '➕ Añadir al carrito';
             });

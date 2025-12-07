@@ -159,6 +159,13 @@ body {
     margin-bottom: 1.5rem;
 }
 
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
 .section-description {
     color: var(--text-body);
     margin-bottom: 1.5rem;
