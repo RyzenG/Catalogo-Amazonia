@@ -229,21 +229,21 @@ img {
     padding: 0.5rem 1rem;
 }
 
-.hero__logo-card {
+.hero__logo {
     width: 100%;
     max-width: 240px;
     aspect-ratio: 1 / 1;
-    border-radius: 16px;
-    background: rgba(12, 18, 15, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
     display: grid;
     place-items: center;
-    padding: 1rem;
+    padding: 0;
     justify-self: center;
 }
 
-.hero__logo-card .brand-logo {
+.hero__logo .brand-logo {
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -352,7 +352,7 @@ img {
         grid-template-columns: 1fr;
     }
 
-    .hero__logo-card {
+    .hero__logo {
         max-width: 200px;
     }
 

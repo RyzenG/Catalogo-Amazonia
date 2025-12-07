@@ -6582,7 +6582,7 @@
             const sectionTitleLogoMarkup = `<img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="section__title-logo" loading="lazy">`;
             const heroVisualContent = `
                 <div class="hero__logo-wrapper">
-                    <div class="hero__logo-card">
+                    <div class="hero__logo">
                         <img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="brand-logo hero__logo-image" loading="lazy">
                     </div>
                 </div>`;
@@ -6648,6 +6648,12 @@
                         <div class="hero-carousel__slides">${heroCarouselSlidesMarkup}</div>
                         ${heroCarouselDotsMarkup}
                    </div>`
+                : '';
+
+            const heroCarouselSectionMarkup = heroCarouselMarkup
+                ? `<section class="hero-carousel-section">
+                        ${heroCarouselMarkup}
+                   </section>`
                 : '';
 
             const sanitizedWhatsappNumber = trimmedConfig.whatsapp.replace(/\D/g, '');
@@ -6803,10 +6809,10 @@
         .hero__visual { order: 1; position: relative; min-height: 320px; display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 0; width: 100%; box-sizing: border-box; }
         .hero__visual > * { width: 100%; max-width: 420px; margin: 0 auto; padding: 0; box-sizing: border-box; }
         .hero__logo-wrapper { width: 100%; display: flex; align-items: center; justify-content: center; }
-        .hero__logo-card { width: 100%; max-width: 320px; aspect-ratio: 1 / 1; border-radius: 50%; background: rgba(12, 18, 15, 0.4); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 20px 36px rgba(0, 0, 0, 0.25); display: grid; place-items: center; padding: 1rem; }
+        .hero__logo { width: 100%; max-width: 320px; aspect-ratio: 1 / 1; border-radius: 12px; background: transparent; border: none; box-shadow: none; display: grid; place-items: center; padding: 0; }
         .hero__logo-image { width: 100%; height: 100%; object-fit: contain; }
-        .hero__logo-card .brand-logo { width: 100%; height: 100%; object-fit: contain; }
-        @media (max-width: 900px) { .hero__grid { grid-template-columns: 1fr; } .hero__visual { order: 1; } .hero__content { order: 2; } .hero__logo-card { max-width: 240px; } }
+        .hero__logo .brand-logo { width: 100%; height: 100%; object-fit: contain; }
+        @media (max-width: 900px) { .hero__grid { grid-template-columns: 1fr; } .hero__visual { order: 1; } .hero__content { order: 2; } .hero__logo { max-width: 240px; } }
         .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 320px; border-radius: 16px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
         .hero__identity { position: relative; display: flex; align-items: center; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; justify-content: space-between; }
         .hero__brand-panel { position: relative; display: flex; align-items: center; gap: 1.5rem; align-self: stretch; padding: 1.1rem 1.25rem; border-radius: 16px; background: var(--hero-brand-panel-bg, rgba(12, 18, 15, 0.45)); color: var(--hero-brand-panel-color, #fdfefc); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22); backdrop-filter: blur(8px); max-width: 1200px; }
@@ -6818,8 +6824,9 @@
         .hero__logo { width: 100%; height: 100%; max-width: 360px; border-radius: 14px; background: transparent; display: grid; place-items: center; box-shadow: none; padding: 0; }
         .hero__visual .brand-logo { width: 100%; height: 100%; object-fit: contain; }
         .hero__tagline { position: relative; right: auto; top: auto; transform: none; margin: 0; background: transparent; color: ${theme.textOnDark}; padding: 0; border-radius: 0; font-weight: 700; line-height: 1.4; max-width: 100%; box-shadow: none; backdrop-filter: none; justify-self: end; }
+        .hero-carousel-section { width: 100%; margin: 0; padding: 0 0 2.5rem; background: radial-gradient(circle at 20% 20%, rgba(74, 124, 89, 0.18), transparent 32%), radial-gradient(circle at 80% 10%, rgba(192, 223, 217, 0.28), transparent 36%), #0f1612; }
         .hero-carousel { position: relative; width: 100%; display: grid; gap: 0.75rem; }
-        .hero-carousel__slides { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(12, 18, 15, 0.7), rgba(31, 47, 40, 0.55)); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28); min-height: 360px; }
+        .hero-carousel__slides { position: relative; border-radius: 0; overflow: hidden; background: linear-gradient(135deg, rgba(12, 18, 15, 0.7), rgba(31, 47, 40, 0.55)); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28); min-height: 360px; }
         .hero-carousel__slide { position: absolute; inset: 0; display: grid; gap: 0.75rem; align-items: flex-end; padding: 1.75rem; text-decoration: none; color: #fdfefc; opacity: 0; transform: translateY(6px); transition: opacity 0.45s ease, transform 0.45s ease; height: 100%; width: 100%; }
         .hero-carousel__slide.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .hero-carousel__slide:not(.is-active) { pointer-events: none; }
@@ -6941,11 +6948,12 @@
                 </div>
                 <div class="hero__visual">
                     ${heroVisualContent}
-                    ${heroCarouselMarkup}
                     <span class="hero__stone"></span>
                 </div>
             </div>
         </section>
+
+        ${heroCarouselSectionMarkup}
 
         <section id="novedades" class="section section--light">
             <div class="section__inner">
