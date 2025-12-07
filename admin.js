@@ -6793,6 +6793,7 @@
         body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1a1f36; ${bodyBackground} }
         a { color: inherit; }
         .page-shell { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
+        .hero .page-shell { max-width: none; padding: 0; }
         .site-header { position: sticky; top: 0; z-index: 10; ${headerBackground} color: ${theme.headerText}; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); }
         .site-header__inner { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem 0; }
         .site-header__brand { display: flex; gap: 0.5rem; align-items: center; }
@@ -6810,15 +6811,17 @@
         .hero { position: relative; color: #f7faf5; padding: 3.5rem 0; overflow: hidden; background: radial-gradient(circle at 30% 20%, rgba(74, 124, 89, 0.12), transparent 35%), radial-gradient(circle at 80% 10%, rgba(192, 223, 217, 0.4), transparent 38%), #0f1612; }
         .hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(120deg, rgba(15, 24, 18, 0.8) 0%, rgba(31, 47, 40, 0.55) 45%, rgba(74, 124, 89, 0.45) 100%), url("images/fondo principal.webp"); background-size: cover; background-position: center; background-repeat: no-repeat; opacity: 0.92; z-index: 0; }
         .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12, 18, 15, 0.15) 0%, rgba(12, 18, 15, 0.4) 35%, rgba(12, 18, 15, 0.65) 100%); pointer-events: none; z-index: 0; }
-        .hero__grid { position: relative; z-index: 1; display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: center; }
+        .hero__grid { position: relative; z-index: 1; display: grid; gap: 1.75rem; grid-template-columns: 1fr; align-items: center; }
         .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.95rem; color: ${theme.accent}; }
         .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; color: #fdfefc; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.45); }
         .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; color: rgba(247, 250, 245, 0.9); }
-        .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
-        .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: 1fr; align-items: center; gap: 1.25rem; padding: 0.5rem 1rem; }
+        .hero__content { text-align: center; max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+        .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; justify-content: center; }
+        .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: 1fr; align-items: center; gap: 1.25rem; padding: 0.5rem 0; width: 100%; margin: 0 calc(50% - 50vw); box-sizing: border-box; }
+        .hero__visual > * { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 1.25rem; box-sizing: border-box; }
         .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 240px; border-radius: 16px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
         .hero__identity { position: relative; display: flex; align-items: center; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; justify-content: space-between; }
-        .hero__brand-panel { position: relative; display: flex; align-items: center; gap: 1.5rem; align-self: stretch; padding: 1.1rem 1.25rem; border-radius: 16px; background: var(--hero-brand-panel-bg, rgba(12, 18, 15, 0.45)); color: var(--hero-brand-panel-color, #fdfefc); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22); backdrop-filter: blur(8px); }
+        .hero__brand-panel { position: relative; display: flex; align-items: center; gap: 1.5rem; align-self: stretch; padding: 1.1rem 1.25rem; border-radius: 16px; background: var(--hero-brand-panel-bg, rgba(12, 18, 15, 0.45)); color: var(--hero-brand-panel-color, #fdfefc); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22); backdrop-filter: blur(8px); max-width: 1200px; }
         .hero__brand-panel .hero__logo { max-width: 220px; justify-self: center; background: transparent; box-shadow: none; }
         .hero__brand-panel .brand-logo { width: 100%; height: 100%; object-fit: contain; }
         .hero__brand-panel .hero__tagline { color: var(--hero-brand-panel-color, #fdfefc); font-weight: 700; max-width: none; margin: 0; }
@@ -6828,18 +6831,18 @@
         .hero__visual .brand-logo { width: 100%; height: 100%; object-fit: contain; }
         .hero__tagline { position: relative; right: auto; top: auto; transform: none; margin: 0; background: transparent; color: ${theme.textOnDark}; padding: 0; border-radius: 0; font-weight: 700; line-height: 1.4; max-width: 100%; box-shadow: none; backdrop-filter: none; justify-self: end; }
         .hero-carousel { position: relative; width: 100%; display: grid; gap: 0.75rem; }
-        .hero-carousel__slides { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(12, 18, 15, 0.7), rgba(31, 47, 40, 0.55)); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28); }
-        .hero-carousel__slide { position: relative; display: grid; gap: 0.75rem; align-items: flex-end; min-height: 220px; padding: 1.25rem; text-decoration: none; color: #fdfefc; opacity: 0; transform: translateY(6px); transition: opacity 0.45s ease, transform 0.45s ease; }
+        .hero-carousel__slides { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(12, 18, 15, 0.7), rgba(31, 47, 40, 0.55)); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28); min-height: 340px; }
+        .hero-carousel__slide { position: relative; display: grid; gap: 0.75rem; align-items: flex-end; min-height: 360px; padding: 1.75rem; text-decoration: none; color: #fdfefc; opacity: 0; transform: translateY(6px); transition: opacity 0.45s ease, transform 0.45s ease; }
         .hero-carousel__slide.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .hero-carousel__slide:not(.is-active) { pointer-events: none; }
         .hero-carousel__media { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.85); }
         .hero-carousel__media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 12, 10, 0.35), rgba(8, 12, 10, 0.75)); }
-        .hero-carousel__content { position: relative; z-index: 1; display: grid; gap: 0.4rem; max-width: 480px; }
+        .hero-carousel__content { position: relative; z-index: 1; display: grid; gap: 0.6rem; max-width: 800px; margin: 0 auto; text-align: center; }
         .hero-carousel__eyebrow { margin: 0; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${theme.accent}; }
         .hero-carousel__title { margin: 0; font-size: 1.35rem; }
         .hero-carousel__description { margin: 0; color: rgba(247, 250, 245, 0.9); line-height: 1.5; }
         .hero-carousel__cta { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; text-decoration: none; color: ${theme.textOnDark}; background: rgba(255,255,255,0.18); border-radius: 999px; padding: 0.35rem 0.75rem; width: fit-content; box-shadow: 0 12px 24px rgba(0,0,0,0.22); }
-        .hero-carousel__dots { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.2rem 0.35rem; border-radius: 999px; background: rgba(12, 18, 15, 0.35); width: fit-content; }
+        .hero-carousel__dots { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.2rem 0.35rem; border-radius: 999px; background: rgba(12, 18, 15, 0.35); width: fit-content; justify-self: center; }
         .hero-carousel__dot { width: 11px; height: 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.65); background: rgba(255,255,255,0.35); cursor: pointer; transition: background 0.2s ease, transform 0.2s ease; }
         .hero-carousel__dot.is-active { background: #fff; transform: scale(1.08); }
         .hero-carousel__dot:focus-visible { outline: 2px solid ${theme.accent}; outline-offset: 2px; }
