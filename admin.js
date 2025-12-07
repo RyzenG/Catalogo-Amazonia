@@ -635,7 +635,7 @@
             companyName: 'AMAZONIA CONCRETE',
             tagline: 'Naturaleza y Modernidad en Perfecta Armonía',
             footerMessage: 'Creando espacios únicos con concreto sostenible',
-            logoData: '',
+            logoData: 'images/logo-amazonia.svg',
             unifiedHomeVisuals: true,
             appearance: { ...defaultAppearance },
             priceRanges: normalizePriceRanges(defaultPriceRanges),
@@ -6576,15 +6576,10 @@
             const cardsMarkup = newsCards || '<p class="empty-state">Añade bloques de novedades para mostrarlos en la página de inicio.</p>';
             const companyNameHtml = escapeHtml(trimmedConfig.companyName || 'Amazonia Concrete');
             const footerMessageHtml = escapeHtml(trimmedConfig.footerMessage || 'Creando espacios únicos con concreto sostenible');
-            const logoMarkup = trimmedConfig.logoData
-                ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`
-                : '';
-            const inlineLogoMarkup = logoMarkup
-                ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="hero__inline-logo" loading="lazy">`
-                : '';
-            const sectionTitleLogoMarkup = logoMarkup
-                ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="section__title-logo" loading="lazy">`
-                : '';
+            const logoSource = trimmedConfig.logoData || 'images/logo-amazonia.svg';
+            const logoMarkup = `<img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`;
+            const inlineLogoMarkup = `<img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="hero__inline-logo" loading="lazy">`;
+            const sectionTitleLogoMarkup = `<img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="section__title-logo" loading="lazy">`;
             const heroVisualContent = '';
 
             const buildHeroSlides = () => {
