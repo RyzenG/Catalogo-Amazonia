@@ -480,6 +480,12 @@ img {
     color: white;
 }
 
+.pill--soldout {
+    background: #f7e8e8;
+    color: #7a2e2e;
+    border: 1px solid rgba(122, 46, 46, 0.15);
+}
+
 .button {
     display: inline-flex;
     align-items: center;
@@ -729,6 +735,12 @@ img {
     border: 1px solid rgba(75, 60, 20, 0.15);
 }
 
+.badge--soldout {
+    background: #f7e8e8;
+    color: #7a2e2e;
+    border: 1px solid rgba(122, 46, 46, 0.15);
+}
+
 .product-card__header {
     display: flex;
     justify-content: space-between;
@@ -814,6 +826,14 @@ img {
 .product-card__cta:active {
     transform: translateY(0);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.product-card__cta--disabled {
+    background: var(--border-soft);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+    pointer-events: none;
 }
 
 .product-card:hover,

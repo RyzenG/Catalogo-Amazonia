@@ -334,6 +334,23 @@ function normalizeTags(rawTags) {
         .filter(Boolean);
 }
 
+function isProductAvailable(product) {
+    if (!product || typeof product !== 'object') {
+        return true;
+    }
+
+    if (typeof product.available === 'boolean') {
+        return product.available;
+    }
+
+    if (typeof product.availability === 'string') {
+        const normalized = product.availability.trim().toLowerCase();
+        return normalized !== 'sold-out' && normalized !== 'agotado';
+    }
+
+    return true;
+}
+
 function normalizeProduct(rawProduct, index, categoryId) {
     const product = rawProduct && typeof rawProduct === 'object' ? rawProduct : {};
     const baseName = sanitizeText(product.name || product.title);
@@ -357,6 +374,7 @@ function normalizeProduct(rawProduct, index, categoryId) {
         imageCandidates.push(sanitizeText(product.imageUrl));
     }
     const imageUrl = imageCandidates.find(Boolean) || '';
+    const available = isProductAvailable(product);
 
     return {
         id: toSlug(slugSource, `producto-${index + 1}`),
@@ -367,7 +385,9 @@ function normalizeProduct(rawProduct, index, categoryId) {
         tags: normalizeTags(product.tags),
         imageUrl,
         ctaText: sanitizeText(product.ctaText),
-        ctaLink: sanitizeText(product.ctaLink || product.contactLink)
+        ctaLink: sanitizeText(product.ctaLink || product.contactLink),
+        availability: available ? 'available' : 'sold-out',
+        available
     };
 }
 
@@ -714,7 +734,7 @@ function groupProducts(filteredProducts) {
 }
 
 function buildContactLink(product) {
-    if (!config || !config.contact) {
+    if (!config || !config.contact || !isProductAvailable(product)) {
         return null;
     }
 
@@ -996,6 +1016,7 @@ function renderProducts(filteredProducts, activeCategory) {
             const card = document.createElement('article');
             card.className = 'product-card';
             card.setAttribute('aria-label', product.name);
+            const isAvailable = isProductAvailable(product);
 
             const media = document.createElement('div');
             media.className = 'product-card__media';
@@ -1073,11 +1094,32 @@ function renderProducts(filteredProducts, activeCategory) {
                 meta.appendChild(chip);
             });
 
+            if (!isAvailable) {
+                const soldOutBadge = document.createElement('span');
+                soldOutBadge.className = 'badge badge--soldout';
+                soldOutBadge.textContent = 'Agotado';
+                badges.appendChild(soldOutBadge);
+            }
+
+            if (!isAvailable) {
+                const soldOutChip = document.createElement('span');
+                soldOutChip.className = 'pill pill--soldout';
+                soldOutChip.textContent = 'Agotado';
+                meta.appendChild(soldOutChip);
+            }
+
             const actions = document.createElement('div');
             actions.className = 'product-card__actions';
             const contactLink = buildContactLink(product);
 
-            if (contactLink) {
+            if (!isAvailable) {
+                const soldOutButton = document.createElement('button');
+                soldOutButton.type = 'button';
+                soldOutButton.className = 'button product-card__cta product-card__cta--disabled';
+                soldOutButton.textContent = 'Agotado';
+                soldOutButton.setAttribute('aria-disabled', 'true');
+                actions.appendChild(soldOutButton);
+            } else if (contactLink) {
                 const actionButton = document.createElement('a');
                 actionButton.className = 'button product-card__cta';
                 actionButton.href = contactLink.href;
