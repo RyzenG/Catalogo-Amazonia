@@ -6579,10 +6579,13 @@
             const logoMarkup = trimmedConfig.logoData
                 ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`
                 : '';
-            const heroLogoCardMarkup = logoMarkup
-                ? `<div class="hero__logo-card">${logoMarkup}</div>`
+            const inlineLogoMarkup = logoMarkup
+                ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="hero__inline-logo" loading="lazy">`
                 : '';
-            const heroVisualContent = heroLogoCardMarkup;
+            const sectionTitleLogoMarkup = logoMarkup
+                ? `<img src="${escapeHtml(trimmedConfig.logoData)}" alt="Logo de ${companyNameHtml}" class="section__title-logo" loading="lazy">`
+                : '';
+            const heroVisualContent = '';
 
             const buildHeroSlides = () => {
                 const baseSlides = (Array.isArray(news.items) ? news.items : [])
@@ -6793,9 +6796,8 @@
          .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; color: #fdfefc; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.45); }
          .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; color: rgba(247, 250, 245, 0.9); }
          .hero__content { text-align: center; max-width: 900px; margin: 0 auto; padding: 0 1.5rem; display: grid; gap: 0.75rem; }
-         .hero__headline { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-         .hero__inline-logo { width: 88px; height: 88px; border-radius: 16px; background: rgba(255, 255, 255, 0.08); display: grid; place-items: center; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18); padding: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.15); }
-         .hero__inline-logo .brand-logo { width: 100%; height: 100%; object-fit: contain; }
+         .hero__headline { display: flex; align-items: center; justify-content: center; gap: 0.9rem; flex-wrap: wrap; }
+         .hero__inline-logo { width: 72px; height: 72px; object-fit: contain; flex-shrink: 0; border-radius: 14px; background: transparent; padding: 0; border: none; box-shadow: none; }
          .hero__text { display: grid; gap: 0.35rem; }
          .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; justify-content: center; }
         .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: minmax(160px, 240px) 1fr; align-items: stretch; gap: 1.25rem; padding: 0.5rem 0; width: 100%; margin: 0 calc(50% - 50vw); box-sizing: border-box; }
@@ -6841,6 +6843,8 @@
         .section__header { max-width: 720px; margin-bottom: 1.5rem; }
         .section__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; color: ${theme.header}; font-weight: 700; font-size: 0.9rem; }
         .section__title { margin: 0.35rem 0 0.5rem; font-size: clamp(1.4rem, 2.5vw, 2rem); }
+        .section__title-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        .section__title-logo { width: 54px; height: 54px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.18)); }
         .section__description { margin: 0; color: #425466; }
         .cards-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
         .card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 8px 30px rgba(0,0,0,0.07); border: 1px solid #e5e9ed; }
@@ -6921,6 +6925,7 @@
             <div class="page-shell hero__grid">
                 <div class="hero__content">
                     <div class="hero__headline">
+                        ${inlineLogoMarkup}
                         <div class="hero__text">
                             <p class="hero__eyebrow">${heroEyebrow}</p>
                             <h1 class="hero__title">${heroTitle}</h1>
@@ -6944,7 +6949,10 @@
             <div class="section__inner">
                 <div class="section__header">
                     <p class="section__eyebrow">${newsSectionEyebrow}</p>
-                    <h2 class="section__title">${newsSectionTitle}</h2>
+                    <div class="section__title-row">
+                        ${sectionTitleLogoMarkup}
+                        <h2 class="section__title">${newsSectionTitle}</h2>
+                    </div>
                     <p class="section__description">${newsSectionDescription}</p>
                 </div>
                 <div class="cards-grid">${cardsMarkup}</div>
