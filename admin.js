@@ -6578,9 +6578,14 @@
             const footerMessageHtml = escapeHtml(trimmedConfig.footerMessage || 'Creando espacios únicos con concreto sostenible');
             const logoSource = trimmedConfig.logoData || 'images/logo-amazonia.svg';
             const logoMarkup = `<img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="brand-logo" loading="lazy">`;
-            const inlineLogoMarkup = `<img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="hero__inline-logo" loading="lazy">`;
+            const inlineLogoMarkup = '';
             const sectionTitleLogoMarkup = `<img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="section__title-logo" loading="lazy">`;
-            const heroVisualContent = '';
+            const heroVisualContent = `
+                <div class="hero__logo-wrapper">
+                    <div class="hero__logo-card">
+                        <img src="${escapeHtml(logoSource)}" alt="Logo de ${companyNameHtml}" class="brand-logo hero__logo-image" loading="lazy">
+                    </div>
+                </div>`;
 
             const buildHeroSlides = () => {
                 const baseSlides = (Array.isArray(news.items) ? news.items : [])
@@ -6786,21 +6791,23 @@
         .hero { position: relative; color: #f7faf5; padding: 3.5rem 0; overflow: hidden; background: radial-gradient(circle at 30% 20%, rgba(74, 124, 89, 0.12), transparent 35%), radial-gradient(circle at 80% 10%, rgba(192, 223, 217, 0.4), transparent 38%), #0f1612; }
         .hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(120deg, rgba(15, 24, 18, 0.8) 0%, rgba(31, 47, 40, 0.55) 45%, rgba(74, 124, 89, 0.45) 100%), url("images/fondo principal.webp"); background-size: cover; background-position: center; background-repeat: no-repeat; opacity: 0.92; z-index: 0; }
         .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12, 18, 15, 0.15) 0%, rgba(12, 18, 15, 0.4) 35%, rgba(12, 18, 15, 0.65) 100%); pointer-events: none; z-index: 0; }
-        .hero__grid { position: relative; z-index: 1; display: grid; gap: 1.75rem; grid-template-columns: 1fr; align-items: center; }
+        .hero__grid { position: relative; z-index: 1; display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: center; padding: 0 1.5rem; box-sizing: border-box; }
          .hero__eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; font-size: 0.95rem; color: ${theme.accent}; }
          .hero__title { margin: 0.25rem 0; font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; color: #fdfefc; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.45); }
          .hero__description { margin: 0; opacity: 0.95; font-size: 1.08rem; max-width: 52ch; color: rgba(247, 250, 245, 0.9); }
-         .hero__content { text-align: left; max-width: 900px; margin: 0 auto; padding: 0 1.5rem; display: grid; gap: 0.75rem; justify-items: start; }
-         .hero__headline { display: flex; align-items: flex-start; justify-content: flex-start; gap: 0.9rem; flex-wrap: wrap; }
-         .hero__inline-logo { width: clamp(2rem, 3vw + 1rem, 3rem); height: clamp(2rem, 3vw + 1rem, 3rem); object-fit: contain; flex-shrink: 0; border-radius: 14px; background: transparent; padding: 0; border: none; box-shadow: none; }
+         .hero__content { order: 2; text-align: left; max-width: 820px; margin: 0 auto; padding: 0; display: grid; gap: 0.75rem; justify-items: start; }
+         .hero__headline { display: flex; align-items: center; justify-content: flex-start; gap: 1rem; flex-wrap: wrap; }
+         .hero__inline-logo { display: none; }
          .hero__text { display: grid; gap: 0.35rem; }
-         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; justify-content: center; }
-        .hero__visual { position: relative; min-height: 260px; display: grid; grid-template-columns: minmax(160px, 240px) 1fr; align-items: stretch; gap: 1.25rem; padding: 0.5rem 0; width: 100%; margin: 0 calc(50% - 50vw); box-sizing: border-box; }
-        .hero__visual > * { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 1.25rem; box-sizing: border-box; }
-        .hero__logo-card { width: 100%; max-width: 240px; aspect-ratio: 1 / 1; border-radius: 16px; background: rgba(12, 18, 15, 0.55); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2); display: grid; place-items: center; padding: 1rem; justify-self: center; }
+         .hero__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; justify-content: flex-start; }
+        .hero__visual { order: 1; position: relative; min-height: 320px; display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 0; width: 100%; box-sizing: border-box; }
+        .hero__visual > * { width: 100%; max-width: 420px; margin: 0 auto; padding: 0; box-sizing: border-box; }
+        .hero__logo-wrapper { width: 100%; display: flex; align-items: center; justify-content: center; }
+        .hero__logo-card { width: 100%; max-width: 320px; aspect-ratio: 1 / 1; border-radius: 50%; background: rgba(12, 18, 15, 0.4); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 20px 36px rgba(0, 0, 0, 0.25); display: grid; place-items: center; padding: 1rem; }
+        .hero__logo-image { width: 100%; height: 100%; object-fit: contain; }
         .hero__logo-card .brand-logo { width: 100%; height: 100%; object-fit: contain; }
-        @media (max-width: 900px) { .hero__visual { grid-template-columns: 1fr; } .hero__logo-card { max-width: 200px; } }
-        .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 240px; border-radius: 16px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
+        @media (max-width: 900px) { .hero__grid { grid-template-columns: 1fr; } .hero__visual { order: 1; } .hero__content { order: 2; } .hero__logo-card { max-width: 240px; } }
+        .hero__visual .hero__logo { position: relative; inset: auto; width: 100%; height: 100%; max-width: 320px; border-radius: 16px; background: transparent; padding: 0; display: grid; place-items: center; justify-self: flex-start; box-shadow: none; }
         .hero__identity { position: relative; display: flex; align-items: center; gap: 1.25rem; color: ${theme.textOnDark}; padding: 0; margin: 0; border-radius: 16px; border: none; width: 100%; height: 100%; box-shadow: none; backdrop-filter: none; justify-content: space-between; }
         .hero__brand-panel { position: relative; display: flex; align-items: center; gap: 1.5rem; align-self: stretch; padding: 1.1rem 1.25rem; border-radius: 16px; background: var(--hero-brand-panel-bg, rgba(12, 18, 15, 0.45)); color: var(--hero-brand-panel-color, #fdfefc); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22); backdrop-filter: blur(8px); max-width: 1200px; }
         .hero__brand-panel .hero__logo { max-width: 220px; justify-self: center; background: transparent; box-shadow: none; }
