@@ -637,6 +637,12 @@
             footerMessage: 'Creando espacios únicos con concreto sostenible',
             logoData: 'images/logo-amazonia.svg',
             unifiedHomeVisuals: true,
+            promotion: {
+                enabled: false,
+                percentage: 15,
+                topBarText: 'Promoción activa: ahorra en tu compra',
+                message: 'Descuento aplicado automáticamente en tu carrito.'
+            },
             appearance: { ...defaultAppearance },
             priceRanges: normalizePriceRanges(defaultPriceRanges),
             about: normalizeAbout(defaultAbout),
@@ -831,6 +837,25 @@
             return trimmed && isValidUrl(trimmed) ? trimmed : '';
         }
 
+        function normalizePromotion(candidate) {
+            const normalized = isPlainObject(candidate) ? candidate : {};
+            const percentageValue = Number.parseFloat(normalized.percentage);
+            const safePercentage = Number.isFinite(percentageValue)
+                ? clamp(percentageValue, 1, 95)
+                : defaultConfig.promotion.percentage;
+
+            return {
+                enabled: Boolean(normalized.enabled),
+                percentage: safePercentage,
+                topBarText: typeof normalized.topBarText === 'string'
+                    ? normalized.topBarText.trim()
+                    : defaultConfig.promotion.topBarText,
+                message: typeof normalized.message === 'string'
+                    ? normalized.message.trim()
+                    : defaultConfig.promotion.message
+            };
+        }
+
         function getNormalizedConfig(rawConfig) {
             const base = isPlainObject(rawConfig)
                 ? { ...defaultConfig, ...rawConfig }
@@ -850,6 +875,7 @@
             base.canonicalUrl = normalizeCanonicalUrl(base.canonicalUrl);
             base.aboutCanonicalUrl = normalizeCanonicalUrl(base.aboutCanonicalUrl);
             base.unifiedHomeVisuals = Boolean(base.unifiedHomeVisuals);
+            base.promotion = normalizePromotion(base.promotion);
             return base;
         }
 
@@ -1538,6 +1564,32 @@
             }
 
             return `${prefix}${formatted}${suffix}`;
+        }
+
+        function applyPromotionToPrice(basePrice, promotion) {
+            const numericBase = Number.parseFloat(basePrice);
+            const hasBase = Number.isFinite(numericBase) && numericBase > 0;
+            const enabled = promotion && promotion.enabled;
+            const percentage = promotion && Number.isFinite(promotion.percentage)
+                ? clamp(promotion.percentage, 1, 95)
+                : 0;
+
+            if (!enabled || !hasBase || percentage <= 0) {
+                return {
+                    hasDiscount: false,
+                    finalPrice: hasBase ? numericBase : null,
+                    discountAmount: 0
+                };
+            }
+
+            const discountAmount = Math.round((numericBase * percentage) / 100);
+            const finalPrice = Math.max(0, numericBase - discountAmount);
+
+            return {
+                hasDiscount: true,
+                finalPrice,
+                discountAmount
+            };
         }
 
         const PRODUCT_FIELD_LIMITS = {
@@ -4302,6 +4354,12 @@
                 footerMessage: readValue('footerMessage'),
                 logoData: readValue('companyLogoUrl'),
                 unifiedHomeVisuals: readCheckbox('unifiedHomeVisuals'),
+                promotion: normalizePromotion({
+                    enabled: readCheckbox('promotionEnabled'),
+                    percentage: readValue('promotionPercentage'),
+                    topBarText: readValue('promotionTopBarText'),
+                    message: readValue('promotionMessage')
+                }),
                 priceRanges: normalizePriceRanges(readPriceRangesFromInputs()),
                 newsPanel: normalizeNewsPanel({
                     heroEyebrow: readValue('newsHeroEyebrow'),
@@ -5185,6 +5243,22 @@
             const unifiedHomeVisualsInput = document.getElementById('unifiedHomeVisuals');
             if (unifiedHomeVisualsInput) {
                 unifiedHomeVisualsInput.checked = Boolean(catalogData.config.unifiedHomeVisuals);
+            }
+            const promotionEnabledInput = document.getElementById('promotionEnabled');
+            if (promotionEnabledInput) {
+                promotionEnabledInput.checked = Boolean(catalogData.config.promotion.enabled);
+            }
+            const promotionPercentageInput = document.getElementById('promotionPercentage');
+            if (promotionPercentageInput) {
+                promotionPercentageInput.value = catalogData.config.promotion.percentage;
+            }
+            const promotionTopBarInput = document.getElementById('promotionTopBarText');
+            if (promotionTopBarInput) {
+                promotionTopBarInput.value = catalogData.config.promotion.topBarText;
+            }
+            const promotionMessageInput = document.getElementById('promotionMessage');
+            if (promotionMessageInput) {
+                promotionMessageInput.value = catalogData.config.promotion.message;
             }
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
             refreshSocialPreviews(catalogData.config);
@@ -7155,6 +7229,7 @@
             };
             const theme = buildThemeTokens(config.appearance);
             const unifiedHomeVisuals = Boolean(config.unifiedHomeVisuals);
+            const promotion = normalizePromotion(config.promotion);
 
             const policiesConfig = normalizePolicies(config.policies);
             const about = normalizeAbout(config.about);
@@ -7180,6 +7255,15 @@
             const taglineMarkup = trimmedConfig.tagline
                 ? `<p class="tagline" id="headerTagline">${taglineHtml}</p>`
                 : `<p class="tagline" id="headerTagline" style="display: none;"></p>`;
+
+            const promoBarMarkup = promotion.enabled
+                ? `<div class="promo-top-bar" role="status" aria-live="polite">
+        <div class="promo-top-bar__content">
+            <span class="promo-top-bar__title">${escapeHtml(promotion.topBarText || 'Promoción activa')}</span>
+            <span class="promo-top-bar__message">${escapeHtml(promotion.message || '')}</span>
+        </div>
+    </div>`
+                : '';
 
             const firstCategoryWithProducts = categoriesWithProducts[0] ? categoriesWithProducts[0].id : null;
 
@@ -7242,7 +7326,11 @@
                             const parsedPrice = Number.parseFloat(priceDigits);
                             numericPrice = Number.isFinite(parsedPrice) ? parsedPrice : Number.NaN;
                         }
+                        const promotionResult = applyPromotionToPrice(numericPrice, promotion);
                         const productPriceHtml = escapeHtml(formattedPrice);
+                        const discountedPriceFormatted = promotionResult.hasDiscount
+                            ? escapeHtml(formatCurrencyCOP(promotionResult.finalPrice))
+                            : '';
                         const featuresAttr = featureValues.map(feature => escapeHtml(feature)).join('||');
                         const descriptionAttrSource = [
                             rawShortDesc,
@@ -7253,7 +7341,7 @@
                             .join(' ');
                         const productDescriptionAttr = escapeHtml(descriptionAttrSource);
                         const priceAttr = Number.isFinite(numericPrice) ? numericPrice : '';
-                    productsHTML += `
+                        productsHTML += `
                 <div class="product-card" id="${productAnchorId}" data-category="${category.id}" data-product-id="${product.id}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${product.id}')">
                     <div class="product-image">
                         <img ${productImageAttrString} alt="${imageAlt}">
@@ -7262,7 +7350,13 @@
                             <h3 class="product-name">${productNameHtml}</h3>
                             <p class="product-description">${productShortDescHtml}</p>
                             <div class="product-features">${featuresHtml}</div>
-                            <p class="product-price">${productPriceHtml}</p>
+                            ${promotionResult.hasDiscount
+                                ? `<div class="product-price product-price--discount">
+                                        <span class="product-price__current">${discountedPriceFormatted}</span>
+                                        <span class="product-price__original">${productPriceHtml}</span>
+                                        <span class="product-price__badge">-${promotion.percentage}%</span>
+                                    </div>`
+                                : `<p class="product-price">${productPriceHtml}</p>`}
                             <div class="product-actions">
                                 <button type="button" class="product-card__select${isAvailable ? '' : ' product-card__select--disabled'}" data-product-id="${product.id}" aria-pressed="false" aria-label="${isAvailable ? `Agregar ${productNameHtml} al carrito` : `${productNameHtml} está agotado`}" ${isAvailable ? '' : 'disabled aria-disabled="true"'}>${isAvailable ? '➕ Añadir al carrito' : 'Agotado'}</button>
                             </div>
@@ -7297,6 +7391,9 @@
                             specs: sanitizedSpecs,
                             price: Number.isFinite(numericPrice) ? numericPrice : null,
                             priceFormatted: formattedPrice,
+                            discountedPrice: promotionResult.hasDiscount ? promotionResult.finalPrice : null,
+                            discountedPriceFormatted: promotionResult.hasDiscount ? formatCurrencyCOP(promotionResult.finalPrice) : '',
+                            discountAmount: promotionResult.discountAmount,
                             available: isAvailable,
                             availability: isAvailable ? 'available' : 'sold-out'
                         };
@@ -7403,6 +7500,7 @@
             <ul class="selected-products-panel__list" id="selectedProductsList" aria-describedby="selectedProductsTitle"></ul>
         </div>
         <div class="selected-products-panel__footer">
+            <div class="selected-products-panel__totals" id="selectedProductsTotals" aria-live="polite"></div>
             <p class="selected-products-panel__notice" id="whatsappConfigAlert" role="status" aria-live="polite" hidden></p>
             <p class="selected-products-panel__hint">Revisa los productos seleccionados y finaliza tu compra por WhatsApp.</p>
             <button type="button" class="selected-products-panel__checkout" id="checkoutButton" disabled>Finalizar compra</button>
@@ -7545,6 +7643,8 @@
             ${primaryNavLinksMarkup}
         </nav>
     </header>
+
+    ${promoBarMarkup}
 
     <main id="mainContent">
         <!-- Navigation -->
@@ -12477,9 +12577,9 @@ ${formatCssBlock(footerBackground)}
                 } else if (uniqueCount === 1) {
                     summaryElement.textContent = totalUnits === 1
                         ? '1 producto en el carrito'
-                        : \`1 producto, \${totalUnits} unidades\`;
+                        : `1 producto, ${totalUnits} unidades`;
                 } else {
-                    summaryElement.textContent = \`\${uniqueCount} productos, \${totalUnits} unidades\`;
+                    summaryElement.textContent = `${uniqueCount} productos, ${totalUnits} unidades`;
                 }
             }
 
@@ -12511,12 +12611,38 @@ ${formatCssBlock(footerBackground)}
                 panel.setAttribute('data-empty', uniqueCount === 0 ? 'true' : 'false');
             }
 
+            const totalsElement = document.getElementById('selectedProductsTotals');
+            if (totalsElement) {
+                const details = getSelectedProductsDetails();
+                const hasPricedItems = details.some(detail => Number.isFinite(detail.subtotal));
+                const totalAmount = details.reduce((sum, detail) => sum + (Number.isFinite(detail.subtotal) ? detail.subtotal : 0), 0);
+                const baseTotal = details.reduce((sum, detail) => sum + (Number.isFinite(detail.originalSubtotal)
+                    ? detail.originalSubtotal
+                    : Number.isFinite(detail.subtotal)
+                        ? detail.subtotal
+                        : 0), 0);
+                const savingsTotal = details.reduce((sum, detail) => sum + (Number.isFinite(detail.savingsTotal) ? detail.savingsTotal : 0), 0);
+
+                if (!hasPricedItems) {
+                    totalsElement.textContent = 'Los precios se confirmarán en el paso final.';
+                } else {
+                    const totalText = `Total estimado: ${formatCurrencyCOP(totalAmount)}`;
+                    const savingsText = savingsTotal > 0 ? ` • Ahorro: ${formatCurrencyCOP(savingsTotal)}` : '';
+                    const referenceText = savingsTotal > 0 && baseTotal > 0
+                        ? ` (Antes: ${formatCurrencyCOP(baseTotal)})`
+                        : '';
+                    totalsElement.textContent = `${totalText}${savingsText}${referenceText}`;
+                }
+
+                totalsElement.setAttribute('data-visible', hasPricedItems ? 'true' : 'false');
+            }
+
             if (toggle) {
                 const expanded = toggle.getAttribute('aria-expanded') === 'true';
                 const labelDescriptor = uniqueCount === 0
                     ? 'sin productos'
-                    : \`\${uniqueCount} \${uniqueCount === 1 ? 'producto en el carrito' : 'productos en el carrito'}\`;
-                toggle.setAttribute('aria-label', \`\${expanded ? 'Cerrar' : 'Abrir'} carrito (\${labelDescriptor})\`);
+                    : `${uniqueCount} ${uniqueCount === 1 ? 'producto en el carrito' : 'productos en el carrito'}`;
+                toggle.setAttribute('aria-label', `${expanded ? 'Cerrar' : 'Abrir'} carrito (${labelDescriptor})`);
             }
         }
 
@@ -12594,7 +12720,7 @@ ${formatCssBlock(footerBackground)}
 
                     const quantity = sanitizeQuantity(item.quantity);
                     const notes = sanitizeNotes(item.notes);
-                    const numericPrice = Number.isFinite(product.price)
+                    const basePrice = Number.isFinite(product.price)
                         ? product.price
                         : Number.isFinite(product.numericPrice)
                             ? product.numericPrice
@@ -12603,24 +12729,38 @@ ${formatCssBlock(footerBackground)}
                                 : Number.isFinite(product.priceNumber)
                                     ? product.priceNumber
                                     : Number.NaN;
-                    const hasPrice = Number.isFinite(numericPrice);
-                    const formattedPrice = hasPrice
-                        ? (typeof product.priceFormatted === 'string' && product.priceFormatted.trim()
-                            ? product.priceFormatted.trim()
-                            : formatCurrencyCOP(numericPrice))
+                    const discountedPrice = Number.isFinite(product.discountedPrice)
+                        ? product.discountedPrice
+                        : Number.NaN;
+                    const hasDiscountedPrice = Number.isFinite(discountedPrice);
+                    const hasPrice = Number.isFinite(basePrice) || hasDiscountedPrice;
+                    const unitPrice = hasDiscountedPrice ? discountedPrice : basePrice;
+                    const formattedPrice = Number.isFinite(unitPrice)
+                        ? formatCurrencyCOP(unitPrice)
                         : '';
-                    const subtotal = hasPrice ? numericPrice * quantity : null;
-                    const subtotalFormatted = hasPrice ? formatCurrencyCOP(subtotal) : '';
+                    const subtotal = Number.isFinite(unitPrice) ? unitPrice * quantity : null;
+                    const subtotalFormatted = Number.isFinite(subtotal) ? formatCurrencyCOP(subtotal) : '';
+                    const originalSubtotal = Number.isFinite(basePrice) ? basePrice * quantity : null;
+                    const savingsTotal = Number.isFinite(originalSubtotal) && Number.isFinite(subtotal)
+                        ? originalSubtotal - subtotal
+                        : null;
 
                     return {
                         id: item.id,
                         name: product.title || 'Producto Amazonia',
                         quantity,
                         notes,
-                        unitPrice: hasPrice ? numericPrice : null,
+                        unitPrice: Number.isFinite(unitPrice) ? unitPrice : null,
                         unitPriceFormatted: formattedPrice,
+                        originalUnitPrice: Number.isFinite(basePrice) ? basePrice : null,
+                        originalUnitPriceFormatted: Number.isFinite(basePrice) ? formatCurrencyCOP(basePrice) : '',
                         subtotal,
-                        subtotalFormatted
+                        subtotalFormatted,
+                        originalSubtotal,
+                        originalSubtotalFormatted: Number.isFinite(originalSubtotal) ? formatCurrencyCOP(originalSubtotal) : '',
+                        savingsTotal,
+                        savingsFormatted: Number.isFinite(savingsTotal) ? formatCurrencyCOP(savingsTotal) : '',
+                        hasDiscount: hasDiscountedPrice
                     };
                 })
                 .filter(Boolean);
