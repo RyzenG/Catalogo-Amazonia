@@ -763,6 +763,42 @@ img {
     font-size: 1.05rem;
 }
 
+.product-price {
+    margin: 0;
+    font-weight: 800;
+    color: var(--brand-primary);
+}
+
+.product-price--discount {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.15rem 0 0.75rem;
+}
+
+.product-price__current {
+    font-weight: 800;
+    color: var(--text-body);
+}
+
+.product-price__original {
+    text-decoration: line-through;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.product-price__badge {
+    background: rgba(159, 207, 181, 0.18);
+    color: var(--text-body);
+    border: 1px solid rgba(159, 207, 181, 0.45);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 0.01em;
+}
+
 .product-card__desc {
     margin: 0;
     color: var(--text-muted);
@@ -847,6 +883,44 @@ img {
 .product-card:focus-within .product-card__image {
     transform: scale(1.04);
     filter: brightness(1.02);
+}
+
+/* Promoción y descuentos */
+.promo-top-bar {
+    background: linear-gradient(120deg, var(--brand-primary), var(--brand-dark));
+    color: var(--text-on-primary, #fdfefc);
+    padding: 0.6rem 1.25rem;
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid var(--border-soft);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.promo-top-bar__content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1200px;
+    text-align: center;
+    justify-content: center;
+}
+
+.promo-top-bar__title {
+    font-weight: 800;
+    letter-spacing: 0.01em;
+}
+
+.promo-top-bar__message {
+    color: var(--text-body);
+    opacity: 0.9;
+}
+
+.selected-products-panel__totals {
+    font-weight: 700;
+    color: var(--text-body);
+    margin: 0 0 0.35rem;
 }
 
 @media (max-width: 960px) {
