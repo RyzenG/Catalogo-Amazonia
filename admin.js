@@ -11249,6 +11249,24 @@ ${formatCssBlock(footerBackground)}
             return { rawValue, digits, isValid };
         }
 
+        function notifyWhatsappIssue(message) {
+            if (!message) {
+                return;
+            }
+
+            const whatsappAlert = document.getElementById('whatsappConfigAlert');
+            const isAlertVisible = whatsappAlert && whatsappAlert.offsetParent !== null;
+
+            if (whatsappAlert) {
+                whatsappAlert.textContent = message;
+                whatsappAlert.hidden = false;
+            }
+
+            if (!isAlertVisible && typeof window !== 'undefined' && typeof window.alert === 'function') {
+                window.alert(message);
+            }
+        }
+
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -11657,7 +11675,9 @@ ${formatCssBlock(footerBackground)}
             const companyName = config.companyName || '';
             const taglineValue = config.tagline || '';
             const logoData = config.logoData || '';
-            const whatsappNumber = (config.whatsapp || '').replace(${nonDigitPatternLiteral}, '');
+            const whatsappStatus = getWhatsappStatus();
+            const whatsappNumber = whatsappStatus.isValid ? whatsappStatus.digits : '';
+            const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
             const emailValue = (config.email || '').trim();
             const instagramValue = (config.instagram || '').trim();
             const facebookValue = (config.facebook || '').trim();
@@ -11698,6 +11718,7 @@ ${formatCssBlock(footerBackground)}
             const whatsappButton = document.getElementById('modalWhatsAppButton');
             if (whatsappButton) {
                 whatsappButton.style.display = whatsappNumber ? 'inline-block' : 'none';
+                whatsappButton.setAttribute('aria-disabled', whatsappNumber ? 'false' : 'true');
             }
 
             const quoteButton = document.getElementById('modalQuoteButton');
@@ -11737,6 +11758,18 @@ ${formatCssBlock(footerBackground)}
 
             if (footerSocialContainer) {
                 footerSocialContainer.style.display = hasFooterSocial ? '' : 'none';
+            }
+
+            const whatsappNotice = document.getElementById('whatsappConfigAlert');
+            if (whatsappNotice) {
+                let message = '';
+                if (!hasWhatsappValue) {
+                    message = 'Configura un número de WhatsApp en Ajustes para finalizar la compra.';
+                } else if (!whatsappStatus.isValid) {
+                    message = 'El número de WhatsApp no es válido. Actualízalo para finalizar la compra.';
+                }
+                whatsappNotice.textContent = message;
+                whatsappNotice.hidden = !message;
             }
 
             const aboutData = updateAboutSection(config.about);
@@ -12990,11 +13023,15 @@ ${formatCssBlock(footerBackground)}
         }
 
         function contactWhatsApp() {
-            const config = catalogConfig || {};
             const whatsappStatus = getWhatsappStatus();
             const whatsappNumber = whatsappStatus.isValid ? whatsappStatus.digits : '';
+            const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
 
             if (!whatsappNumber) {
+                const message = hasWhatsappValue
+                    ? 'El número de WhatsApp configurado no es válido. Actualízalo para continuar con la compra.'
+                    : 'Agrega un número de WhatsApp en Ajustes para finalizar la compra.';
+                notifyWhatsappIssue(message);
                 return;
             }
 
@@ -13028,7 +13065,10 @@ ${formatCssBlock(footerBackground)}
             }
 
             const url = \`https://wa.me/\${whatsappNumber}?text=\${encodeURIComponent(message)}\`;
-            window.open(url, '_blank');
+            const openedWindow = window.open(url, '_blank');
+            if (!openedWindow || openedWindow.closed || typeof openedWindow.closed === 'undefined') {
+                window.location.href = url;
+            }
         }
 
         function requestQuote() {
