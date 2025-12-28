@@ -837,6 +837,19 @@
             return trimmed && isValidUrl(trimmed) ? trimmed : '';
         }
 
+        function clamp(value, min, max) {
+            const numericValue = Number.parseFloat(value);
+
+            if (!Number.isFinite(numericValue)) {
+                return Number.isFinite(min) ? min : 0;
+            }
+
+            const lowerBound = Number.isFinite(min) ? min : numericValue;
+            const upperBound = Number.isFinite(max) ? max : numericValue;
+
+            return Math.min(upperBound, Math.max(lowerBound, numericValue));
+        }
+
         function normalizePromotion(candidate) {
             const normalized = isPlainObject(candidate) ? candidate : {};
             const percentageValue = Number.parseFloat(normalized.percentage);
