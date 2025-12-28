@@ -12577,9 +12577,9 @@ ${formatCssBlock(footerBackground)}
                 } else if (uniqueCount === 1) {
                     summaryElement.textContent = totalUnits === 1
                         ? '1 producto en el carrito'
-                        : `1 producto, ${totalUnits} unidades`;
+                        : '1 producto, ' + totalUnits + ' unidades';
                 } else {
-                    summaryElement.textContent = `${uniqueCount} productos, ${totalUnits} unidades`;
+                    summaryElement.textContent = uniqueCount + ' productos, ' + totalUnits + ' unidades';
                 }
             }
 
@@ -12626,12 +12626,12 @@ ${formatCssBlock(footerBackground)}
                 if (!hasPricedItems) {
                     totalsElement.textContent = 'Los precios se confirmarán en el paso final.';
                 } else {
-                    const totalText = `Total estimado: ${formatCurrencyCOP(totalAmount)}`;
-                    const savingsText = savingsTotal > 0 ? ` • Ahorro: ${formatCurrencyCOP(savingsTotal)}` : '';
+                    const totalText = 'Total estimado: ' + formatCurrencyCOP(totalAmount);
+                    const savingsText = savingsTotal > 0 ? ' • Ahorro: ' + formatCurrencyCOP(savingsTotal) : '';
                     const referenceText = savingsTotal > 0 && baseTotal > 0
-                        ? ` (Antes: ${formatCurrencyCOP(baseTotal)})`
+                        ? ' (Antes: ' + formatCurrencyCOP(baseTotal) + ')'
                         : '';
-                    totalsElement.textContent = `${totalText}${savingsText}${referenceText}`;
+                    totalsElement.textContent = totalText + savingsText + referenceText;
                 }
 
                 totalsElement.setAttribute('data-visible', hasPricedItems ? 'true' : 'false');
@@ -12641,8 +12641,8 @@ ${formatCssBlock(footerBackground)}
                 const expanded = toggle.getAttribute('aria-expanded') === 'true';
                 const labelDescriptor = uniqueCount === 0
                     ? 'sin productos'
-                    : `${uniqueCount} ${uniqueCount === 1 ? 'producto en el carrito' : 'productos en el carrito'}`;
-                toggle.setAttribute('aria-label', `${expanded ? 'Cerrar' : 'Abrir'} carrito (${labelDescriptor})`);
+                    : uniqueCount + ' ' + (uniqueCount === 1 ? 'producto en el carrito' : 'productos en el carrito');
+                toggle.setAttribute('aria-label', (expanded ? 'Cerrar' : 'Abrir') + ' carrito (' + labelDescriptor + ')');
             }
         }
 
