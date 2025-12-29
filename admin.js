@@ -12705,8 +12705,9 @@ ${formatCssBlock(footerBackground)}
                         if (discountPercent > 0) {
                             const discountBadge = document.createElement('span');
                             discountBadge.className = 'selected-products-item__price-badge';
-                            discountBadge.textContent = `-${discountPercent}%`;
-                            discountBadge.setAttribute('aria-label', `Ahorro de ${discountPercent}%`);
+                            const discountLabel = '-' + discountPercent + '%';
+                            discountBadge.textContent = discountLabel;
+                            discountBadge.setAttribute('aria-label', 'Ahorro de ' + discountPercent + '%');
                             priceRow.appendChild(discountBadge);
                         }
                     }
@@ -12729,7 +12730,7 @@ ${formatCssBlock(footerBackground)}
                     if (pricingDetails.hasDiscount && pricingDetails.originalSubtotalFormatted && pricingDetails.subtotalFormatted) {
                         const subtotalReference = document.createElement('span');
                         subtotalReference.className = 'selected-products-item__subtotal-original';
-                        subtotalReference.textContent = `Antes: ${pricingDetails.originalSubtotalFormatted}`;
+                        subtotalReference.textContent = 'Antes: ' + pricingDetails.originalSubtotalFormatted;
                         subtotalRow.appendChild(subtotalReference);
                     }
 
