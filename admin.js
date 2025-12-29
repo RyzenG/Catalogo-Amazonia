@@ -10933,11 +10933,18 @@ ${formatCssBlock(footerBackground)}
             outline-offset: 2px;
         }
 
-        .selected-products-panel__checkout:disabled {
+        .selected-products-panel__checkout:disabled,
+        .selected-products-panel__checkout.selected-products__checkout--disabled {
             opacity: 0.6;
             cursor: not-allowed;
             box-shadow: none;
             transform: none;
+        }
+
+        .selected-products-panel__checkout.selected-products__checkout--disabled:hover,
+        .selected-products-panel__checkout.selected-products__checkout--disabled:focus {
+            transform: none;
+            box-shadow: none;
         }
 
         .selected-products-panel__empty {
@@ -11012,6 +11019,74 @@ ${formatCssBlock(footerBackground)}
         .selected-products-item__remove:focus {
             color: ${theme.accentStrong};
             text-decoration: underline;
+        }
+
+        .selected-products-item__pricing {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            color: ${theme.categoryDescription};
+        }
+
+        .selected-products-item__price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .selected-products-item__price--original {
+            text-decoration: line-through;
+            color: ${theme.categoryDescription};
+            font-weight: 500;
+        }
+
+        .selected-products-item__price--discounted {
+            color: ${theme.accentStrong};
+            font-weight: 700;
+        }
+
+        .selected-products-item__price {
+            color: ${theme.categoryTitle};
+            font-weight: 700;
+        }
+
+        .selected-products-item__price-badge {
+            background: ${theme.accentSoft};
+            color: ${theme.accentStrong};
+            border-radius: 999px;
+            padding: 0.1rem 0.55rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .selected-products-item__subtotal-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            font-size: 0.95rem;
+            color: ${theme.categoryTitle};
+        }
+
+        .selected-products-item__subtotal-label {
+            font-weight: 600;
+        }
+
+        .selected-products-item__subtotal-value {
+            font-weight: 700;
+            color: ${theme.categoryTitle};
+        }
+
+        .selected-products-item__subtotal-original {
+            color: ${theme.categoryDescription};
+            text-decoration: line-through;
+            font-weight: 500;
+        }
+
+        .selected-products-item__price--pending {
+            color: ${theme.categoryDescription};
+            font-style: italic;
         }
 
         .selected-products-item__fields {
@@ -12283,6 +12358,48 @@ ${formatCssBlock(footerBackground)}
             }
         }
 
+        function getCheckoutState() {
+            const validItems = selectedProducts.filter(item => productData[item.id] && isProductAvailable(productData[item.id]));
+            const whatsappStatus = getWhatsappStatus();
+            const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
+            const hasValidWhatsapp = whatsappStatus.isValid;
+            const hasSelection = validItems.length > 0;
+            const canCheckout = hasSelection && hasValidWhatsapp;
+            let disabledReason = '';
+
+            if (!hasSelection) {
+                disabledReason = 'Agrega al menos un producto al carrito para finalizar la compra.';
+            } else if (!hasWhatsappValue) {
+                disabledReason = 'Configura un número de WhatsApp en Ajustes para finalizar la compra.';
+            } else if (!hasValidWhatsapp) {
+                disabledReason = 'El número de WhatsApp no es válido. Actualízalo para finalizar la compra.';
+            }
+
+            return {
+                hasWhatsappValue,
+                hasValidWhatsapp,
+                hasSelection,
+                canCheckout,
+                disabledReason
+            };
+        }
+
+        function applyCheckoutButtonState(checkoutButton) {
+            if (!checkoutButton) {
+                return null;
+            }
+
+            const state = getCheckoutState();
+            const isDisabled = !state.canCheckout;
+            checkoutButton.disabled = false;
+            checkoutButton.classList.toggle('selected-products__checkout--disabled', isDisabled);
+            checkoutButton.setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
+            checkoutButton.dataset.checkoutDisabled = isDisabled ? 'true' : 'false';
+            checkoutButton.style.display = '';
+
+            return state;
+        }
+
         function setupSelectionPanel() {
             const toggle = document.getElementById('selectedPanelToggle');
             const panel = document.getElementById('selectedProductsPanel');
@@ -12290,10 +12407,6 @@ ${formatCssBlock(footerBackground)}
             const clearButton = document.getElementById('clearSelectedProductsButton');
             const checkoutButton = document.getElementById('checkoutButton');
             const whatsappAlert = document.getElementById('whatsappConfigAlert');
-
-            const whatsappStatus = getWhatsappStatus();
-            const hasValidWhatsapp = whatsappStatus.isValid;
-            const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
 
             if (toggle) {
                 toggle.addEventListener('click', function() {
@@ -12333,14 +12446,20 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (checkoutButton) {
-                const hasSelection = selectedProducts.some(item => productData[item.id]);
-                const canCheckout = hasSelection && hasValidWhatsapp;
-                checkoutButton.disabled = !canCheckout;
-                checkoutButton.setAttribute('aria-disabled', canCheckout ? 'false' : 'true');
-                checkoutButton.style.display = hasWhatsappValue ? '' : 'none';
+                applyCheckoutButtonState(checkoutButton);
 
-                checkoutButton.addEventListener('click', function() {
-                    if (checkoutButton.disabled) {
+                checkoutButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const state = applyCheckoutButtonState(checkoutButton);
+
+                    if (!state) {
+                        return;
+                    }
+
+                    if (!state.canCheckout) {
+                        if (state.disabledReason) {
+                            notifyWhatsappIssue(state.disabledReason);
+                        }
                         return;
                     }
 
@@ -12350,6 +12469,10 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (whatsappAlert) {
+                const whatsappStatus = getWhatsappStatus();
+                const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
+                const hasValidWhatsapp = whatsappStatus.isValid;
+
                 let message = '';
 
                 if (!hasWhatsappValue) {
@@ -12478,6 +12601,11 @@ ${formatCssBlock(footerBackground)}
                 selectedProducts = filtered;
             }
 
+            const detailsById = getSelectedProductsDetails().reduce((accumulator, detail) => {
+                accumulator[detail.id] = detail;
+                return accumulator;
+            }, {});
+
             if (!list) {
                 updateSelectionSummaryUI();
                 updateProductSelectionButtons();
@@ -12540,6 +12668,81 @@ ${formatCssBlock(footerBackground)}
 
                 listItem.appendChild(header);
 
+                const pricingDetails = (detailsById && detailsById[item.id]) || null;
+                const pricingWrapper = document.createElement('div');
+                pricingWrapper.className = 'selected-products-item__pricing';
+
+                if (pricingDetails && (pricingDetails.unitPriceFormatted || pricingDetails.originalUnitPriceFormatted)) {
+                    const priceRow = document.createElement('div');
+                    priceRow.className = 'selected-products-item__price-row';
+
+                    if (pricingDetails.hasDiscount && pricingDetails.originalUnitPriceFormatted) {
+                        const originalPrice = document.createElement('span');
+                        originalPrice.className = 'selected-products-item__price--original';
+                        originalPrice.textContent = pricingDetails.originalUnitPriceFormatted;
+                        priceRow.appendChild(originalPrice);
+                    }
+
+                    if (pricingDetails.unitPriceFormatted) {
+                        const currentPrice = document.createElement('span');
+                        currentPrice.className = pricingDetails.hasDiscount
+                            ? 'selected-products-item__price--discounted'
+                            : 'selected-products-item__price';
+                        currentPrice.textContent = pricingDetails.unitPriceFormatted;
+                        priceRow.appendChild(currentPrice);
+                    }
+
+                    if (
+                        pricingDetails.hasDiscount
+                        && Number.isFinite(pricingDetails.originalUnitPrice)
+                        && Number.isFinite(pricingDetails.unitPrice)
+                        && pricingDetails.originalUnitPrice > 0
+                    ) {
+                        const discountPercent = Math.round(
+                            ((pricingDetails.originalUnitPrice - pricingDetails.unitPrice) / pricingDetails.originalUnitPrice) * 100
+                        );
+
+                        if (discountPercent > 0) {
+                            const discountBadge = document.createElement('span');
+                            discountBadge.className = 'selected-products-item__price-badge';
+                            discountBadge.textContent = `-${discountPercent}%`;
+                            discountBadge.setAttribute('aria-label', `Ahorro de ${discountPercent}%`);
+                            priceRow.appendChild(discountBadge);
+                        }
+                    }
+
+                    pricingWrapper.appendChild(priceRow);
+
+                    const subtotalRow = document.createElement('div');
+                    subtotalRow.className = 'selected-products-item__subtotal-row';
+
+                    const subtotalLabel = document.createElement('span');
+                    subtotalLabel.className = 'selected-products-item__subtotal-label';
+                    subtotalLabel.textContent = 'Subtotal';
+                    subtotalRow.appendChild(subtotalLabel);
+
+                    const subtotalValue = document.createElement('span');
+                    subtotalValue.className = 'selected-products-item__subtotal-value';
+                    subtotalValue.textContent = pricingDetails.subtotalFormatted || 'Pendiente de cotizar';
+                    subtotalRow.appendChild(subtotalValue);
+
+                    if (pricingDetails.hasDiscount && pricingDetails.originalSubtotalFormatted && pricingDetails.subtotalFormatted) {
+                        const subtotalReference = document.createElement('span');
+                        subtotalReference.className = 'selected-products-item__subtotal-original';
+                        subtotalReference.textContent = `Antes: ${pricingDetails.originalSubtotalFormatted}`;
+                        subtotalRow.appendChild(subtotalReference);
+                    }
+
+                    pricingWrapper.appendChild(subtotalRow);
+                } else {
+                    const pendingPrice = document.createElement('span');
+                    pendingPrice.className = 'selected-products-item__price--pending';
+                    pendingPrice.textContent = 'Precio pendiente de cotizar';
+                    pricingWrapper.appendChild(pendingPrice);
+                }
+
+                listItem.appendChild(pricingWrapper);
+
                 const fieldsWrapper = document.createElement('div');
                 fieldsWrapper.className = 'selected-products-item__fields';
 
@@ -12559,12 +12762,12 @@ ${formatCssBlock(footerBackground)}
                 quantityInput.addEventListener('change', function() {
                     const value = sanitizeQuantity(quantityInput.value);
                     quantityInput.value = value.toString();
-                    updateSelectionItem(item.id, { quantity: value }, { reRender: false });
+                    updateSelectionItem(item.id, { quantity: value }, { reRender: true });
                 });
                 quantityInput.addEventListener('blur', function() {
                     const value = sanitizeQuantity(quantityInput.value);
                     quantityInput.value = value.toString();
-                    updateSelectionItem(item.id, { quantity: value }, { reRender: false });
+                    updateSelectionItem(item.id, { quantity: value }, { reRender: true });
                 });
                 quantityField.appendChild(quantityInput);
 
@@ -12634,10 +12837,7 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (checkoutButton) {
-                const canCheckout = uniqueCount > 0 && whatsappStatus.isValid;
-                checkoutButton.disabled = !canCheckout;
-                checkoutButton.setAttribute('aria-disabled', canCheckout ? 'false' : 'true');
-                checkoutButton.style.display = hasWhatsappValue ? '' : 'none';
+                applyCheckoutButtonState(checkoutButton);
             }
 
             if (whatsappAlert) {
