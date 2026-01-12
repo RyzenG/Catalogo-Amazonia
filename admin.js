@@ -11342,9 +11342,19 @@ ${formatCssBlock(footerBackground)}
             return true;
         }
 
-        function getWhatsappStatus() {
+        function resolveWhatsappValue() {
             const config = catalogConfig || {};
-            const rawValue = typeof config.whatsapp === 'string' ? config.whatsapp.trim() : '';
+            const contact = config && typeof config.contact === 'object' ? config.contact : {};
+            const candidates = [
+                typeof config.whatsapp === 'string' ? config.whatsapp.trim() : '',
+                typeof contact.whatsapp === 'string' ? contact.whatsapp.trim() : '',
+                typeof contact.phone === 'string' ? contact.phone.trim() : ''
+            ];
+            return candidates.find(value => value.length > 0) || '';
+        }
+
+        function getWhatsappStatus() {
+            const rawValue = resolveWhatsappValue();
             const digits = rawValue.replace(/\D/g, '');
             const isValid = digits.length >= 10 && digits.length <= 15;
 
