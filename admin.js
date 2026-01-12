@@ -6245,7 +6245,7 @@
         });
 
         // Generate Catalog
-        function generateCatalog() {
+        async function generateCatalog() {
             const processEntryId = createProcessStatusEntry('generate-catalog', 'Validando configuración antes de generar…');
             setGenerateButtonsDisabled(true);
             showMessage('Validando información del catálogo...', 'info');
@@ -6284,20 +6284,27 @@
                     detail: 'Generando archivos para la descarga…'
                 });
 
-                const triggerDownload = (filename, content) => {
+                const triggerDownload = (filename, content, delayMs = 200) => new Promise((resolve) => {
                     const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
                     link.download = filename;
+                    document.body.appendChild(link);
                     link.click();
-                    URL.revokeObjectURL(url);
-                };
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            URL.revokeObjectURL(url);
+                            link.remove();
+                            resolve();
+                        }, delayMs);
+                    });
+                });
 
-                triggerDownload('index.html', homeHtmlContent);
-                triggerDownload('catalogo.html', catalogHtmlContent);
-                triggerDownload('politicas.html', policiesHtmlContent);
-                triggerDownload('nosotros.html', aboutHtmlContent);
+                await triggerDownload('index.html', homeHtmlContent);
+                await triggerDownload('catalogo.html', catalogHtmlContent);
+                await triggerDownload('politicas.html', policiesHtmlContent);
+                await triggerDownload('nosotros.html', aboutHtmlContent);
 
                 updateProcessStatusEntry(processEntryId, {
                     state: 'success',
