@@ -7308,7 +7308,10 @@
                             ? product.name
                             : 'Producto Amazonia';
                         const productNameHtml = escapeHtml(rawName);
-                        const productAnchorId = escapeHtml(`producto-${product.id || `item-${productIndex + 1}`}`);
+                        const resolvedProductId = typeof product.id === 'string' && product.id.trim()
+                            ? product.id.trim()
+                            : `${category.id}-item-${productIndex + 1}`;
+                        const productAnchorId = escapeHtml(`producto-${resolvedProductId}`);
                         const rawShortDesc = typeof product.shortDesc === 'string' && product.shortDesc.trim()
                             ? product.shortDesc
                             : 'Información disponible próximamente.';
@@ -7358,7 +7361,7 @@
                         const productDescriptionAttr = escapeHtml(descriptionAttrSource);
                         const priceAttr = Number.isFinite(numericPrice) ? numericPrice : '';
                         productsHTML += `
-                <div class="product-card" id="${productAnchorId}" data-category="${category.id}" data-product-id="${product.id}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${product.id}')">
+                <div class="product-card" id="${productAnchorId}" data-category="${category.id}" data-product-id="${resolvedProductId}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${resolvedProductId}')">
                     <div class="product-image">
                         <img ${productImageAttrString} alt="${imageAlt}">
                     </div>
@@ -7374,7 +7377,7 @@
                                     </div>`
                                 : `<p class="product-price">${productPriceHtml}</p>`}
                             <div class="product-actions">
-                                <button type="button" class="product-card__select${isAvailable ? '' : ' product-card__select--disabled'}" data-product-id="${product.id}" aria-pressed="false" aria-label="${isAvailable ? `Agregar ${productNameHtml} al carrito` : `${productNameHtml} está agotado`}" ${isAvailable ? '' : 'disabled aria-disabled="true"'}>${isAvailable ? '➕ Añadir al carrito' : 'Agotado'}</button>
+                                <button type="button" class="product-card__select${isAvailable ? '' : ' product-card__select--disabled'}" data-product-id="${resolvedProductId}" aria-pressed="false" aria-label="${isAvailable ? `Agregar ${productNameHtml} al carrito` : `${productNameHtml} está agotado`}" ${isAvailable ? '' : 'disabled aria-disabled="true"'}>${isAvailable ? '➕ Añadir al carrito' : 'Agotado'}</button>
                             </div>
                         </div>
                     </div>`;
@@ -7395,7 +7398,7 @@
                             escapeHtml(spec[1])
                         ]);
 
-                        productDataJS[product.id] = {
+                        productDataJS[resolvedProductId] = {
                             title: rawName,
                             image: imageSrc,
                             imageAttributes: productImageAttributes,
