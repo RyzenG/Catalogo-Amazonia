@@ -6323,11 +6323,15 @@
             }
         }
 
+        let lastCatalogPreviewHtml = '';
+
         function updateCatalogPreview() {
             const previewFrame = document.getElementById('catalogPreview');
             if (!previewFrame) {
                 return;
             }
+
+            previewFrame.classList.remove('catalog-preview--error');
 
             try {
                 const hasConfigForm = Boolean(document.getElementById('companyName'));
@@ -6339,6 +6343,7 @@
                 updateMetadataPreview(context.pageMetadata);
 
                 const htmlContent = generateCatalogHTML(context.config, context);
+                lastCatalogPreviewHtml = htmlContent;
                 if ('srcdoc' in previewFrame) {
                     previewFrame.srcdoc = htmlContent;
                 } else {
@@ -6346,6 +6351,15 @@
                 }
             } catch (error) {
                 console.error('No se pudo actualizar la vista previa del catálogo', error);
+                showMessage('No se pudo actualizar la vista previa del catálogo. Intenta nuevamente.', 'error');
+                previewFrame.classList.add('catalog-preview--error');
+                if (lastCatalogPreviewHtml) {
+                    if ('srcdoc' in previewFrame) {
+                        previewFrame.srcdoc = lastCatalogPreviewHtml;
+                    } else {
+                        previewFrame.innerHTML = lastCatalogPreviewHtml;
+                    }
+                }
             }
         }
 
