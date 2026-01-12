@@ -11400,11 +11400,11 @@ ${formatCssBlock(footerBackground)}
             if (suffixWithoutCop !== suffix) {
                 suffix = suffixWithoutCop;
                 if (suffix && !/^\s/.test(suffix)) {
-                    suffix = ` ${suffix}`;
+                    suffix = \` \${suffix}\`;
                 }
             }
 
-            return `${prefix}${formatted}${suffix}`;
+            return \`\${prefix}\${formatted}\${suffix}\`;
         }
 
         function isProductAvailable(product) {
