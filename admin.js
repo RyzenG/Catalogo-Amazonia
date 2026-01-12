@@ -7328,6 +7328,9 @@
                         const imageSrc = productImageAttributes.src;
                         const imageAlt = escapeHtml(`Imagen de ${rawName}`);
                         const formattedPrice = formatCurrencyCOP(product.price);
+                        const priceDisplay = formattedPrice
+                            ? formattedPrice
+                            : (typeof product.price === 'string' && product.price.trim() ? product.price.trim() : '');
                         let numericPrice = Number.NaN;
                         if (typeof product.price === 'number') {
                             numericPrice = product.price;
@@ -7401,9 +7404,11 @@
                             description: typeof product.longDesc === 'string' && product.longDesc.trim()
                                 ? product.longDesc
                                 : rawShortDesc,
+                            shortDesc: rawShortDesc,
                             specs: sanitizedSpecs,
                             price: Number.isFinite(numericPrice) ? numericPrice : null,
                             priceFormatted: formattedPrice,
+                            priceDisplay,
                             discountedPrice: promotionResult.hasDiscount ? promotionResult.finalPrice : null,
                             discountedPriceFormatted: promotionResult.hasDiscount ? formatCurrencyCOP(promotionResult.finalPrice) : '',
                             discountAmount: promotionResult.discountAmount,
@@ -10975,6 +10980,13 @@ ${formatCssBlock(footerBackground)}
             gap: 0.75rem;
         }
 
+        .selected-products-item__info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            flex: 1 1 auto;
+        }
+
         .selected-products-item__thumbnail {
             width: 64px;
             height: 64px;
@@ -11005,6 +11017,13 @@ ${formatCssBlock(footerBackground)}
             font-weight: 600;
             color: ${theme.categoryTitle};
             flex: 1 1 auto;
+        }
+
+        .selected-products-item__description {
+            display: block;
+            color: ${theme.categoryDescription};
+            font-size: 0.95rem;
+            line-height: 1.4;
         }
 
         .selected-products-item__remove {
@@ -11049,6 +11068,11 @@ ${formatCssBlock(footerBackground)}
         .selected-products-item__price {
             color: ${theme.categoryTitle};
             font-weight: 700;
+        }
+
+        .selected-products-item__price--text {
+            color: ${theme.categoryDescription};
+            font-weight: 600;
         }
 
         .selected-products-item__price-badge {
@@ -12384,18 +12408,28 @@ ${formatCssBlock(footerBackground)}
             };
         }
 
-        function applyCheckoutButtonState(checkoutButton) {
+        function applyCheckoutButtonState(checkoutButton, whatsappAlert) {
             if (!checkoutButton) {
                 return null;
             }
 
             const state = getCheckoutState();
             const isDisabled = !state.canCheckout;
-            checkoutButton.disabled = false;
+            checkoutButton.disabled = isDisabled;
             checkoutButton.classList.toggle('selected-products__checkout--disabled', isDisabled);
             checkoutButton.setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
             checkoutButton.dataset.checkoutDisabled = isDisabled ? 'true' : 'false';
             checkoutButton.style.display = '';
+
+            if (whatsappAlert) {
+                if (isDisabled && state.disabledReason) {
+                    whatsappAlert.textContent = state.disabledReason;
+                    whatsappAlert.hidden = false;
+                } else {
+                    whatsappAlert.textContent = '';
+                    whatsappAlert.hidden = true;
+                }
+            }
 
             return state;
         }
@@ -12446,20 +12480,17 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (checkoutButton) {
-                applyCheckoutButtonState(checkoutButton);
+                applyCheckoutButtonState(checkoutButton, whatsappAlert);
 
                 checkoutButton.addEventListener('click', function(event) {
                     event.preventDefault();
-                    const state = applyCheckoutButtonState(checkoutButton);
+                    const state = applyCheckoutButtonState(checkoutButton, whatsappAlert);
 
                     if (!state) {
                         return;
                     }
 
                     if (!state.canCheckout) {
-                        if (state.disabledReason) {
-                            notifyWhatsappIssue(state.disabledReason);
-                        }
                         return;
                     }
 
@@ -12468,21 +12499,10 @@ ${formatCssBlock(footerBackground)}
                 });
             }
 
-            if (whatsappAlert) {
-                const whatsappStatus = getWhatsappStatus();
-                const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
-                const hasValidWhatsapp = whatsappStatus.isValid;
-
-                let message = '';
-
-                if (!hasWhatsappValue) {
-                    message = 'Configura un número de WhatsApp en Ajustes para finalizar la compra.';
-                } else if (!hasValidWhatsapp) {
-                    message = 'El número de WhatsApp no es válido. Actualízalo para finalizar la compra.';
-                }
-
-                whatsappAlert.textContent = message;
-                whatsappAlert.hidden = !message;
+            if (whatsappAlert && !checkoutButton) {
+                const state = getCheckoutState();
+                whatsappAlert.textContent = !state.canCheckout && state.disabledReason ? state.disabledReason : '';
+                whatsappAlert.hidden = state.canCheckout || !state.disabledReason;
             }
         }
 
@@ -12651,10 +12671,26 @@ ${formatCssBlock(footerBackground)}
 
                 header.appendChild(thumbnailContainer);
 
+                const infoContainer = document.createElement('div');
+                infoContainer.className = 'selected-products-item__info';
+
                 const nameElement = document.createElement('span');
                 nameElement.className = 'selected-products-item__name';
                 nameElement.textContent = normalizedName;
-                header.appendChild(nameElement);
+                infoContainer.appendChild(nameElement);
+
+                const descriptionText = typeof product.shortDesc === 'string' && product.shortDesc.trim()
+                    ? product.shortDesc.trim()
+                    : (typeof product.description === 'string' ? product.description.trim() : '');
+
+                if (descriptionText) {
+                    const descriptionElement = document.createElement('span');
+                    descriptionElement.className = 'selected-products-item__description';
+                    descriptionElement.textContent = descriptionText;
+                    infoContainer.appendChild(descriptionElement);
+                }
+
+                header.appendChild(infoContainer);
 
                 const removeButton = document.createElement('button');
                 removeButton.type = 'button';
@@ -12672,7 +12708,7 @@ ${formatCssBlock(footerBackground)}
                 const pricingWrapper = document.createElement('div');
                 pricingWrapper.className = 'selected-products-item__pricing';
 
-                if (pricingDetails && (pricingDetails.unitPriceFormatted || pricingDetails.originalUnitPriceFormatted)) {
+                if (pricingDetails && (pricingDetails.unitPriceFormatted || pricingDetails.originalUnitPriceFormatted || pricingDetails.displayPrice)) {
                     const priceRow = document.createElement('div');
                     priceRow.className = 'selected-products-item__price-row';
 
@@ -12690,6 +12726,11 @@ ${formatCssBlock(footerBackground)}
                             : 'selected-products-item__price';
                         currentPrice.textContent = pricingDetails.unitPriceFormatted;
                         priceRow.appendChild(currentPrice);
+                    } else if (pricingDetails.displayPrice) {
+                        const textPrice = document.createElement('span');
+                        textPrice.className = 'selected-products-item__price--text';
+                        textPrice.textContent = 'Precio: ' + pricingDetails.displayPrice;
+                        priceRow.appendChild(textPrice);
                     }
 
                     if (
@@ -12815,7 +12856,6 @@ ${formatCssBlock(footerBackground)}
             const uniqueCount = validItems.length;
             const totalUnits = validItems.reduce((sum, item) => sum + sanitizeQuantity(item.quantity), 0);
             const whatsappStatus = getWhatsappStatus();
-            const hasWhatsappValue = Boolean(whatsappStatus.rawValue);
 
             if (countElement) {
                 countElement.textContent = String(uniqueCount);
@@ -12838,20 +12878,11 @@ ${formatCssBlock(footerBackground)}
             }
 
             if (checkoutButton) {
-                applyCheckoutButtonState(checkoutButton);
-            }
-
-            if (whatsappAlert) {
-                let message = '';
-
-                if (!hasWhatsappValue) {
-                    message = 'Configura un número de WhatsApp en Ajustes para finalizar la compra.';
-                } else if (!whatsappStatus.isValid) {
-                    message = 'El número de WhatsApp no es válido. Actualízalo para finalizar la compra.';
-                }
-
-                whatsappAlert.textContent = message;
-                whatsappAlert.hidden = !message;
+                applyCheckoutButtonState(checkoutButton, whatsappAlert);
+            } else if (whatsappAlert) {
+                const state = getCheckoutState();
+                whatsappAlert.textContent = !state.canCheckout && state.disabledReason ? state.disabledReason : '';
+                whatsappAlert.hidden = state.canCheckout || !state.disabledReason;
             }
 
             if (panel) {
@@ -12985,6 +13016,11 @@ ${formatCssBlock(footerBackground)}
                     const formattedPrice = Number.isFinite(unitPrice)
                         ? formatCurrencyCOP(unitPrice)
                         : '';
+                    const displayPrice = typeof product.priceDisplay === 'string' && product.priceDisplay.trim()
+                        ? product.priceDisplay.trim()
+                        : (typeof product.priceFormatted === 'string' && product.priceFormatted.trim()
+                            ? product.priceFormatted.trim()
+                            : (typeof product.price === 'string' ? product.price.trim() : ''));
                     const subtotal = Number.isFinite(unitPrice) ? unitPrice * quantity : null;
                     const subtotalFormatted = Number.isFinite(subtotal) ? formatCurrencyCOP(subtotal) : '';
                     const originalSubtotal = Number.isFinite(basePrice) ? basePrice * quantity : null;
@@ -13001,6 +13037,7 @@ ${formatCssBlock(footerBackground)}
                         unitPriceFormatted: formattedPrice,
                         originalUnitPrice: Number.isFinite(basePrice) ? basePrice : null,
                         originalUnitPriceFormatted: Number.isFinite(basePrice) ? formatCurrencyCOP(basePrice) : '',
+                        displayPrice,
                         subtotal,
                         subtotalFormatted,
                         originalSubtotal,
