@@ -11325,6 +11325,67 @@ ${formatCssBlock(footerBackground)}
         const selectionStorage = getPersistentStorage();
         let selectedProducts = [];
 
+        const COP_CURRENCY_FORMATTER = new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            currencyDisplay: 'code',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+
+        function formatCurrencyCOP(value) {
+            if (value === null || typeof value === 'undefined') {
+                return '';
+            }
+
+            if (typeof value === 'number' && !Number.isFinite(value)) {
+                return '';
+            }
+
+            const stringValue = typeof value === 'number' ? String(value) : String(value);
+            if (!stringValue) {
+                return '';
+            }
+
+            const match = stringValue.match(/[\d][\d.,]*/);
+            if (!match) {
+                return '';
+            }
+
+            const numericChunk = match[0];
+            const digitsOnly = numericChunk.replace(/[^\d]/g, '');
+            if (!digitsOnly) {
+                return '';
+            }
+
+            const parsedValue = parseInt(digitsOnly, 10);
+            if (Number.isNaN(parsedValue)) {
+                return '';
+            }
+
+            const formatted = COP_CURRENCY_FORMATTER.format(parsedValue);
+            let prefix = stringValue.slice(0, match.index);
+            let suffix = stringValue.slice(match.index + numericChunk.length);
+
+            const prefixWithoutCop = prefix.replace(/\s*COP\s*$/i, '');
+            if (prefixWithoutCop !== prefix) {
+                prefix = prefixWithoutCop;
+                if (prefix && !/\s$/.test(prefix)) {
+                    prefix += ' ';
+                }
+            }
+
+            const suffixWithoutCop = suffix.replace(/^\s*COP\s*/i, '');
+            if (suffixWithoutCop !== suffix) {
+                suffix = suffixWithoutCop;
+                if (suffix && !/^\s/.test(suffix)) {
+                    suffix = ` ${suffix}`;
+                }
+            }
+
+            return `${prefix}${formatted}${suffix}`;
+        }
+
         function isProductAvailable(product) {
             if (!product || typeof product !== 'object') {
                 return true;
