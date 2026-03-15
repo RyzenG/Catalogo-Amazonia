@@ -7384,9 +7384,11 @@
                             .join(' ');
                         const productDescriptionAttr = escapeHtml(descriptionAttrSource);
                         const priceAttr = Number.isFinite(numericPrice) ? numericPrice : '';
+                        const isNewProduct = product.isNew === true;
                         productsHTML += `
                 <div class="product-card" id="${productAnchorId}" data-category="${category.id}" data-product-id="${resolvedProductId}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${resolvedProductId}')">
                     <div class="product-image">
+                        ${isNewProduct ? '<span class="product-badge product-badge--new" aria-label="Producto nuevo">✨ Nuevo</span>' : ''}
                         <img ${productImageAttrString} alt="${imageAlt}">
                     </div>
                         <div class="product-info">
@@ -7662,6 +7664,9 @@
     <meta name="twitter:title" content="${documentTitle}">
     <meta name="twitter:description" content="${metaDescription}">
     ${faviconMarkup}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <style>
         ${getCatalogStyles(theme, { unifiedHomeVisuals })}
     </style>
@@ -7745,6 +7750,7 @@
                 <div class="cta-section">
                     <h3>¿Interesado en este producto?</h3>
                     <p>Contáctanos para más información o para realizar tu pedido</p>
+                    <button type="button" class="cta-button cta-button--cart" id="modalCartButton" onclick="modalAddToCart()">🛒 Añadir al carrito</button>
                     ${modalCTAButtons}
                 </div>
             </div>
@@ -9178,7 +9184,7 @@ ${formatCssBlock(bodyBackground)}
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 ${formatCssBlock(bodyBackground)}
             overflow-x: hidden;
         }
@@ -9351,6 +9357,7 @@ ${formatCssBlock(headerBackground)}
         }
 
         h1 {
+            font-family: 'Playfair Display', Georgia, serif;
             font-size: 3rem;
             margin-bottom: 0.5rem;
             letter-spacing: 3px;
@@ -10026,6 +10033,7 @@ ${formatCssBlock(headerBackground)}
         }
 
         .category-title {
+            font-family: 'Playfair Display', Georgia, serif;
             font-size: 2.5rem;
             color: ${theme.categoryTitle};
             margin-bottom: 1rem;
@@ -10129,6 +10137,26 @@ ${formatCssBlock(headerBackground)}
             display: block;
         }
 
+        .product-badge {
+            position: absolute;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 2;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.3rem 0.75rem;
+            letter-spacing: 0.4px;
+            pointer-events: none;
+        }
+
+        .product-badge--new {
+            background: linear-gradient(135deg, #2e7d52 0%, #1f3b2e 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(31, 59, 46, 0.4);
+            animation: fadeInDown 0.5s ease-out;
+        }
+
         .product-image::after {
             content: '';
             position: absolute;
@@ -10200,22 +10228,25 @@ ${formatCssBlock(headerBackground)}
             appearance: none;
             border: none;
             border-radius: 999px;
-            background: ${theme.accentStrong};
-            color: ${theme.textOnDark};
-            font-weight: 600;
-            padding: 0.55rem 1.4rem;
+            background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+            padding: 0.65rem 1.5rem;
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-            box-shadow: 0 10px 20px ${theme.accentSoft};
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, filter 0.2s ease;
+            box-shadow: 0 6px 18px rgba(31, 59, 46, 0.35);
         }
 
         .product-card__select:hover,
         .product-card__select:focus {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 28px ${theme.accentSoft};
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(31, 59, 46, 0.45);
+            filter: brightness(1.1);
         }
 
         .product-card__select:focus-visible {
@@ -10453,6 +10484,20 @@ ${formatCssBlock(headerBackground)}
         .cta-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px ${theme.ctaShadow};
+        }
+
+        .cta-button--cart {
+            background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: 0.3px;
+            box-shadow: 0 6px 18px rgba(31, 59, 46, 0.35);
+        }
+
+        .cta-button--cart:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 10px 24px rgba(31, 59, 46, 0.45);
         }
 
         .shipping-main {
@@ -11339,6 +11384,7 @@ ${formatCssBlock(footerBackground)}
             return `
         let currentProduct = null;
         let modalProduct = null;
+        let modalProductId = null;
         let modalImages = [];
         let currentImageIndex = 0;
         let searchFilterTimeout = null;
@@ -13313,6 +13359,7 @@ ${formatCssBlock(footerBackground)}
 
             currentProduct = product.title;
             modalProduct = product;
+            modalProductId = productId;
             modalImages = Array.isArray(product.images)
                 ? product.images
                     .map(image => (typeof image === 'string' ? image.trim() : ''))
@@ -13343,9 +13390,36 @@ ${formatCssBlock(footerBackground)}
 
             updateModalImage();
             updateModalCarouselControls();
+            updateModalCartButton();
 
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+        }
+
+        function updateModalCartButton() {
+            const btn = document.getElementById('modalCartButton');
+            if (!btn || !modalProductId) return;
+            const product = productData[modalProductId];
+            if (!product || !product.available) {
+                btn.disabled = true;
+                btn.setAttribute('aria-disabled', 'true');
+                btn.style.opacity = '0.45';
+                btn.style.cursor = 'not-allowed';
+                btn.textContent = 'Agotado';
+                return;
+            }
+            const isSelected = selectedProducts.some(p => p.id === modalProductId);
+            btn.disabled = false;
+            btn.removeAttribute('aria-disabled');
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.textContent = isSelected ? '✔ En el carrito' : '🛒 Añadir al carrito';
+        }
+
+        function modalAddToCart() {
+            if (!modalProductId) return;
+            addProductToSelection(modalProductId);
+            updateModalCartButton();
         }
 
         function closeModal() {
