@@ -10218,6 +10218,41 @@ ${formatCssBlock(headerBackground)}
             font-weight: bold;
         }
 
+        .product-price--discount {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .product-price__current {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: ${theme.priceColor};
+            line-height: 1;
+        }
+
+        .product-price__original {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: ${theme.textSecondary};
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        .product-price__badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: #ffffff;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            box-shadow: 0 3px 8px rgba(197, 48, 48, 0.35);
+            align-self: flex-start;
+            margin-top: 0.15rem;
+        }
+
         .product-actions {
             margin-top: 1.2rem;
             display: flex;
@@ -10787,6 +10822,40 @@ ${formatCssBlock(footerBackground)}
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        @keyframes cartFlyArc {
+            0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+            40%  { opacity: 1; transform: translate(var(--fly-mid-x), var(--fly-mid-y)) scale(0.85); }
+            100% { opacity: 0; transform: translate(var(--fly-end-x), var(--fly-end-y)) scale(0.3); }
+        }
+
+        .cart-fly-particle {
+            position: fixed;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2e7d52 0%, #1f3b2e 100%);
+            color: #fff;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 4px 16px rgba(31, 59, 46, 0.5);
+            animation: cartFlyArc 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes cartBounce {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.35); }
+            70%  { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        .selected-products-toggle--bounce {
+            animation: cartBounce 0.45s ease forwards;
         }
 
         @keyframes fadeInUp {
@@ -12231,6 +12300,17 @@ ${formatCssBlock(footerBackground)}
             const priceSelect = document.getElementById('catalogPriceFilter');
             const sortSelect = document.getElementById('catalogSortFilter');
 
+            // Restore filters from URL params on page load
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const qParam     = params.get('q');
+                const precioParam = params.get('precio');
+                const ordenParam  = params.get('orden');
+                if (searchInput && qParam)     { searchInput.value = qParam; }
+                if (priceSelect && precioParam) { priceSelect.value = precioParam; }
+                if (sortSelect  && ordenParam)  { sortSelect.value  = ordenParam; }
+            } catch (_) { /* silently ignore */ }
+
             initializeFilterPopovers();
 
             if (searchInput) {
@@ -12309,6 +12389,17 @@ ${formatCssBlock(footerBackground)}
             const priceFilter = priceSelect ? priceSelect.value.trim() : '';
             const sortOption = sortSelect ? sortSelect.value : '';
             const priceRange = parsePriceFilter(priceFilter);
+
+            // Persist active filters in the URL without causing a page reload
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (searchTerm) { params.set('q', searchTerm); } else { params.delete('q'); }
+                if (priceFilter) { params.set('precio', priceFilter); } else { params.delete('precio'); }
+                if (sortOption) { params.set('orden', sortOption); } else { params.delete('orden'); }
+                const newSearch = params.toString();
+                const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+                window.history.replaceState(null, '', newUrl);
+            } catch (_) { /* silently ignore if replaceState is unavailable */ }
             const searchTokens = searchTerm.length > 0
                 ? searchTerm.split(/\s+/).filter(Boolean)
                 : [];
@@ -12650,6 +12741,41 @@ ${formatCssBlock(footerBackground)}
             }
         }
 
+        function triggerCartFlyAnimation(sourceEl) {
+            const toggle = document.getElementById('selectedPanelToggle');
+            if (!sourceEl || !toggle) return;
+
+            const srcRect = sourceEl.getBoundingClientRect();
+            const dstRect = toggle.getBoundingClientRect();
+
+            const startX = srcRect.left + srcRect.width / 2;
+            const startY = srcRect.top + srcRect.height / 2;
+            const endX   = dstRect.left + dstRect.width / 2;
+            const endY   = dstRect.top  + dstRect.height / 2;
+
+            const midX = (startX + endX) / 2 - startX;
+            const midY = Math.min(startY, endY) - 80 - startY;
+
+            const particle = document.createElement('div');
+            particle.className = 'cart-fly-particle';
+            particle.textContent = '🛒';
+            particle.style.left = (startX - 21) + 'px';
+            particle.style.top  = (startY - 21) + 'px';
+            particle.style.setProperty('--fly-mid-x', midX + 'px');
+            particle.style.setProperty('--fly-mid-y', midY + 'px');
+            particle.style.setProperty('--fly-end-x', (endX - startX) + 'px');
+            particle.style.setProperty('--fly-end-y', (endY - startY) + 'px');
+
+            document.body.appendChild(particle);
+
+            particle.addEventListener('animationend', function() {
+                particle.remove();
+                toggle.classList.remove('selected-products-toggle--bounce');
+                void toggle.offsetWidth; // force reflow to restart animation
+                toggle.classList.add('selected-products-toggle--bounce');
+            });
+        }
+
         function attachProductSelectionHandlers() {
             const buttons = document.querySelectorAll('.product-card__select');
 
@@ -12672,6 +12798,7 @@ ${formatCssBlock(footerBackground)}
 
                 button.addEventListener('click', function(event) {
                     event.stopPropagation();
+                    triggerCartFlyAnimation(button);
                     addProductToSelection(productId);
                 });
             });
@@ -13418,6 +13545,8 @@ ${formatCssBlock(footerBackground)}
 
         function modalAddToCart() {
             if (!modalProductId) return;
+            const btn = document.getElementById('modalCartButton');
+            if (btn) triggerCartFlyAnimation(btn);
             addProductToSelection(modalProductId);
             updateModalCartButton();
         }
