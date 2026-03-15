@@ -5900,6 +5900,10 @@
                     if (soldOutInput) {
                         soldOutInput.checked = !isProductAvailable(product);
                     }
+                    const priceOnRequestInput = document.getElementById('productPriceOnRequest');
+                    if (priceOnRequestInput) {
+                        priceOnRequestInput.checked = product.priceOnRequest === true;
+                    }
                     document.getElementById('productSpecs').value = product.specs || '';
                     document.getElementById('productId').value = productId;
 
@@ -5920,6 +5924,10 @@
                 const soldOutInput = document.getElementById('productSoldOut');
                 if (soldOutInput) {
                     soldOutInput.checked = false;
+                }
+                const priceOnRequestInputNew = document.getElementById('productPriceOnRequest');
+                if (priceOnRequestInputNew) {
+                    priceOnRequestInputNew.checked = false;
                 }
                 currentImageUrl = '';
                 currentIconFallback = '';
@@ -6055,6 +6063,8 @@
             const normalizedPrice = formatCurrencyCOP(priceInput ? priceInput.value : '');
             const soldOutCheckbox = document.getElementById('productSoldOut');
             const isSoldOut = soldOutCheckbox ? soldOutCheckbox.checked : false;
+            const priceOnRequestCheckbox = document.getElementById('productPriceOnRequest');
+            const isPriceOnRequest = priceOnRequestCheckbox ? priceOnRequestCheckbox.checked : false;
 
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
@@ -6062,6 +6072,7 @@
                 shortDesc: document.getElementById('productShortDesc').value,
                 longDesc: document.getElementById('productLongDesc').value,
                 price: normalizedPrice,
+                priceOnRequest: isPriceOnRequest,
                 features: features,
                 specs: document.getElementById('productSpecs').value,
                 available: !isSoldOut,
@@ -7385,25 +7396,41 @@
                         const productDescriptionAttr = escapeHtml(descriptionAttrSource);
                         const priceAttr = Number.isFinite(numericPrice) ? numericPrice : '';
                         const isNewProduct = product.isNew === true;
-                        productsHTML += `
-                <div class="product-card" id="${productAnchorId}" data-category="${category.id}" data-product-id="${resolvedProductId}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${resolvedProductId}')">
-                    <div class="product-image">
-                        ${isNewProduct ? '<span class="product-badge product-badge--new" aria-label="Producto nuevo">✨ Nuevo</span>' : ''}
-                        <img ${productImageAttrString} alt="${imageAlt}">
-                    </div>
-                        <div class="product-info">
-                            <h3 class="product-name">${productNameHtml}</h3>
-                            <p class="product-description">${productShortDescHtml}</p>
-                            <div class="product-features">${featuresHtml}</div>
-                            ${promotionResult.hasDiscount
+                        const isPriceOnRequest = product.priceOnRequest === true;
+                        const priceBlockHtml = isPriceOnRequest
+                            ? `<p class="product-price product-price--consult">Precio a consultar</p>`
+                            : (promotionResult.hasDiscount
                                 ? `<div class="product-price product-price--discount">
                                         <span class="product-price__current">${discountedPriceFormatted}</span>
                                         <span class="product-price__original">${productPriceHtml}</span>
                                         <span class="product-price__badge">-${promotion.percentage}%</span>
                                     </div>`
-                                : `<p class="product-price">${productPriceHtml}</p>`}
+                                : `<p class="product-price">${productPriceHtml}</p>`);
+                        const selectBtnLabel = isPriceOnRequest
+                            ? `Consultar precio de ${productNameHtml}`
+                            : (isAvailable ? `Agregar ${productNameHtml} al carrito` : `${productNameHtml} está agotado`);
+                        const selectBtnText = isPriceOnRequest ? '💬 Consultar precio' : (isAvailable ? '➕ Añadir al carrito' : 'Agotado');
+                        const selectBtnClass = `product-card__select${(!isAvailable && !isPriceOnRequest) ? ' product-card__select--disabled' : ''}${isPriceOnRequest ? ' product-card__select--consult' : ''}`;
+                        const selectBtnDisabled = !isAvailable && !isPriceOnRequest ? 'disabled aria-disabled="true"' : '';
+                        productsHTML += `
+                <div class="product-card" id="${productAnchorId}" data-category="${category.id}" data-product-id="${resolvedProductId}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${resolvedProductId}')">
+                    <div class="product-image">
+                        ${isNewProduct ? '<span class="product-badge product-badge--new" aria-label="Producto nuevo">✨ Nuevo</span>' : ''}
+                        <img ${productImageAttrString} alt="${imageAlt}">
+                        <button type="button" class="product-card__favorite" data-product-id="${resolvedProductId}" aria-label="Agregar ${productNameHtml} a favoritos" aria-pressed="false" onclick="event.stopPropagation(); toggleFavorite('${resolvedProductId}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                        <div class="product-info">
+                            <h3 class="product-name">${productNameHtml}</h3>
+                            <p class="product-description">${productShortDescHtml}</p>
+                            <div class="product-features">${featuresHtml}</div>
+                            ${priceBlockHtml}
                             <div class="product-actions">
-                                <button type="button" class="product-card__select${isAvailable ? '' : ' product-card__select--disabled'}" data-product-id="${resolvedProductId}" aria-pressed="false" aria-label="${isAvailable ? `Agregar ${productNameHtml} al carrito` : `${productNameHtml} está agotado`}" ${isAvailable ? '' : 'disabled aria-disabled="true"'}>${isAvailable ? '➕ Añadir al carrito' : 'Agotado'}</button>
+                                <button type="button" class="${selectBtnClass}" data-product-id="${resolvedProductId}" aria-pressed="false" aria-label="${selectBtnLabel}" ${selectBtnDisabled}>${selectBtnText}</button>
+                                <button type="button" class="product-card__share" data-product-id="${resolvedProductId}" aria-label="Compartir ${productNameHtml}" onclick="event.stopPropagation(); shareProduct('${resolvedProductId}')">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                </button>
                             </div>
                         </div>
                     </div>`;
@@ -7442,7 +7469,8 @@
                             discountedPriceFormatted: promotionResult.hasDiscount ? formatCurrencyCOP(promotionResult.finalPrice) : '',
                             discountAmount: promotionResult.discountAmount,
                             available: isAvailable,
-                            availability: isAvailable ? 'available' : 'sold-out'
+                            availability: isAvailable ? 'available' : 'sold-out',
+                            priceOnRequest: isPriceOnRequest
                         };
                     });
 
@@ -7520,6 +7548,13 @@
                         </div>
                     </div>
                 </div>
+                <div class="filter-chip filter-chip--favorites">
+                    <button type="button" class="filter-chip__button filter-chip__button--toggle" id="favoritesFilterBtn" aria-pressed="false" aria-label="Mostrar solo favoritos">
+                        <span class="filter-chip__icon" aria-hidden="true">❤️</span>
+                        <span class="filter-chip__text">Favoritos</span>
+                        <span class="filter-chip__count-badge" id="favoritesBadge" aria-hidden="true" hidden>0</span>
+                    </button>
+                </div>
             </div>
         </div>`;
 
@@ -7548,6 +7583,10 @@
         </div>
         <div class="selected-products-panel__footer">
             <div class="selected-products-panel__totals" id="selectedProductsTotals" aria-live="polite"></div>
+            <div class="selected-products-panel__note-wrapper">
+                <label class="selected-products-panel__note-label" for="cartOrderNote">Indicaciones adicionales <span class="selected-products-panel__note-optional">(opcional)</span></label>
+                <textarea id="cartOrderNote" class="selected-products-panel__note" rows="3" maxlength="500" placeholder="Ej: dirección de entrega, color preferido, fecha requerida…" aria-label="Indicaciones adicionales para el pedido"></textarea>
+            </div>
             <p class="selected-products-panel__notice" id="whatsappConfigAlert" role="status" aria-live="polite" hidden></p>
             <p class="selected-products-panel__hint">Revisa los productos seleccionados y finaliza tu compra por WhatsApp.</p>
             <button type="button" class="selected-products-panel__checkout" id="checkoutButton" disabled>Finalizar compra</button>
@@ -7750,7 +7789,13 @@
                 <div class="cta-section">
                     <h3>¿Interesado en este producto?</h3>
                     <p>Contáctanos para más información o para realizar tu pedido</p>
-                    <button type="button" class="cta-button cta-button--cart" id="modalCartButton" onclick="modalAddToCart()">🛒 Añadir al carrito</button>
+                    <div class="cta-section__actions">
+                        <button type="button" class="cta-button cta-button--cart" id="modalCartButton" onclick="modalAddToCart()">🛒 Añadir al carrito</button>
+                        <button type="button" class="cta-button cta-button--share" id="modalShareButton" onclick="shareProduct(modalProductId)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            Compartir
+                        </button>
+                    </div>
                     ${modalCTAButtons}
                 </div>
             </div>
@@ -9378,6 +9423,7 @@ ${formatCssBlock(headerBackground)}
             top: 0;
             z-index: 100;
             animation: slideDown 0.5s ease-out 0.5s both;
+            transition: box-shadow 0.3s ease, background-color 0.3s ease;
         }
 
         .nav-container nav {
@@ -9595,7 +9641,10 @@ ${formatCssBlock(headerBackground)}
         }
 
         .nav-container--compact {
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+            background-color: rgba(255, 255, 255, 0.9);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
         }
 
         .nav-container--compact nav {
@@ -10137,6 +10186,70 @@ ${formatCssBlock(headerBackground)}
             display: block;
         }
 
+        .product-card__favorite {
+            position: absolute;
+            top: 0.55rem;
+            right: 0.55rem;
+            appearance: none;
+            border: none;
+            background: rgba(255, 255, 255, 0.88);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            width: 2.1rem;
+            height: 2.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 2;
+            color: #c0c0c0;
+            padding: 0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        .product-card__favorite:hover {
+            background: #fff;
+            color: #e53e3e;
+            transform: scale(1.15);
+        }
+
+        .product-card__favorite[aria-pressed="true"] {
+            background: #fff5f5;
+            color: #e53e3e;
+        }
+
+        .product-card__favorite[aria-pressed="true"] svg {
+            fill: #e53e3e;
+            stroke: #e53e3e;
+        }
+
+        mark {
+            background: ${theme.accentSoft};
+            color: ${theme.accentStrong};
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+
+        .filter-chip__button--toggle[aria-pressed="true"] {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: #fff;
+            border-color: #e53e3e;
+        }
+
+        .filter-chip__count-badge {
+            background: #e53e3e;
+            color: #fff;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            padding: 0.05rem 0.4rem;
+            font-weight: 700;
+            min-width: 1.1rem;
+            text-align: center;
+            line-height: 1.4;
+        }
+
         .product-badge {
             position: absolute;
             top: 0.75rem;
@@ -10218,10 +10331,67 @@ ${formatCssBlock(headerBackground)}
             font-weight: bold;
         }
 
+        .product-price--discount {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .product-price--consult {
+            font-size: 1rem;
+            font-weight: 600;
+            color: ${theme.accentStrong};
+            border: 1.5px dashed ${theme.accentStrong};
+            border-radius: 8px;
+            padding: 0.3rem 0.7rem;
+            display: inline-block;
+            opacity: 0.85;
+        }
+
+        .product-card__select--consult {
+            background: linear-gradient(135deg, ${theme.accentStrong} 0%, ${theme.ctaBackgroundEnd} 100%);
+            color: #ffffff;
+        }
+
+        .product-card__select--consult:hover {
+            filter: brightness(1.1);
+        }
+
+        .product-price__current {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: ${theme.priceColor};
+            line-height: 1;
+        }
+
+        .product-price__original {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: ${theme.textSecondary};
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        .product-price__badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: #ffffff;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            box-shadow: 0 3px 8px rgba(197, 48, 48, 0.35);
+            align-self: flex-start;
+            margin-top: 0.15rem;
+        }
+
         .product-actions {
             margin-top: 1.2rem;
             display: flex;
             justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .product-card__select {
@@ -10267,6 +10437,30 @@ ${formatCssBlock(headerBackground)}
             cursor: not-allowed;
             box-shadow: none;
             transform: none;
+        }
+
+        .product-card__share {
+            appearance: none;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 999px;
+            background: transparent;
+            color: ${theme.textSecondary};
+            width: 2.2rem;
+            height: 2.2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .product-card__share:hover,
+        .product-card__share:focus-visible {
+            background: ${theme.accentSoft};
+            border-color: ${theme.accentStrong};
+            color: ${theme.accentStrong};
+            transform: scale(1.1);
         }
 
         /* Modal */
@@ -10486,6 +10680,14 @@ ${formatCssBlock(headerBackground)}
             box-shadow: 0 5px 15px ${theme.ctaShadow};
         }
 
+        .cta-section__actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
         .cta-button--cart {
             background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
             color: #ffffff;
@@ -10498,6 +10700,24 @@ ${formatCssBlock(headerBackground)}
         .cta-button--cart:hover {
             filter: brightness(1.1);
             box-shadow: 0 10px 24px rgba(31, 59, 46, 0.45);
+        }
+
+        .cta-button--share {
+            background: transparent;
+            border: 1.5px solid ${theme.borderColor};
+            color: ${theme.productName};
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .cta-button--share:hover {
+            background: ${theme.accentSoft};
+            border-color: ${theme.accentStrong};
+            color: ${theme.accentStrong};
+            box-shadow: none;
         }
 
         .shipping-main {
@@ -10789,6 +11009,40 @@ ${formatCssBlock(footerBackground)}
             }
         }
 
+        @keyframes cartFlyArc {
+            0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+            40%  { opacity: 1; transform: translate(var(--fly-mid-x), var(--fly-mid-y)) scale(0.85); }
+            100% { opacity: 0; transform: translate(var(--fly-end-x), var(--fly-end-y)) scale(0.3); }
+        }
+
+        .cart-fly-particle {
+            position: fixed;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2e7d52 0%, #1f3b2e 100%);
+            color: #fff;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 4px 16px rgba(31, 59, 46, 0.5);
+            animation: cartFlyArc 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes cartBounce {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.35); }
+            70%  { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        .selected-products-toggle--bounce {
+            animation: cartBounce 0.45s ease forwards;
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -10969,6 +11223,47 @@ ${formatCssBlock(footerBackground)}
             flex-direction: column;
             gap: 0.75rem;
             background: #ffffff;
+        }
+
+        .selected-products-panel__note-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .selected-products-panel__note-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: ${theme.productName};
+        }
+
+        .selected-products-panel__note-optional {
+            font-weight: 400;
+            color: ${theme.categoryDescription};
+        }
+
+        .selected-products-panel__note {
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            resize: vertical;
+            background: transparent;
+            color: ${theme.productName};
+            line-height: 1.4;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .selected-products-panel__note:focus {
+            outline: none;
+            border-color: ${theme.accentStrong};
+        }
+
+        .selected-products-panel[data-empty="true"] .selected-products-panel__note-wrapper {
+            display: none;
         }
 
         .selected-products-panel__notice {
@@ -11392,8 +11687,11 @@ ${formatCssBlock(footerBackground)}
         const defaultImageAttributes = ${serialize(defaultImageAttributes)};
         const catalogConfig = ${serialize(config || {})};
         const selectionStorageKey = 'amazoniaCatalogSelectedProducts';
+        const favoritesStorageKey = 'amazoniaCatalogFavorites';
         const selectionStorage = getPersistentStorage();
         let selectedProducts = [];
+        let favoriteProductIds = [];
+        let showOnlyFavorites = false;
 
         const COP_CURRENCY_FORMATTER = new Intl.NumberFormat('es-CO', {
             style: 'currency',
@@ -11738,6 +12036,19 @@ ${formatCssBlock(footerBackground)}
                 attachProductSelectionHandlers();
                 restoreSelectionFromStorage();
                 renderSelectedProductsList();
+
+                // Favorites initialization
+                loadFavorites();
+                updateFavoriteButtons();
+                updateFavoritesBadge();
+                const favoritesFilterBtn = document.getElementById('favoritesFilterBtn');
+                if (favoritesFilterBtn) {
+                    favoritesFilterBtn.addEventListener('click', function() {
+                        showOnlyFavorites = !showOnlyFavorites;
+                        updateFavoritesBadge();
+                        filterCatalog();
+                    });
+                }
 
                 const cards = document.querySelectorAll('.product-card');
                 cards.forEach(card => {
@@ -12231,6 +12542,17 @@ ${formatCssBlock(footerBackground)}
             const priceSelect = document.getElementById('catalogPriceFilter');
             const sortSelect = document.getElementById('catalogSortFilter');
 
+            // Restore filters from URL params on page load
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const qParam     = params.get('q');
+                const precioParam = params.get('precio');
+                const ordenParam  = params.get('orden');
+                if (searchInput && qParam)     { searchInput.value = qParam; }
+                if (priceSelect && precioParam) { priceSelect.value = precioParam; }
+                if (sortSelect  && ordenParam)  { sortSelect.value  = ordenParam; }
+            } catch (_) { /* silently ignore */ }
+
             initializeFilterPopovers();
 
             if (searchInput) {
@@ -12300,6 +12622,117 @@ ${formatCssBlock(footerBackground)}
             return { min: normalizedMin, max: normalizedMax };
         }
 
+        // ── Favorites ────────────────────────────────────────────────────────
+        function loadFavorites() {
+            try {
+                const storage = getPersistentStorage();
+                if (storage) {
+                    const raw = storage.getItem(favoritesStorageKey);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed)) {
+                            favoriteProductIds = parsed;
+                        }
+                    }
+                }
+            } catch (_) {}
+        }
+
+        function saveFavorites() {
+            try {
+                const storage = getPersistentStorage();
+                if (storage) {
+                    storage.setItem(favoritesStorageKey, JSON.stringify(favoriteProductIds));
+                }
+            } catch (_) {}
+        }
+
+        function toggleFavorite(productId) {
+            const index = favoriteProductIds.indexOf(productId);
+            if (index === -1) {
+                favoriteProductIds.push(productId);
+            } else {
+                favoriteProductIds.splice(index, 1);
+            }
+            saveFavorites();
+            updateFavoriteButtons();
+            updateFavoritesBadge();
+            if (showOnlyFavorites) {
+                filterCatalog();
+            }
+        }
+
+        function updateFavoriteButtons() {
+            const buttons = document.querySelectorAll('.product-card__favorite');
+            buttons.forEach(function(btn) {
+                const id = btn.getAttribute('data-product-id');
+                const isFav = favoriteProductIds.indexOf(id) !== -1;
+                btn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+                const product = productData[id];
+                const name = product ? product.title : '';
+                btn.setAttribute('aria-label', (isFav ? 'Quitar de favoritos: ' : 'Agregar a favoritos: ') + name);
+            });
+        }
+
+        function updateFavoritesBadge() {
+            const badge = document.getElementById('favoritesBadge');
+            const btn = document.getElementById('favoritesFilterBtn');
+            if (badge) {
+                const count = favoriteProductIds.length;
+                badge.textContent = String(count);
+                badge.hidden = count === 0;
+            }
+            if (btn) {
+                btn.setAttribute('aria-pressed', showOnlyFavorites ? 'true' : 'false');
+            }
+        }
+
+        // ── Search highlight ──────────────────────────────────────────────────
+        function applySearchHighlights(tokens) {
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(function(card) {
+                const nameEl = card.querySelector('.product-name');
+                const descEl = card.querySelector('.product-description');
+
+                if (!nameEl) {
+                    return;
+                }
+
+                if (!nameEl.dataset.originalText) {
+                    nameEl.dataset.originalText = nameEl.textContent || '';
+                }
+                if (descEl && !descEl.dataset.originalText) {
+                    descEl.dataset.originalText = descEl.textContent || '';
+                }
+
+                if (tokens.length === 0) {
+                    nameEl.textContent = nameEl.dataset.originalText;
+                    if (descEl) {
+                        descEl.textContent = descEl.dataset.originalText;
+                    }
+                    return;
+                }
+
+                var escapedTokens = tokens.map(function(t) {
+                    return t.replace(/[.*+?^{}()|[\]\\$]/g, '\\$&');
+                });
+                var regex = new RegExp('(' + escapedTokens.join('|') + ')', 'gi');
+
+                function highlight(text) {
+                    if (!text) {
+                        return '';
+                    }
+                    return text.replace(regex, '<mark>$1</mark>');
+                }
+
+                nameEl.innerHTML = highlight(nameEl.dataset.originalText);
+                if (descEl) {
+                    descEl.innerHTML = highlight(descEl.dataset.originalText);
+                }
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         function filterCatalog() {
             const searchInput = document.getElementById('catalogSearchInput');
             const priceSelect = document.getElementById('catalogPriceFilter');
@@ -12309,6 +12742,17 @@ ${formatCssBlock(footerBackground)}
             const priceFilter = priceSelect ? priceSelect.value.trim() : '';
             const sortOption = sortSelect ? sortSelect.value : '';
             const priceRange = parsePriceFilter(priceFilter);
+
+            // Persist active filters in the URL without causing a page reload
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (searchTerm) { params.set('q', searchTerm); } else { params.delete('q'); }
+                if (priceFilter) { params.set('precio', priceFilter); } else { params.delete('precio'); }
+                if (sortOption) { params.set('orden', sortOption); } else { params.delete('orden'); }
+                const newSearch = params.toString();
+                const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+                window.history.replaceState(null, '', newUrl);
+            } catch (_) { /* silently ignore if replaceState is unavailable */ }
             const searchTokens = searchTerm.length > 0
                 ? searchTerm.split(/\s+/).filter(Boolean)
                 : [];
@@ -12415,7 +12859,10 @@ ${formatCssBlock(footerBackground)}
                         }
                     }
 
-                    const matchesAll = matchesSearch && matchesPrice;
+                    const productId = card.getAttribute('data-product-id');
+                    const matchesFavorites = !showOnlyFavorites || favoriteProductIds.indexOf(productId) !== -1;
+
+                    const matchesAll = matchesSearch && matchesPrice && matchesFavorites;
                     card.style.display = matchesAll ? '' : 'none';
 
                     if (matchesAll) {
@@ -12432,6 +12879,8 @@ ${formatCssBlock(footerBackground)}
                     emptyMessage.style.display = visibleInCategory === 0 ? 'block' : 'none';
                 }
             });
+
+            applySearchHighlights(searchTokens);
         }
 
         function getPersistentStorage() {
@@ -12650,6 +13099,41 @@ ${formatCssBlock(footerBackground)}
             }
         }
 
+        function triggerCartFlyAnimation(sourceEl) {
+            const toggle = document.getElementById('selectedPanelToggle');
+            if (!sourceEl || !toggle) return;
+
+            const srcRect = sourceEl.getBoundingClientRect();
+            const dstRect = toggle.getBoundingClientRect();
+
+            const startX = srcRect.left + srcRect.width / 2;
+            const startY = srcRect.top + srcRect.height / 2;
+            const endX   = dstRect.left + dstRect.width / 2;
+            const endY   = dstRect.top  + dstRect.height / 2;
+
+            const midX = (startX + endX) / 2 - startX;
+            const midY = Math.min(startY, endY) - 80 - startY;
+
+            const particle = document.createElement('div');
+            particle.className = 'cart-fly-particle';
+            particle.textContent = '🛒';
+            particle.style.left = (startX - 21) + 'px';
+            particle.style.top  = (startY - 21) + 'px';
+            particle.style.setProperty('--fly-mid-x', midX + 'px');
+            particle.style.setProperty('--fly-mid-y', midY + 'px');
+            particle.style.setProperty('--fly-end-x', (endX - startX) + 'px');
+            particle.style.setProperty('--fly-end-y', (endY - startY) + 'px');
+
+            document.body.appendChild(particle);
+
+            particle.addEventListener('animationend', function() {
+                particle.remove();
+                toggle.classList.remove('selected-products-toggle--bounce');
+                void toggle.offsetWidth; // force reflow to restart animation
+                toggle.classList.add('selected-products-toggle--bounce');
+            });
+        }
+
         function attachProductSelectionHandlers() {
             const buttons = document.querySelectorAll('.product-card__select');
 
@@ -12662,6 +13146,18 @@ ${formatCssBlock(footerBackground)}
 
                 const product = productData[productId];
                 const isAvailable = isProductAvailable(product);
+                const isPriceOnRequest = product && product.priceOnRequest === true;
+
+                if (isPriceOnRequest) {
+                    button.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        currentProduct = product.title;
+                        modalProduct = product;
+                        modalProductId = productId;
+                        contactWhatsApp();
+                    });
+                    return;
+                }
 
                 if (!isAvailable) {
                     button.classList.add('product-card__select--disabled');
@@ -12672,6 +13168,7 @@ ${formatCssBlock(footerBackground)}
 
                 button.addEventListener('click', function(event) {
                     event.stopPropagation();
+                    triggerCartFlyAnimation(button);
                     addProductToSelection(productId);
                 });
             });
@@ -12718,6 +13215,10 @@ ${formatCssBlock(footerBackground)}
             selectedProducts = [];
             persistSelection();
             renderSelectedProductsList();
+            const orderNoteEl = document.getElementById('cartOrderNote');
+            if (orderNoteEl) {
+                orderNoteEl.value = '';
+            }
         }
 
         function updateSelectionItem(productId, updates, options) {
@@ -13400,6 +13901,15 @@ ${formatCssBlock(footerBackground)}
             const btn = document.getElementById('modalCartButton');
             if (!btn || !modalProductId) return;
             const product = productData[modalProductId];
+            if (product && product.priceOnRequest) {
+                btn.disabled = false;
+                btn.removeAttribute('aria-disabled');
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                btn.textContent = '💬 Consultar precio';
+                btn.onclick = function() { contactWhatsApp(); };
+                return;
+            }
             if (!product || !product.available) {
                 btn.disabled = true;
                 btn.setAttribute('aria-disabled', 'true');
@@ -13414,12 +13924,72 @@ ${formatCssBlock(footerBackground)}
             btn.style.opacity = '1';
             btn.style.cursor = 'pointer';
             btn.textContent = isSelected ? '✔ En el carrito' : '🛒 Añadir al carrito';
+            btn.onclick = function() { modalAddToCart(); };
         }
 
         function modalAddToCart() {
             if (!modalProductId) return;
+            const product = productData[modalProductId];
+            if (product && product.priceOnRequest) {
+                contactWhatsApp();
+                return;
+            }
+            const btn = document.getElementById('modalCartButton');
+            if (btn) triggerCartFlyAnimation(btn);
             addProductToSelection(modalProductId);
             updateModalCartButton();
+        }
+
+        function shareProduct(productId) {
+            const product = productId ? productData[productId] : null;
+            const productTitle = product ? product.title : document.title;
+            const shareUrl = new URL(window.location.href);
+            shareUrl.hash = '';
+            if (productId) {
+                shareUrl.searchParams.set('producto', productId);
+            }
+            const shareUrlStr = shareUrl.toString();
+
+            function showShareToast(message) {
+                let toast = document.getElementById('shareToast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'shareToast';
+                    toast.style.cssText = 'position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:0.6rem 1.2rem;border-radius:999px;font-size:0.85rem;z-index:10000;pointer-events:none;transition:opacity 0.3s;';
+                    document.body.appendChild(toast);
+                }
+                toast.textContent = message;
+                toast.style.opacity = '1';
+                clearTimeout(toast._timer);
+                toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+            }
+
+            if (navigator.share) {
+                navigator.share({ title: productTitle, url: shareUrlStr }).catch(() => {});
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrlStr).then(() => {
+                    showShareToast('¡Link copiado al portapapeles!');
+                }).catch(() => {
+                    showShareToast('No se pudo copiar el link');
+                });
+            } else {
+                try {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = shareUrlStr;
+                    textArea.style.position = 'fixed';
+                    textArea.style.opacity = '0';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showShareToast('¡Link copiado al portapapeles!');
+                } catch (e) {
+                    showShareToast('Copia este link: ' + shareUrlStr);
+                }
+            }
         }
 
         function closeModal() {
@@ -13472,7 +14042,10 @@ ${formatCssBlock(footerBackground)}
                     ? \`Total estimado: \${formatCurrencyCOP(totalAmount)}\${hasPendingPrices ? ' (faltan precios por confirmar)' : ''}\`
                     : 'Total estimado: pendiente de cotizar';
 
-                message = \`Hola! Quiero finalizar mi compra con este pedido:\n\n\${lines}\n\nTotal de unidades: \${totalUnits}\n\${totalLine}\n\n¿Me ayudas a completar la compra?\`;
+                const orderNoteEl = document.getElementById('cartOrderNote');
+                const orderNote = orderNoteEl ? orderNoteEl.value.trim() : '';
+                const noteSuffix = orderNote ? \`\n\nIndicaciones adicionales: \${orderNote}\` : '';
+                message = \`Hola! Quiero finalizar mi compra con este pedido:\n\n\${lines}\n\nTotal de unidades: \${totalUnits}\n\${totalLine}\${noteSuffix}\n\n¿Me ayudas a completar la compra?\`;
             } else {
                 const productName = currentProduct || 'Producto Amazonia';
                 message = \`Hola! Me interesa el producto: \${productName}. ¿Podríamos avanzar con la compra?\`;
