@@ -1793,3 +1793,59 @@ textarea {
     margin: 0;
     line-height: 1.4;
 }
+
+/* Config Tabs */
+.config-tabs {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0;
+}
+
+.config-tab {
+    position: relative;
+    padding: 0.55rem 1.1rem;
+    background: transparent;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+}
+
+.config-tab:hover {
+    color: var(--primary-color);
+    background: rgba(0,0,0,0.04);
+}
+
+.config-tab--active,
+.config-tab[aria-selected="true"] {
+    color: var(--primary-color);
+    background: transparent;
+}
+
+.config-tab--active::after,
+.config-tab[aria-selected="true"]::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color);
+    border-radius: 2px 2px 0 0;
+}
+
+.config-tab:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.config-tab-panel[hidden] {
+    display: none;
+}

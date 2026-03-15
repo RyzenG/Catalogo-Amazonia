@@ -3399,6 +3399,7 @@
                 }
             });
 
+            initConfigTabs();
             initQrPanel();
 
             const savePoliciesButton = document.getElementById('savePoliciesButton');
@@ -6359,6 +6360,36 @@ self.addEventListener('fetch', function(event) {
 });`;
         }
 
+        // Config Section Tabs
+        function initConfigTabs() {
+            const tabBtns = document.querySelectorAll('.config-tabs [role="tab"]');
+            if (!tabBtns.length) return;
+
+            function activateTab(tabId) {
+                tabBtns.forEach(btn => {
+                    const isActive = btn.dataset.configTab === tabId;
+                    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    btn.classList.toggle('config-tab--active', isActive);
+                });
+                document.querySelectorAll('.config-tab-panel').forEach(panel => {
+                    const isActive = panel.id === 'configTabPanel-' + tabId;
+                    panel.hidden = !isActive;
+                });
+            }
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => activateTab(btn.dataset.configTab));
+                btn.addEventListener('keydown', e => {
+                    const tabs = [...tabBtns];
+                    const idx = tabs.indexOf(e.currentTarget);
+                    if (e.key === 'ArrowRight') { tabs[(idx + 1) % tabs.length].focus(); e.preventDefault(); }
+                    if (e.key === 'ArrowLeft') { tabs[(idx - 1 + tabs.length) % tabs.length].focus(); e.preventDefault(); }
+                    if (e.key === 'Home') { tabs[0].focus(); e.preventDefault(); }
+                    if (e.key === 'End') { tabs[tabs.length - 1].focus(); e.preventDefault(); }
+                });
+            });
+        }
+
         // QR Panel
         let qrSelectedSize = 300;
 
@@ -7804,8 +7835,9 @@ self.addEventListener('fetch', function(event) {
             const selectionPanelMarkup = `
     <button type="button" class="selected-products-toggle" id="selectedPanelToggle" aria-controls="selectedProductsPanel" aria-expanded="false" aria-haspopup="dialog">
         <span class="selected-products-toggle__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" focusable="false">
-                <path d="M7 5h-2l-1 2v2h2l3.6 7.59-1.35 2.41c-.16.28-.25.61-.25.95 0 1.1.9 2 2 2h10v-2h-9.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.58h6.74c.75 0 1.41-.41 1.75-1.03l3.58-6.49-1.74-1-3.58 6.49h-6.12l-.32-.59 8.05-1.28-.31-1.96-9.42 1.49-.95-1.76h9.65v-2h-10z" fill="currentColor"/>
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
         </span>
         <span class="sr-only">Abrir carrito</span>
