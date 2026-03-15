@@ -479,8 +479,11 @@
                 }
 
                 let id = idCandidate || fallbackId || `section-${index + 1}`;
+                const baseId = id;
+                let dedupCounter = 1;
                 while (usedIds.has(id)) {
-                    id = `${id}-${index + 1}`;
+                    dedupCounter += 1;
+                    id = `${baseId}-${dedupCounter}`;
                 }
                 usedIds.add(id);
 
@@ -5088,8 +5091,8 @@
             ];
 
             newsCtaFields.forEach(({ id, label }) => {
-                const fieldValue = configValues.newsPanel && configValues.newsPanel[id] ? configValues.newsPanel[id] : '';
                 const input = document.getElementById(id);
+                const fieldValue = input ? input.value.trim() : '';
 
                 if (!fieldValue) {
                     setFieldValidationState(input, true);
