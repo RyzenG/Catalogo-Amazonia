@@ -107,6 +107,40 @@
                     </div>
 
                     <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">QR del catálogo</h3>
+                        <p class="section-description">Genera un código QR que apunte a tu catálogo publicado. Usa la URL canónica configurada arriba.</p>
+                        <div class="qr-panel">
+                            <div class="qr-panel__controls">
+                                <div class="form-group">
+                                    <label>URL para el QR</label>
+                                    <input type="url" id="qrUrl" placeholder="https://www.tucatalogo.com/" readonly>
+                                    <small class="input-helper">Se sincroniza con la URL canónica del catálogo. Puedes editarla aquí si necesitas una URL diferente para el QR.</small>
+                                </div>
+                                <div class="qr-panel__size-row">
+                                    <label>Tamaño</label>
+                                    <div class="qr-size-options">
+                                        <button type="button" class="qr-size-btn" data-size="200" aria-pressed="false">Pequeño</button>
+                                        <button type="button" class="qr-size-btn" data-size="300" aria-pressed="true">Mediano</button>
+                                        <button type="button" class="qr-size-btn" data-size="512" aria-pressed="false">Grande</button>
+                                    </div>
+                                </div>
+                                <div class="qr-panel__actions">
+                                    <button type="button" class="btn btn-primary" id="generateQrButton">🔲 Generar QR</button>
+                                    <button type="button" class="btn btn-secondary" id="downloadQrButton" style="display:none">⬇️ Descargar PNG</button>
+                                    <button type="button" class="btn btn-secondary" id="copyQrUrlButton" style="display:none">📋 Copiar URL</button>
+                                </div>
+                            </div>
+                            <div class="qr-panel__preview" id="qrPreview" aria-live="polite">
+                                <div class="qr-panel__placeholder" id="qrPlaceholder">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+                                    <p>Ingresa una URL y haz clic en «Generar QR»</p>
+                                </div>
+                                <img id="qrImage" alt="Código QR del catálogo" style="display:none; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
                         <h3 style="margin-bottom: 1rem">Promoción de descuento</h3>
                         <p class="section-description">Activa un descuento porcentual que se aplicará de forma automática en todos los precios visibles y mostrará el ahorro en el carrito.</p>
                         <div class="two-columns">
