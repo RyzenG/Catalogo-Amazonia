@@ -7417,6 +7417,9 @@
                     <div class="product-image">
                         ${isNewProduct ? '<span class="product-badge product-badge--new" aria-label="Producto nuevo">✨ Nuevo</span>' : ''}
                         <img ${productImageAttrString} alt="${imageAlt}">
+                        <button type="button" class="product-card__favorite" data-product-id="${resolvedProductId}" aria-label="Agregar ${productNameHtml} a favoritos" aria-pressed="false" onclick="event.stopPropagation(); toggleFavorite('${resolvedProductId}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
                     </div>
                         <div class="product-info">
                             <h3 class="product-name">${productNameHtml}</h3>
@@ -7544,6 +7547,13 @@
                             </label>
                         </div>
                     </div>
+                </div>
+                <div class="filter-chip filter-chip--favorites">
+                    <button type="button" class="filter-chip__button filter-chip__button--toggle" id="favoritesFilterBtn" aria-pressed="false" aria-label="Mostrar solo favoritos">
+                        <span class="filter-chip__icon" aria-hidden="true">❤️</span>
+                        <span class="filter-chip__text">Favoritos</span>
+                        <span class="filter-chip__count-badge" id="favoritesBadge" aria-hidden="true" hidden>0</span>
+                    </button>
                 </div>
             </div>
         </div>`;
@@ -9413,6 +9423,7 @@ ${formatCssBlock(headerBackground)}
             top: 0;
             z-index: 100;
             animation: slideDown 0.5s ease-out 0.5s both;
+            transition: box-shadow 0.3s ease, background-color 0.3s ease;
         }
 
         .nav-container nav {
@@ -9630,7 +9641,10 @@ ${formatCssBlock(headerBackground)}
         }
 
         .nav-container--compact {
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+            background-color: rgba(255, 255, 255, 0.9);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
         }
 
         .nav-container--compact nav {
@@ -10170,6 +10184,70 @@ ${formatCssBlock(headerBackground)}
             height: 100%;
             object-fit: cover;
             display: block;
+        }
+
+        .product-card__favorite {
+            position: absolute;
+            top: 0.55rem;
+            right: 0.55rem;
+            appearance: none;
+            border: none;
+            background: rgba(255, 255, 255, 0.88);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            width: 2.1rem;
+            height: 2.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 2;
+            color: #c0c0c0;
+            padding: 0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        .product-card__favorite:hover {
+            background: #fff;
+            color: #e53e3e;
+            transform: scale(1.15);
+        }
+
+        .product-card__favorite[aria-pressed="true"] {
+            background: #fff5f5;
+            color: #e53e3e;
+        }
+
+        .product-card__favorite[aria-pressed="true"] svg {
+            fill: #e53e3e;
+            stroke: #e53e3e;
+        }
+
+        mark {
+            background: ${theme.accentSoft};
+            color: ${theme.accentStrong};
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+
+        .filter-chip__button--toggle[aria-pressed="true"] {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: #fff;
+            border-color: #e53e3e;
+        }
+
+        .filter-chip__count-badge {
+            background: #e53e3e;
+            color: #fff;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            padding: 0.05rem 0.4rem;
+            font-weight: 700;
+            min-width: 1.1rem;
+            text-align: center;
+            line-height: 1.4;
         }
 
         .product-badge {
@@ -11609,8 +11687,11 @@ ${formatCssBlock(footerBackground)}
         const defaultImageAttributes = ${serialize(defaultImageAttributes)};
         const catalogConfig = ${serialize(config || {})};
         const selectionStorageKey = 'amazoniaCatalogSelectedProducts';
+        const favoritesStorageKey = 'amazoniaCatalogFavorites';
         const selectionStorage = getPersistentStorage();
         let selectedProducts = [];
+        let favoriteProductIds = [];
+        let showOnlyFavorites = false;
 
         const COP_CURRENCY_FORMATTER = new Intl.NumberFormat('es-CO', {
             style: 'currency',
@@ -11955,6 +12036,19 @@ ${formatCssBlock(footerBackground)}
                 attachProductSelectionHandlers();
                 restoreSelectionFromStorage();
                 renderSelectedProductsList();
+
+                // Favorites initialization
+                loadFavorites();
+                updateFavoriteButtons();
+                updateFavoritesBadge();
+                const favoritesFilterBtn = document.getElementById('favoritesFilterBtn');
+                if (favoritesFilterBtn) {
+                    favoritesFilterBtn.addEventListener('click', function() {
+                        showOnlyFavorites = !showOnlyFavorites;
+                        updateFavoritesBadge();
+                        filterCatalog();
+                    });
+                }
 
                 const cards = document.querySelectorAll('.product-card');
                 cards.forEach(card => {
@@ -12528,6 +12622,117 @@ ${formatCssBlock(footerBackground)}
             return { min: normalizedMin, max: normalizedMax };
         }
 
+        // ── Favorites ────────────────────────────────────────────────────────
+        function loadFavorites() {
+            try {
+                const storage = getPersistentStorage();
+                if (storage) {
+                    const raw = storage.getItem(favoritesStorageKey);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed)) {
+                            favoriteProductIds = parsed;
+                        }
+                    }
+                }
+            } catch (_) {}
+        }
+
+        function saveFavorites() {
+            try {
+                const storage = getPersistentStorage();
+                if (storage) {
+                    storage.setItem(favoritesStorageKey, JSON.stringify(favoriteProductIds));
+                }
+            } catch (_) {}
+        }
+
+        function toggleFavorite(productId) {
+            const index = favoriteProductIds.indexOf(productId);
+            if (index === -1) {
+                favoriteProductIds.push(productId);
+            } else {
+                favoriteProductIds.splice(index, 1);
+            }
+            saveFavorites();
+            updateFavoriteButtons();
+            updateFavoritesBadge();
+            if (showOnlyFavorites) {
+                filterCatalog();
+            }
+        }
+
+        function updateFavoriteButtons() {
+            const buttons = document.querySelectorAll('.product-card__favorite');
+            buttons.forEach(function(btn) {
+                const id = btn.getAttribute('data-product-id');
+                const isFav = favoriteProductIds.indexOf(id) !== -1;
+                btn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+                const product = productData[id];
+                const name = product ? product.title : '';
+                btn.setAttribute('aria-label', (isFav ? 'Quitar de favoritos: ' : 'Agregar a favoritos: ') + name);
+            });
+        }
+
+        function updateFavoritesBadge() {
+            const badge = document.getElementById('favoritesBadge');
+            const btn = document.getElementById('favoritesFilterBtn');
+            if (badge) {
+                const count = favoriteProductIds.length;
+                badge.textContent = String(count);
+                badge.hidden = count === 0;
+            }
+            if (btn) {
+                btn.setAttribute('aria-pressed', showOnlyFavorites ? 'true' : 'false');
+            }
+        }
+
+        // ── Search highlight ──────────────────────────────────────────────────
+        function applySearchHighlights(tokens) {
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(function(card) {
+                const nameEl = card.querySelector('.product-name');
+                const descEl = card.querySelector('.product-description');
+
+                if (!nameEl) {
+                    return;
+                }
+
+                if (!nameEl.dataset.originalText) {
+                    nameEl.dataset.originalText = nameEl.textContent || '';
+                }
+                if (descEl && !descEl.dataset.originalText) {
+                    descEl.dataset.originalText = descEl.textContent || '';
+                }
+
+                if (tokens.length === 0) {
+                    nameEl.textContent = nameEl.dataset.originalText;
+                    if (descEl) {
+                        descEl.textContent = descEl.dataset.originalText;
+                    }
+                    return;
+                }
+
+                var escapedTokens = tokens.map(function(t) {
+                    return t.replace(/[.*+?^{}()|[\]\\$]/g, '\\$&');
+                });
+                var regex = new RegExp('(' + escapedTokens.join('|') + ')', 'gi');
+
+                function highlight(text) {
+                    if (!text) {
+                        return '';
+                    }
+                    return text.replace(regex, '<mark>$1</mark>');
+                }
+
+                nameEl.innerHTML = highlight(nameEl.dataset.originalText);
+                if (descEl) {
+                    descEl.innerHTML = highlight(descEl.dataset.originalText);
+                }
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         function filterCatalog() {
             const searchInput = document.getElementById('catalogSearchInput');
             const priceSelect = document.getElementById('catalogPriceFilter');
@@ -12654,7 +12859,10 @@ ${formatCssBlock(footerBackground)}
                         }
                     }
 
-                    const matchesAll = matchesSearch && matchesPrice;
+                    const productId = card.getAttribute('data-product-id');
+                    const matchesFavorites = !showOnlyFavorites || favoriteProductIds.indexOf(productId) !== -1;
+
+                    const matchesAll = matchesSearch && matchesPrice && matchesFavorites;
                     card.style.display = matchesAll ? '' : 'none';
 
                     if (matchesAll) {
@@ -12671,6 +12879,8 @@ ${formatCssBlock(footerBackground)}
                     emptyMessage.style.display = visibleInCategory === 0 ? 'block' : 'none';
                 }
             });
+
+            applySearchHighlights(searchTokens);
         }
 
         function getPersistentStorage() {
