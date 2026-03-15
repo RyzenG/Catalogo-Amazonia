@@ -9985,7 +9985,7 @@ ${formatCssBlock(headerBackground)}
         .scroll-to-top {
             position: fixed;
             inset-inline-end: 2rem;
-            bottom: 2.5rem;
+            bottom: 5.25rem;
             width: 3rem;
             height: 3rem;
             border-radius: 999px;
