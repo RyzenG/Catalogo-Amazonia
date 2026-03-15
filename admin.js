@@ -7539,6 +7539,10 @@ self.addEventListener('fetch', function(event) {
                         <button type="button" class="product-card__favorite" data-product-id="${resolvedProductId}" aria-label="Agregar ${productNameHtml} a favoritos" aria-pressed="false" onclick="event.stopPropagation(); toggleFavorite('${resolvedProductId}')">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                         </button>
+                        <button type="button" class="product-card__quick-view" aria-label="Vista rápida de ${productNameHtml}" onclick="event.stopPropagation(); openQuickView('${resolvedProductId}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Vista rápida
+                        </button>
                     </div>
                         <div class="product-info">
                             <h3 class="product-name">${productNameHtml}</h3>
@@ -7922,6 +7926,27 @@ self.addEventListener('fetch', function(event) {
                         </button>
                     </div>
                     ${modalCTAButtons}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick View Modal -->
+    <div class="quick-view-modal" id="quickViewModal" role="dialog" aria-modal="true" aria-labelledby="qvTitle">
+        <div class="quick-view-modal__content">
+            <button class="quick-view-modal__close" onclick="closeQuickView()" aria-label="Cerrar vista rápida">✕</button>
+            <div class="quick-view-modal__grid">
+                <div class="quick-view-modal__image-wrap">
+                    <img id="qvImage" alt="" class="quick-view-modal__image">
+                </div>
+                <div class="quick-view-modal__info">
+                    <h3 class="quick-view-modal__title" id="qvTitle"></h3>
+                    <div class="quick-view-modal__price" id="qvPrice"></div>
+                    <p class="quick-view-modal__desc" id="qvDesc"></p>
+                    <div class="quick-view-modal__actions">
+                        <button type="button" class="cta-button cta-button--cart" id="qvCartBtn"></button>
+                        <button type="button" class="cta-button cta-button--details" id="qvDetailsBtn" onclick="closeQuickView(); openModal(quickViewProductId)">Ver detalles completos</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -10373,6 +10398,196 @@ ${formatCssBlock(headerBackground)}
             stroke: #e53e3e;
         }
 
+        /* Quick View button overlay */
+        .product-card__quick-view {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            appearance: none;
+            border: none;
+            background: rgba(0, 0, 0, 0.65);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            padding: 0.55rem 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.22s ease, transform 0.22s ease;
+            z-index: 3;
+        }
+
+        .product-card:hover .product-card__quick-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .product-card__quick-view:hover {
+            background: rgba(0, 0, 0, 0.82);
+        }
+
+        /* Quick View Modal */
+        .quick-view-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1100;
+            background: rgba(0, 0, 0, 0.55);
+            -webkit-backdrop-filter: blur(3px);
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .quick-view-modal.active {
+            display: flex;
+        }
+
+        .quick-view-modal__content {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            max-width: 780px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            animation: qvFadeIn 0.22s ease;
+        }
+
+        @keyframes qvFadeIn {
+            from { opacity: 0; transform: scale(0.96) translateY(12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .quick-view-modal__close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            appearance: none;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            cursor: pointer;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: background 0.15s ease;
+        }
+
+        .quick-view-modal__close:hover {
+            background: #fff;
+        }
+
+        .quick-view-modal__grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        @media (max-width: 580px) {
+            .quick-view-modal__grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quick-view-modal__image-wrap {
+            background: ${theme.imagePlaceholderStart};
+        }
+
+        .quick-view-modal__image {
+            width: 100%;
+            height: 100%;
+            min-height: 260px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .quick-view-modal__info {
+            padding: 1.75rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quick-view-modal__title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: ${theme.text};
+            margin: 0;
+            line-height: 1.3;
+            padding-right: 1.5rem;
+        }
+
+        .quick-view-modal__price {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: ${theme.priceColor};
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .quick-view-modal__price .qv-original {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: ${theme.textSecondary};
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        .quick-view-modal__price .qv-badge {
+            font-size: 0.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: #fff;
+            border-radius: 999px;
+            padding: 0.15rem 0.55rem;
+        }
+
+        .quick-view-modal__desc {
+            font-size: 0.9rem;
+            color: ${theme.textSecondary};
+            line-height: 1.5;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .quick-view-modal__actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: auto;
+        }
+
+        .cta-button--details {
+            background: transparent;
+            color: ${theme.accent};
+            border: 2px solid ${theme.accent};
+        }
+
+        .cta-button--details:hover {
+            background: ${theme.accentSoft};
+        }
+
         mark {
             background: ${theme.accentSoft};
             color: ${theme.accentStrong};
@@ -12236,6 +12451,15 @@ ${formatCssBlock(footerBackground)}
                     modalElement.addEventListener('click', function(e) {
                         if (e.target === this) {
                             closeModal();
+                        }
+                    });
+                }
+
+                const qvModalElement = document.getElementById('quickViewModal');
+                if (qvModalElement) {
+                    qvModalElement.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            closeQuickView();
                         }
                     });
                 }
@@ -14223,6 +14447,72 @@ ${formatCssBlock(footerBackground)}
             currentImageIndex = 0;
             updateModalImage();
             updateModalCarouselControls();
+        }
+
+        let quickViewProductId = null;
+
+        function openQuickView(productId) {
+            const modal = document.getElementById('quickViewModal');
+            const product = productData[productId];
+            if (!modal || !product) return;
+
+            quickViewProductId = productId;
+
+            const titleEl = document.getElementById('qvTitle');
+            const priceEl = document.getElementById('qvPrice');
+            const descEl = document.getElementById('qvDesc');
+            const imgEl = document.getElementById('qvImage');
+            const cartBtn = document.getElementById('qvCartBtn');
+
+            if (titleEl) titleEl.textContent = product.title;
+            if (descEl) descEl.textContent = product.shortDesc || product.description || '';
+
+            if (imgEl) {
+                const src = (Array.isArray(product.images) && product.images[0]) || product.image || '';
+                imgEl.src = src;
+                imgEl.alt = product.alt || product.title;
+            }
+
+            if (priceEl) {
+                if (product.priceOnRequest) {
+                    priceEl.innerHTML = '<span>Precio a consultar</span>';
+                } else if (product.discountedPrice != null) {
+                    priceEl.innerHTML =
+                        '<span>' + (product.discountedPriceFormatted || '') + '</span>' +
+                        '<span class="qv-original">' + (product.priceFormatted || '') + '</span>' +
+                        '<span class="qv-badge">-' + Math.round(100 - (product.discountedPrice / product.price * 100)) + '%</span>';
+                } else {
+                    priceEl.innerHTML = '<span>' + (product.priceDisplay || product.priceFormatted || '') + '</span>';
+                }
+            }
+
+            if (cartBtn) {
+                if (product.priceOnRequest) {
+                    cartBtn.textContent = '💬 Consultar precio';
+                    cartBtn.disabled = false;
+                    cartBtn.onclick = function() { closeQuickView(); currentProduct = product.title; modalProduct = product; modalProductId = productId; contactWhatsApp(); };
+                } else if (!product.available) {
+                    cartBtn.textContent = 'Agotado';
+                    cartBtn.disabled = true;
+                } else {
+                    const inCart = selectedProducts.some(p => p.id === productId);
+                    cartBtn.textContent = inCart ? '✓ En el carrito' : '🛒 Añadir al carrito';
+                    cartBtn.disabled = false;
+                    cartBtn.onclick = function() {
+                        addProductToSelection(productId);
+                        cartBtn.textContent = '✓ En el carrito';
+                    };
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeQuickView() {
+            const modal = document.getElementById('quickViewModal');
+            if (modal) modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
 
         function contactWhatsApp() {
