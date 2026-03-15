@@ -12906,8 +12906,10 @@ ${formatCssBlock(footerBackground)}
                 });
                 quantityInput.addEventListener('blur', function() {
                     const value = sanitizeQuantity(quantityInput.value);
-                    quantityInput.value = value.toString();
-                    updateSelectionItem(item.id, { quantity: value }, { reRender: true });
+                    if (quantityInput.value !== value.toString()) {
+                        quantityInput.value = value.toString();
+                        updateSelectionItem(item.id, { quantity: value }, { reRender: true });
+                    }
                 });
                 quantityField.appendChild(quantityInput);
 
@@ -13047,6 +13049,8 @@ ${formatCssBlock(footerBackground)}
                 }
 
                 button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+                const productName = productData[productId] && productData[productId].title ? productData[productId].title : productId;
+                button.setAttribute('aria-label', isSelected ? \`\${productName} en el carrito\` : \`Agregar \${productName} al carrito\`);
                 button.textContent = isSelected ? '✔ En el carrito' : '➕ Añadir al carrito';
             });
         }
