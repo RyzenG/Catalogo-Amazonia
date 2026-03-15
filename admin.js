@@ -644,7 +644,8 @@
                 enabled: false,
                 percentage: 15,
                 topBarText: 'Promoción activa: ahorra en tu compra',
-                message: 'Descuento aplicado automáticamente en tu carrito.'
+                message: 'Descuento aplicado automáticamente en tu carrito.',
+                endDate: ''
             },
             appearance: { ...defaultAppearance },
             priceRanges: normalizePriceRanges(defaultPriceRanges),
@@ -860,6 +861,8 @@
                 ? clamp(percentageValue, 1, 95)
                 : defaultConfig.promotion.percentage;
 
+            const endDateRaw = typeof normalized.endDate === 'string' ? normalized.endDate.trim() : '';
+            const endDateValid = endDateRaw ? !isNaN(new Date(endDateRaw).getTime()) : false;
             return {
                 enabled: Boolean(normalized.enabled),
                 percentage: safePercentage,
@@ -868,7 +871,8 @@
                     : defaultConfig.promotion.topBarText,
                 message: typeof normalized.message === 'string'
                     ? normalized.message.trim()
-                    : defaultConfig.promotion.message
+                    : defaultConfig.promotion.message,
+                endDate: endDateValid ? endDateRaw : ''
             };
         }
 
@@ -4374,7 +4378,8 @@
                     enabled: readCheckbox('promotionEnabled'),
                     percentage: readValue('promotionPercentage'),
                     topBarText: readValue('promotionTopBarText'),
-                    message: readValue('promotionMessage')
+                    message: readValue('promotionMessage'),
+                    endDate: readValue('promotionEndDate')
                 }),
                 priceRanges: normalizePriceRanges(readPriceRangesFromInputs()),
                 newsPanel: normalizeNewsPanel({
@@ -5275,6 +5280,10 @@
             const promotionMessageInput = document.getElementById('promotionMessage');
             if (promotionMessageInput) {
                 promotionMessageInput.value = catalogData.config.promotion.message;
+            }
+            const promotionEndDateInput = document.getElementById('promotionEndDate');
+            if (promotionEndDateInput) {
+                promotionEndDateInput.value = catalogData.config.promotion.endDate || '';
             }
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
             refreshSocialPreviews(catalogData.config);
@@ -6258,6 +6267,92 @@
             reader.readAsText(file);
         });
 
+        // PWA helpers
+        function generateManifestJSON(config, theme) {
+            const companyName = ((config && config.companyName) || 'Catálogo').trim();
+            const shortName = companyName.length > 14
+                ? companyName.split(' ')[0].slice(0, 14)
+                : companyName;
+            const bgColor = (config && config.appearance && config.appearance.background) || '#f5f7f3';
+            const themeColor = (theme && theme.headerStart) || (config && config.appearance && config.appearance.header) || '#1f3b2e';
+            const description = (config && config.tagline) || 'Catálogo de productos';
+            const logoSrc = (config && config.logoData && config.logoData.startsWith('data:'))
+                ? 'images/logo-amazonia.svg'
+                : (config && config.logoData) || 'images/logo-amazonia.svg';
+
+            const manifest = {
+                name: companyName,
+                short_name: shortName,
+                description: description,
+                start_url: './index.html',
+                scope: './',
+                display: 'standalone',
+                background_color: bgColor,
+                theme_color: themeColor,
+                orientation: 'portrait-primary',
+                lang: 'es',
+                icons: [
+                    {
+                        src: logoSrc,
+                        sizes: 'any',
+                        type: 'image/svg+xml',
+                        purpose: 'any maskable'
+                    }
+                ]
+            };
+
+            return JSON.stringify(manifest, null, 2);
+        }
+
+        function generateServiceWorkerJS() {
+            return `// Service Worker — Catálogo Amazonia
+// Versión: 1.0 — Actualizar CACHE_NAME para forzar recarga
+const CACHE_NAME = 'amazonia-catalog-v1';
+const STATIC_ASSETS = ['./index.html', './catalogo.html', './nosotros.html', './politicas.html', './manifest.json'];
+
+self.addEventListener('install', function(event) {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(function(cache) {
+            return cache.addAll(STATIC_ASSETS);
+        }).then(function() {
+            return self.skipWaiting();
+        })
+    );
+});
+
+self.addEventListener('activate', function(event) {
+    event.waitUntil(
+        caches.keys().then(function(keys) {
+            return Promise.all(
+                keys.filter(function(k) { return k !== CACHE_NAME; })
+                    .map(function(k) { return caches.delete(k); })
+            );
+        }).then(function() {
+            return self.clients.claim();
+        })
+    );
+});
+
+self.addEventListener('fetch', function(event) {
+    if (event.request.method !== 'GET') return;
+    if (!event.request.url.startsWith(self.location.origin)) return;
+
+    event.respondWith(
+        fetch(event.request).then(function(response) {
+            if (response && response.status === 200) {
+                var clone = response.clone();
+                caches.open(CACHE_NAME).then(function(cache) {
+                    cache.put(event.request, clone);
+                });
+            }
+            return response;
+        }).catch(function() {
+            return caches.match(event.request);
+        })
+    );
+});`;
+        }
+
         // Generate Catalog
         async function generateCatalog() {
             const processEntryId = createProcessStatusEntry('generate-catalog', 'Validando configuración antes de generar…');
@@ -6298,8 +6393,8 @@
                     detail: 'Generando archivos para la descarga…'
                 });
 
-                const triggerDownload = (filename, content, delayMs = 200) => new Promise((resolve) => {
-                    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+                const triggerDownload = (filename, content, mimeType = 'text/html;charset=utf-8', delayMs = 200) => new Promise((resolve) => {
+                    const blob = new Blob([content], { type: mimeType });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
@@ -6315,10 +6410,17 @@
                     });
                 });
 
+                const currentConfig = getNormalizedConfig(catalogData.config);
+                const currentTheme = buildThemeTokens(currentConfig.appearance);
+                const manifestContent = generateManifestJSON(currentConfig, currentTheme);
+                const swContent = generateServiceWorkerJS();
+
                 await triggerDownload('index.html', homeHtmlContent);
                 await triggerDownload('catalogo.html', catalogHtmlContent);
                 await triggerDownload('politicas.html', policiesHtmlContent);
                 await triggerDownload('nosotros.html', aboutHtmlContent);
+                await triggerDownload('manifest.json', manifestContent, 'application/json;charset=utf-8');
+                await triggerDownload('sw.js', swContent, 'text/javascript;charset=utf-8');
 
                 updateProcessStatusEntry(processEntryId, {
                     state: 'success',
@@ -7077,6 +7179,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${companyNameHtml} | Inicio</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="${theme.headerStart}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="${companyNameHtml}">
     <style>${styles}</style>
 </head>
     <body class="page page--home">
@@ -7253,6 +7361,13 @@
         });
     })();
     </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
+            });
+        }
+    </script>
 </body>
 </html>`;
         }
@@ -7304,10 +7419,14 @@
                 ? `<p class="tagline" id="headerTagline">${taglineHtml}</p>`
                 : `<p class="tagline" id="headerTagline" style="display: none;"></p>`;
 
+            const countdownMarkup = (promotion.enabled && promotion.endDate)
+                ? `<span class="promo-countdown" id="promoCountdown" data-end="${escapeHtml(promotion.endDate)}" aria-label="Tiempo restante de la oferta"></span>`
+                : '';
             const promoBarMarkup = promotion.enabled
                 ? `<div class="promo-top-bar" role="status" aria-live="polite">
         <div class="promo-top-bar__content">
             <span class="promo-top-bar__title">${escapeHtml(promotion.topBarText || 'Promoción activa')}</span>
+            ${countdownMarkup}
             <span class="promo-top-bar__message">${escapeHtml(promotion.message || '')}</span>
         </div>
     </div>`
@@ -7703,6 +7822,12 @@
     <meta name="twitter:title" content="${documentTitle}">
     <meta name="twitter:description" content="${metaDescription}">
     ${faviconMarkup}
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="${theme.headerStart}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="${metaSiteName}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
@@ -7817,6 +7942,13 @@
 
     <script>
         ${getCatalogScript(productDataJS, config, serializeForScript, baseImageAttributes)}
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
+            });
+        }
     </script>
 </body>
 </html>`;
@@ -8486,6 +8618,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${heroTitleHtml} - ${escapeHtml(companyNameFooter)}</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="${theme.headerStart}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
         ${policyStyles}
     </style>
@@ -8666,6 +8802,10 @@
                         setActivePolicy(activePolicyIndex + 1);
                     });
                 }
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
             }
 
             var quickLinks = document.querySelectorAll('[data-quick-link]');
@@ -8981,6 +9121,10 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
         .contact-cta:hover, .contact-cta:focus-visible { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,0.22); }
         .contact-cta:focus-visible { outline: 3px solid ${theme.accentSoft}; outline-offset: 2px; }
     </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="${theme.headerStart}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}">
     <div class="loader" id="loader">
@@ -9090,6 +9234,10 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
                         window.location.hash = '#' + targetId;
                     }
                 });
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
             }
         });
     </script>
@@ -10384,6 +10532,25 @@ ${formatCssBlock(headerBackground)}
             box-shadow: 0 3px 8px rgba(197, 48, 48, 0.35);
             align-self: flex-start;
             margin-top: 0.15rem;
+        }
+
+        .promo-countdown {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            font-variant-numeric: tabular-nums;
+            gap: 0.3rem;
+            white-space: nowrap;
+        }
+
+        .promo-countdown--expired {
+            background: rgba(197, 48, 48, 0.35);
         }
 
         .product-actions {
@@ -12036,6 +12203,9 @@ ${formatCssBlock(footerBackground)}
                 attachProductSelectionHandlers();
                 restoreSelectionFromStorage();
                 renderSelectedProductsList();
+
+                // Countdown timer initialization
+                initPromoCountdown();
 
                 // Favorites initialization
                 loadFavorites();
@@ -13748,6 +13918,55 @@ ${formatCssBlock(footerBackground)}
                     });
                 }
             }
+        }
+
+        function initPromoCountdown() {
+            const countdownEl = document.getElementById('promoCountdown');
+            if (!countdownEl) {
+                return;
+            }
+
+            const endDateStr = countdownEl.getAttribute('data-end');
+            if (!endDateStr) {
+                return;
+            }
+
+            const endDate = new Date(endDateStr);
+            if (isNaN(endDate.getTime())) {
+                return;
+            }
+
+            function pad(n) {
+                return String(n).padStart(2, '0');
+            }
+
+            function updateCountdown() {
+                const now = new Date();
+                const diff = endDate - now;
+
+                if (diff <= 0) {
+                    countdownEl.textContent = '¡Oferta finalizada!';
+                    countdownEl.classList.add('promo-countdown--expired');
+                    clearInterval(timer);
+                    return;
+                }
+
+                const days = Math.floor(diff / 86400000);
+                const hours = Math.floor((diff % 86400000) / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+
+                var text = '\u23F0 Termina en: ';
+                if (days > 0) {
+                    text += days + 'd ';
+                }
+                text += pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+
+                countdownEl.textContent = text;
+            }
+
+            updateCountdown();
+            var timer = setInterval(updateCountdown, 1000);
         }
 
         function setupStickyNavigation() {
