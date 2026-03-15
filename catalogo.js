@@ -335,20 +335,35 @@ function normalizeTags(rawTags) {
 }
 
 function isProductAvailable(product) {
+    return getProductAvailabilityState(product) === 'available';
+}
+
+/**
+ * Devuelve el estado de disponibilidad del producto:
+ *   'available'  → en stock, CTA activo
+ *   'consultar'  → disponibilidad bajo consulta, CTA alternativo
+ *   'soldout'    → agotado, botón deshabilitado
+ */
+function getProductAvailabilityState(product) {
     if (!product || typeof product !== 'object') {
-        return true;
+        return 'available';
     }
 
-    if (typeof product.available === 'boolean') {
-        return product.available;
+    if (typeof product.available === 'boolean' && !product.available) {
+        return 'soldout';
     }
 
     if (typeof product.availability === 'string') {
         const normalized = product.availability.trim().toLowerCase();
-        return normalized !== 'sold-out' && normalized !== 'agotado';
+        if (normalized === 'sold-out' || normalized === 'agotado') {
+            return 'soldout';
+        }
+        if (normalized === 'consultar') {
+            return 'consultar';
+        }
     }
 
-    return true;
+    return 'available';
 }
 
 function normalizeProduct(rawProduct, index, categoryId) {
@@ -734,7 +749,7 @@ function groupProducts(filteredProducts) {
 }
 
 function buildContactLink(product) {
-    if (!config || !config.contact || !isProductAvailable(product)) {
+    if (!config || !config.contact || getProductAvailabilityState(product) === 'soldout') {
         return null;
     }
 
@@ -1016,7 +1031,8 @@ function renderProducts(filteredProducts, activeCategory) {
             const card = document.createElement('article');
             card.className = 'product-card';
             card.setAttribute('aria-label', product.name);
-            const isAvailable = isProductAvailable(product);
+            const availabilityState = getProductAvailabilityState(product);
+            const isAvailable = availabilityState === 'available';
 
             const media = document.createElement('div');
             media.className = 'product-card__media';
@@ -1094,14 +1110,19 @@ function renderProducts(filteredProducts, activeCategory) {
                 meta.appendChild(chip);
             });
 
-            if (!isAvailable) {
+            if (availabilityState === 'soldout') {
                 const soldOutBadge = document.createElement('span');
                 soldOutBadge.className = 'badge badge--soldout';
                 soldOutBadge.textContent = 'Agotado';
                 badges.appendChild(soldOutBadge);
+            } else if (availabilityState === 'consultar') {
+                const consultarBadge = document.createElement('span');
+                consultarBadge.className = 'badge badge--consultar';
+                consultarBadge.textContent = 'Consultar';
+                badges.appendChild(consultarBadge);
             }
 
-            if (!isAvailable) {
+            if (availabilityState === 'soldout') {
                 const soldOutChip = document.createElement('span');
                 soldOutChip.className = 'pill pill--soldout';
                 soldOutChip.textContent = 'Agotado';
@@ -1112,13 +1133,26 @@ function renderProducts(filteredProducts, activeCategory) {
             actions.className = 'product-card__actions';
             const contactLink = buildContactLink(product);
 
-            if (!isAvailable) {
+            if (availabilityState === 'soldout') {
                 const soldOutButton = document.createElement('button');
                 soldOutButton.type = 'button';
                 soldOutButton.className = 'button product-card__cta product-card__cta--disabled';
                 soldOutButton.textContent = 'Agotado';
                 soldOutButton.setAttribute('aria-disabled', 'true');
                 actions.appendChild(soldOutButton);
+            } else if (availabilityState === 'consultar') {
+                const whatsappNumber = config?.contact?.whatsapp?.replace(/\D/g, '');
+                const productMsg = encodeURIComponent(`Hola, quiero consultar disponibilidad de ${product.name}.`);
+                const consultarButton = document.createElement('a');
+                consultarButton.className = 'button product-card__cta product-card__cta--consultar';
+                consultarButton.href = whatsappNumber
+                    ? `https://wa.me/${whatsappNumber}?text=${productMsg}`
+                    : (config?.contact?.email ? `mailto:${config.contact.email}` : '#');
+                consultarButton.target = '_blank';
+                consultarButton.rel = 'noopener noreferrer';
+                consultarButton.textContent = 'Consultar disponibilidad';
+                consultarButton.setAttribute('aria-label', `Consultar disponibilidad de ${product.name}`);
+                actions.appendChild(consultarButton);
             } else if (contactLink) {
                 const actionButton = document.createElement('a');
                 actionButton.className = 'button product-card__cta';
@@ -1143,10 +1177,17 @@ function renderProducts(filteredProducts, activeCategory) {
     });
 
     if (!container.children.length) {
-        const empty = document.createElement('p');
-        empty.textContent = 'No hay productos que coincidan con los filtros seleccionados.';
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        const sampleNames = products.slice(0, 3).map(p => p.name).join(', ');
+        empty.innerHTML = `
+            <p class="empty-state__title">No encontramos productos con ese criterio.</p>
+            <p class="empty-state__hint">Prueba con: <em>${sampleNames || 'Maceta, Lámpara, Mesa'}</em></p>
+        `;
         container.appendChild(empty);
     }
+
+    updateResultsCounter(filteredProducts.length);
 
     if (activeCategory) {
         const anchor = document.getElementById(activeCategory);
@@ -1190,6 +1231,7 @@ function applyFilters({ search, price, category } = {}) {
     });
 
     renderProducts(filtered, activeCategory);
+    updateUrl({ categoria: activeCategory, buscar: activeSearch, precio: activePrice });
 }
 
 function updateThemeToggleLabel(toggleButton, mode) {
@@ -1233,6 +1275,119 @@ function setupThemeToggle(theme) {
     });
 }
 
+/* ─── URL profunda: estado del catálogo en query params ─── */
+
+function readUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        categoria: params.get('categoria'),
+        buscar: params.get('buscar'),
+        precio: params.get('precio')
+    };
+}
+
+function updateUrl({ categoria, buscar, precio } = {}) {
+    if (!window.history || !window.history.replaceState) {
+        return;
+    }
+    const params = new URLSearchParams();
+    if (categoria) {
+        params.set('categoria', categoria);
+    }
+    if (buscar) {
+        params.set('buscar', buscar);
+    }
+    if (precio && precio !== '') {
+        params.set('precio', precio);
+    }
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+}
+
+/* ─── Contador de resultados ─── */
+
+function updateResultsCounter(count) {
+    let counter = document.getElementById('resultsCounter');
+    if (!counter) {
+        const container = document.getElementById('catalogProducts');
+        if (!container || !container.parentNode) {
+            return;
+        }
+        counter = document.createElement('p');
+        counter.id = 'resultsCounter';
+        counter.className = 'results-counter';
+        container.parentNode.insertBefore(counter, container);
+    }
+    counter.textContent = count === 1
+        ? 'Mostrando 1 producto'
+        : `Mostrando ${count} producto${count !== 0 ? 's' : ''}`;
+}
+
+/* ─── Utilidad: debounce ─── */
+
+function debounce(fn, delay) {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+/* ─── JSON-LD schema.org/Product ─── */
+
+function injectProductSchema(visibleProducts) {
+    const existing = document.getElementById('product-jsonld');
+    if (existing) {
+        existing.remove();
+    }
+
+    if (!visibleProducts || visibleProducts.length === 0) {
+        return;
+    }
+
+    const catalogName = config?.about?.storeName || 'Amazonia Concrete';
+
+    const items = visibleProducts.map((product, index) => {
+        const availState = getProductAvailabilityState(product);
+        const schemaAvailability = availState === 'soldout'
+            ? 'https://schema.org/OutOfStock'
+            : 'https://schema.org/InStock';
+
+        const item = {
+            '@type': 'ListItem',
+            position: index + 1,
+            item: {
+                '@type': 'Product',
+                name: product.name,
+                description: product.description,
+                offers: {
+                    '@type': 'Offer',
+                    priceCurrency: 'COP',
+                    price: product.price,
+                    availability: schemaAvailability
+                }
+            }
+        };
+        if (product.imageUrl) {
+            item.item.image = product.imageUrl;
+        }
+        return item;
+    });
+
+    const schema = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: `Catálogo ${catalogName}`,
+        itemListElement: items
+    };
+
+    const script = document.createElement('script');
+    script.id = 'product-jsonld';
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+}
+
 function initCatalog() {
     const dataset = loadDataset();
     categories = dataset.categories;
@@ -1241,18 +1396,34 @@ function initCatalog() {
 
     applyAppearanceStyles(config.appearance);
     renderPriceFilterOptions();
-    renderCategoryTags(null);
-    applyFilters();
 
+    // Restaurar estado desde URL al cargar
+    const urlParams = readUrlParams();
+    const initialCategory = urlParams.categoria || null;
+    renderCategoryTags(initialCategory);
+    applyFilters({
+        category: initialCategory,
+        search: urlParams.buscar || '',
+        price: urlParams.precio || ''
+    });
+
+    injectProductSchema(products);
     setupThemeToggle(config.appearance);
 
     const searchInput = document.getElementById('searchInput');
     const priceSelect = document.getElementById('priceSelect');
 
+    if (searchInput && urlParams.buscar) {
+        searchInput.value = urlParams.buscar;
+    }
+    if (priceSelect && urlParams.precio) {
+        priceSelect.value = urlParams.precio;
+    }
+
     if (searchInput) {
-        searchInput.addEventListener('input', event => {
+        searchInput.addEventListener('input', debounce(event => {
             applyFilters({ search: event.target.value });
-        });
+        }, 250));
     }
 
     if (priceSelect) {

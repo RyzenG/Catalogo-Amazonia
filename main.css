@@ -33,7 +33,8 @@ body {
     color: var(--text-body);
     background-color: var(--brand-dark);
     background-image: linear-gradient(135deg, rgba(28, 47, 42, 0.95) 0%, rgba(47, 74, 65, 0.9) 55%, rgba(63, 94, 82, 0.8) 100%);
-    background-attachment: fixed;
+    /* background-attachment:fixed desactiva GPU compositing en iOS Safari/Android → penaliza LCP */
+    background-attachment: scroll;
 }
 
 a {
@@ -741,6 +742,52 @@ img {
     border: 1px solid rgba(122, 46, 46, 0.15);
 }
 
+.badge--consultar {
+    background: linear-gradient(135deg, #e8f0fe, #c5d5f8);
+    color: #2c4a8e;
+    border: 1px solid rgba(44, 74, 142, 0.2);
+}
+
+.product-card__cta--consultar {
+    background: linear-gradient(135deg, var(--brand-primary), #3b6b55);
+    border: 1.5px dashed var(--brand-accent);
+    opacity: 0.92;
+}
+
+.product-card__cta--consultar:hover,
+.product-card__cta--consultar:focus-visible {
+    opacity: 1;
+    background: var(--brand-dark);
+}
+
+/* ─── Contador de resultados ─── */
+
+.results-counter {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0 0 0.75rem;
+    padding: 0 0.25rem;
+}
+
+/* ─── Empty state ─── */
+
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+.empty-state__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-body);
+    margin: 0 0 0.5rem;
+}
+
+.empty-state__hint {
+    color: var(--text-muted);
+    margin: 0;
+}
+
 .product-card__header {
     display: flex;
     justify-content: space-between;
@@ -937,4 +984,33 @@ img {
         align-items: flex-start;
         gap: 0.75rem;
     }
+}
+
+/* ─── Accesibilidad: respetar preferencia de movimiento reducido (WCAG 2.1 §2.3.3) ─── */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ─── Focus visible accesible (WCAG 2.2 §2.4.11) ─── */
+:focus-visible {
+    outline: 3px solid var(--brand-accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* ─── Touch targets mínimos 44px (WCAG 2.2 §2.5.8 / iOS/Android HIG) ─── */
+.tag,
+.pill,
+.filter-tag,
+.filter-select,
+.theme-toggle {
+    min-height: 44px;
+    min-width: 44px;
 }
