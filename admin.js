@@ -644,7 +644,8 @@
                 enabled: false,
                 percentage: 15,
                 topBarText: 'Promoción activa: ahorra en tu compra',
-                message: 'Descuento aplicado automáticamente en tu carrito.'
+                message: 'Descuento aplicado automáticamente en tu carrito.',
+                endDate: ''
             },
             appearance: { ...defaultAppearance },
             priceRanges: normalizePriceRanges(defaultPriceRanges),
@@ -860,6 +861,8 @@
                 ? clamp(percentageValue, 1, 95)
                 : defaultConfig.promotion.percentage;
 
+            const endDateRaw = typeof normalized.endDate === 'string' ? normalized.endDate.trim() : '';
+            const endDateValid = endDateRaw ? !isNaN(new Date(endDateRaw).getTime()) : false;
             return {
                 enabled: Boolean(normalized.enabled),
                 percentage: safePercentage,
@@ -868,7 +871,8 @@
                     : defaultConfig.promotion.topBarText,
                 message: typeof normalized.message === 'string'
                     ? normalized.message.trim()
-                    : defaultConfig.promotion.message
+                    : defaultConfig.promotion.message,
+                endDate: endDateValid ? endDateRaw : ''
             };
         }
 
@@ -4374,7 +4378,8 @@
                     enabled: readCheckbox('promotionEnabled'),
                     percentage: readValue('promotionPercentage'),
                     topBarText: readValue('promotionTopBarText'),
-                    message: readValue('promotionMessage')
+                    message: readValue('promotionMessage'),
+                    endDate: readValue('promotionEndDate')
                 }),
                 priceRanges: normalizePriceRanges(readPriceRangesFromInputs()),
                 newsPanel: normalizeNewsPanel({
@@ -5275,6 +5280,10 @@
             const promotionMessageInput = document.getElementById('promotionMessage');
             if (promotionMessageInput) {
                 promotionMessageInput.value = catalogData.config.promotion.message;
+            }
+            const promotionEndDateInput = document.getElementById('promotionEndDate');
+            if (promotionEndDateInput) {
+                promotionEndDateInput.value = catalogData.config.promotion.endDate || '';
             }
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
             refreshSocialPreviews(catalogData.config);
@@ -6258,6 +6267,92 @@
             reader.readAsText(file);
         });
 
+        // PWA helpers
+        function generateManifestJSON(config, theme) {
+            const companyName = ((config && config.companyName) || 'Catálogo').trim();
+            const shortName = companyName.length > 14
+                ? companyName.split(' ')[0].slice(0, 14)
+                : companyName;
+            const bgColor = (config && config.appearance && config.appearance.background) || '#f5f7f3';
+            const themeColor = (theme && theme.headerStart) || (config && config.appearance && config.appearance.header) || '#1f3b2e';
+            const description = (config && config.tagline) || 'Catálogo de productos';
+            const logoSrc = (config && config.logoData && config.logoData.startsWith('data:'))
+                ? 'images/logo-amazonia.svg'
+                : (config && config.logoData) || 'images/logo-amazonia.svg';
+
+            const manifest = {
+                name: companyName,
+                short_name: shortName,
+                description: description,
+                start_url: './index.html',
+                scope: './',
+                display: 'standalone',
+                background_color: bgColor,
+                theme_color: themeColor,
+                orientation: 'portrait-primary',
+                lang: 'es',
+                icons: [
+                    {
+                        src: logoSrc,
+                        sizes: 'any',
+                        type: 'image/svg+xml',
+                        purpose: 'any maskable'
+                    }
+                ]
+            };
+
+            return JSON.stringify(manifest, null, 2);
+        }
+
+        function generateServiceWorkerJS() {
+            return `// Service Worker — Catálogo Amazonia
+// Versión: 1.0 — Actualizar CACHE_NAME para forzar recarga
+const CACHE_NAME = 'amazonia-catalog-v1';
+const STATIC_ASSETS = ['./index.html', './catalogo.html', './nosotros.html', './politicas.html', './manifest.json'];
+
+self.addEventListener('install', function(event) {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(function(cache) {
+            return cache.addAll(STATIC_ASSETS);
+        }).then(function() {
+            return self.skipWaiting();
+        })
+    );
+});
+
+self.addEventListener('activate', function(event) {
+    event.waitUntil(
+        caches.keys().then(function(keys) {
+            return Promise.all(
+                keys.filter(function(k) { return k !== CACHE_NAME; })
+                    .map(function(k) { return caches.delete(k); })
+            );
+        }).then(function() {
+            return self.clients.claim();
+        })
+    );
+});
+
+self.addEventListener('fetch', function(event) {
+    if (event.request.method !== 'GET') return;
+    if (!event.request.url.startsWith(self.location.origin)) return;
+
+    event.respondWith(
+        fetch(event.request).then(function(response) {
+            if (response && response.status === 200) {
+                var clone = response.clone();
+                caches.open(CACHE_NAME).then(function(cache) {
+                    cache.put(event.request, clone);
+                });
+            }
+            return response;
+        }).catch(function() {
+            return caches.match(event.request);
+        })
+    );
+});`;
+        }
+
         // Generate Catalog
         async function generateCatalog() {
             const processEntryId = createProcessStatusEntry('generate-catalog', 'Validando configuración antes de generar…');
@@ -6298,8 +6393,8 @@
                     detail: 'Generando archivos para la descarga…'
                 });
 
-                const triggerDownload = (filename, content, delayMs = 200) => new Promise((resolve) => {
-                    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+                const triggerDownload = (filename, content, mimeType = 'text/html;charset=utf-8', delayMs = 200) => new Promise((resolve) => {
+                    const blob = new Blob([content], { type: mimeType });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
@@ -6315,10 +6410,17 @@
                     });
                 });
 
+                const currentConfig = getNormalizedConfig(catalogData.config);
+                const currentTheme = buildThemeTokens(currentConfig.appearance);
+                const manifestContent = generateManifestJSON(currentConfig, currentTheme);
+                const swContent = generateServiceWorkerJS();
+
                 await triggerDownload('index.html', homeHtmlContent);
                 await triggerDownload('catalogo.html', catalogHtmlContent);
                 await triggerDownload('politicas.html', policiesHtmlContent);
                 await triggerDownload('nosotros.html', aboutHtmlContent);
+                await triggerDownload('manifest.json', manifestContent, 'application/json;charset=utf-8');
+                await triggerDownload('sw.js', swContent, 'text/javascript;charset=utf-8');
 
                 updateProcessStatusEntry(processEntryId, {
                     state: 'success',
@@ -7077,6 +7179,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${companyNameHtml} | Inicio</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="${theme.headerStart}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="${companyNameHtml}">
     <style>${styles}</style>
 </head>
     <body class="page page--home">
@@ -7253,6 +7361,13 @@
         });
     })();
     </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
+            });
+        }
+    </script>
 </body>
 </html>`;
         }
@@ -7304,10 +7419,14 @@
                 ? `<p class="tagline" id="headerTagline">${taglineHtml}</p>`
                 : `<p class="tagline" id="headerTagline" style="display: none;"></p>`;
 
+            const countdownMarkup = (promotion.enabled && promotion.endDate)
+                ? `<span class="promo-countdown" id="promoCountdown" data-end="${escapeHtml(promotion.endDate)}" aria-label="Tiempo restante de la oferta"></span>`
+                : '';
             const promoBarMarkup = promotion.enabled
                 ? `<div class="promo-top-bar" role="status" aria-live="polite">
         <div class="promo-top-bar__content">
             <span class="promo-top-bar__title">${escapeHtml(promotion.topBarText || 'Promoción activa')}</span>
+            ${countdownMarkup}
             <span class="promo-top-bar__message">${escapeHtml(promotion.message || '')}</span>
         </div>
     </div>`
@@ -7419,6 +7538,10 @@
                         <img ${productImageAttrString} alt="${imageAlt}">
                         <button type="button" class="product-card__favorite" data-product-id="${resolvedProductId}" aria-label="Agregar ${productNameHtml} a favoritos" aria-pressed="false" onclick="event.stopPropagation(); toggleFavorite('${resolvedProductId}')">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                        <button type="button" class="product-card__quick-view" aria-label="Vista rápida de ${productNameHtml}" onclick="event.stopPropagation(); openQuickView('${resolvedProductId}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Vista rápida
                         </button>
                     </div>
                         <div class="product-info">
@@ -7703,6 +7826,12 @@
     <meta name="twitter:title" content="${documentTitle}">
     <meta name="twitter:description" content="${metaDescription}">
     ${faviconMarkup}
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="${theme.headerStart}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="${metaSiteName}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
@@ -7802,6 +7931,27 @@
         </div>
     </div>
 
+    <!-- Quick View Modal -->
+    <div class="quick-view-modal" id="quickViewModal" role="dialog" aria-modal="true" aria-labelledby="qvTitle">
+        <div class="quick-view-modal__content">
+            <button class="quick-view-modal__close" onclick="closeQuickView()" aria-label="Cerrar vista rápida">✕</button>
+            <div class="quick-view-modal__grid">
+                <div class="quick-view-modal__image-wrap">
+                    <img id="qvImage" alt="" class="quick-view-modal__image">
+                </div>
+                <div class="quick-view-modal__info">
+                    <h3 class="quick-view-modal__title" id="qvTitle"></h3>
+                    <div class="quick-view-modal__price" id="qvPrice"></div>
+                    <p class="quick-view-modal__desc" id="qvDesc"></p>
+                    <div class="quick-view-modal__actions">
+                        <button type="button" class="cta-button cta-button--cart" id="qvCartBtn"></button>
+                        <button type="button" class="cta-button cta-button--details" id="qvDetailsBtn" onclick="closeQuickView(); openModal(quickViewProductId)">Ver detalles completos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <div class="footer-content">
@@ -7817,6 +7967,13 @@
 
     <script>
         ${getCatalogScript(productDataJS, config, serializeForScript, baseImageAttributes)}
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
+            });
+        }
     </script>
 </body>
 </html>`;
@@ -8486,6 +8643,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${heroTitleHtml} - ${escapeHtml(companyNameFooter)}</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="${theme.headerStart}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
         ${policyStyles}
     </style>
@@ -8666,6 +8827,10 @@
                         setActivePolicy(activePolicyIndex + 1);
                     });
                 }
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
             }
 
             var quickLinks = document.querySelectorAll('[data-quick-link]');
@@ -8981,6 +9146,10 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
         .contact-cta:hover, .contact-cta:focus-visible { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,0.22); }
         .contact-cta:focus-visible { outline: 3px solid ${theme.accentSoft}; outline-offset: 2px; }
     </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="${theme.headerStart}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}">
     <div class="loader" id="loader">
@@ -9090,6 +9259,10 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
                         window.location.hash = '#' + targetId;
                     }
                 });
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
             }
         });
     </script>
@@ -10225,6 +10398,196 @@ ${formatCssBlock(headerBackground)}
             stroke: #e53e3e;
         }
 
+        /* Quick View button overlay */
+        .product-card__quick-view {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            appearance: none;
+            border: none;
+            background: rgba(0, 0, 0, 0.65);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            padding: 0.55rem 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.22s ease, transform 0.22s ease;
+            z-index: 3;
+        }
+
+        .product-card:hover .product-card__quick-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .product-card__quick-view:hover {
+            background: rgba(0, 0, 0, 0.82);
+        }
+
+        /* Quick View Modal */
+        .quick-view-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1100;
+            background: rgba(0, 0, 0, 0.55);
+            -webkit-backdrop-filter: blur(3px);
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .quick-view-modal.active {
+            display: flex;
+        }
+
+        .quick-view-modal__content {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            max-width: 780px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            animation: qvFadeIn 0.22s ease;
+        }
+
+        @keyframes qvFadeIn {
+            from { opacity: 0; transform: scale(0.96) translateY(12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .quick-view-modal__close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            appearance: none;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            cursor: pointer;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: background 0.15s ease;
+        }
+
+        .quick-view-modal__close:hover {
+            background: #fff;
+        }
+
+        .quick-view-modal__grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        @media (max-width: 580px) {
+            .quick-view-modal__grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quick-view-modal__image-wrap {
+            background: ${theme.imagePlaceholderStart};
+        }
+
+        .quick-view-modal__image {
+            width: 100%;
+            height: 100%;
+            min-height: 260px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .quick-view-modal__info {
+            padding: 1.75rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quick-view-modal__title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: ${theme.text};
+            margin: 0;
+            line-height: 1.3;
+            padding-right: 1.5rem;
+        }
+
+        .quick-view-modal__price {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: ${theme.priceColor};
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .quick-view-modal__price .qv-original {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: ${theme.textSecondary};
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        .quick-view-modal__price .qv-badge {
+            font-size: 0.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: #fff;
+            border-radius: 999px;
+            padding: 0.15rem 0.55rem;
+        }
+
+        .quick-view-modal__desc {
+            font-size: 0.9rem;
+            color: ${theme.textSecondary};
+            line-height: 1.5;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .quick-view-modal__actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: auto;
+        }
+
+        .cta-button--details {
+            background: transparent;
+            color: ${theme.accent};
+            border: 2px solid ${theme.accent};
+        }
+
+        .cta-button--details:hover {
+            background: ${theme.accentSoft};
+        }
+
         mark {
             background: ${theme.accentSoft};
             color: ${theme.accentStrong};
@@ -10384,6 +10747,25 @@ ${formatCssBlock(headerBackground)}
             box-shadow: 0 3px 8px rgba(197, 48, 48, 0.35);
             align-self: flex-start;
             margin-top: 0.15rem;
+        }
+
+        .promo-countdown {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            font-variant-numeric: tabular-nums;
+            gap: 0.3rem;
+            white-space: nowrap;
+        }
+
+        .promo-countdown--expired {
+            background: rgba(197, 48, 48, 0.35);
         }
 
         .product-actions {
@@ -12037,6 +12419,9 @@ ${formatCssBlock(footerBackground)}
                 restoreSelectionFromStorage();
                 renderSelectedProductsList();
 
+                // Countdown timer initialization
+                initPromoCountdown();
+
                 // Favorites initialization
                 loadFavorites();
                 updateFavoriteButtons();
@@ -12066,6 +12451,15 @@ ${formatCssBlock(footerBackground)}
                     modalElement.addEventListener('click', function(e) {
                         if (e.target === this) {
                             closeModal();
+                        }
+                    });
+                }
+
+                const qvModalElement = document.getElementById('quickViewModal');
+                if (qvModalElement) {
+                    qvModalElement.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            closeQuickView();
                         }
                     });
                 }
@@ -13750,6 +14144,55 @@ ${formatCssBlock(footerBackground)}
             }
         }
 
+        function initPromoCountdown() {
+            const countdownEl = document.getElementById('promoCountdown');
+            if (!countdownEl) {
+                return;
+            }
+
+            const endDateStr = countdownEl.getAttribute('data-end');
+            if (!endDateStr) {
+                return;
+            }
+
+            const endDate = new Date(endDateStr);
+            if (isNaN(endDate.getTime())) {
+                return;
+            }
+
+            function pad(n) {
+                return String(n).padStart(2, '0');
+            }
+
+            function updateCountdown() {
+                const now = new Date();
+                const diff = endDate - now;
+
+                if (diff <= 0) {
+                    countdownEl.textContent = '¡Oferta finalizada!';
+                    countdownEl.classList.add('promo-countdown--expired');
+                    clearInterval(timer);
+                    return;
+                }
+
+                const days = Math.floor(diff / 86400000);
+                const hours = Math.floor((diff % 86400000) / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+
+                var text = '\u23F0 Termina en: ';
+                if (days > 0) {
+                    text += days + 'd ';
+                }
+                text += pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+
+                countdownEl.textContent = text;
+            }
+
+            updateCountdown();
+            var timer = setInterval(updateCountdown, 1000);
+        }
+
         function setupStickyNavigation() {
             const navContainer = document.querySelector('.nav-container');
             const scrollButton = document.getElementById('scrollToTopButton');
@@ -14004,6 +14447,72 @@ ${formatCssBlock(footerBackground)}
             currentImageIndex = 0;
             updateModalImage();
             updateModalCarouselControls();
+        }
+
+        let quickViewProductId = null;
+
+        function openQuickView(productId) {
+            const modal = document.getElementById('quickViewModal');
+            const product = productData[productId];
+            if (!modal || !product) return;
+
+            quickViewProductId = productId;
+
+            const titleEl = document.getElementById('qvTitle');
+            const priceEl = document.getElementById('qvPrice');
+            const descEl = document.getElementById('qvDesc');
+            const imgEl = document.getElementById('qvImage');
+            const cartBtn = document.getElementById('qvCartBtn');
+
+            if (titleEl) titleEl.textContent = product.title;
+            if (descEl) descEl.textContent = product.shortDesc || product.description || '';
+
+            if (imgEl) {
+                const src = (Array.isArray(product.images) && product.images[0]) || product.image || '';
+                imgEl.src = src;
+                imgEl.alt = product.alt || product.title;
+            }
+
+            if (priceEl) {
+                if (product.priceOnRequest) {
+                    priceEl.innerHTML = '<span>Precio a consultar</span>';
+                } else if (product.discountedPrice != null) {
+                    priceEl.innerHTML =
+                        '<span>' + (product.discountedPriceFormatted || '') + '</span>' +
+                        '<span class="qv-original">' + (product.priceFormatted || '') + '</span>' +
+                        '<span class="qv-badge">-' + Math.round(100 - (product.discountedPrice / product.price * 100)) + '%</span>';
+                } else {
+                    priceEl.innerHTML = '<span>' + (product.priceDisplay || product.priceFormatted || '') + '</span>';
+                }
+            }
+
+            if (cartBtn) {
+                if (product.priceOnRequest) {
+                    cartBtn.textContent = '💬 Consultar precio';
+                    cartBtn.disabled = false;
+                    cartBtn.onclick = function() { closeQuickView(); currentProduct = product.title; modalProduct = product; modalProductId = productId; contactWhatsApp(); };
+                } else if (!product.available) {
+                    cartBtn.textContent = 'Agotado';
+                    cartBtn.disabled = true;
+                } else {
+                    const inCart = selectedProducts.some(p => p.id === productId);
+                    cartBtn.textContent = inCart ? '✓ En el carrito' : '🛒 Añadir al carrito';
+                    cartBtn.disabled = false;
+                    cartBtn.onclick = function() {
+                        addProductToSelection(productId);
+                        cartBtn.textContent = '✓ En el carrito';
+                    };
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeQuickView() {
+            const modal = document.getElementById('quickViewModal');
+            if (modal) modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
 
         function contactWhatsApp() {
