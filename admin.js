@@ -3399,6 +3399,8 @@
                 }
             });
 
+            initQrPanel();
+
             const savePoliciesButton = document.getElementById('savePoliciesButton');
             if (savePoliciesButton) {
                 savePoliciesButton.addEventListener('click', saveConfig);
@@ -5259,6 +5261,10 @@
             document.getElementById('tiktok').value = catalogData.config.tiktok || '';
             document.getElementById('canonicalUrl').value = catalogData.config.canonicalUrl || '';
             document.getElementById('aboutCanonicalUrl').value = catalogData.config.aboutCanonicalUrl || '';
+            const qrUrlInput = document.getElementById('qrUrl');
+            if (qrUrlInput && !qrUrlInput.dataset.customized) {
+                qrUrlInput.value = catalogData.config.canonicalUrl || '';
+            }
             document.getElementById('companyName').value = catalogData.config.companyName || '';
             document.getElementById('tagline').value = catalogData.config.tagline || '';
             const unifiedHomeVisualsInput = document.getElementById('unifiedHomeVisuals');
@@ -6351,6 +6357,120 @@ self.addEventListener('fetch', function(event) {
         })
     );
 });`;
+        }
+
+        // QR Panel
+        let qrSelectedSize = 300;
+
+        function initQrPanel() {
+            const generateBtn = document.getElementById('generateQrButton');
+            const downloadBtn = document.getElementById('downloadQrButton');
+            const copyUrlBtn = document.getElementById('copyQrUrlButton');
+            const qrUrlInput = document.getElementById('qrUrl');
+            const canonicalInput = document.getElementById('canonicalUrl');
+
+            // Keep qrUrl in sync with canonicalUrl
+            if (canonicalInput && qrUrlInput) {
+                const syncQrUrl = () => {
+                    if (!qrUrlInput.dataset.customized) {
+                        qrUrlInput.value = canonicalInput.value;
+                    }
+                };
+                canonicalInput.addEventListener('input', syncQrUrl);
+                canonicalInput.addEventListener('change', syncQrUrl);
+                qrUrlInput.removeAttribute('readonly');
+                qrUrlInput.addEventListener('input', () => {
+                    qrUrlInput.dataset.customized = '1';
+                });
+            }
+
+            // Size buttons
+            document.querySelectorAll('.qr-size-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.qr-size-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+                    btn.setAttribute('aria-pressed', 'true');
+                    qrSelectedSize = Number(btn.dataset.size) || 300;
+                });
+            });
+
+            if (generateBtn) {
+                generateBtn.addEventListener('click', generateQrCode);
+            }
+
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', downloadQrCode);
+            }
+
+            if (copyUrlBtn) {
+                copyUrlBtn.addEventListener('click', () => {
+                    const url = (document.getElementById('qrUrl') || {}).value || '';
+                    if (!url) return;
+                    navigator.clipboard.writeText(url).then(() => {
+                        showMessage('URL copiada al portapapeles.', 'success');
+                    }).catch(() => {
+                        showMessage('No se pudo copiar la URL.', 'error');
+                    });
+                });
+            }
+        }
+
+        function generateQrCode() {
+            const qrUrlInput = document.getElementById('qrUrl');
+            const url = qrUrlInput ? qrUrlInput.value.trim() : '';
+
+            if (!url) {
+                showMessage('Ingresa una URL canónica en la sección "URLs canónicas" para generar el QR.', 'warning');
+                return;
+            }
+
+            if (!isValidUrl(url)) {
+                showMessage('La URL no es válida. Asegúrate de incluir https://.', 'error');
+                return;
+            }
+
+            const placeholder = document.getElementById('qrPlaceholder');
+            const imgEl = document.getElementById('qrImage');
+            const downloadBtn = document.getElementById('downloadQrButton');
+            const copyBtn = document.getElementById('copyQrUrlButton');
+
+            if (placeholder) placeholder.style.display = 'none';
+            if (imgEl) {
+                imgEl.style.display = 'none';
+                const size = qrSelectedSize;
+                const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(url) + '&format=png&margin=10';
+                imgEl.onload = () => {
+                    imgEl.style.display = 'block';
+                    imgEl.style.width = Math.min(size, 260) + 'px';
+                    imgEl.style.height = Math.min(size, 260) + 'px';
+                    if (downloadBtn) downloadBtn.style.display = '';
+                    if (copyBtn) copyBtn.style.display = '';
+                    showMessage('QR generado correctamente.', 'success');
+                };
+                imgEl.onerror = () => {
+                    if (placeholder) placeholder.style.display = '';
+                    showMessage('No se pudo generar el QR. Verifica tu conexión a Internet.', 'error');
+                };
+                imgEl.src = apiUrl;
+                imgEl.dataset.qrUrl = url;
+            }
+        }
+
+        function downloadQrCode() {
+            const imgEl = document.getElementById('qrImage');
+            if (!imgEl || !imgEl.src) return;
+
+            fetch(imgEl.src)
+                .then(r => r.blob())
+                .then(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'qr-catalogo.png';
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                })
+                .catch(() => {
+                    showMessage('No se pudo descargar el QR. Intenta guardar la imagen manualmente.', 'error');
+                });
         }
 
         // Generate Catalog
@@ -9865,7 +9985,7 @@ ${formatCssBlock(headerBackground)}
         .scroll-to-top {
             position: fixed;
             inset-inline-end: 2rem;
-            bottom: 2.5rem;
+            bottom: 5.25rem;
             width: 3rem;
             height: 3rem;
             border-radius: 999px;
