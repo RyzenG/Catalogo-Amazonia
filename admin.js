@@ -5900,6 +5900,10 @@
                     if (soldOutInput) {
                         soldOutInput.checked = !isProductAvailable(product);
                     }
+                    const priceOnRequestInput = document.getElementById('productPriceOnRequest');
+                    if (priceOnRequestInput) {
+                        priceOnRequestInput.checked = product.priceOnRequest === true;
+                    }
                     document.getElementById('productSpecs').value = product.specs || '';
                     document.getElementById('productId').value = productId;
 
@@ -5920,6 +5924,10 @@
                 const soldOutInput = document.getElementById('productSoldOut');
                 if (soldOutInput) {
                     soldOutInput.checked = false;
+                }
+                const priceOnRequestInputNew = document.getElementById('productPriceOnRequest');
+                if (priceOnRequestInputNew) {
+                    priceOnRequestInputNew.checked = false;
                 }
                 currentImageUrl = '';
                 currentIconFallback = '';
@@ -6055,6 +6063,8 @@
             const normalizedPrice = formatCurrencyCOP(priceInput ? priceInput.value : '');
             const soldOutCheckbox = document.getElementById('productSoldOut');
             const isSoldOut = soldOutCheckbox ? soldOutCheckbox.checked : false;
+            const priceOnRequestCheckbox = document.getElementById('productPriceOnRequest');
+            const isPriceOnRequest = priceOnRequestCheckbox ? priceOnRequestCheckbox.checked : false;
 
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
@@ -6062,6 +6072,7 @@
                 shortDesc: document.getElementById('productShortDesc').value,
                 longDesc: document.getElementById('productLongDesc').value,
                 price: normalizedPrice,
+                priceOnRequest: isPriceOnRequest,
                 features: features,
                 specs: document.getElementById('productSpecs').value,
                 available: !isSoldOut,
@@ -7385,6 +7396,22 @@
                         const productDescriptionAttr = escapeHtml(descriptionAttrSource);
                         const priceAttr = Number.isFinite(numericPrice) ? numericPrice : '';
                         const isNewProduct = product.isNew === true;
+                        const isPriceOnRequest = product.priceOnRequest === true;
+                        const priceBlockHtml = isPriceOnRequest
+                            ? `<p class="product-price product-price--consult">Precio a consultar</p>`
+                            : (promotionResult.hasDiscount
+                                ? `<div class="product-price product-price--discount">
+                                        <span class="product-price__current">${discountedPriceFormatted}</span>
+                                        <span class="product-price__original">${productPriceHtml}</span>
+                                        <span class="product-price__badge">-${promotion.percentage}%</span>
+                                    </div>`
+                                : `<p class="product-price">${productPriceHtml}</p>`);
+                        const selectBtnLabel = isPriceOnRequest
+                            ? `Consultar precio de ${productNameHtml}`
+                            : (isAvailable ? `Agregar ${productNameHtml} al carrito` : `${productNameHtml} está agotado`);
+                        const selectBtnText = isPriceOnRequest ? '💬 Consultar precio' : (isAvailable ? '➕ Añadir al carrito' : 'Agotado');
+                        const selectBtnClass = `product-card__select${(!isAvailable && !isPriceOnRequest) ? ' product-card__select--disabled' : ''}${isPriceOnRequest ? ' product-card__select--consult' : ''}`;
+                        const selectBtnDisabled = !isAvailable && !isPriceOnRequest ? 'disabled aria-disabled="true"' : '';
                         productsHTML += `
                 <div class="product-card" id="${productAnchorId}" data-category="${category.id}" data-product-id="${resolvedProductId}" data-name="${productNameHtml}" data-description="${productDescriptionAttr}" data-features="${featuresAttr}" data-price="${priceAttr}" onclick="openModal('${resolvedProductId}')">
                     <div class="product-image">
@@ -7395,15 +7422,12 @@
                             <h3 class="product-name">${productNameHtml}</h3>
                             <p class="product-description">${productShortDescHtml}</p>
                             <div class="product-features">${featuresHtml}</div>
-                            ${promotionResult.hasDiscount
-                                ? `<div class="product-price product-price--discount">
-                                        <span class="product-price__current">${discountedPriceFormatted}</span>
-                                        <span class="product-price__original">${productPriceHtml}</span>
-                                        <span class="product-price__badge">-${promotion.percentage}%</span>
-                                    </div>`
-                                : `<p class="product-price">${productPriceHtml}</p>`}
+                            ${priceBlockHtml}
                             <div class="product-actions">
-                                <button type="button" class="product-card__select${isAvailable ? '' : ' product-card__select--disabled'}" data-product-id="${resolvedProductId}" aria-pressed="false" aria-label="${isAvailable ? `Agregar ${productNameHtml} al carrito` : `${productNameHtml} está agotado`}" ${isAvailable ? '' : 'disabled aria-disabled="true"'}>${isAvailable ? '➕ Añadir al carrito' : 'Agotado'}</button>
+                                <button type="button" class="${selectBtnClass}" data-product-id="${resolvedProductId}" aria-pressed="false" aria-label="${selectBtnLabel}" ${selectBtnDisabled}>${selectBtnText}</button>
+                                <button type="button" class="product-card__share" data-product-id="${resolvedProductId}" aria-label="Compartir ${productNameHtml}" onclick="event.stopPropagation(); shareProduct('${resolvedProductId}')">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                </button>
                             </div>
                         </div>
                     </div>`;
@@ -7442,7 +7466,8 @@
                             discountedPriceFormatted: promotionResult.hasDiscount ? formatCurrencyCOP(promotionResult.finalPrice) : '',
                             discountAmount: promotionResult.discountAmount,
                             available: isAvailable,
-                            availability: isAvailable ? 'available' : 'sold-out'
+                            availability: isAvailable ? 'available' : 'sold-out',
+                            priceOnRequest: isPriceOnRequest
                         };
                     });
 
@@ -7548,6 +7573,10 @@
         </div>
         <div class="selected-products-panel__footer">
             <div class="selected-products-panel__totals" id="selectedProductsTotals" aria-live="polite"></div>
+            <div class="selected-products-panel__note-wrapper">
+                <label class="selected-products-panel__note-label" for="cartOrderNote">Indicaciones adicionales <span class="selected-products-panel__note-optional">(opcional)</span></label>
+                <textarea id="cartOrderNote" class="selected-products-panel__note" rows="3" maxlength="500" placeholder="Ej: dirección de entrega, color preferido, fecha requerida…" aria-label="Indicaciones adicionales para el pedido"></textarea>
+            </div>
             <p class="selected-products-panel__notice" id="whatsappConfigAlert" role="status" aria-live="polite" hidden></p>
             <p class="selected-products-panel__hint">Revisa los productos seleccionados y finaliza tu compra por WhatsApp.</p>
             <button type="button" class="selected-products-panel__checkout" id="checkoutButton" disabled>Finalizar compra</button>
@@ -7750,7 +7779,13 @@
                 <div class="cta-section">
                     <h3>¿Interesado en este producto?</h3>
                     <p>Contáctanos para más información o para realizar tu pedido</p>
-                    <button type="button" class="cta-button cta-button--cart" id="modalCartButton" onclick="modalAddToCart()">🛒 Añadir al carrito</button>
+                    <div class="cta-section__actions">
+                        <button type="button" class="cta-button cta-button--cart" id="modalCartButton" onclick="modalAddToCart()">🛒 Añadir al carrito</button>
+                        <button type="button" class="cta-button cta-button--share" id="modalShareButton" onclick="shareProduct(modalProductId)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            Compartir
+                        </button>
+                    </div>
                     ${modalCTAButtons}
                 </div>
             </div>
@@ -10224,6 +10259,26 @@ ${formatCssBlock(headerBackground)}
             gap: 0.2rem;
         }
 
+        .product-price--consult {
+            font-size: 1rem;
+            font-weight: 600;
+            color: ${theme.accentStrong};
+            border: 1.5px dashed ${theme.accentStrong};
+            border-radius: 8px;
+            padding: 0.3rem 0.7rem;
+            display: inline-block;
+            opacity: 0.85;
+        }
+
+        .product-card__select--consult {
+            background: linear-gradient(135deg, ${theme.accentStrong} 0%, ${theme.ctaBackgroundEnd} 100%);
+            color: #ffffff;
+        }
+
+        .product-card__select--consult:hover {
+            filter: brightness(1.1);
+        }
+
         .product-price__current {
             font-size: 1.7rem;
             font-weight: 800;
@@ -10257,6 +10312,8 @@ ${formatCssBlock(headerBackground)}
             margin-top: 1.2rem;
             display: flex;
             justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .product-card__select {
@@ -10302,6 +10359,30 @@ ${formatCssBlock(headerBackground)}
             cursor: not-allowed;
             box-shadow: none;
             transform: none;
+        }
+
+        .product-card__share {
+            appearance: none;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 999px;
+            background: transparent;
+            color: ${theme.textSecondary};
+            width: 2.2rem;
+            height: 2.2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .product-card__share:hover,
+        .product-card__share:focus-visible {
+            background: ${theme.accentSoft};
+            border-color: ${theme.accentStrong};
+            color: ${theme.accentStrong};
+            transform: scale(1.1);
         }
 
         /* Modal */
@@ -10521,6 +10602,14 @@ ${formatCssBlock(headerBackground)}
             box-shadow: 0 5px 15px ${theme.ctaShadow};
         }
 
+        .cta-section__actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
         .cta-button--cart {
             background: linear-gradient(135deg, ${theme.headerStart} 0%, ${theme.headerEnd} 100%);
             color: #ffffff;
@@ -10533,6 +10622,24 @@ ${formatCssBlock(headerBackground)}
         .cta-button--cart:hover {
             filter: brightness(1.1);
             box-shadow: 0 10px 24px rgba(31, 59, 46, 0.45);
+        }
+
+        .cta-button--share {
+            background: transparent;
+            border: 1.5px solid ${theme.borderColor};
+            color: ${theme.productName};
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .cta-button--share:hover {
+            background: ${theme.accentSoft};
+            border-color: ${theme.accentStrong};
+            color: ${theme.accentStrong};
+            box-shadow: none;
         }
 
         .shipping-main {
@@ -11038,6 +11145,47 @@ ${formatCssBlock(footerBackground)}
             flex-direction: column;
             gap: 0.75rem;
             background: #ffffff;
+        }
+
+        .selected-products-panel__note-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .selected-products-panel__note-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: ${theme.productName};
+        }
+
+        .selected-products-panel__note-optional {
+            font-weight: 400;
+            color: ${theme.categoryDescription};
+        }
+
+        .selected-products-panel__note {
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid ${theme.borderColor};
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            resize: vertical;
+            background: transparent;
+            color: ${theme.productName};
+            line-height: 1.4;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .selected-products-panel__note:focus {
+            outline: none;
+            border-color: ${theme.accentStrong};
+        }
+
+        .selected-products-panel[data-empty="true"] .selected-products-panel__note-wrapper {
+            display: none;
         }
 
         .selected-products-panel__notice {
@@ -12788,6 +12936,18 @@ ${formatCssBlock(footerBackground)}
 
                 const product = productData[productId];
                 const isAvailable = isProductAvailable(product);
+                const isPriceOnRequest = product && product.priceOnRequest === true;
+
+                if (isPriceOnRequest) {
+                    button.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        currentProduct = product.title;
+                        modalProduct = product;
+                        modalProductId = productId;
+                        contactWhatsApp();
+                    });
+                    return;
+                }
 
                 if (!isAvailable) {
                     button.classList.add('product-card__select--disabled');
@@ -12845,6 +13005,10 @@ ${formatCssBlock(footerBackground)}
             selectedProducts = [];
             persistSelection();
             renderSelectedProductsList();
+            const orderNoteEl = document.getElementById('cartOrderNote');
+            if (orderNoteEl) {
+                orderNoteEl.value = '';
+            }
         }
 
         function updateSelectionItem(productId, updates, options) {
@@ -13527,6 +13691,15 @@ ${formatCssBlock(footerBackground)}
             const btn = document.getElementById('modalCartButton');
             if (!btn || !modalProductId) return;
             const product = productData[modalProductId];
+            if (product && product.priceOnRequest) {
+                btn.disabled = false;
+                btn.removeAttribute('aria-disabled');
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                btn.textContent = '💬 Consultar precio';
+                btn.onclick = function() { contactWhatsApp(); };
+                return;
+            }
             if (!product || !product.available) {
                 btn.disabled = true;
                 btn.setAttribute('aria-disabled', 'true');
@@ -13541,14 +13714,72 @@ ${formatCssBlock(footerBackground)}
             btn.style.opacity = '1';
             btn.style.cursor = 'pointer';
             btn.textContent = isSelected ? '✔ En el carrito' : '🛒 Añadir al carrito';
+            btn.onclick = function() { modalAddToCart(); };
         }
 
         function modalAddToCart() {
             if (!modalProductId) return;
+            const product = productData[modalProductId];
+            if (product && product.priceOnRequest) {
+                contactWhatsApp();
+                return;
+            }
             const btn = document.getElementById('modalCartButton');
             if (btn) triggerCartFlyAnimation(btn);
             addProductToSelection(modalProductId);
             updateModalCartButton();
+        }
+
+        function shareProduct(productId) {
+            const product = productId ? productData[productId] : null;
+            const productTitle = product ? product.title : document.title;
+            const shareUrl = new URL(window.location.href);
+            shareUrl.hash = '';
+            if (productId) {
+                shareUrl.searchParams.set('producto', productId);
+            }
+            const shareUrlStr = shareUrl.toString();
+
+            function showShareToast(message) {
+                let toast = document.getElementById('shareToast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'shareToast';
+                    toast.style.cssText = 'position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:0.6rem 1.2rem;border-radius:999px;font-size:0.85rem;z-index:10000;pointer-events:none;transition:opacity 0.3s;';
+                    document.body.appendChild(toast);
+                }
+                toast.textContent = message;
+                toast.style.opacity = '1';
+                clearTimeout(toast._timer);
+                toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+            }
+
+            if (navigator.share) {
+                navigator.share({ title: productTitle, url: shareUrlStr }).catch(() => {});
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrlStr).then(() => {
+                    showShareToast('¡Link copiado al portapapeles!');
+                }).catch(() => {
+                    showShareToast('No se pudo copiar el link');
+                });
+            } else {
+                try {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = shareUrlStr;
+                    textArea.style.position = 'fixed';
+                    textArea.style.opacity = '0';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showShareToast('¡Link copiado al portapapeles!');
+                } catch (e) {
+                    showShareToast('Copia este link: ' + shareUrlStr);
+                }
+            }
         }
 
         function closeModal() {
@@ -13601,7 +13832,10 @@ ${formatCssBlock(footerBackground)}
                     ? \`Total estimado: \${formatCurrencyCOP(totalAmount)}\${hasPendingPrices ? ' (faltan precios por confirmar)' : ''}\`
                     : 'Total estimado: pendiente de cotizar';
 
-                message = \`Hola! Quiero finalizar mi compra con este pedido:\n\n\${lines}\n\nTotal de unidades: \${totalUnits}\n\${totalLine}\n\n¿Me ayudas a completar la compra?\`;
+                const orderNoteEl = document.getElementById('cartOrderNote');
+                const orderNote = orderNoteEl ? orderNoteEl.value.trim() : '';
+                const noteSuffix = orderNote ? \`\n\nIndicaciones adicionales: \${orderNote}\` : '';
+                message = \`Hola! Quiero finalizar mi compra con este pedido:\n\n\${lines}\n\nTotal de unidades: \${totalUnits}\n\${totalLine}\${noteSuffix}\n\n¿Me ayudas a completar la compra?\`;
             } else {
                 const productName = currentProduct || 'Producto Amazonia';
                 message = \`Hola! Me interesa el producto: \${productName}. ¿Podríamos avanzar con la compra?\`;
