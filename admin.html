@@ -46,7 +46,17 @@
                 <!-- Configuration Section -->
                 <div id="configSection" class="section" role="region" aria-labelledby="configSectionTitle" aria-hidden="false">
                     <h2 class="section-title" id="configSectionTitle">⚙️ Configuración General</h2>
-                    
+
+                    <div class="config-tabs" role="tablist" aria-label="Secciones de configuración">
+                        <button role="tab" class="config-tab config-tab--active" data-config-tab="contacto" id="configTabBtn-contacto" aria-controls="configTabPanel-contacto" aria-selected="true">📞 Contacto</button>
+                        <button role="tab" class="config-tab" data-config-tab="empresa" id="configTabBtn-empresa" aria-controls="configTabPanel-empresa" aria-selected="false">🏢 Empresa</button>
+                        <button role="tab" class="config-tab" data-config-tab="apariencia" id="configTabBtn-apariencia" aria-controls="configTabPanel-apariencia" aria-selected="false">🎨 Apariencia</button>
+                        <button role="tab" class="config-tab" data-config-tab="promocion" id="configTabBtn-promocion" aria-controls="configTabPanel-promocion" aria-selected="false">🏷️ Promoción</button>
+                    </div>
+
+                    <!-- Tab: Contacto -->
+                    <div id="configTabPanel-contacto" class="config-tab-panel" role="tabpanel" aria-labelledby="configTabBtn-contacto">
+
                     <div class="config-section">
                         <h3 style="margin-bottom: 1rem">Información de Contacto</h3>
                         <div class="two-columns">
@@ -90,6 +100,11 @@
                         </div>
                         <small style="display: block; margin-top: 0.5rem; color: var(--text-muted);">Puedes escribir tu usuario (ej. <code>@marca</code>) o pegar la URL completa; te mostraremos la versión final que se publicará.</small>
                     </div>
+
+                    </div><!-- /configTabPanel-contacto -->
+
+                    <!-- Tab: Empresa -->
+                    <div id="configTabPanel-empresa" class="config-tab-panel" role="tabpanel" aria-labelledby="configTabBtn-empresa" hidden>
 
                     <div class="config-section">
                         <h3 style="margin-bottom: 1rem">URLs canónicas</h3>
@@ -141,38 +156,6 @@
                     </div>
 
                     <div class="config-section">
-                        <h3 style="margin-bottom: 1rem">Promoción de descuento</h3>
-                        <p class="section-description">Activa un descuento porcentual que se aplicará de forma automática en todos los precios visibles y mostrará el ahorro en el carrito.</p>
-                        <div class="two-columns">
-                            <div class="form-group">
-                                <label class="checkbox-wrapper">
-                                    <input type="checkbox" id="promotionEnabled">
-                                    <span>Activar promoción</span>
-                                </label>
-                                <small class="input-helper">La barra superior solo aparece mientras la promoción esté activa.</small>
-                            </div>
-                            <div class="form-group">
-                                <label>Porcentaje de descuento (%)</label>
-                                <input type="number" id="promotionPercentage" min="1" max="95" step="1" value="15">
-                                <small class="input-helper">El descuento se aplica sobre el precio base de cada producto.</small>
-                            </div>
-                            <div class="form-group">
-                                <label>Mensaje de la barra superior</label>
-                                <input type="text" id="promotionTopBarText" placeholder="Promoción activa: ahorra en tu compra">
-                            </div>
-                            <div class="form-group">
-                                <label>Mensaje destacado en el carrito</label>
-                                <input type="text" id="promotionMessage" placeholder="Descuento aplicado automáticamente en tu carrito.">
-                            </div>
-                            <div class="form-group">
-                                <label>Fecha y hora de fin de la oferta</label>
-                                <input type="datetime-local" id="promotionEndDate">
-                                <small class="input-helper">Si está configurada, el catálogo mostrará una cuenta regresiva en la barra de promoción. Deja en blanco para no mostrarla.</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="config-section">
                         <h3 style="margin-bottom: 1rem">Información de la Empresa</h3>
                         <div class="form-group">
                             <label>Nombre de la empresa:</label>
@@ -197,6 +180,11 @@
                             <textarea id="footerMessage">Creando espacios únicos con concreto sostenible</textarea>
                         </div>
                     </div>
+
+                    </div><!-- /configTabPanel-empresa -->
+
+                    <!-- Tab: Apariencia -->
+                    <div id="configTabPanel-apariencia" class="config-tab-panel" role="tabpanel" aria-labelledby="configTabBtn-apariencia" hidden>
 
                     <!-- Apariencia del catálogo: mantener esta sección inmediatamente después de la información de la empresa -->
                     <div class="config-section">
@@ -298,6 +286,43 @@
                         <button type="button" class="btn btn-secondary" id="resetAppearanceButton">Restaurar colores de fábrica</button>
                     </div>
 
+                    </div><!-- /configTabPanel-apariencia -->
+
+                    <!-- Tab: Promoción -->
+                    <div id="configTabPanel-promocion" class="config-tab-panel" role="tabpanel" aria-labelledby="configTabBtn-promocion" hidden>
+
+                    <div class="config-section">
+                        <h3 style="margin-bottom: 1rem">Promoción de descuento</h3>
+                        <p class="section-description">Activa un descuento porcentual que se aplicará de forma automática en todos los precios visibles y mostrará el ahorro en el carrito.</p>
+                        <div class="two-columns">
+                            <div class="form-group">
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" id="promotionEnabled">
+                                    <span>Activar promoción</span>
+                                </label>
+                                <small class="input-helper">La barra superior solo aparece mientras la promoción esté activa.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Porcentaje de descuento (%)</label>
+                                <input type="number" id="promotionPercentage" min="1" max="95" step="1" value="15">
+                                <small class="input-helper">El descuento se aplica sobre el precio base de cada producto.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Mensaje de la barra superior</label>
+                                <input type="text" id="promotionTopBarText" placeholder="Promoción activa: ahorra en tu compra">
+                            </div>
+                            <div class="form-group">
+                                <label>Mensaje destacado en el carrito</label>
+                                <input type="text" id="promotionMessage" placeholder="Descuento aplicado automáticamente en tu carrito.">
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha y hora de fin de la oferta</label>
+                                <input type="datetime-local" id="promotionEndDate">
+                                <small class="input-helper">Si está configurada, el catálogo mostrará una cuenta regresiva en la barra de promoción. Deja en blanco para no mostrarla.</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="config-section">
                         <h3 style="margin-bottom: 0.75rem">Rangos de precios</h3>
                         <p class="section-description">Define los rangos que aparecerán en el filtro de precios del catálogo. Evita solapamientos para que cada producto solo coincida con un rango.</p>
@@ -308,6 +333,8 @@
                         </div>
                         <p class="field-hint field-hint--error" id="priceRangeError" aria-live="polite" style="display: none;"></p>
                     </div>
+
+                    </div><!-- /configTabPanel-promocion -->
 
                 <button class="btn btn-primary" id="saveConfigButton">Guardar Configuración</button>
             </div>
