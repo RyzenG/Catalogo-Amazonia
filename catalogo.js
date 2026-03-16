@@ -1031,8 +1031,23 @@ function renderProducts(filteredProducts, activeCategory) {
             const card = document.createElement('article');
             card.className = 'product-card';
             card.setAttribute('aria-label', product.name);
+            card.style.cursor = 'pointer';
+            card.setAttribute('tabindex', '0');
             const availabilityState = getProductAvailabilityState(product);
             const isAvailable = availabilityState === 'available';
+
+            // Abrir modal al hacer clic en la card (excepto en el CTA)
+            card.addEventListener('click', event => {
+                if (!event.target.closest('.product-card__actions')) {
+                    openProductModal(product);
+                }
+            });
+            card.addEventListener('keydown', event => {
+                if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.product-card__actions')) {
+                    event.preventDefault();
+                    openProductModal(product);
+                }
+            });
 
             const media = document.createElement('div');
             media.className = 'product-card__media';
@@ -1234,6 +1249,291 @@ function applyFilters({ search, price, category } = {}) {
     updateUrl({ categoria: activeCategory, buscar: activeSearch, precio: activePrice });
 }
 
+/* ═══════════════════════════════════════════════════
+   SPRINT 2: MODAL DE DETALLE + LIGHTBOX + RELACIONADOS
+   ═══════════════════════════════════════════════════ */
+
+/**
+ * Crea (una sola vez) el elemento <dialog> del modal de producto y lo agrega al DOM.
+ * Retorna el dialog existente si ya fue creado.
+ */
+function createProductModal() {
+    const existing = document.getElementById('productModal');
+    if (existing) {
+        return existing;
+    }
+
+    const dialog = document.createElement('dialog');
+    dialog.id = 'productModal';
+    dialog.className = 'product-modal';
+    dialog.setAttribute('aria-labelledby', 'productModalTitle');
+    dialog.setAttribute('aria-modal', 'true');
+
+    dialog.innerHTML = `
+        <div class="product-modal__inner">
+            <button class="product-modal__close" id="productModalClose" aria-label="Cerrar detalle de producto" type="button">&#x2715;</button>
+
+            <div class="product-modal__media" id="productModalMedia">
+                <img id="productModalImage" class="product-modal__image" src="" alt="" loading="eager" decoding="async">
+                <div id="productModalPlaceholder" class="product-modal__image product-modal__image--placeholder" role="img" aria-label="Imagen pendiente" hidden></div>
+            </div>
+
+            <div class="product-modal__content">
+                <div id="productModalBadges" class="product-modal__badges"></div>
+                <h2 id="productModalTitle" class="product-modal__title"></h2>
+                <p id="productModalPrice" class="product-modal__price"></p>
+                <p id="productModalDesc" class="product-modal__desc"></p>
+                <div id="productModalMeta" class="product-meta"></div>
+                <div id="productModalActions" class="product-modal__actions"></div>
+            </div>
+
+            <section id="productModalRelated" class="product-modal__related" aria-label="Productos relacionados" hidden>
+                <h3 class="product-modal__related-title">También te puede interesar</h3>
+                <div id="productModalRelatedGrid" class="product-modal__related-grid"></div>
+            </section>
+        </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    // Cerrar al hacer clic en el backdrop (fuera del inner)
+    dialog.addEventListener('click', event => {
+        if (event.target === dialog) {
+            dialog.close();
+        }
+    });
+
+    document.getElementById('productModalClose').addEventListener('click', () => {
+        dialog.close();
+    });
+
+    return dialog;
+}
+
+/**
+ * Rellena y abre el modal con los datos del producto.
+ * @param {Object} product - objeto producto normalizado
+ */
+function openProductModal(product) {
+    const dialog = createProductModal();
+    const availState = getProductAvailabilityState(product);
+    const categoryData = categories.find(c => c.id === product.category);
+
+    // --- Imagen ---
+    const img = document.getElementById('productModalImage');
+    const placeholder = document.getElementById('productModalPlaceholder');
+    if (product.imageUrl) {
+        img.src = product.imageUrl;
+        img.alt = `Vista de ${product.name}`;
+        img.hidden = false;
+        img.style.cursor = 'zoom-in';
+        img.onclick = () => openImageLightbox(product.imageUrl, product.name);
+        placeholder.hidden = true;
+    } else {
+        img.hidden = true;
+        img.onclick = null;
+        placeholder.setAttribute('aria-label', `Imagen pendiente para ${product.name}`);
+        placeholder.hidden = false;
+    }
+
+    // --- Título y precio ---
+    document.getElementById('productModalTitle').textContent = product.name;
+    document.getElementById('productModalPrice').textContent = formatCurrency(product.price);
+    document.getElementById('productModalDesc').textContent = product.description;
+
+    // --- Badges ---
+    const badgesContainer = document.getElementById('productModalBadges');
+    badgesContainer.innerHTML = '';
+    if (categoryData) {
+        const catBadge = document.createElement('span');
+        catBadge.className = 'badge badge--category';
+        catBadge.textContent = categoryData.name;
+        badgesContainer.appendChild(catBadge);
+    }
+    const labelMap = { nuevo: 'badge--new', premium: 'badge--premium', stock: 'badge--stock' };
+    const addedLabels = new Set();
+    product.tags.forEach(tag => {
+        const cls = labelMap[tag.toLowerCase()];
+        if (cls && !addedLabels.has(cls)) {
+            const b = document.createElement('span');
+            b.className = `badge ${cls}`;
+            b.textContent = tag;
+            badgesContainer.appendChild(b);
+            addedLabels.add(cls);
+        }
+    });
+    if (availState === 'soldout') {
+        const b = document.createElement('span');
+        b.className = 'badge badge--soldout';
+        b.textContent = 'Agotado';
+        badgesContainer.appendChild(b);
+    } else if (availState === 'consultar') {
+        const b = document.createElement('span');
+        b.className = 'badge badge--consultar';
+        b.textContent = 'Consultar';
+        badgesContainer.appendChild(b);
+    }
+
+    // --- Tags (pills) ---
+    const metaContainer = document.getElementById('productModalMeta');
+    metaContainer.innerHTML = '';
+    product.tags.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'pill';
+        chip.textContent = tag;
+        metaContainer.appendChild(chip);
+    });
+
+    // --- CTA ---
+    const actionsContainer = document.getElementById('productModalActions');
+    actionsContainer.innerHTML = '';
+    if (availState === 'soldout') {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'button product-card__cta product-card__cta--disabled';
+        btn.textContent = 'Agotado';
+        btn.setAttribute('aria-disabled', 'true');
+        actionsContainer.appendChild(btn);
+    } else {
+        const whatsappNumber = config?.contact?.whatsapp?.replace(/\D/g, '');
+        const isConsultar = availState === 'consultar';
+        const msgText = isConsultar
+            ? `Hola, quiero consultar disponibilidad de ${product.name}.`
+            : `Hola, quiero saber más sobre ${product.name}.`;
+        const encodedMsg = encodeURIComponent(msgText);
+
+        let href = '#';
+        if (whatsappNumber) {
+            href = `https://wa.me/${whatsappNumber}?text=${encodedMsg}`;
+        } else if (config?.contact?.email) {
+            href = `mailto:${config.contact.email}?subject=${encodeURIComponent(`Consulta sobre ${product.name}`)}`;
+        }
+
+        const ctaText = isConsultar
+            ? 'Consultar disponibilidad'
+            : (product.ctaText || config?.contact?.ctaText || 'Solicitar información');
+
+        const btn = document.createElement('a');
+        btn.className = `button product-card__cta${isConsultar ? ' product-card__cta--consultar' : ''}`;
+        btn.href = href;
+        btn.target = '_blank';
+        btn.rel = 'noopener noreferrer';
+        btn.textContent = ctaText;
+        btn.setAttribute('aria-label', `${ctaText} para ${product.name}`);
+        actionsContainer.appendChild(btn);
+    }
+
+    // --- Productos relacionados ---
+    renderRelatedProducts(product);
+
+    dialog.showModal();
+}
+
+/**
+ * Rellena la sección de productos relacionados dentro del modal.
+ * Muestra hasta 3 productos de la misma categoría, excluyendo el actual.
+ */
+function renderRelatedProducts(currentProduct) {
+    const relatedSection = document.getElementById('productModalRelated');
+    const relatedGrid = document.getElementById('productModalRelatedGrid');
+    if (!relatedSection || !relatedGrid) {
+        return;
+    }
+
+    const related = products
+        .filter(p => p.category === currentProduct.category && p.id !== currentProduct.id)
+        .slice(0, 3);
+
+    if (related.length === 0) {
+        relatedSection.hidden = true;
+        return;
+    }
+
+    relatedGrid.innerHTML = '';
+    related.forEach(product => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'related-card';
+        card.setAttribute('aria-label', `Ver detalle de ${product.name}`);
+
+        if (product.imageUrl) {
+            const img = document.createElement('img');
+            img.src = product.imageUrl;
+            img.alt = `Vista de ${product.name}`;
+            img.className = 'related-card__image';
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            card.appendChild(img);
+        } else {
+            const ph = document.createElement('div');
+            ph.className = 'related-card__image related-card__image--placeholder';
+            ph.setAttribute('aria-hidden', 'true');
+            card.appendChild(ph);
+        }
+
+        const info = document.createElement('div');
+        info.className = 'related-card__info';
+        const nameEl = document.createElement('span');
+        nameEl.className = 'related-card__name';
+        nameEl.textContent = product.name;
+        const priceEl = document.createElement('span');
+        priceEl.className = 'related-card__price';
+        priceEl.textContent = formatCurrency(product.price);
+        info.appendChild(nameEl);
+        info.appendChild(priceEl);
+        card.appendChild(info);
+
+        card.addEventListener('click', () => openProductModal(product));
+        relatedGrid.appendChild(card);
+    });
+
+    relatedSection.hidden = false;
+}
+
+/**
+ * Abre el lightbox con la imagen a tamaño completo.
+ * Se crea una sola vez en el DOM.
+ */
+function openImageLightbox(imageUrl, productName) {
+    let lightbox = document.getElementById('imageLightbox');
+    if (!lightbox) {
+        lightbox = document.createElement('div');
+        lightbox.id = 'imageLightbox';
+        lightbox.className = 'image-lightbox';
+        lightbox.setAttribute('role', 'dialog');
+        lightbox.setAttribute('aria-label', 'Imagen ampliada');
+        lightbox.setAttribute('aria-modal', 'true');
+        lightbox.hidden = true;
+
+        lightbox.innerHTML = `
+            <button class="image-lightbox__close" aria-label="Cerrar imagen ampliada" type="button">&#x2715;</button>
+            <img class="image-lightbox__img" src="" alt="">
+        `;
+
+        lightbox.querySelector('.image-lightbox__close').addEventListener('click', () => {
+            lightbox.hidden = true;
+        });
+        lightbox.addEventListener('click', event => {
+            if (event.target === lightbox) {
+                lightbox.hidden = true;
+            }
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !lightbox.hidden) {
+                lightbox.hidden = true;
+            }
+        });
+
+        document.body.appendChild(lightbox);
+    }
+
+    const img = lightbox.querySelector('.image-lightbox__img');
+    img.src = imageUrl;
+    img.alt = `Vista ampliada de ${productName}`;
+    lightbox.hidden = false;
+    lightbox.querySelector('.image-lightbox__close').focus();
+}
+
 function updateThemeToggleLabel(toggleButton, mode) {
     if (!toggleButton) {
         return;
@@ -1396,6 +1696,7 @@ function initCatalog() {
 
     applyAppearanceStyles(config.appearance);
     renderPriceFilterOptions();
+    createProductModal();
 
     // Restaurar estado desde URL al cargar
     const urlParams = readUrlParams();

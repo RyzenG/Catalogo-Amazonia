@@ -1014,3 +1014,278 @@ img {
     min-height: 44px;
     min-width: 44px;
 }
+
+/* ════════════════════════════════════════════════
+   SPRINT 2: MODAL DE PRODUCTO
+   ════════════════════════════════════════════════ */
+
+.product-modal {
+    border: none;
+    border-radius: 20px;
+    padding: 0;
+    max-width: min(680px, calc(100vw - 2rem));
+    width: 100%;
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    background: var(--surface);
+    color: var(--text-body);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.product-modal::backdrop {
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(4px);
+}
+
+.product-modal__inner {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-modal__close {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-soft);
+    color: var(--text-body);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.product-modal__close:hover,
+.product-modal__close:focus-visible {
+    background: var(--brand-primary);
+    transform: scale(1.08);
+}
+
+.product-modal__media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 20px 20px 0 0;
+    background: var(--surface-alt);
+    flex-shrink: 0;
+}
+
+.product-modal__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+}
+
+.product-modal__image:hover {
+    transform: scale(1.03);
+}
+
+.product-modal__image--placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.product-modal__content {
+    padding: 1.5rem 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.product-modal__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.product-modal__title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-body);
+    line-height: 1.25;
+}
+
+.product-modal__price {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--brand-accent);
+}
+
+.product-modal__desc {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.75;
+    font-size: 0.97rem;
+}
+
+.product-modal__actions {
+    padding-top: 0.25rem;
+}
+
+/* ─── Productos relacionados ─── */
+
+.product-modal__related {
+    padding: 1.25rem 1.5rem 1.5rem;
+    border-top: 1px solid var(--border-soft);
+}
+
+.product-modal__related-title {
+    margin: 0 0 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.product-modal__related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+}
+
+.related-card {
+    background: var(--surface-alt);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    color: var(--text-body);
+    font-family: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.related-card:hover,
+.related-card:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    border-color: var(--brand-accent);
+}
+
+.related-card__image {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+
+.related-card__image--placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--surface);
+}
+
+.related-card__info {
+    padding: 0.45rem 0.6rem 0.55rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.related-card__name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.related-card__price {
+    font-size: 0.76rem;
+    color: var(--brand-accent);
+    font-weight: 700;
+    display: block;
+}
+
+/* ════════════════════════════════════════════════
+   SPRINT 2: LIGHTBOX DE IMAGEN
+   ════════════════════════════════════════════════ */
+
+.image-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.94);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+    padding: 1rem;
+}
+
+.image-lightbox[hidden] {
+    display: none;
+}
+
+.image-lightbox__img {
+    max-width: 95vw;
+    max-height: 95dvh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 0 80px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    animation: lightbox-in 0.2s ease;
+}
+
+@keyframes lightbox-in {
+    from { opacity: 0; transform: scale(0.94); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.image-lightbox__close {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition: background 0.15s ease;
+}
+
+.image-lightbox__close:hover,
+.image-lightbox__close:focus-visible {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 640px) {
+    .product-modal__related-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .product-modal__title {
+        font-size: 1.15rem;
+    }
+
+    .product-modal__price {
+        font-size: 1.1rem;
+    }
+}
