@@ -3542,6 +3542,11 @@
                 addFeatureButton.addEventListener('click', addFeature);
             }
 
+            const addVariantButton = document.getElementById('addVariantButton');
+            if (addVariantButton) {
+                addVariantButton.addEventListener('click', addVariant);
+            }
+
             const productForm = document.getElementById('productForm');
             if (productForm) {
                 productForm.addEventListener('input', event => {
@@ -5929,6 +5934,7 @@
                     renderProductImageInputs(imageValues, primaryImage);
                     currentImageUrl = primaryImage || '';
                     renderFeatureInputs(product.features);
+                    renderVariantInputs(product.variants);
                     updateProductPreviewCard();
                 }
             } else {
@@ -6005,6 +6011,7 @@
             renderProductImageInputs([]);
             updateProductImagePreview(null);
             renderFeatureInputs();
+            renderVariantInputs();
             refreshProductFormAssistants();
             updateProductPreviewCard();
 
@@ -6039,6 +6046,72 @@
             }
 
             updateProductPreviewCard();
+        }
+
+        // ─── Variantes de producto ───────────────────────────────────────────────
+
+        function createVariantRow(value = '') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'feature-input-group';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = value;
+            if (!value) {
+                input.placeholder = 'Ej: Gris humo';
+            }
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'remove-feature';
+            removeButton.textContent = '✕';
+            removeButton.addEventListener('click', () => removeVariant(removeButton));
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(removeButton);
+            return wrapper;
+        }
+
+        function renderVariantInputs(variants = []) {
+            const list = document.getElementById('variantsList');
+            if (!list) return;
+
+            list.innerHTML = '';
+
+            if (!Array.isArray(variants) || variants.length === 0) {
+                list.appendChild(createVariantRow());
+                return;
+            }
+
+            variants.forEach(v => list.appendChild(createVariantRow(v)));
+        }
+
+        function collectVariantInputValues() {
+            const list = document.getElementById('variantsList');
+            if (!list) return [];
+            return Array.from(list.querySelectorAll('input'))
+                .map(i => i.value.trim())
+                .filter(Boolean);
+        }
+
+        function addVariant() {
+            const list = document.getElementById('variantsList');
+            if (!list) return;
+            list.appendChild(createVariantRow(''));
+        }
+
+        function removeVariant(button) {
+            const list = document.getElementById('variantsList');
+            if (!list) return;
+            if (list.children.length > 1) {
+                list.removeChild(button.parentElement);
+            } else {
+                const input = button.parentElement.querySelector('input');
+                if (input) {
+                    input.value = '';
+                    input.placeholder = 'Ej: Gris humo';
+                }
+            }
         }
 
         // Edit product
@@ -6082,6 +6155,7 @@
             const priceOnRequestCheckbox = document.getElementById('productPriceOnRequest');
             const isPriceOnRequest = priceOnRequestCheckbox ? priceOnRequestCheckbox.checked : false;
 
+            const variantValues = collectVariantInputValues();
             const productData = {
                 id: editingProductId || 'product_' + Date.now(),
                 name: document.getElementById('productName').value,
@@ -6090,6 +6164,7 @@
                 price: normalizedPrice,
                 priceOnRequest: isPriceOnRequest,
                 features: features,
+                variants: variantValues,
                 specs: document.getElementById('productSpecs').value,
                 available: !isSoldOut,
                 availability: isSoldOut ? 'sold-out' : 'available'
@@ -6309,6 +6384,51 @@
             };
 
             return JSON.stringify(manifest, null, 2);
+        }
+
+        /**
+         * Genera sitemap.xml con todas las páginas del sitio.
+         * Solo se incluyen URLs si el usuario configuró una URL canónica válida.
+         */
+        function generateSitemapXML(config) {
+            const rawBase = typeof config.canonicalUrl === 'string' ? config.canonicalUrl.trim() : '';
+            const base = rawBase && isValidUrl(rawBase)
+                ? rawBase.replace(/\/$/, '')
+                : '';
+
+            const today = new Date().toISOString().slice(0, 10);
+
+            const pages = [
+                { loc: `${base}/index.html`, priority: '1.0', changefreq: 'weekly' },
+                { loc: `${base}/catalogo.html`, priority: '0.9', changefreq: 'weekly' },
+                { loc: `${base}/nosotros.html`, priority: '0.6', changefreq: 'monthly' },
+                { loc: `${base}/politicas.html`, priority: '0.4', changefreq: 'monthly' }
+            ];
+
+            const urlEntries = pages.map(p => `  <url>
+    <loc>${escapeHtml(p.loc)}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${p.changefreq}</changefreq>
+    <priority>${p.priority}</priority>
+  </url>`).join('\n');
+
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urlEntries}
+</urlset>`;
+        }
+
+        /**
+         * Genera robots.txt permitiendo todos los crawlers y apuntando al sitemap.
+         */
+        function generateRobotsTxt(config) {
+            const rawBase = typeof config.canonicalUrl === 'string' ? config.canonicalUrl.trim() : '';
+            const base = rawBase && isValidUrl(rawBase)
+                ? rawBase.replace(/\/$/, '')
+                : '';
+            const sitemapLine = base ? `\nSitemap: ${base}/sitemap.xml` : '';
+            return `User-agent: *
+Allow: /${sitemapLine}`;
         }
 
         function generateServiceWorkerJS() {
@@ -6565,6 +6685,8 @@ self.addEventListener('fetch', function(event) {
                 const currentTheme = buildThemeTokens(currentConfig.appearance);
                 const manifestContent = generateManifestJSON(currentConfig, currentTheme);
                 const swContent = generateServiceWorkerJS();
+                const sitemapContent = generateSitemapXML(currentConfig);
+                const robotsContent = generateRobotsTxt(currentConfig);
 
                 await triggerDownload('index.html', homeHtmlContent);
                 await triggerDownload('catalogo.html', catalogHtmlContent);
@@ -6572,10 +6694,12 @@ self.addEventListener('fetch', function(event) {
                 await triggerDownload('nosotros.html', aboutHtmlContent);
                 await triggerDownload('manifest.json', manifestContent, 'application/json;charset=utf-8');
                 await triggerDownload('sw.js', swContent, 'text/javascript;charset=utf-8');
+                await triggerDownload('sitemap.xml', sitemapContent, 'application/xml;charset=utf-8');
+                await triggerDownload('robots.txt', robotsContent, 'text/plain;charset=utf-8');
 
                 updateProcessStatusEntry(processEntryId, {
                     state: 'success',
-                    detail: 'Descarga completada. Se generaron index.html, catalogo.html, politicas.html y nosotros.html.'
+                    detail: 'Descarga completada. Se generaron index.html, catalogo.html, politicas.html, nosotros.html, sitemap.xml y robots.txt.'
                 });
                 showMessage('¡Catálogo, inicio, políticas corporativas y página de "Nosotros" generados correctamente! Revisa tu carpeta de descargas para encontrar index.html, catalogo.html, politicas.html y nosotros.html.', 'success');
             } catch (error) {
@@ -6647,6 +6771,7 @@ self.addEventListener('fetch', function(event) {
         window.openCategoryModal = openCategoryModal;
         window.closeCategoryModal = closeCategoryModal;
         window.addFeature = addFeature;
+        window.addVariant = addVariant;
         window.moveProduct = moveProduct;
         window.editProduct = editProduct;
         window.deleteProduct = deleteProduct;
@@ -7957,9 +8082,16 @@ self.addEventListener('fetch', function(event) {
             const ogImageMarkup = pageMetadata.image
                 ? `    <meta property="og:image" content="${escapeHtml(pageMetadata.image)}">\n    <meta name="twitter:image" content="${escapeHtml(pageMetadata.image)}">`
                 : '';
+            const twitterCardType = pageMetadata.image ? 'summary_large_image' : 'summary';
             const faviconMarkup = pageMetadata.faviconHref
                 ? `    <link rel="icon" href="${escapeHtml(pageMetadata.faviconHref)}" />`
                 : '';
+            const canonicalUrlRaw = typeof config.canonicalUrl === 'string' ? config.canonicalUrl.trim() : '';
+            const canonicalUrl = canonicalUrlRaw && isValidUrl(canonicalUrlRaw)
+                ? escapeHtml(canonicalUrlRaw.replace(/\/$/, '') + '/catalogo.html')
+                : '';
+            const ogUrlMarkup = canonicalUrl ? `    <meta property="og:url" content="${canonicalUrl}">` : '';
+            const canonicalLinkMarkup = canonicalUrl ? `    <link rel="canonical" href="${canonicalUrl}">` : '';
 
             // Generate the complete HTML
             return `<!DOCTYPE html>
@@ -7973,10 +8105,12 @@ self.addEventListener('fetch', function(event) {
     <meta property="og:description" content="${metaDescription}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="${metaSiteName}">
+    ${ogUrlMarkup}
     ${ogImageMarkup}
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="${twitterCardType}">
     <meta name="twitter:title" content="${documentTitle}">
     <meta name="twitter:description" content="${metaDescription}">
+    ${canonicalLinkMarkup}
     ${faviconMarkup}
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="${theme.headerStart}">

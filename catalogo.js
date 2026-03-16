@@ -1016,11 +1016,28 @@ function renderProducts(filteredProducts, activeCategory) {
         title.className = 'category-block__title';
         title.textContent = `${category.icon} ${category.name}`;
 
+        const descId = `desc-${category.id}`;
         const description = document.createElement('p');
         description.className = 'section__description';
+        description.id = descId;
         description.textContent = category.description;
 
+        // Toggle "Ver descripción" visible solo en mobile (CSS oculta el botón en desktop)
+        const descToggle = document.createElement('button');
+        descToggle.type = 'button';
+        descToggle.className = 'category-desc-toggle';
+        descToggle.setAttribute('aria-expanded', 'false');
+        descToggle.setAttribute('aria-controls', descId);
+        descToggle.textContent = 'Ver descripción';
+        descToggle.addEventListener('click', () => {
+            const expanded = descToggle.getAttribute('aria-expanded') === 'true';
+            descToggle.setAttribute('aria-expanded', String(!expanded));
+            description.classList.toggle('is-expanded', !expanded);
+            descToggle.textContent = expanded ? 'Ver descripción' : 'Ocultar descripción';
+        });
+
         header.appendChild(title);
+        header.appendChild(descToggle);
         header.appendChild(description);
         block.appendChild(header);
 
@@ -1031,8 +1048,23 @@ function renderProducts(filteredProducts, activeCategory) {
             const card = document.createElement('article');
             card.className = 'product-card';
             card.setAttribute('aria-label', product.name);
+            card.style.cursor = 'pointer';
+            card.setAttribute('tabindex', '0');
             const availabilityState = getProductAvailabilityState(product);
             const isAvailable = availabilityState === 'available';
+
+            // Abrir modal al hacer clic en la card (excepto en el CTA)
+            card.addEventListener('click', event => {
+                if (!event.target.closest('.product-card__actions')) {
+                    openProductModal(product);
+                }
+            });
+            card.addEventListener('keydown', event => {
+                if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.product-card__actions')) {
+                    event.preventDefault();
+                    openProductModal(product);
+                }
+            });
 
             const media = document.createElement('div');
             media.className = 'product-card__media';
@@ -1164,6 +1196,23 @@ function renderProducts(filteredProducts, activeCategory) {
                 actions.appendChild(actionButton);
             }
 
+            // Botón secundario: compartir por WhatsApp
+            const whatsappShareNumber = config?.contact?.whatsapp?.replace(/\D/g, '');
+            if (whatsappShareNumber) {
+                const catalogUrl = window.location.href.split('?')[0];
+                const shareText = encodeURIComponent(
+                    `Mira este producto de Amazonia Concrete: ${product.name} — ${catalogUrl}?categoria=${product.category}`
+                );
+                const shareBtn = document.createElement('a');
+                shareBtn.className = 'product-card__share';
+                shareBtn.href = `https://wa.me/?text=${shareText}`;
+                shareBtn.target = '_blank';
+                shareBtn.rel = 'noopener noreferrer';
+                shareBtn.setAttribute('aria-label', `Compartir ${product.name} por WhatsApp`);
+                shareBtn.innerHTML = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.115 1.535 5.845L.057 23.927a.5.5 0 0 0 .609.61l6.213-1.49A11.942 11.942 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.655-.51-5.18-1.398l-.371-.22-3.847.923.962-3.72-.242-.382A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>`;
+                actions.appendChild(shareBtn);
+            }
+
             card.appendChild(media);
             card.appendChild(headerRow);
             card.appendChild(description);
@@ -1232,6 +1281,332 @@ function applyFilters({ search, price, category } = {}) {
 
     renderProducts(filtered, activeCategory);
     updateUrl({ categoria: activeCategory, buscar: activeSearch, precio: activePrice });
+}
+
+/* ═══════════════════════════════════════════════════
+   SPRINT 2: MODAL DE DETALLE + LIGHTBOX + RELACIONADOS
+   ═══════════════════════════════════════════════════ */
+
+/**
+ * Crea (una sola vez) el elemento <dialog> del modal de producto y lo agrega al DOM.
+ * Retorna el dialog existente si ya fue creado.
+ */
+function createProductModal() {
+    const existing = document.getElementById('productModal');
+    if (existing) {
+        return existing;
+    }
+
+    const dialog = document.createElement('dialog');
+    dialog.id = 'productModal';
+    dialog.className = 'product-modal';
+    dialog.setAttribute('aria-labelledby', 'productModalTitle');
+    dialog.setAttribute('aria-modal', 'true');
+
+    dialog.innerHTML = `
+        <div class="product-modal__inner">
+            <button class="product-modal__close" id="productModalClose" aria-label="Cerrar detalle de producto" type="button">&#x2715;</button>
+
+            <div class="product-modal__media" id="productModalMedia">
+                <img id="productModalImage" class="product-modal__image" src="" alt="" loading="eager" decoding="async">
+                <div id="productModalPlaceholder" class="product-modal__image product-modal__image--placeholder" role="img" aria-label="Imagen pendiente" hidden></div>
+            </div>
+
+            <div class="product-modal__content">
+                <div id="productModalBadges" class="product-modal__badges"></div>
+                <h2 id="productModalTitle" class="product-modal__title"></h2>
+                <p id="productModalPrice" class="product-modal__price"></p>
+                <p id="productModalDesc" class="product-modal__desc"></p>
+                <div id="productModalMeta" class="product-meta"></div>
+                <div id="productModalActions" class="product-modal__actions"></div>
+            </div>
+
+            <section id="productModalRelated" class="product-modal__related" aria-label="Productos relacionados" hidden>
+                <h3 class="product-modal__related-title">También te puede interesar</h3>
+                <div id="productModalRelatedGrid" class="product-modal__related-grid"></div>
+            </section>
+        </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    // Cerrar al hacer clic en el backdrop (fuera del inner)
+    dialog.addEventListener('click', event => {
+        if (event.target === dialog) {
+            dialog.close();
+        }
+    });
+
+    document.getElementById('productModalClose').addEventListener('click', () => {
+        dialog.close();
+    });
+
+    return dialog;
+}
+
+/**
+ * Rellena y abre el modal con los datos del producto.
+ * @param {Object} product - objeto producto normalizado
+ */
+function openProductModal(product) {
+    const dialog = createProductModal();
+    const availState = getProductAvailabilityState(product);
+    const categoryData = categories.find(c => c.id === product.category);
+
+    // --- Imagen ---
+    const img = document.getElementById('productModalImage');
+    const placeholder = document.getElementById('productModalPlaceholder');
+    if (product.imageUrl) {
+        img.src = product.imageUrl;
+        img.alt = `Vista de ${product.name}`;
+        img.hidden = false;
+        img.style.cursor = 'zoom-in';
+        img.onclick = () => openImageLightbox(product.imageUrl, product.name);
+        placeholder.hidden = true;
+    } else {
+        img.hidden = true;
+        img.onclick = null;
+        placeholder.setAttribute('aria-label', `Imagen pendiente para ${product.name}`);
+        placeholder.hidden = false;
+    }
+
+    // --- Título y precio ---
+    document.getElementById('productModalTitle').textContent = product.name;
+    document.getElementById('productModalPrice').textContent = formatCurrency(product.price);
+    document.getElementById('productModalDesc').textContent = product.description;
+
+    // --- Badges ---
+    const badgesContainer = document.getElementById('productModalBadges');
+    badgesContainer.innerHTML = '';
+    if (categoryData) {
+        const catBadge = document.createElement('span');
+        catBadge.className = 'badge badge--category';
+        catBadge.textContent = categoryData.name;
+        badgesContainer.appendChild(catBadge);
+    }
+    const labelMap = { nuevo: 'badge--new', premium: 'badge--premium', stock: 'badge--stock' };
+    const addedLabels = new Set();
+    product.tags.forEach(tag => {
+        const cls = labelMap[tag.toLowerCase()];
+        if (cls && !addedLabels.has(cls)) {
+            const b = document.createElement('span');
+            b.className = `badge ${cls}`;
+            b.textContent = tag;
+            badgesContainer.appendChild(b);
+            addedLabels.add(cls);
+        }
+    });
+    if (availState === 'soldout') {
+        const b = document.createElement('span');
+        b.className = 'badge badge--soldout';
+        b.textContent = 'Agotado';
+        badgesContainer.appendChild(b);
+    } else if (availState === 'consultar') {
+        const b = document.createElement('span');
+        b.className = 'badge badge--consultar';
+        b.textContent = 'Consultar';
+        badgesContainer.appendChild(b);
+    }
+
+    // --- Tags (pills) ---
+    const metaContainer = document.getElementById('productModalMeta');
+    metaContainer.innerHTML = '';
+    product.tags.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'pill';
+        chip.textContent = tag;
+        metaContainer.appendChild(chip);
+    });
+
+    // --- Variantes de acabado/color ---
+    const existingVariantsSection = document.getElementById('productModalVariants');
+    if (existingVariantsSection) {
+        existingVariantsSection.remove();
+    }
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+        const variantsSection = document.createElement('div');
+        variantsSection.id = 'productModalVariants';
+        variantsSection.className = 'product-modal__variants';
+        const variantsLabel = document.createElement('p');
+        variantsLabel.className = 'product-modal__variants-label';
+        variantsLabel.textContent = 'Acabados disponibles';
+        variantsSection.appendChild(variantsLabel);
+        const variantsList = document.createElement('div');
+        variantsList.className = 'product-modal__variants-list';
+        product.variants.forEach((variant, index) => {
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.className = `variant-pill ${index === 0 ? 'is-active' : ''}`;
+            pill.textContent = variant;
+            pill.setAttribute('aria-pressed', String(index === 0));
+            pill.addEventListener('click', () => {
+                variantsList.querySelectorAll('.variant-pill').forEach(p => {
+                    p.classList.remove('is-active');
+                    p.setAttribute('aria-pressed', 'false');
+                });
+                pill.classList.add('is-active');
+                pill.setAttribute('aria-pressed', 'true');
+            });
+            variantsList.appendChild(pill);
+        });
+        variantsSection.appendChild(variantsList);
+        // Insertar antes de las acciones CTA
+        const actionsEl = document.getElementById('productModalActions');
+        if (actionsEl) {
+            actionsEl.parentNode.insertBefore(variantsSection, actionsEl);
+        } else {
+            document.getElementById('productModalContent').appendChild(variantsSection);
+        }
+    }
+
+    // --- CTA ---
+    const actionsContainer = document.getElementById('productModalActions');
+    actionsContainer.innerHTML = '';
+    if (availState === 'soldout') {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'button product-card__cta product-card__cta--disabled';
+        btn.textContent = 'Agotado';
+        btn.setAttribute('aria-disabled', 'true');
+        actionsContainer.appendChild(btn);
+    } else {
+        const whatsappNumber = config?.contact?.whatsapp?.replace(/\D/g, '');
+        const isConsultar = availState === 'consultar';
+        const msgText = isConsultar
+            ? `Hola, quiero consultar disponibilidad de ${product.name}.`
+            : `Hola, quiero saber más sobre ${product.name}.`;
+        const encodedMsg = encodeURIComponent(msgText);
+
+        let href = '#';
+        if (whatsappNumber) {
+            href = `https://wa.me/${whatsappNumber}?text=${encodedMsg}`;
+        } else if (config?.contact?.email) {
+            href = `mailto:${config.contact.email}?subject=${encodeURIComponent(`Consulta sobre ${product.name}`)}`;
+        }
+
+        const ctaText = isConsultar
+            ? 'Consultar disponibilidad'
+            : (product.ctaText || config?.contact?.ctaText || 'Solicitar información');
+
+        const btn = document.createElement('a');
+        btn.className = `button product-card__cta${isConsultar ? ' product-card__cta--consultar' : ''}`;
+        btn.href = href;
+        btn.target = '_blank';
+        btn.rel = 'noopener noreferrer';
+        btn.textContent = ctaText;
+        btn.setAttribute('aria-label', `${ctaText} para ${product.name}`);
+        actionsContainer.appendChild(btn);
+    }
+
+    // --- Productos relacionados ---
+    renderRelatedProducts(product);
+
+    dialog.showModal();
+}
+
+/**
+ * Rellena la sección de productos relacionados dentro del modal.
+ * Muestra hasta 3 productos de la misma categoría, excluyendo el actual.
+ */
+function renderRelatedProducts(currentProduct) {
+    const relatedSection = document.getElementById('productModalRelated');
+    const relatedGrid = document.getElementById('productModalRelatedGrid');
+    if (!relatedSection || !relatedGrid) {
+        return;
+    }
+
+    const related = products
+        .filter(p => p.category === currentProduct.category && p.id !== currentProduct.id)
+        .slice(0, 3);
+
+    if (related.length === 0) {
+        relatedSection.hidden = true;
+        return;
+    }
+
+    relatedGrid.innerHTML = '';
+    related.forEach(product => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'related-card';
+        card.setAttribute('aria-label', `Ver detalle de ${product.name}`);
+
+        if (product.imageUrl) {
+            const img = document.createElement('img');
+            img.src = product.imageUrl;
+            img.alt = `Vista de ${product.name}`;
+            img.className = 'related-card__image';
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            card.appendChild(img);
+        } else {
+            const ph = document.createElement('div');
+            ph.className = 'related-card__image related-card__image--placeholder';
+            ph.setAttribute('aria-hidden', 'true');
+            card.appendChild(ph);
+        }
+
+        const info = document.createElement('div');
+        info.className = 'related-card__info';
+        const nameEl = document.createElement('span');
+        nameEl.className = 'related-card__name';
+        nameEl.textContent = product.name;
+        const priceEl = document.createElement('span');
+        priceEl.className = 'related-card__price';
+        priceEl.textContent = formatCurrency(product.price);
+        info.appendChild(nameEl);
+        info.appendChild(priceEl);
+        card.appendChild(info);
+
+        card.addEventListener('click', () => openProductModal(product));
+        relatedGrid.appendChild(card);
+    });
+
+    relatedSection.hidden = false;
+}
+
+/**
+ * Abre el lightbox con la imagen a tamaño completo.
+ * Se crea una sola vez en el DOM.
+ */
+function openImageLightbox(imageUrl, productName) {
+    let lightbox = document.getElementById('imageLightbox');
+    if (!lightbox) {
+        lightbox = document.createElement('div');
+        lightbox.id = 'imageLightbox';
+        lightbox.className = 'image-lightbox';
+        lightbox.setAttribute('role', 'dialog');
+        lightbox.setAttribute('aria-label', 'Imagen ampliada');
+        lightbox.setAttribute('aria-modal', 'true');
+        lightbox.hidden = true;
+
+        lightbox.innerHTML = `
+            <button class="image-lightbox__close" aria-label="Cerrar imagen ampliada" type="button">&#x2715;</button>
+            <img class="image-lightbox__img" src="" alt="">
+        `;
+
+        lightbox.querySelector('.image-lightbox__close').addEventListener('click', () => {
+            lightbox.hidden = true;
+        });
+        lightbox.addEventListener('click', event => {
+            if (event.target === lightbox) {
+                lightbox.hidden = true;
+            }
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !lightbox.hidden) {
+                lightbox.hidden = true;
+            }
+        });
+
+        document.body.appendChild(lightbox);
+    }
+
+    const img = lightbox.querySelector('.image-lightbox__img');
+    img.src = imageUrl;
+    img.alt = `Vista ampliada de ${productName}`;
+    lightbox.hidden = false;
+    lightbox.querySelector('.image-lightbox__close').focus();
 }
 
 function updateThemeToggleLabel(toggleButton, mode) {
@@ -1396,6 +1771,7 @@ function initCatalog() {
 
     applyAppearanceStyles(config.appearance);
     renderPriceFilterOptions();
+    createProductModal();
 
     // Restaurar estado desde URL al cargar
     const urlParams = readUrlParams();
@@ -1431,6 +1807,24 @@ function initCatalog() {
             applyFilters({ price: event.target.value });
         });
     }
+
+    setupStickyOffset();
+    window.addEventListener('resize', debounce(setupStickyOffset, 150));
+}
+
+/**
+ * Mide la altura del header sticky y actualiza la variable CSS --header-height.
+ * La usa el sidebar para pegarse justo debajo del header en mobile.
+ */
+function setupStickyOffset() {
+    const header = document.querySelector('.site-header');
+    if (!header) {
+        return;
+    }
+    document.documentElement.style.setProperty(
+        '--header-height',
+        `${header.getBoundingClientRect().height}px`
+    );
 }
 
 document.addEventListener('DOMContentLoaded', initCatalog);
