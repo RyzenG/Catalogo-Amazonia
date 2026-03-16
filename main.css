@@ -882,6 +882,30 @@ img {
     display: flex;
     justify-content: flex-start;
     align-items: center;
+    gap: 0.5rem;
+}
+
+/* ─── Botón compartir WhatsApp por card (Sprint 3) ─── */
+.product-card__share {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(37, 211, 102, 0.12);
+    border: 1px solid rgba(37, 211, 102, 0.3);
+    color: #25d366;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    flex-shrink: 0;
+}
+
+.product-card__share:hover,
+.product-card__share:focus-visible {
+    background: rgba(37, 211, 102, 0.22);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.2);
 }
 
 .product-card__cta {
@@ -975,8 +999,16 @@ img {
         grid-template-columns: 1fr;
     }
 
+    /* ─── Sidebar sticky en mobile (Sprint 3) ─── */
+    /* JS mide el header y asigna --header-height; el sidebar queda pegado justo debajo */
     .catalog-sidebar {
-        position: static;
+        position: sticky;
+        top: var(--header-height, 70px);
+        z-index: 9;
+        border-radius: 0 0 16px 16px;
+        /* Ligero blur para que quede diferenciado del contenido al scrollear */
+        backdrop-filter: blur(10px);
+        background: rgba(31, 49, 44, 0.97);
     }
 
     .site-header {
@@ -984,6 +1016,50 @@ img {
         align-items: flex-start;
         gap: 0.75rem;
     }
+
+    /* ─── Descripción de categoría colapsable en mobile (Sprint 3) ─── */
+    .section__description {
+        max-height: 0;
+        overflow: hidden;
+        margin: 0;
+        transition: max-height 0.3s ease;
+    }
+
+    .section__description.is-expanded {
+        max-height: 300px;
+    }
+
+    .category-desc-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--brand-accent);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem 0;
+        font-family: inherit;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .category-desc-toggle:hover,
+    .category-desc-toggle:focus-visible {
+        color: var(--text-body);
+    }
+
+    .category-block__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+}
+
+/* Ocultar el toggle de descripción en desktop (siempre visible allí) */
+.category-desc-toggle {
+    display: none;
 }
 
 /* ─── Accesibilidad: respetar preferencia de movimiento reducido (WCAG 2.1 §2.3.3) ─── */
