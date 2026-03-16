@@ -1418,6 +1418,47 @@ function openProductModal(product) {
         metaContainer.appendChild(chip);
     });
 
+    // --- Variantes de acabado/color ---
+    const existingVariantsSection = document.getElementById('productModalVariants');
+    if (existingVariantsSection) {
+        existingVariantsSection.remove();
+    }
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+        const variantsSection = document.createElement('div');
+        variantsSection.id = 'productModalVariants';
+        variantsSection.className = 'product-modal__variants';
+        const variantsLabel = document.createElement('p');
+        variantsLabel.className = 'product-modal__variants-label';
+        variantsLabel.textContent = 'Acabados disponibles';
+        variantsSection.appendChild(variantsLabel);
+        const variantsList = document.createElement('div');
+        variantsList.className = 'product-modal__variants-list';
+        product.variants.forEach((variant, index) => {
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.className = `variant-pill ${index === 0 ? 'is-active' : ''}`;
+            pill.textContent = variant;
+            pill.setAttribute('aria-pressed', String(index === 0));
+            pill.addEventListener('click', () => {
+                variantsList.querySelectorAll('.variant-pill').forEach(p => {
+                    p.classList.remove('is-active');
+                    p.setAttribute('aria-pressed', 'false');
+                });
+                pill.classList.add('is-active');
+                pill.setAttribute('aria-pressed', 'true');
+            });
+            variantsList.appendChild(pill);
+        });
+        variantsSection.appendChild(variantsList);
+        // Insertar antes de las acciones CTA
+        const actionsEl = document.getElementById('productModalActions');
+        if (actionsEl) {
+            actionsEl.parentNode.insertBefore(variantsSection, actionsEl);
+        } else {
+            document.getElementById('productModalContent').appendChild(variantsSection);
+        }
+    }
+
     // --- CTA ---
     const actionsContainer = document.getElementById('productModalActions');
     actionsContainer.innerHTML = '';

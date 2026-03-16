@@ -1215,6 +1215,51 @@ img {
     padding-top: 0.25rem;
 }
 
+/* ─── Variantes de producto en modal (Sprint 4) ─── */
+.product-modal__variants {
+    padding: 0.5rem 0 0.75rem;
+}
+
+.product-modal__variants-label {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.product-modal__variants-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.variant-pill {
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 2px solid var(--border-soft);
+    color: var(--text-body);
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    min-height: 36px;
+}
+
+.variant-pill:hover {
+    border-color: var(--brand-primary);
+    color: var(--brand-primary);
+}
+
+.variant-pill.is-active {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: #fff;
+}
+
 /* ─── Productos relacionados ─── */
 
 .product-modal__related {
