@@ -810,6 +810,45 @@ img {
     font-size: 1.05rem;
 }
 
+/* ─── Precio con descuento (Sprint 5) ─── */
+/* Usado tanto en .product-card__price como en .product-modal__price */
+.product-card__price--discount,
+.product-modal__price--discount {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.price-current {
+    color: #c0392b;   /* rojo llamativo para precio con descuento */
+    font-weight: 800;
+    font-size: 1.05rem;
+}
+
+.product-modal__price--discount .price-current {
+    font-size: 1.4rem;
+}
+
+.price-original {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-decoration: line-through;
+    opacity: 0.75;
+}
+
+.price-badge {
+    background: #c0392b;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
 .product-price {
     margin: 0;
     font-weight: 800;
