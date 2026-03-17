@@ -1586,30 +1586,45 @@
             return `${prefix}${formatted}${suffix}`;
         }
 
-        function applyPromotionToPrice(basePrice, promotion) {
+        /**
+         * Calcula el precio final aplicando el descuento efectivo.
+         * Prioridad: descuento de categoría > promoción global.
+         * Retorna también el porcentaje efectivo aplicado para mostrarlo en el badge.
+         *
+         * @param {number|string} basePrice
+         * @param {object} promotion  - config.promotion global
+         * @param {object} [categoryDiscount] - category.discount (opcional)
+         */
+        function applyPromotionToPrice(basePrice, promotion, categoryDiscount) {
             const numericBase = Number.parseFloat(basePrice);
             const hasBase = Number.isFinite(numericBase) && numericBase > 0;
-            const enabled = promotion && promotion.enabled;
-            const percentage = promotion && Number.isFinite(promotion.percentage)
+
+            if (!hasBase) {
+                return { hasDiscount: false, finalPrice: null, discountAmount: 0, percentage: 0 };
+            }
+
+            // Descuento de categoría tiene prioridad sobre la promoción global
+            const catEnabled = categoryDiscount && categoryDiscount.enabled;
+            const catPct = catEnabled && Number.isFinite(categoryDiscount.percentage)
+                ? clamp(categoryDiscount.percentage, 1, 95)
+                : 0;
+
+            const promoEnabled = promotion && promotion.enabled;
+            const promoPct = promoEnabled && Number.isFinite(promotion.percentage)
                 ? clamp(promotion.percentage, 1, 95)
                 : 0;
 
-            if (!enabled || !hasBase || percentage <= 0) {
-                return {
-                    hasDiscount: false,
-                    finalPrice: hasBase ? numericBase : null,
-                    discountAmount: 0
-                };
+            // Categoría tiene prioridad; si no tiene descuento, usar global
+            const effectivePct = catPct > 0 ? catPct : promoPct;
+
+            if (effectivePct <= 0) {
+                return { hasDiscount: false, finalPrice: numericBase, discountAmount: 0, percentage: 0 };
             }
 
-            const discountAmount = Math.round((numericBase * percentage) / 100);
+            const discountAmount = Math.round((numericBase * effectivePct) / 100);
             const finalPrice = Math.max(0, numericBase - discountAmount);
 
-            return {
-                hasDiscount: true,
-                finalPrice,
-                discountAmount
-            };
+            return { hasDiscount: true, finalPrice, discountAmount, percentage: effectivePct };
         }
 
         const PRODUCT_FIELD_LIMITS = {
@@ -2498,8 +2513,62 @@
                 actions.appendChild(moveDownButton);
                 actions.appendChild(deleteButton);
 
+                // ─── Descuento por categoría ────────────────────────────────────
+                const discountGroup = document.createElement('div');
+                discountGroup.className = 'form-group category-discount-group';
+
+                const discountTitle = document.createElement('label');
+                discountTitle.className = 'category-discount-title';
+                discountTitle.textContent = 'Descuento en esta categoría';
+
+                const discountRow = document.createElement('div');
+                discountRow.className = 'category-discount-row';
+
+                const discountEnabledLabel = document.createElement('label');
+                discountEnabledLabel.className = 'checkbox-label';
+
+                const discountEnabledInput = document.createElement('input');
+                discountEnabledInput.type = 'checkbox';
+                discountEnabledInput.checked = Boolean(category.discount && category.discount.enabled);
+                discountEnabledInput.setAttribute('data-field', 'discountEnabled');
+
+                const discountEnabledText = document.createElement('span');
+                discountEnabledText.textContent = 'Activar descuento';
+                discountEnabledLabel.appendChild(discountEnabledInput);
+                discountEnabledLabel.appendChild(discountEnabledText);
+
+                const discountPctWrapper = document.createElement('div');
+                discountPctWrapper.className = 'category-discount-pct';
+
+                const discountPctInput = document.createElement('input');
+                discountPctInput.type = 'number';
+                discountPctInput.min = '1';
+                discountPctInput.max = '95';
+                discountPctInput.step = '1';
+                discountPctInput.value = (category.discount && Number.isFinite(category.discount.percentage))
+                    ? category.discount.percentage
+                    : 10;
+                discountPctInput.setAttribute('data-field', 'discountPercentage');
+                discountPctInput.disabled = !discountEnabledInput.checked;
+
+                const discountPctLabel = document.createElement('span');
+                discountPctLabel.className = 'category-discount-pct-label';
+                discountPctLabel.textContent = '%';
+
+                discountEnabledInput.addEventListener('change', () => {
+                    discountPctInput.disabled = !discountEnabledInput.checked;
+                });
+
+                discountPctWrapper.appendChild(discountPctInput);
+                discountPctWrapper.appendChild(discountPctLabel);
+                discountRow.appendChild(discountEnabledLabel);
+                discountRow.appendChild(discountPctWrapper);
+                discountGroup.appendChild(discountTitle);
+                discountGroup.appendChild(discountRow);
+
                 item.appendChild(grid);
                 item.appendChild(descriptionGroup);
+                item.appendChild(discountGroup);
                 item.appendChild(actions);
 
                 list.appendChild(item);
@@ -2538,6 +2607,15 @@
                 category.name = (nameInput && nameInput.value.trim()) || 'Nueva categoría';
                 category.icon = (iconInput && iconInput.value.trim()) || '📦';
                 category.description = descriptionInput ? descriptionInput.value : '';
+
+                const discountEnabledEl = item.querySelector('[data-field="discountEnabled"]');
+                const discountPctEl = item.querySelector('[data-field="discountPercentage"]');
+                const discountEnabled = discountEnabledEl ? discountEnabledEl.checked : false;
+                const discountPct = discountPctEl ? Number.parseFloat(discountPctEl.value) : 0;
+                category.discount = {
+                    enabled: discountEnabled,
+                    percentage: Number.isFinite(discountPct) ? clamp(discountPct, 1, 95) : 10
+                };
 
                 updatedCategories.push(category);
                 seenIds.add(categoryId);
@@ -7775,7 +7853,8 @@ self.addEventListener('fetch', function(event) {
                             const parsedPrice = Number.parseFloat(priceDigits);
                             numericPrice = Number.isFinite(parsedPrice) ? parsedPrice : Number.NaN;
                         }
-                        const promotionResult = applyPromotionToPrice(numericPrice, promotion);
+                        // Descuento efectivo: categoría tiene prioridad sobre global
+                        const promotionResult = applyPromotionToPrice(numericPrice, promotion, category.discount);
                         const productPriceHtml = escapeHtml(formattedPrice);
                         const discountedPriceFormatted = promotionResult.hasDiscount
                             ? escapeHtml(formatCurrencyCOP(promotionResult.finalPrice))
@@ -7798,7 +7877,7 @@ self.addEventListener('fetch', function(event) {
                                 ? `<div class="product-price product-price--discount">
                                         <span class="product-price__current">${discountedPriceFormatted}</span>
                                         <span class="product-price__original">${productPriceHtml}</span>
-                                        <span class="product-price__badge">-${promotion.percentage}%</span>
+                                        <span class="product-price__badge">-${promotionResult.percentage}%</span>
                                     </div>`
                                 : `<p class="product-price">${productPriceHtml}</p>`);
                         const selectBtnLabel = isPriceOnRequest

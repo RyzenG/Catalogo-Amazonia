@@ -720,6 +720,59 @@ textarea {
     margin-top: 1rem;
 }
 
+/* ─── Campo de descuento por categoría (Sprint 5) ─── */
+.category-discount-group {
+    margin-top: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    background: rgba(192, 57, 43, 0.05);
+    border: 1px dashed rgba(192, 57, 43, 0.25);
+    border-radius: 8px;
+}
+
+.category-discount-title {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #c0392b;
+    margin-bottom: 0.5rem;
+}
+
+.category-discount-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.category-discount-pct {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.category-discount-pct input[type="number"] {
+    width: 72px;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.category-discount-pct input[type="number"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.category-discount-pct-label {
+    font-weight: 700;
+    color: #c0392b;
+    font-size: 0.95rem;
+}
+
 .category-manager-actions {
     display: flex;
     justify-content: flex-end;

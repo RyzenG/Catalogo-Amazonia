@@ -732,6 +732,78 @@ function formatCurrency(value) {
     });
 }
 
+/**
+ * Calcula el descuento efectivo para un producto.
+ * Prioridad: descuento de categoría > promoción global del config.
+ * @returns {{ hasDiscount: boolean, finalPrice: number, percentage: number }}
+ */
+function computeDiscount(product) {
+    const numericPrice = typeof product.price === 'number'
+        ? product.price
+        : Number.parseFloat(String(product.price).replace(/[^0-9,.-]/g, '').replace(/\./g, '').replace(',', '.'));
+
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+        return { hasDiscount: false, finalPrice: numericPrice, percentage: 0 };
+    }
+
+    const categoryData = categories.find(c => c.id === product.category);
+    const catDiscount = categoryData && categoryData.discount;
+    const catEnabled = catDiscount && catDiscount.enabled;
+    const catPct = catEnabled && Number.isFinite(catDiscount.percentage)
+        ? Math.min(95, Math.max(1, catDiscount.percentage))
+        : 0;
+
+    const promoEnabled = config && config.promotion && config.promotion.enabled;
+    const promoPct = promoEnabled && Number.isFinite(config.promotion.percentage)
+        ? Math.min(95, Math.max(1, config.promotion.percentage))
+        : 0;
+
+    // Categoría tiene prioridad; si no aplica, usar global
+    const effectivePct = catPct > 0 ? catPct : promoPct;
+
+    if (effectivePct <= 0) {
+        return { hasDiscount: false, finalPrice: numericPrice, percentage: 0 };
+    }
+
+    const discountAmount = Math.round((numericPrice * effectivePct) / 100);
+    const finalPrice = Math.max(0, numericPrice - discountAmount);
+    return { hasDiscount: true, finalPrice, percentage: effectivePct };
+}
+
+/**
+ * Construye el elemento DOM del bloque de precio, con o sin descuento.
+ * @param {Object} product
+ * @param {string} [tagName='p'] - etiqueta HTML ('p' para cards, 'div' para modal)
+ */
+function buildPriceElement(product, tagName = 'p') {
+    const discountInfo = computeDiscount(product);
+    const el = document.createElement(tagName);
+    el.className = 'product-card__price';
+
+    if (discountInfo.hasDiscount) {
+        el.classList.add('product-card__price--discount');
+        const current = document.createElement('span');
+        current.className = 'price-current';
+        current.textContent = formatCurrency(discountInfo.finalPrice);
+
+        const original = document.createElement('span');
+        original.className = 'price-original';
+        original.textContent = formatCurrency(product.price);
+
+        const badge = document.createElement('span');
+        badge.className = 'price-badge';
+        badge.textContent = `-${discountInfo.percentage}%`;
+
+        el.appendChild(current);
+        el.appendChild(original);
+        el.appendChild(badge);
+    } else {
+        el.textContent = formatCurrency(product.price);
+    }
+
+    return el;
+}
+
 function groupProducts(filteredProducts) {
     const grouped = new Map();
     categories.forEach(category => {
@@ -1122,9 +1194,7 @@ function renderProducts(filteredProducts, activeCategory) {
             name.className = 'product-card__name';
             name.textContent = product.name;
 
-            const price = document.createElement('p');
-            price.className = 'product-card__price';
-            price.textContent = formatCurrency(product.price);
+            const price = buildPriceElement(product);
 
             headerRow.appendChild(name);
             headerRow.appendChild(price);
@@ -1372,7 +1442,27 @@ function openProductModal(product) {
 
     // --- Título y precio ---
     document.getElementById('productModalTitle').textContent = product.name;
-    document.getElementById('productModalPrice').textContent = formatCurrency(product.price);
+    const modalPriceContainer = document.getElementById('productModalPrice');
+    const discountInfoModal = computeDiscount(product);
+    if (discountInfoModal.hasDiscount) {
+        modalPriceContainer.className = 'product-modal__price product-modal__price--discount';
+        modalPriceContainer.innerHTML = '';
+        const currentEl = document.createElement('span');
+        currentEl.className = 'price-current';
+        currentEl.textContent = formatCurrency(discountInfoModal.finalPrice);
+        const originalEl = document.createElement('span');
+        originalEl.className = 'price-original';
+        originalEl.textContent = formatCurrency(product.price);
+        const badgeEl = document.createElement('span');
+        badgeEl.className = 'price-badge';
+        badgeEl.textContent = `-${discountInfoModal.percentage}%`;
+        modalPriceContainer.appendChild(currentEl);
+        modalPriceContainer.appendChild(originalEl);
+        modalPriceContainer.appendChild(badgeEl);
+    } else {
+        modalPriceContainer.className = 'product-modal__price';
+        modalPriceContainer.textContent = formatCurrency(product.price);
+    }
     document.getElementById('productModalDesc').textContent = product.description;
 
     // --- Badges ---
