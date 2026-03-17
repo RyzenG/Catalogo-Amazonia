@@ -7773,17 +7773,22 @@ self.addEventListener('fetch', function(event) {
                 ? `<p class="tagline" id="headerTagline">${taglineHtml}</p>`
                 : `<p class="tagline" id="headerTagline" style="display: none;"></p>`;
 
-            const countdownMarkup = (promotion.enabled && promotion.endDate)
-                ? `<span class="promo-countdown" id="promoCountdown" data-end="${escapeHtml(promotion.endDate)}" aria-label="Tiempo restante de la oferta"></span>`
-                : '';
+            // Ticker: repetimos el contenido 4 veces para el loop sin saltos
+            const promoItemContent = escapeHtml(promotion.topBarText || 'Promoción activa')
+                + (promotion.message ? ' · ' + escapeHtml(promotion.message) : '');
+            const promoItem = `<span class="promo-top-bar__item" aria-hidden="true">
+                <svg class="promo-top-bar__icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+                ${promoItemContent}
+                ${(promotion.enabled && promotion.endDate) ? `<span class="promo-countdown" data-end="${escapeHtml(promotion.endDate)}" aria-label="Tiempo restante"></span>` : ''}
+            </span>`;
             const promoBarMarkup = promotion.enabled
-                ? `<div class="promo-top-bar" role="status" aria-live="polite">
-        <div class="promo-top-bar__content">
-            <span class="promo-top-bar__title">${escapeHtml(promotion.topBarText || 'Promoción activa')}</span>
-            ${countdownMarkup}
-            <span class="promo-top-bar__message">${escapeHtml(promotion.message || '')}</span>
+                ? `<div class="promo-top-bar" role="status" aria-live="polite" aria-label="Anuncio de promoción">
+    <div class="promo-top-bar__track">
+        <div class="promo-top-bar__ticker">
+            ${promoItem}${promoItem}${promoItem}${promoItem}
         </div>
-    </div>`
+    </div>
+</div>`
                 : '';
 
             const firstCategoryWithProducts = categoriesWithProducts[0] ? categoriesWithProducts[0].id : null;
@@ -8204,7 +8209,10 @@ self.addEventListener('fetch', function(event) {
         ${getCatalogStyles(theme, { unifiedHomeVisuals })}
     </style>
 </head>
-<body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}">
+<body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}${promotion.enabled ? ' has-promo-bar' : ''}">
+    <!-- Barra de promoción — fixed top, ticker animado -->
+    ${promoBarMarkup}
+
     <!-- Loading Screen -->
     <div class="loader" id="loader">
         <svg class="leaf-spinner" viewBox="0 0 100 100">
@@ -8226,8 +8234,6 @@ self.addEventListener('fetch', function(event) {
             ${primaryNavLinksMarkup}
         </nav>
     </header>
-
-    ${promoBarMarkup}
 
     <main id="mainContent">
         <!-- Navigation -->
@@ -9829,6 +9835,86 @@ ${formatCssBlock(headerBackground)}
         @keyframes float {
             0%, 100% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* ─── Barra de promoción — ticker animado ─────────────────────────────── */
+
+        @keyframes promoTicker {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        @keyframes promoBgShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes promoSlideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        .promo-top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1100;
+            height: 40px;
+            overflow: hidden;
+            background: linear-gradient(
+                270deg,
+                #b71c1c 0%,
+                #e53935 25%,
+                #c62828 50%,
+                #e53935 75%,
+                #b71c1c 100%
+            );
+            background-size: 300% 300%;
+            animation: promoBgShift 6s ease infinite, promoSlideIn 0.5s ease both;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(183, 28, 28, 0.5);
+        }
+
+        .promo-top-bar__track {
+            overflow: hidden;
+            width: 100%;
+        }
+
+        /* Ticker: 4 copias → ocultamos la mitad para loop transparente */
+        .promo-top-bar__ticker {
+            display: flex;
+            white-space: nowrap;
+            width: max-content;
+            animation: promoTicker 28s linear infinite;
+        }
+
+        .promo-top-bar:hover .promo-top-bar__ticker {
+            animation-play-state: paused;
+        }
+
+        .promo-top-bar__item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0 3.5rem;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.82rem;
+            letter-spacing: 0.03em;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+        }
+
+        .promo-top-bar__icon {
+            opacity: 0.85;
+            flex-shrink: 0;
+        }
+
+        /* Compensar el header cuando la barra está activa */
+        .has-promo-bar header {
+            margin-top: 40px;
         }
 
         .header-inner {
