@@ -171,6 +171,32 @@ body {
     font-weight: 600;
 }
 
+/* ─── Color picker con etiqueta hex ─── */
+.color-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.3rem;
+}
+
+.color-picker-row input[type="color"] {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 2px;
+    cursor: pointer;
+    background: none;
+}
+
+.color-picker-label {
+    font-family: monospace;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
 .section-description {
     color: var(--text-body);
     margin-bottom: 1.5rem;

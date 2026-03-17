@@ -645,7 +645,9 @@
                 percentage: 15,
                 topBarText: 'Promoción activa: ahorra en tu compra',
                 message: 'Descuento aplicado automáticamente en tu carrito.',
-                endDate: ''
+                endDate: '',
+                bgColor: '#c62828',
+                textColor: '#ffffff'
             },
             appearance: { ...defaultAppearance },
             priceRanges: normalizePriceRanges(defaultPriceRanges),
@@ -863,6 +865,9 @@
 
             const endDateRaw = typeof normalized.endDate === 'string' ? normalized.endDate.trim() : '';
             const endDateValid = endDateRaw ? !isNaN(new Date(endDateRaw).getTime()) : false;
+            const hexPattern = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+            const rawBg = typeof normalized.bgColor === 'string' ? normalized.bgColor.trim() : '';
+            const rawText = typeof normalized.textColor === 'string' ? normalized.textColor.trim() : '';
             return {
                 enabled: Boolean(normalized.enabled),
                 percentage: safePercentage,
@@ -872,7 +877,9 @@
                 message: typeof normalized.message === 'string'
                     ? normalized.message.trim()
                     : defaultConfig.promotion.message,
-                endDate: endDateValid ? endDateRaw : ''
+                endDate: endDateValid ? endDateRaw : '',
+                bgColor: hexPattern.test(rawBg) ? rawBg : defaultConfig.promotion.bgColor,
+                textColor: hexPattern.test(rawText) ? rawText : defaultConfig.promotion.textColor
             };
         }
 
@@ -3468,6 +3475,20 @@
                 saveConfigButton.addEventListener('click', saveConfig);
             }
 
+            // Sincronizar etiqueta hex de los color pickers de la barra de promoción
+            [
+                { inputId: 'promotionBgColor',   labelId: 'promotionBgColorLabel' },
+                { inputId: 'promotionTextColor',  labelId: 'promotionTextColorLabel' }
+            ].forEach(({ inputId, labelId }) => {
+                const input = document.getElementById(inputId);
+                const label = document.getElementById(labelId);
+                if (input && label) {
+                    const sync = () => { label.textContent = input.value; };
+                    input.addEventListener('input', sync);
+                    input.addEventListener('change', sync);
+                }
+            });
+
             ['instagram', 'facebook', 'tiktok'].forEach(id => {
                 const input = document.getElementById(id);
                 if (input) {
@@ -4465,7 +4486,9 @@
                     percentage: readValue('promotionPercentage'),
                     topBarText: readValue('promotionTopBarText'),
                     message: readValue('promotionMessage'),
-                    endDate: readValue('promotionEndDate')
+                    endDate: readValue('promotionEndDate'),
+                    bgColor: readColor('promotionBgColor') || defaultConfig.promotion.bgColor,
+                    textColor: readColor('promotionTextColor') || defaultConfig.promotion.textColor
                 }),
                 priceRanges: normalizePriceRanges(readPriceRangesFromInputs()),
                 newsPanel: normalizeNewsPanel({
@@ -5374,6 +5397,14 @@
             const promotionEndDateInput = document.getElementById('promotionEndDate');
             if (promotionEndDateInput) {
                 promotionEndDateInput.value = catalogData.config.promotion.endDate || '';
+            }
+            const promotionBgColorInput = document.getElementById('promotionBgColor');
+            if (promotionBgColorInput) {
+                promotionBgColorInput.value = catalogData.config.promotion.bgColor || defaultConfig.promotion.bgColor;
+            }
+            const promotionTextColorInput = document.getElementById('promotionTextColor');
+            if (promotionTextColorInput) {
+                promotionTextColorInput.value = catalogData.config.promotion.textColor || defaultConfig.promotion.textColor;
             }
             document.getElementById('footerMessage').value = catalogData.config.footerMessage || '';
             refreshSocialPreviews(catalogData.config);
@@ -8206,7 +8237,11 @@ self.addEventListener('fetch', function(event) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        ${getCatalogStyles(theme, { unifiedHomeVisuals })}
+        ${getCatalogStyles(theme, {
+            unifiedHomeVisuals,
+            promoBgColor: promotion.bgColor || defaultConfig.promotion.bgColor,
+            promoTextColor: promotion.textColor || defaultConfig.promotion.textColor
+        })}
     </style>
 </head>
 <body class="${unifiedHomeVisuals ? 'page page--unified-visuals' : 'page'}${promotion.enabled ? ' has-promo-bar' : ''}">
@@ -9644,7 +9679,11 @@ ${canonicalLinkMarkup}${metaTagsMarkup}${organizationJsonLdMarkup}    <style>
         // Get catalog styles
         function getCatalogStyles(themeTokens, options = {}) {
             const theme = themeTokens || buildThemeTokens(defaultAppearance);
-            const { unifiedHomeVisuals = false } = options;
+            const { unifiedHomeVisuals = false, promoBgColor = '#c62828', promoTextColor = '#ffffff' } = options;
+            // Calcular variantes del color de fondo para el gradiente animado
+            const promoBgDark = adjustColorBrightness(promoBgColor, -18);
+            const promoBgLight = adjustColorBrightness(promoBgColor, 18);
+            const promoBgShadowRgba = hexToRgba(promoBgColor, 0.55);
             const formatCssBlock = (value) => {
                 if (typeof value !== 'string' || value.length === 0) {
                     return '';
@@ -9865,17 +9904,17 @@ ${formatCssBlock(headerBackground)}
             overflow: hidden;
             background: linear-gradient(
                 270deg,
-                #b71c1c 0%,
-                #e53935 25%,
-                #c62828 50%,
-                #e53935 75%,
-                #b71c1c 100%
+                ${promoBgDark} 0%,
+                ${promoBgLight} 25%,
+                ${promoBgColor} 50%,
+                ${promoBgLight} 75%,
+                ${promoBgDark} 100%
             );
             background-size: 300% 300%;
             animation: promoBgShift 6s ease infinite, promoSlideIn 0.5s ease both;
             display: flex;
             align-items: center;
-            box-shadow: 0 2px 12px rgba(183, 28, 28, 0.5);
+            box-shadow: 0 2px 12px ${promoBgShadowRgba};
         }
 
         .promo-top-bar__track {
@@ -9900,11 +9939,11 @@ ${formatCssBlock(headerBackground)}
             align-items: center;
             gap: 0.55rem;
             padding: 0 3.5rem;
-            color: #fff;
+            color: ${promoTextColor};
             font-weight: 700;
             font-size: 0.82rem;
             letter-spacing: 0.03em;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.18);
         }
 
         .promo-top-bar__icon {
