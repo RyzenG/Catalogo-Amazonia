@@ -8072,6 +8072,7 @@ self.addEventListener('fetch', function(event) {
                     </button>
                 </div>
             </div>
+            <div class="active-filters-bar" id="activeFiltersBar" aria-label="Filtros activos" aria-live="polite" hidden></div>
         </div>`;
 
             const selectionPanelMarkup = `
@@ -10391,6 +10392,76 @@ ${formatCssBlock(headerBackground)}
         .scroll-to-top:focus-visible {
             outline: 3px solid ${theme.textOnDark};
             outline-offset: 3px;
+        }
+
+        /* ─── Active filter chips ─── */
+        .active-filters-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.5rem 1.5rem 0.2rem;
+        }
+
+        .active-filters-bar[hidden] {
+            display: none;
+        }
+
+        .active-filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: ${theme.accentSoft};
+            border: 1px solid ${theme.borderColor};
+            color: ${theme.categoryTitle};
+            border-radius: 999px;
+            padding: 0.25rem 0.55rem 0.25rem 0.8rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            animation: chip-appear 0.18s ease;
+        }
+
+        @keyframes chip-appear {
+            from { opacity: 0; transform: scale(0.88); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .active-filter-chip__remove {
+            background: none;
+            border: none;
+            color: ${theme.textSecondary};
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            padding: 0;
+            transition: color 0.15s ease, background 0.15s ease;
+        }
+
+        .active-filter-chip__remove:hover {
+            color: #c62828;
+            background: rgba(198, 40, 40, 0.1);
+        }
+
+        .active-filters-bar__clear-all {
+            background: none;
+            border: 1px dashed ${theme.borderColor};
+            color: ${theme.textSecondary};
+            border-radius: 999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .active-filters-bar__clear-all:hover {
+            color: ${theme.categoryTitle};
+            border-color: ${theme.accentStrong};
         }
 
         @media (max-width: 768px) {
@@ -13619,6 +13690,119 @@ ${formatCssBlock(footerBackground)}
         }
 
         // ─────────────────────────────────────────────────────────────────────
+        var CATALOG_SORT_LABELS = {
+            'price-asc': 'Precio ↑',
+            'price-desc': 'Precio ↓',
+            'name-asc': 'Nombre A-Z',
+            'name-desc': 'Nombre Z-A'
+        };
+
+        function renderActiveFilterChips() {
+            var bar = document.getElementById('activeFiltersBar');
+            if (!bar) { return; }
+
+            var searchInput = document.getElementById('catalogSearchInput');
+            var priceSelect = document.getElementById('catalogPriceFilter');
+            var sortSelect  = document.getElementById('catalogSortFilter');
+
+            var searchTerm = searchInput ? searchInput.value.trim() : '';
+            var priceValue = priceSelect ? priceSelect.value.trim() : '';
+            var sortValue  = sortSelect  ? sortSelect.value.trim()  : '';
+
+            bar.innerHTML = '';
+            var chips = [];
+
+            if (searchTerm) {
+                chips.push({
+                    label: 'Búsqueda: "' + searchTerm + '"',
+                    clear: function() {
+                        if (searchInput) { searchInput.value = ''; }
+                        filterCatalog();
+                    }
+                });
+            }
+
+            if (priceValue) {
+                var priceLabel = priceValue;
+                if (priceSelect) {
+                    var selectedOption = Array.from(priceSelect.options).find(function(o) { return o.value === priceValue; });
+                    if (selectedOption) { priceLabel = selectedOption.text; }
+                }
+                chips.push({
+                    label: 'Precio: ' + priceLabel,
+                    clear: function() {
+                        if (priceSelect) { priceSelect.value = ''; }
+                        filterCatalog();
+                        closeFilterPopoverById('catalogPriceFilter');
+                    }
+                });
+            }
+
+            if (sortValue) {
+                chips.push({
+                    label: 'Orden: ' + (CATALOG_SORT_LABELS[sortValue] || sortValue),
+                    clear: function() {
+                        if (sortSelect) { sortSelect.value = ''; }
+                        filterCatalog();
+                        closeFilterPopoverById('catalogSortFilter');
+                    }
+                });
+            }
+
+            if (showOnlyFavorites) {
+                chips.push({
+                    label: '❤️ Solo favoritos',
+                    clear: function() {
+                        showOnlyFavorites = false;
+                        var favBtn = document.getElementById('favoritesFilterBtn');
+                        if (favBtn) { favBtn.setAttribute('aria-pressed', 'false'); }
+                        filterCatalog();
+                    }
+                });
+            }
+
+            if (chips.length === 0) {
+                bar.hidden = true;
+                return;
+            }
+
+            bar.hidden = false;
+
+            chips.forEach(function(chip) {
+                var el = document.createElement('span');
+                el.className = 'active-filter-chip';
+                var labelSpan = document.createElement('span');
+                labelSpan.textContent = chip.label;
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'active-filter-chip__remove';
+                btn.setAttribute('aria-label', 'Quitar filtro: ' + chip.label);
+                btn.textContent = '×';
+                btn.addEventListener('click', chip.clear);
+                el.appendChild(labelSpan);
+                el.appendChild(btn);
+                bar.appendChild(el);
+            });
+
+            if (chips.length > 1) {
+                var clearAll = document.createElement('button');
+                clearAll.type = 'button';
+                clearAll.className = 'active-filters-bar__clear-all';
+                clearAll.textContent = 'Limpiar todo';
+                clearAll.addEventListener('click', function() {
+                    if (searchInput) { searchInput.value = ''; }
+                    if (priceSelect) { priceSelect.value = ''; }
+                    if (sortSelect)  { sortSelect.value = ''; }
+                    showOnlyFavorites = false;
+                    var favBtn = document.getElementById('favoritesFilterBtn');
+                    if (favBtn) { favBtn.setAttribute('aria-pressed', 'false'); }
+                    filterCatalog();
+                });
+                bar.appendChild(clearAll);
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         function filterCatalog() {
             const searchInput = document.getElementById('catalogSearchInput');
             const priceSelect = document.getElementById('catalogPriceFilter');
@@ -13798,6 +13982,7 @@ ${formatCssBlock(footerBackground)}
             });
 
             applySearchHighlights(searchTokens);
+            renderActiveFilterChips();
         }
 
         function getPersistentStorage() {

@@ -1424,7 +1424,106 @@ function applyFilters({ search, price, category, sort } = {}) {
     }
 
     renderProducts(filtered, activeCategory);
+    renderActiveFilterChips({ activeSearch, activePrice, activeCategory, activeSort });
     updateUrl({ categoria: activeCategory, buscar: activeSearch, precio: activePrice, orden: activeSort });
+}
+
+/* ═══════════════════════════════════════════════════
+   CHIPS DE FILTROS ACTIVOS
+   ═══════════════════════════════════════════════════ */
+
+function getOrCreateActiveFiltersBar() {
+    let bar = document.getElementById('activeFiltersBar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'activeFiltersBar';
+        bar.className = 'active-filters-bar';
+        bar.setAttribute('aria-label', 'Filtros activos');
+        bar.setAttribute('aria-live', 'polite');
+        // Insert after .catalog-controls or after priceSelect's parent
+        const priceSelect = document.getElementById('priceSelect');
+        const anchor = priceSelect ? priceSelect.closest('.catalog-controls, .catalog-sidebar, form') || priceSelect.parentElement : null;
+        if (anchor) {
+            anchor.insertAdjacentElement('afterend', bar);
+        } else {
+            const catalogProducts = document.getElementById('catalogProducts');
+            if (catalogProducts) {
+                catalogProducts.insertAdjacentElement('beforebegin', bar);
+            }
+        }
+    }
+    return bar;
+}
+
+const SORT_LABELS = {
+    'price-asc': 'Precio ↑',
+    'price-desc': 'Precio ↓',
+    'name-asc': 'Nombre A-Z',
+    'name-desc': 'Nombre Z-A'
+};
+
+function renderActiveFilterChips({ activeSearch, activePrice, activeCategory, activeSort } = {}) {
+    const bar = getOrCreateActiveFiltersBar();
+    bar.innerHTML = '';
+
+    const chips = [];
+
+    if (activeSearch) {
+        chips.push({ label: `Búsqueda: "${activeSearch}"`, clear: () => applyFilters({ search: '' }) });
+    }
+
+    if (activeCategory) {
+        const catObj = categories.find(c => c.id === activeCategory);
+        const catLabel = catObj ? `${catObj.icon || ''} ${catObj.name}`.trim() : activeCategory;
+        chips.push({ label: `Categoría: ${catLabel}`, clear: () => applyFilters({ category: null }) });
+    }
+
+    if (activePrice) {
+        const priceRanges = config?.priceRanges || DEFAULT_PRICE_RANGES;
+        const rangeObj = priceRanges.find(r => r.id === activePrice);
+        const priceLabel = rangeObj ? rangeObj.label : activePrice;
+        chips.push({ label: `Precio: ${priceLabel}`, clear: () => applyFilters({ price: '' }) });
+    }
+
+    if (activeSort) {
+        const sortLabel = SORT_LABELS[activeSort] || activeSort;
+        chips.push({ label: `Orden: ${sortLabel}`, clear: () => applyFilters({ sort: '' }) });
+    }
+
+    if (chips.length === 0) {
+        bar.hidden = true;
+        return;
+    }
+
+    bar.hidden = false;
+
+    chips.forEach(chip => {
+        const el = document.createElement('span');
+        el.className = 'active-filter-chip';
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = chip.label;
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'active-filter-chip__remove';
+        removeBtn.setAttribute('aria-label', `Quitar filtro: ${chip.label}`);
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', chip.clear);
+        el.appendChild(labelSpan);
+        el.appendChild(removeBtn);
+        bar.appendChild(el);
+    });
+
+    // "Limpiar todo" si hay más de un filtro
+    if (chips.length > 1) {
+        const clearAll = document.createElement('button');
+        clearAll.type = 'button';
+        clearAll.className = 'active-filters-bar__clear-all';
+        clearAll.textContent = 'Limpiar todo';
+        clearAll.addEventListener('click', () => {
+            applyFilters({ search: '', price: '', category: null, sort: '' });
+        });
+        bar.appendChild(clearAll);
+    }
 }
 
 /* ═══════════════════════════════════════════════════
