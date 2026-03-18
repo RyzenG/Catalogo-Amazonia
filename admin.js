@@ -8056,7 +8056,9 @@ self.addEventListener('fetch', function(event) {
                                 <select id="catalogSortFilter">
                                     <option value="">Predeterminado</option>
                                     <option value="price-asc">Precio: menor a mayor</option>
+                                    <option value="price-desc">Precio: mayor a menor</option>
                                     <option value="name-asc">Nombre: A–Z</option>
+                                    <option value="name-desc">Nombre: Z–A</option>
                                 </select>
                             </label>
                         </div>
@@ -13703,11 +13705,42 @@ ${formatCssBlock(footerBackground)}
 
                         return compareByOriginalIndex(a, b);
                     });
+                } else if (sortOption === 'price-desc') {
+                    sortedCards.sort((a, b) => {
+                        const priceA = Number.parseFloat(a.dataset.price);
+                        const priceB = Number.parseFloat(b.dataset.price);
+                        const hasPriceA = Number.isFinite(priceA);
+                        const hasPriceB = Number.isFinite(priceB);
+                        if (hasPriceA && hasPriceB) {
+                            if (priceA === priceB) {
+                                const nameA = a.dataset.name || '';
+                                const nameB = b.dataset.name || '';
+                                const nameComparison = nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+                                return nameComparison !== 0 ? nameComparison : compareByOriginalIndex(a, b);
+                            }
+                            return priceB - priceA;
+                        }
+                        if (hasPriceA) { return -1; }
+                        if (hasPriceB) { return 1; }
+                        return compareByOriginalIndex(a, b);
+                    });
                 } else if (sortOption === 'name-asc') {
                     sortedCards.sort((a, b) => {
                         const nameA = a.dataset.name || '';
                         const nameB = b.dataset.name || '';
                         const comparison = nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+
+                        if (comparison !== 0) {
+                            return comparison;
+                        }
+
+                        return compareByOriginalIndex(a, b);
+                    });
+                } else if (sortOption === 'name-desc') {
+                    sortedCards.sort((a, b) => {
+                        const nameA = a.dataset.name || '';
+                        const nameB = b.dataset.name || '';
+                        const comparison = nameB.localeCompare(nameA, 'es', { sensitivity: 'base' });
 
                         if (comparison !== 0) {
                             return comparison;
