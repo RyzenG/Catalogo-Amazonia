@@ -8071,6 +8071,17 @@ self.addEventListener('fetch', function(event) {
                         <span class="filter-chip__count-badge" id="favoritesBadge" aria-hidden="true" hidden>0</span>
                     </button>
                 </div>
+                <div class="filter-chip filter-chip--view-toggle" title="Cambiar vista">
+                    <button type="button" class="filter-chip__button filter-chip__button--toggle" id="viewToggleBtn" aria-pressed="false" aria-label="Cambiar a vista lista">
+                        <span class="filter-chip__icon view-toggle-icon--grid" aria-hidden="true">
+                            <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor"><rect x="0" y="0" width="6" height="6" rx="1"/><rect x="9" y="0" width="6" height="6" rx="1"/><rect x="0" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+                        </span>
+                        <span class="filter-chip__icon view-toggle-icon--list" aria-hidden="true" hidden>
+                            <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor"><rect x="0" y="1" width="15" height="2" rx="1"/><rect x="0" y="6.5" width="15" height="2" rx="1"/><rect x="0" y="12" width="15" height="2" rx="1"/></svg>
+                        </span>
+                        <span class="filter-chip__text">Vista</span>
+                    </button>
+                </div>
             </div>
             <div class="active-filters-bar" id="activeFiltersBar" aria-label="Filtros activos" aria-live="polite" hidden></div>
         </div>`;
@@ -10961,6 +10972,57 @@ ${formatCssBlock(headerBackground)}
             stroke: #e53e3e;
         }
 
+        /* ─── List view (toggle) ─── */
+        .products-grid.is-list {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .products-grid.is-list .product-card {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            grid-template-rows: 1fr;
+            border-radius: 12px;
+        }
+
+        .products-grid.is-list .product-card:hover {
+            transform: translateY(-4px) scale(1.005);
+        }
+
+        .products-grid.is-list .product-image {
+            height: 100%;
+            min-height: 160px;
+            border-radius: 12px 0 0 12px;
+        }
+
+        .products-grid.is-list .product-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .products-grid.is-list .product-description {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .products-grid.is-list .product-features {
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 560px) {
+            .products-grid.is-list .product-card {
+                grid-template-columns: 1fr;
+            }
+            .products-grid.is-list .product-image {
+                height: 200px;
+                min-height: unset;
+                border-radius: 12px 12px 0 0;
+            }
+        }
+
         /* Quick View button overlay */
         .product-card__quick-view {
             position: absolute;
@@ -12997,6 +13059,36 @@ ${formatCssBlock(footerBackground)}
                         filterCatalog();
                     });
                 }
+
+                // View toggle (grid / list)
+                (function setupViewToggle() {
+                    const VIEW_KEY = 'amazoniaViewMode';
+                    const btn = document.getElementById('viewToggleBtn');
+                    const grids = document.querySelectorAll('.products-grid');
+                    if (!btn) { return; }
+
+                    function applyView(mode) {
+                        const isGrid = mode !== 'list';
+                        grids.forEach(g => g.classList.toggle('is-list', !isGrid));
+                        btn.setAttribute('aria-pressed', isGrid ? 'false' : 'true');
+                        btn.setAttribute('aria-label', isGrid ? 'Cambiar a vista lista' : 'Cambiar a vista cuadrícula');
+                        const iconGrid = btn.querySelector('.view-toggle-icon--grid');
+                        const iconList = btn.querySelector('.view-toggle-icon--list');
+                        if (iconGrid) { iconGrid.hidden = !isGrid; }
+                        if (iconList) { iconList.hidden = isGrid; }
+                        try { localStorage.setItem(VIEW_KEY, isGrid ? 'grid' : 'list'); } catch (_) {}
+                    }
+
+                    // Restore saved preference
+                    let savedView = 'grid';
+                    try { savedView = localStorage.getItem(VIEW_KEY) || 'grid'; } catch (_) {}
+                    applyView(savedView);
+
+                    btn.addEventListener('click', function() {
+                        const isCurrentlyList = grids.length > 0 && grids[0].classList.contains('is-list');
+                        applyView(isCurrentlyList ? 'grid' : 'list');
+                    });
+                })();
 
                 const cards = document.querySelectorAll('.product-card');
                 cards.forEach(card => {

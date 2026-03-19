@@ -1354,6 +1354,16 @@ function renderProducts(filteredProducts, activeCategory) {
 
     updateResultsCounter(filteredProducts.length);
 
+    // Restore current view mode on newly rendered cards
+    try {
+        const savedView = localStorage.getItem(VIEW_KEY) || 'grid';
+        if (savedView === 'list') {
+            document.querySelectorAll('.product-grid').forEach(g => g.classList.add('is-list'));
+        }
+    } catch (_) {}
+
+    observeCards();
+
     if (activeCategory) {
         const anchor = document.getElementById(activeCategory);
         if (anchor && typeof anchor.scrollIntoView === 'function') {
@@ -2340,6 +2350,120 @@ function initCatalog() {
 
     setupStickyOffset();
     window.addEventListener('resize', debounce(setupStickyOffset, 150));
+    setupViewToggle();
+    setupScrollAnimations();
+    setupScrollToTop();
+}
+
+/* ═══════════════════════════════════════════════════
+   TOGGLE VISTA LISTA / CUADRÍCULA
+   ═══════════════════════════════════════════════════ */
+
+const VIEW_KEY = 'amazoniaViewMode';
+
+function setupViewToggle() {
+    // Inject the toggle button near the catalog products container
+    const container = document.getElementById('catalogProducts');
+    if (!container || document.getElementById('viewToggleBtn')) { return; }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'view-toggle-wrapper';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'viewToggleBtn';
+    btn.className = 'view-toggle-btn';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', 'Cambiar a vista lista');
+    btn.innerHTML = `
+        <span class="view-toggle-btn__icon view-toggle-btn__icon--grid" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="0" width="6.5" height="6.5" rx="1.5"/><rect x="9.5" y="0" width="6.5" height="6.5" rx="1.5"/><rect x="0" y="9.5" width="6.5" height="6.5" rx="1.5"/><rect x="9.5" y="9.5" width="6.5" height="6.5" rx="1.5"/></svg>
+        </span>
+        <span class="view-toggle-btn__icon view-toggle-btn__icon--list" aria-hidden="true" hidden>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="1.5" width="16" height="2.5" rx="1.25"/><rect x="0" y="6.75" width="16" height="2.5" rx="1.25"/><rect x="0" y="12" width="16" height="2.5" rx="1.25"/></svg>
+        </span>
+        <span class="view-toggle-btn__label">Lista</span>
+    `;
+
+    wrapper.appendChild(btn);
+    container.insertAdjacentElement('beforebegin', wrapper);
+
+    function applyView(mode) {
+        const isGrid = mode !== 'list';
+        document.querySelectorAll('.product-grid').forEach(g => g.classList.toggle('is-list', !isGrid));
+        btn.setAttribute('aria-pressed', isGrid ? 'false' : 'true');
+        btn.setAttribute('aria-label', isGrid ? 'Cambiar a vista lista' : 'Cambiar a vista cuadrícula');
+        const iconGrid = btn.querySelector('.view-toggle-btn__icon--grid');
+        const iconList = btn.querySelector('.view-toggle-btn__icon--list');
+        const label = btn.querySelector('.view-toggle-btn__label');
+        if (iconGrid) { iconGrid.hidden = !isGrid; }
+        if (iconList) { iconList.hidden = isGrid; }
+        if (label) { label.textContent = isGrid ? 'Lista' : 'Cuadrícula'; }
+        try { localStorage.setItem(VIEW_KEY, mode); } catch (_) {}
+    }
+
+    let saved = 'grid';
+    try { saved = localStorage.getItem(VIEW_KEY) || 'grid'; } catch (_) {}
+    applyView(saved);
+
+    btn.addEventListener('click', () => {
+        const isCurrentlyList = document.querySelector('.product-grid.is-list');
+        applyView(isCurrentlyList ? 'grid' : 'list');
+    });
+}
+
+/* ═══════════════════════════════════════════════════
+   ANIMACIONES DE ENTRADA (IntersectionObserver)
+   ═══════════════════════════════════════════════════ */
+
+let cardObserver = null;
+
+function setupScrollAnimations() {
+    if (typeof IntersectionObserver === 'undefined') { return; }
+    cardObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'cardFadeInUp 0.5s ease-out forwards';
+                cardObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+}
+
+function observeCards() {
+    if (!cardObserver) { return; }
+    document.querySelectorAll('.product-card').forEach(card => {
+        if (!card.dataset.observed) {
+            card.style.opacity = '0';
+            card.dataset.observed = '1';
+            cardObserver.observe(card);
+        }
+    });
+}
+
+/* ═══════════════════════════════════════════════════
+   BOTÓN VOLVER ARRIBA
+   ═══════════════════════════════════════════════════ */
+
+function setupScrollToTop() {
+    if (document.getElementById('scrollToTopBtn')) { return; }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'scrollToTopBtn';
+    btn.className = 'scroll-to-top';
+    btn.setAttribute('aria-label', 'Volver al inicio de la página');
+    btn.hidden = true;
+    btn.innerHTML = `<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`;
+    document.body.appendChild(btn);
+
+    window.addEventListener('scroll', debounce(() => {
+        btn.hidden = window.scrollY < 400;
+    }, 80), { passive: true });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 }
 
 /**
