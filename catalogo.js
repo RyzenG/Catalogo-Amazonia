@@ -1354,6 +1354,16 @@ function renderProducts(filteredProducts, activeCategory) {
 
     updateResultsCounter(filteredProducts.length);
 
+    // Restore current view mode on newly rendered cards
+    try {
+        const savedView = localStorage.getItem(VIEW_KEY) || 'grid';
+        if (savedView === 'list') {
+            document.querySelectorAll('.product-grid').forEach(g => g.classList.add('is-list'));
+        }
+    } catch (_) {}
+
+    observeCards();
+
     if (activeCategory) {
         const anchor = document.getElementById(activeCategory);
         if (anchor && typeof anchor.scrollIntoView === 'function') {
@@ -1424,7 +1434,106 @@ function applyFilters({ search, price, category, sort } = {}) {
     }
 
     renderProducts(filtered, activeCategory);
+    renderActiveFilterChips({ activeSearch, activePrice, activeCategory, activeSort });
     updateUrl({ categoria: activeCategory, buscar: activeSearch, precio: activePrice, orden: activeSort });
+}
+
+/* ═══════════════════════════════════════════════════
+   CHIPS DE FILTROS ACTIVOS
+   ═══════════════════════════════════════════════════ */
+
+function getOrCreateActiveFiltersBar() {
+    let bar = document.getElementById('activeFiltersBar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'activeFiltersBar';
+        bar.className = 'active-filters-bar';
+        bar.setAttribute('aria-label', 'Filtros activos');
+        bar.setAttribute('aria-live', 'polite');
+        // Insert after .catalog-controls or after priceSelect's parent
+        const priceSelect = document.getElementById('priceSelect');
+        const anchor = priceSelect ? priceSelect.closest('.catalog-controls, .catalog-sidebar, form') || priceSelect.parentElement : null;
+        if (anchor) {
+            anchor.insertAdjacentElement('afterend', bar);
+        } else {
+            const catalogProducts = document.getElementById('catalogProducts');
+            if (catalogProducts) {
+                catalogProducts.insertAdjacentElement('beforebegin', bar);
+            }
+        }
+    }
+    return bar;
+}
+
+const SORT_LABELS = {
+    'price-asc': 'Precio ↑',
+    'price-desc': 'Precio ↓',
+    'name-asc': 'Nombre A-Z',
+    'name-desc': 'Nombre Z-A'
+};
+
+function renderActiveFilterChips({ activeSearch, activePrice, activeCategory, activeSort } = {}) {
+    const bar = getOrCreateActiveFiltersBar();
+    bar.innerHTML = '';
+
+    const chips = [];
+
+    if (activeSearch) {
+        chips.push({ label: `Búsqueda: "${activeSearch}"`, clear: () => applyFilters({ search: '' }) });
+    }
+
+    if (activeCategory) {
+        const catObj = categories.find(c => c.id === activeCategory);
+        const catLabel = catObj ? `${catObj.icon || ''} ${catObj.name}`.trim() : activeCategory;
+        chips.push({ label: `Categoría: ${catLabel}`, clear: () => applyFilters({ category: null }) });
+    }
+
+    if (activePrice) {
+        const priceRanges = config?.priceRanges || DEFAULT_PRICE_RANGES;
+        const rangeObj = priceRanges.find(r => r.id === activePrice);
+        const priceLabel = rangeObj ? rangeObj.label : activePrice;
+        chips.push({ label: `Precio: ${priceLabel}`, clear: () => applyFilters({ price: '' }) });
+    }
+
+    if (activeSort) {
+        const sortLabel = SORT_LABELS[activeSort] || activeSort;
+        chips.push({ label: `Orden: ${sortLabel}`, clear: () => applyFilters({ sort: '' }) });
+    }
+
+    if (chips.length === 0) {
+        bar.hidden = true;
+        return;
+    }
+
+    bar.hidden = false;
+
+    chips.forEach(chip => {
+        const el = document.createElement('span');
+        el.className = 'active-filter-chip';
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = chip.label;
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'active-filter-chip__remove';
+        removeBtn.setAttribute('aria-label', `Quitar filtro: ${chip.label}`);
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', chip.clear);
+        el.appendChild(labelSpan);
+        el.appendChild(removeBtn);
+        bar.appendChild(el);
+    });
+
+    // "Limpiar todo" si hay más de un filtro
+    if (chips.length > 1) {
+        const clearAll = document.createElement('button');
+        clearAll.type = 'button';
+        clearAll.className = 'active-filters-bar__clear-all';
+        clearAll.textContent = 'Limpiar todo';
+        clearAll.addEventListener('click', () => {
+            applyFilters({ search: '', price: '', category: null, sort: '' });
+        });
+        bar.appendChild(clearAll);
+    }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2241,6 +2350,120 @@ function initCatalog() {
 
     setupStickyOffset();
     window.addEventListener('resize', debounce(setupStickyOffset, 150));
+    setupViewToggle();
+    setupScrollAnimations();
+    setupScrollToTop();
+}
+
+/* ═══════════════════════════════════════════════════
+   TOGGLE VISTA LISTA / CUADRÍCULA
+   ═══════════════════════════════════════════════════ */
+
+const VIEW_KEY = 'amazoniaViewMode';
+
+function setupViewToggle() {
+    // Inject the toggle button near the catalog products container
+    const container = document.getElementById('catalogProducts');
+    if (!container || document.getElementById('viewToggleBtn')) { return; }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'view-toggle-wrapper';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'viewToggleBtn';
+    btn.className = 'view-toggle-btn';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', 'Cambiar a vista lista');
+    btn.innerHTML = `
+        <span class="view-toggle-btn__icon view-toggle-btn__icon--grid" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="0" width="6.5" height="6.5" rx="1.5"/><rect x="9.5" y="0" width="6.5" height="6.5" rx="1.5"/><rect x="0" y="9.5" width="6.5" height="6.5" rx="1.5"/><rect x="9.5" y="9.5" width="6.5" height="6.5" rx="1.5"/></svg>
+        </span>
+        <span class="view-toggle-btn__icon view-toggle-btn__icon--list" aria-hidden="true" hidden>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="1.5" width="16" height="2.5" rx="1.25"/><rect x="0" y="6.75" width="16" height="2.5" rx="1.25"/><rect x="0" y="12" width="16" height="2.5" rx="1.25"/></svg>
+        </span>
+        <span class="view-toggle-btn__label">Lista</span>
+    `;
+
+    wrapper.appendChild(btn);
+    container.insertAdjacentElement('beforebegin', wrapper);
+
+    function applyView(mode) {
+        const isGrid = mode !== 'list';
+        document.querySelectorAll('.product-grid').forEach(g => g.classList.toggle('is-list', !isGrid));
+        btn.setAttribute('aria-pressed', isGrid ? 'false' : 'true');
+        btn.setAttribute('aria-label', isGrid ? 'Cambiar a vista lista' : 'Cambiar a vista cuadrícula');
+        const iconGrid = btn.querySelector('.view-toggle-btn__icon--grid');
+        const iconList = btn.querySelector('.view-toggle-btn__icon--list');
+        const label = btn.querySelector('.view-toggle-btn__label');
+        if (iconGrid) { iconGrid.hidden = !isGrid; }
+        if (iconList) { iconList.hidden = isGrid; }
+        if (label) { label.textContent = isGrid ? 'Lista' : 'Cuadrícula'; }
+        try { localStorage.setItem(VIEW_KEY, mode); } catch (_) {}
+    }
+
+    let saved = 'grid';
+    try { saved = localStorage.getItem(VIEW_KEY) || 'grid'; } catch (_) {}
+    applyView(saved);
+
+    btn.addEventListener('click', () => {
+        const isCurrentlyList = document.querySelector('.product-grid.is-list');
+        applyView(isCurrentlyList ? 'grid' : 'list');
+    });
+}
+
+/* ═══════════════════════════════════════════════════
+   ANIMACIONES DE ENTRADA (IntersectionObserver)
+   ═══════════════════════════════════════════════════ */
+
+let cardObserver = null;
+
+function setupScrollAnimations() {
+    if (typeof IntersectionObserver === 'undefined') { return; }
+    cardObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'cardFadeInUp 0.5s ease-out forwards';
+                cardObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+}
+
+function observeCards() {
+    if (!cardObserver) { return; }
+    document.querySelectorAll('.product-card').forEach(card => {
+        if (!card.dataset.observed) {
+            card.style.opacity = '0';
+            card.dataset.observed = '1';
+            cardObserver.observe(card);
+        }
+    });
+}
+
+/* ═══════════════════════════════════════════════════
+   BOTÓN VOLVER ARRIBA
+   ═══════════════════════════════════════════════════ */
+
+function setupScrollToTop() {
+    if (document.getElementById('scrollToTopBtn')) { return; }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'scrollToTopBtn';
+    btn.className = 'scroll-to-top';
+    btn.setAttribute('aria-label', 'Volver al inicio de la página');
+    btn.hidden = true;
+    btn.innerHTML = `<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`;
+    document.body.appendChild(btn);
+
+    window.addEventListener('scroll', debounce(() => {
+        btn.hidden = window.scrollY < 400;
+    }, 80), { passive: true });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 }
 
 /**
