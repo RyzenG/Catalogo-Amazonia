@@ -677,7 +677,7 @@ img {
     object-fit: cover;
     aspect-ratio: 4 / 3;
     background: var(--surface-alt);
-    transition: transform 0.35s ease, filter 0.35s ease;
+    transition: opacity 0.35s ease, transform 0.35s ease, filter 0.35s ease;
 }
 
 .product-card__image--placeholder {
@@ -1982,4 +1982,127 @@ mark {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
     opacity: 1;
     outline: none;
+}
+
+/* ─── Toast notifications ─── */
+.toast-container {
+    position: fixed;
+    bottom: 6.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 1100;
+    pointer-events: none;
+}
+
+.toast {
+    background: rgba(35, 56, 50, 0.97);
+    color: var(--text-body, #eaf2ec);
+    border: 1px solid var(--border-soft, rgba(159, 207, 181, 0.22));
+    border-radius: 999px;
+    padding: 0.55rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 90vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.toast--visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.toast--success {
+    border-color: rgba(159, 207, 181, 0.55);
+}
+
+.toast--info {
+    border-color: rgba(159, 207, 181, 0.28);
+    opacity: 0.92;
+}
+
+/* ─── Search clear button ─── */
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-wrapper .search-input {
+    padding-right: 2.4rem;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted, rgba(234, 242, 236, 0.78));
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.2rem;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.search-clear-btn:hover {
+    color: var(--text-body, #eaf2ec);
+    background: rgba(159, 207, 181, 0.15);
+}
+
+.search-clear-btn[hidden] {
+    display: none;
+}
+
+/* ─── Category tag count badge ─── */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.tag__count {
+    background: rgba(0, 0, 0, 0.18);
+    color: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 999px;
+    padding: 0.1em 0.45em;
+    min-width: 1.4em;
+    text-align: center;
+    opacity: 0.85;
+}
+
+.tag.is-active .tag__count {
+    background: rgba(255, 255, 255, 0.22);
+    opacity: 1;
+}
+
+/* ─── Catalog refresh fade animation ─── */
+@keyframes catalogRefresh {
+    from { opacity: 0.55; }
+    to   { opacity: 1; }
+}
+
+#catalogProducts.is-refreshing {
+    animation: catalogRefresh 0.22s ease-out forwards;
 }
