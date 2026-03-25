@@ -890,19 +890,38 @@ function renderCategoryTags(activeCategoryId) {
     }
 
     const allButton = document.createElement('button');
-    allButton.textContent = 'Todas';
     allButton.className = `tag ${!activeCategoryId ? 'is-active' : ''}`;
     allButton.type = 'button';
     allButton.dataset.category = '';
+    const allNameSpan = document.createElement('span');
+    allNameSpan.textContent = 'Todas';
+    allButton.appendChild(allNameSpan);
+    if (products.length > 0) {
+        const allCountEl = document.createElement('span');
+        allCountEl.className = 'tag__count';
+        allCountEl.textContent = String(products.length);
+        allCountEl.setAttribute('aria-hidden', 'true');
+        allButton.appendChild(allCountEl);
+    }
     allButton.addEventListener('click', () => applyFilters({ category: null }));
     container.appendChild(allButton);
 
     categories.forEach(category => {
+        const count = products.filter(p => p.category === category.id).length;
         const tag = document.createElement('button');
         tag.type = 'button';
         tag.className = `tag ${activeCategoryId === category.id ? 'is-active' : ''}`;
-        tag.textContent = `${category.icon} ${category.name}`;
         tag.dataset.category = category.id;
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = `${category.icon} ${category.name}`;
+        tag.appendChild(nameSpan);
+        if (count > 0) {
+            const countEl = document.createElement('span');
+            countEl.className = 'tag__count';
+            countEl.textContent = String(count);
+            countEl.setAttribute('aria-hidden', 'true');
+            tag.appendChild(countEl);
+        }
         tag.addEventListener('click', () => applyFilters({ category: category.id }));
         container.appendChild(tag);
     });
@@ -1069,6 +1088,10 @@ function renderProducts(filteredProducts, activeCategory) {
         return;
     }
 
+    container.classList.remove('is-refreshing');
+    void container.offsetWidth; // force reflow to restart animation
+    container.classList.add('is-refreshing');
+
     container.innerHTML = '';
 
     if (categories.length === 0) {
@@ -1191,6 +1214,8 @@ function renderProducts(filteredProducts, activeCategory) {
                 image.alt = `Vista de ${product.name}`;
                 image.loading = 'lazy';
                 image.decoding = 'async';
+                image.style.opacity = '0';
+                image.addEventListener('load', () => { image.style.opacity = '1'; }, { once: true });
                 media.appendChild(badges);
                 media.appendChild(image);
             } else {
@@ -2057,6 +2082,7 @@ function saveCart() {
 
 function toggleCartItem(product) {
     const idx = cartItems.findIndex(item => item.id === product.id);
+    const wasAdded = idx < 0;
     if (idx >= 0) {
         cartItems.splice(idx, 1);
     } else {
@@ -2067,14 +2093,13 @@ function toggleCartItem(product) {
     saveCart();
     updateCartBubble();
     renderCartDrawer();
-    // Actualizar botones de las cards visibles
-    document.querySelectorAll('.product-card__add-to-cart').forEach(btn => {
-        const card = btn.closest('.product-card');
-        if (!card) { return; }
-        const productId = card.getAttribute('data-product-id') || card.id;
-        // match by aria-label pattern or re-render (simple approach: re-filter)
-    });
     applyFilters();
+    const productName = product.name || 'Producto';
+    const truncated = productName.length > 28 ? `${productName.slice(0, 28)}…` : productName;
+    showToast(
+        wasAdded ? `"${truncated}" agregado a cotización` : `"${truncated}" quitado de cotización`,
+        wasAdded ? 'success' : 'info'
+    );
 }
 
 function updateCartBubble() {
@@ -2288,6 +2313,35 @@ function createCartUI() {
     updateCartBubble();
 }
 
+/* ─── Sistema de notificaciones toast ─── */
+
+function showToast(message, type = 'success') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        container.setAttribute('aria-live', 'polite');
+        container.setAttribute('aria-atomic', 'false');
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${type}`;
+    toast.setAttribute('role', 'status');
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => toast.classList.add('toast--visible'));
+    });
+
+    setTimeout(() => {
+        toast.classList.remove('toast--visible');
+        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    }, 2800);
+}
+
 function initCatalog() {
     const dataset = loadDataset();
     categories = dataset.categories;
@@ -2334,6 +2388,32 @@ function initCatalog() {
         searchInput.addEventListener('input', debounce(event => {
             applyFilters({ search: event.target.value });
         }, 250));
+
+        // Inject search clear (×) button
+        const searchParent = searchInput.parentElement;
+        if (searchParent && !searchParent.classList.contains('search-input-wrapper')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'search-input-wrapper';
+            searchParent.insertBefore(wrapper, searchInput);
+            wrapper.appendChild(searchInput);
+        }
+        if (!document.getElementById('searchClearBtn')) {
+            const clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.id = 'searchClearBtn';
+            clearBtn.className = 'search-clear-btn';
+            clearBtn.setAttribute('aria-label', 'Limpiar búsqueda');
+            clearBtn.textContent = '×';
+            clearBtn.hidden = !searchInput.value;
+            searchInput.insertAdjacentElement('afterend', clearBtn);
+            clearBtn.addEventListener('click', () => {
+                applyFilters({ search: '' });
+                searchInput.focus();
+            });
+            searchInput.addEventListener('input', () => {
+                clearBtn.hidden = !searchInput.value;
+            });
+        }
     }
 
     if (priceSelect) {
@@ -2347,6 +2427,18 @@ function initCatalog() {
             applyFilters({ sort: event.target.value });
         });
     }
+
+    // Keyboard shortcut: press "/" to focus the search input
+    document.addEventListener('keydown', event => {
+        if (event.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+            event.preventDefault();
+            const input = document.getElementById('searchInput');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }
+    });
 
     setupStickyOffset();
     window.addEventListener('resize', debounce(setupStickyOffset, 150));
