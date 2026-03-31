@@ -8021,8 +8021,9 @@ self.addEventListener('fetch', function(event) {
                         <div class="filter-popover__content">
                             <label class="filter-field filter-field--popover" for="catalogSearchInput" id="catalogSearchLabel">
                                 <span class="filter-label">Buscar</span>
-                                <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre o descripción">
+                                <input type="search" id="catalogSearchInput" placeholder="Buscar por nombre o descripción" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="catalogSearchSuggestions">
                             </label>
+                            <ul id="catalogSearchSuggestions" class="search-autocomplete-list" role="listbox" aria-label="Sugerencias de búsqueda" hidden></ul>
                         </div>
                     </div>
                 </div>
@@ -10315,6 +10316,52 @@ ${formatCssBlock(headerBackground)}
         .filter-popover select,
         .filter-popover input[type="search"] {
             margin-top: 0.25rem;
+        }
+
+        .search-autocomplete-list {
+            list-style: none;
+            margin: 0.3rem 0 0;
+            padding: 0;
+            background: var(--color-bg, #fff);
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            max-height: 13rem;
+            overflow-y: auto;
+        }
+
+        .search-autocomplete-list[hidden] {
+            display: none;
+        }
+
+        .search-autocomplete-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.45rem 0.75rem;
+            background: none;
+            border: none;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: var(--color-text, #1a1a1a);
+            line-height: 1.3;
+        }
+
+        .search-autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-autocomplete-item:hover,
+        .search-autocomplete-item:focus {
+            background: rgba(0,0,0,0.05);
+            outline: none;
+        }
+
+        .search-autocomplete-item mark {
+            background: transparent;
+            font-weight: 700;
+            color: var(--color-primary, #1f3b2e);
         }
 
         .nav-container--compact {
@@ -13145,6 +13192,14 @@ ${formatCssBlock(footerBackground)}
                 }
 
                 updateModalCarouselControls();
+
+                // Deep-link: abrir producto directamente si hay ?producto=ID en la URL
+                try {
+                    const deepLinkId = new URLSearchParams(window.location.search).get('producto');
+                    if (deepLinkId && productData[deepLinkId]) {
+                        setTimeout(function() { openModal(deepLinkId); }, 400);
+                    }
+                } catch (_) {}
             } catch (error) {
                 console.error('Error during DOMContentLoaded initialization:', error);
                 hideLoader();
@@ -13626,6 +13681,10 @@ ${formatCssBlock(footerBackground)}
                     filterCatalog();
                     closeFilterPopoverById('catalogSortFilter', { focusTrigger: true });
                 });
+            }
+
+            if (searchInput) {
+                setupSearchAutocomplete(searchInput);
             }
         }
 
@@ -15233,6 +15292,104 @@ ${formatCssBlock(footerBackground)}
                     showShareToast('Copia este link: ' + shareUrlStr);
                 }
             }
+        }
+
+        /* ── Autocompletado de búsqueda ── */
+        function setupSearchAutocomplete(input) {
+            const suggestionsList = document.getElementById('catalogSearchSuggestions');
+            if (!input || !suggestionsList) { return; }
+
+            const allProducts = Object.values(productData);
+
+            function closeSuggestions() {
+                suggestionsList.hidden = true;
+                suggestionsList.innerHTML = '';
+                input.setAttribute('aria-expanded', 'false');
+            }
+
+            function buildSuggestionItem(product, term) {
+                const li = document.createElement('li');
+                li.setAttribute('role', 'option');
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'search-autocomplete-item';
+                const name = product.title || '';
+                const lowerName = name.toLowerCase();
+                const lowerTerm = term.toLowerCase();
+                const matchIdx = lowerName.indexOf(lowerTerm);
+                if (matchIdx >= 0) {
+                    const before = document.createTextNode(name.slice(0, matchIdx));
+                    const mark = document.createElement('mark');
+                    mark.textContent = name.slice(matchIdx, matchIdx + term.length);
+                    const after = document.createTextNode(name.slice(matchIdx + term.length));
+                    btn.appendChild(before);
+                    btn.appendChild(mark);
+                    btn.appendChild(after);
+                } else {
+                    btn.textContent = name;
+                }
+                btn.addEventListener('mousedown', function(e) {
+                    e.preventDefault(); // prevent blur before click
+                    input.value = product.title;
+                    closeSuggestions();
+                    if (searchFilterTimeout) { clearTimeout(searchFilterTimeout); }
+                    filterCatalog();
+                });
+                li.appendChild(btn);
+                return li;
+            }
+
+            function openSuggestions(term) {
+                if (!term || term.length < 2) { closeSuggestions(); return; }
+                const lowerTerm = term.toLowerCase();
+                const matches = allProducts
+                    .filter(function(p) {
+                        return (p.title || '').toLowerCase().includes(lowerTerm)
+                            || (p.description || '').toLowerCase().includes(lowerTerm);
+                    })
+                    .slice(0, 6);
+                if (matches.length === 0) { closeSuggestions(); return; }
+                suggestionsList.innerHTML = '';
+                matches.forEach(function(product) {
+                    suggestionsList.appendChild(buildSuggestionItem(product, term));
+                });
+                suggestionsList.hidden = false;
+                input.setAttribute('aria-expanded', 'true');
+            }
+
+            input.addEventListener('input', function() {
+                openSuggestions(input.value.trim());
+            });
+
+            input.addEventListener('blur', function() {
+                setTimeout(closeSuggestions, 200);
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (suggestionsList.hidden) { return; }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const first = suggestionsList.querySelector('.search-autocomplete-item');
+                    if (first) { first.focus(); }
+                } else if (e.key === 'Escape') {
+                    closeSuggestions();
+                }
+            });
+
+            suggestionsList.addEventListener('keydown', function(e) {
+                const items = Array.from(suggestionsList.querySelectorAll('.search-autocomplete-item'));
+                const idx = items.indexOf(document.activeElement);
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (idx < items.length - 1) { items[idx + 1].focus(); }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (idx > 0) { items[idx - 1].focus(); } else { input.focus(); }
+                } else if (e.key === 'Escape') {
+                    closeSuggestions();
+                    input.focus();
+                }
+            });
         }
 
         function closeModal() {
