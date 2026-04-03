@@ -2258,3 +2258,231 @@ mark {
     border-radius: 2px;
     padding: 0 1px;
 }
+
+/* ════════════════════════════════════════════════
+   GALERÍA DE IMÁGENES EN MODAL DE PRODUCTO
+   ════════════════════════════════════════════════ */
+
+/* Botones de navegación prev / next sobre la imagen */
+.product-modal__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(12, 18, 15, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #fff;
+    font-size: 1.6rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+    opacity: 0.85;
+}
+
+.product-modal__nav:hover:not(:disabled) {
+    background: rgba(47, 74, 65, 0.88);
+    opacity: 1;
+    transform: translateY(-50%) scale(1.08);
+}
+
+.product-modal__nav:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+.product-modal__nav--prev {
+    left: 0.65rem;
+}
+
+.product-modal__nav--next {
+    right: 0.65rem;
+}
+
+/* Contador de imagen "2 / 4" */
+.product-modal__counter {
+    position: absolute;
+    bottom: 0.65rem;
+    right: 0.65rem;
+    background: rgba(12, 18, 15, 0.62);
+    color: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Tira de thumbnails bajo la imagen */
+.product-modal__thumbs {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.6rem 1rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-soft) transparent;
+    background: var(--surface-alt, #233832);
+    border-bottom: 1px solid var(--border-soft);
+    scroll-snap-type: x mandatory;
+}
+
+.product-modal__thumbs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.product-modal__thumbs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.product-modal__thumbs::-webkit-scrollbar-thumb {
+    background: var(--border-soft);
+    border-radius: 2px;
+}
+
+.product-modal__thumb {
+    flex-shrink: 0;
+    width: 58px;
+    height: 58px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    padding: 0;
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    scroll-snap-align: start;
+}
+
+.product-modal__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+.product-modal__thumb:hover {
+    border-color: var(--brand-accent, #9fcfb5);
+    transform: scale(1.05);
+}
+
+.product-modal__thumb.is-active {
+    border-color: var(--brand-accent, #9fcfb5);
+    box-shadow: 0 0 0 1px var(--brand-accent, #9fcfb5);
+}
+
+@media (max-width: 640px) {
+    .product-modal__nav {
+        width: 34px;
+        height: 34px;
+        font-size: 1.3rem;
+    }
+
+    .product-modal__thumb {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* ════════════════════════════════════════════════
+   SKELETON LOADING — TARJETAS SHIMMER
+   ════════════════════════════════════════════════ */
+
+@keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+}
+
+.skeleton {
+    border-radius: 8px;
+    background: linear-gradient(
+        90deg,
+        var(--surface-alt, #233832) 25%,
+        rgba(159, 207, 181, 0.08) 50%,
+        var(--surface-alt, #233832) 75%
+    );
+    background-size: 600px 100%;
+    animation: shimmer 1.4s infinite linear;
+}
+
+.skeleton--image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+}
+
+.skeleton--line {
+    height: 14px;
+    margin: 0.35rem 0;
+    border-radius: 6px;
+}
+
+.skeleton--line-title {
+    width: 70%;
+    height: 18px;
+}
+
+.skeleton--line-price {
+    width: 40%;
+    height: 16px;
+}
+
+.skeleton--line-desc {
+    width: 95%;
+}
+
+.skeleton--line-short {
+    width: 60%;
+}
+
+/* La tarjeta esqueleto hereda el layout base de product-card */
+.product-card--skeleton {
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Bloque skeleton sin borde prominente */
+.category-block--skeleton {
+    background: var(--surface);
+    border-radius: 18px;
+    border: 1px solid var(--border-soft);
+    padding: 1.25rem;
+}
+
+/* Shimmer sobre imagen de tarjeta mientras carga */
+.product-card__image--loading {
+    background: linear-gradient(
+        90deg,
+        var(--surface-alt, #233832) 25%,
+        rgba(159, 207, 181, 0.08) 50%,
+        var(--surface-alt, #233832) 75%
+    );
+    background-size: 600px 100%;
+    animation: shimmer 1.4s infinite linear;
+}
+
+/* ════════════════════════════════════════════════
+   EMPTY STATE MEJORADO
+   ════════════════════════════════════════════════ */
+
+.empty-state__icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    opacity: 0.35;
+    color: var(--brand-accent, #9fcfb5);
+}
+
+.empty-state__icon svg {
+    width: 60px;
+    height: 60px;
+}
