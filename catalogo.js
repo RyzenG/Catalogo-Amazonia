@@ -396,6 +396,21 @@ function normalizeProduct(rawProduct, index, categoryId) {
         imageCandidates.push(sanitizeText(product.imageUrl));
     }
     const imageUrl = imageCandidates.find(Boolean) || '';
+
+    // Galería: preservar todas las URLs únicas de imágenes del producto
+    const rawImages = Array.isArray(product.images) ? product.images : [];
+    const allImageUrls = [
+        ...rawImages.map(u => sanitizeText(typeof u === 'string' ? u : '')),
+        sanitizeText(typeof product.image === 'string' ? product.image : ''),
+        sanitizeText(typeof product.imageUrl === 'string' ? product.imageUrl : '')
+    ].filter(Boolean);
+    const images = [...new Set(allImageUrls)];
+    if (imageUrl && images[0] !== imageUrl) {
+        const idx = images.indexOf(imageUrl);
+        if (idx > 0) { images.splice(idx, 1); }
+        images.unshift(imageUrl);
+    }
+
     const available = isProductAvailable(product);
 
     return {
@@ -406,6 +421,10 @@ function normalizeProduct(rawProduct, index, categoryId) {
         price: normalizePrice(product.price),
         tags: normalizeTags(product.tags),
         imageUrl,
+        images,
+        variants: Array.isArray(product.variants)
+            ? product.variants.map(v => sanitizeText(typeof v === 'string' ? v : '')).filter(Boolean)
+            : [],
         ctaText: sanitizeText(product.ctaText),
         ctaLink: sanitizeText(product.ctaLink || product.contactLink),
         availability: available ? 'available' : 'sold-out',
@@ -1108,9 +1127,56 @@ function highlightText(text, search) {
     return text.replace(regex, '<mark>$1</mark>');
 }
 
+let _catalogFirstRender = true;
+
+/**
+ * Construye N tarjetas skeleton shimmer para el estado de carga inicial.
+ */
+function buildSkeletonCards(count) {
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < count; i++) {
+        const card = document.createElement('div');
+        card.className = 'product-card product-card--skeleton';
+        card.setAttribute('aria-hidden', 'true');
+        card.innerHTML = `
+            <div class="product-card__media">
+                <div class="skeleton skeleton--image"></div>
+            </div>
+            <div class="skeleton skeleton--line skeleton--line-title"></div>
+            <div class="skeleton skeleton--line skeleton--line-price"></div>
+            <div class="skeleton skeleton--line skeleton--line-desc"></div>
+            <div class="skeleton skeleton--line skeleton--line-desc skeleton--line-short"></div>
+        `;
+        fragment.appendChild(card);
+    }
+    return fragment;
+}
+
 function renderProducts(filteredProducts, activeCategory) {
     const container = document.getElementById('catalogProducts');
     if (!container) {
+        return;
+    }
+
+    // En la primera carga, mostrar skeletons brevemente para feedback visual
+    if (_catalogFirstRender && container.children.length === 0) {
+        _catalogFirstRender = false;
+        const skeletonGrid = document.createElement('div');
+        skeletonGrid.className = 'product-grid';
+        const skeletonBlock = document.createElement('div');
+        skeletonBlock.className = 'category-block category-block--skeleton';
+        skeletonBlock.appendChild(skeletonGrid);
+        const skeletonCount = Math.min(filteredProducts.length || 6, 6);
+        skeletonGrid.appendChild(buildSkeletonCards(skeletonCount));
+        container.appendChild(skeletonBlock);
+
+        setTimeout(() => {
+            container.classList.remove('is-refreshing');
+            void container.offsetWidth;
+            container.classList.add('is-refreshing');
+            container.innerHTML = '';
+            _doRenderProducts(filteredProducts, activeCategory, container);
+        }, 280);
         return;
     }
 
@@ -1119,6 +1185,10 @@ function renderProducts(filteredProducts, activeCategory) {
     container.classList.add('is-refreshing');
 
     container.innerHTML = '';
+    _doRenderProducts(filteredProducts, activeCategory, container);
+}
+
+function _doRenderProducts(filteredProducts, activeCategory, container) {
 
     if (categories.length === 0) {
         const emptyCategories = document.createElement('p');
@@ -1235,13 +1305,16 @@ function renderProducts(filteredProducts, activeCategory) {
 
             if (product.imageUrl) {
                 const image = document.createElement('img');
-                image.className = 'product-card__image';
+                image.className = 'product-card__image product-card__image--loading';
                 image.src = product.imageUrl;
                 image.alt = `Vista de ${product.name}`;
                 image.loading = 'lazy';
                 image.decoding = 'async';
                 image.style.opacity = '0';
-                image.addEventListener('load', () => { image.style.opacity = '1'; }, { once: true });
+                image.addEventListener('load', () => {
+                    image.classList.remove('product-card__image--loading');
+                    image.style.opacity = '1';
+                }, { once: true });
                 media.appendChild(badges);
                 media.appendChild(image);
             } else {
@@ -1412,7 +1485,10 @@ function renderProducts(filteredProducts, activeCategory) {
         empty.className = 'empty-state';
         const sampleNames = products.slice(0, 3).map(p => p.name).join(', ');
         empty.innerHTML = `
-            <p class="empty-state__title">No encontramos productos con ese criterio.</p>
+            <div class="empty-state__icon" aria-hidden="true">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </div>
+            <p class="empty-state__title">Sin resultados para este filtro</p>
             <p class="empty-state__hint">Prueba con: <em>${sampleNames || 'Maceta, Lámpara, Mesa'}</em></p>
         `;
         container.appendChild(empty);
@@ -1639,7 +1715,11 @@ function createProductModal() {
             <div class="product-modal__media" id="productModalMedia">
                 <img id="productModalImage" class="product-modal__image" src="" alt="" loading="eager" decoding="async">
                 <div id="productModalPlaceholder" class="product-modal__image product-modal__image--placeholder" role="img" aria-label="Imagen pendiente" hidden></div>
+                <button class="product-modal__nav product-modal__nav--prev" id="productModalNavPrev" type="button" aria-label="Imagen anterior" hidden>&#8249;</button>
+                <button class="product-modal__nav product-modal__nav--next" id="productModalNavNext" type="button" aria-label="Imagen siguiente" hidden>&#8250;</button>
+                <div id="productModalCounter" class="product-modal__counter" hidden></div>
             </div>
+            <div id="productModalThumbs" class="product-modal__thumbs" hidden></div>
 
             <div class="product-modal__content">
                 <div id="productModalBadges" class="product-modal__badges"></div>
@@ -1682,21 +1762,115 @@ function openProductModal(product) {
     const availState = getProductAvailabilityState(product);
     const categoryData = categories.find(c => c.id === product.category);
 
-    // --- Imagen ---
+    // --- Galería de imágenes ---
     const img = document.getElementById('productModalImage');
     const placeholder = document.getElementById('productModalPlaceholder');
-    if (product.imageUrl) {
-        img.src = product.imageUrl;
-        img.alt = `Vista de ${product.name}`;
+    const prevBtn = document.getElementById('productModalNavPrev');
+    const nextBtn = document.getElementById('productModalNavNext');
+    const counterEl = document.getElementById('productModalCounter');
+    const thumbsContainer = document.getElementById('productModalThumbs');
+
+    const galleryImages = (Array.isArray(product.images) && product.images.length > 0)
+        ? product.images
+        : (product.imageUrl ? [product.imageUrl] : []);
+    let galleryIndex = 0;
+
+    function showGalleryImage(index) {
+        const next = Math.max(0, Math.min(index, galleryImages.length - 1));
+        if (next === galleryIndex && img.src === galleryImages[next]) { return; }
+        galleryIndex = next;
+        const url = galleryImages[galleryIndex];
+
+        img.style.transition = 'opacity 0.2s ease';
+        img.style.opacity = '0';
+        img.src = url;
+        img.alt = galleryImages.length > 1
+            ? `Vista ${galleryIndex + 1} de ${galleryImages.length} — ${product.name}`
+            : `Vista de ${product.name}`;
+        img.onload = () => { img.style.opacity = '1'; };
+        img.onerror = () => { img.style.opacity = '0.4'; };
+
+        // Thumbs
+        thumbsContainer.querySelectorAll('.product-modal__thumb').forEach((th, i) => {
+            th.classList.toggle('is-active', i === galleryIndex);
+            th.setAttribute('aria-pressed', String(i === galleryIndex));
+        });
+
+        // Counter
+        if (galleryImages.length > 1) {
+            counterEl.textContent = `${galleryIndex + 1} / ${galleryImages.length}`;
+            prevBtn.disabled = galleryIndex === 0;
+            nextBtn.disabled = galleryIndex === galleryImages.length - 1;
+        }
+    }
+
+    if (galleryImages.length > 0) {
         img.hidden = false;
         img.style.cursor = 'zoom-in';
-        img.onclick = () => openImageLightbox(product.imageUrl, product.name);
+        img.onclick = () => openImageLightbox(galleryImages[galleryIndex], product.name);
         placeholder.hidden = true;
     } else {
         img.hidden = true;
         img.onclick = null;
         placeholder.setAttribute('aria-label', `Imagen pendiente para ${product.name}`);
         placeholder.hidden = false;
+    }
+
+    // Thumbnails
+    thumbsContainer.innerHTML = '';
+    if (galleryImages.length > 1) {
+        galleryImages.forEach((url, i) => {
+            const thumb = document.createElement('button');
+            thumb.type = 'button';
+            thumb.className = `product-modal__thumb${i === 0 ? ' is-active' : ''}`;
+            thumb.setAttribute('aria-pressed', String(i === 0));
+            thumb.setAttribute('aria-label', `Imagen ${i + 1} de ${galleryImages.length}`);
+            const thumbImg = document.createElement('img');
+            thumbImg.src = url;
+            thumbImg.alt = '';
+            thumbImg.loading = 'lazy';
+            thumbImg.decoding = 'async';
+            thumb.appendChild(thumbImg);
+            thumb.addEventListener('click', () => showGalleryImage(i));
+            thumbsContainer.appendChild(thumb);
+        });
+        thumbsContainer.hidden = false;
+        prevBtn.hidden = false;
+        nextBtn.hidden = false;
+        counterEl.hidden = false;
+        counterEl.textContent = `1 / ${galleryImages.length}`;
+        prevBtn.disabled = true;
+        nextBtn.disabled = galleryImages.length === 1;
+    } else {
+        thumbsContainer.hidden = true;
+        prevBtn.hidden = true;
+        nextBtn.hidden = true;
+        counterEl.hidden = true;
+    }
+
+    // Nav buttons (reassign onclick to avoid stale closures)
+    prevBtn.onclick = () => showGalleryImage(galleryIndex - 1);
+    nextBtn.onclick = () => showGalleryImage(galleryIndex + 1);
+
+    // Touch swipe para galería en móvil
+    let _touchStartX = 0;
+    img.ontouchstart = e => { _touchStartX = e.changedTouches[0].screenX; };
+    img.ontouchend = e => {
+        const delta = _touchStartX - e.changedTouches[0].screenX;
+        if (Math.abs(delta) > 45) { showGalleryImage(galleryIndex + (delta > 0 ? 1 : -1)); }
+    };
+
+    // Teclado: ← → mientras el modal está abierto
+    dialog.onkeydown = e => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); showGalleryImage(galleryIndex - 1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); showGalleryImage(galleryIndex + 1); }
+    };
+
+    // Mostrar imagen inicial
+    if (galleryImages.length > 0) {
+        img.src = galleryImages[0];
+        img.alt = `Vista de ${product.name}`;
+        img.style.opacity = '1';
     }
 
     // --- Título y precio ---
