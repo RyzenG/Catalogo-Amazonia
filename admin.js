@@ -6604,6 +6604,8 @@ self.addEventListener('fetch', function(event) {
                     const isActive = panel.id === 'configTabPanel-' + tabId;
                     panel.hidden = !isActive;
                 });
+                const saveBtn = document.getElementById('saveConfigButton');
+                if (saveBtn) saveBtn.hidden = tabId === 'manual';
             }
 
             tabBtns.forEach(btn => {

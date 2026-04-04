@@ -52,6 +52,7 @@
                         <button role="tab" class="config-tab" data-config-tab="empresa" id="configTabBtn-empresa" aria-controls="configTabPanel-empresa" aria-selected="false">🏢 Empresa</button>
                         <button role="tab" class="config-tab" data-config-tab="apariencia" id="configTabBtn-apariencia" aria-controls="configTabPanel-apariencia" aria-selected="false">🎨 Apariencia</button>
                         <button role="tab" class="config-tab" data-config-tab="promocion" id="configTabBtn-promocion" aria-controls="configTabPanel-promocion" aria-selected="false">🏷️ Promoción</button>
+                        <button role="tab" class="config-tab" data-config-tab="manual" id="configTabBtn-manual" aria-controls="configTabPanel-manual" aria-selected="false">📖 Manual</button>
                     </div>
 
                     <!-- Tab: Contacto -->
@@ -351,6 +352,304 @@
                     </div>
 
                     </div><!-- /configTabPanel-promocion -->
+
+                    <!-- Tab: Manual de Usuario -->
+                    <div id="configTabPanel-manual" class="config-tab-panel manual-panel" role="tabpanel" aria-labelledby="configTabBtn-manual" hidden>
+
+                        <div class="info-box">
+                            <strong>Manual de Usuario — Catálogo Amazonia</strong><br>
+                            Guía completa del panel de administración. Haz clic en cada sección para expandirla y leer los detalles.
+                        </div>
+
+                        <!-- 1. Visión General -->
+                        <details class="manual-section" open>
+                            <summary class="manual-section__title">1. Visión general del panel de administración</summary>
+                            <div class="manual-section__body">
+                                <p>El panel de administración de <strong>Catálogo Amazonia</strong> te permite gestionar por completo el catálogo digital de tu empresa: productos, apariencia, textos, promociones, políticas y mucho más, todo desde un único lugar sin necesidad de conocimientos técnicos.</p>
+                                <h4 class="manual-h4">Acceso al panel</h4>
+                                <p>Abre el archivo <code>admin.html</code> en tu navegador. No requiere servidor ni conexión a internet para funcionar: todos los datos se guardan localmente en el navegador (localStorage). Para ver el catálogo público, abre <code>index.html</code> en el mismo navegador.</p>
+                                <h4 class="manual-h4">Estructura del menú lateral</h4>
+                                <ul class="manual-list">
+                                    <li><strong>⚙️ Configuración</strong> — Datos de contacto, empresa, apariencia visual y promociones.</li>
+                                    <li><strong>👥 Nosotros</strong> — Contenido de la página "Sobre nosotros".</li>
+                                    <li><strong>📰 Inicio y novedades</strong> — Página de inicio del catálogo con banners y anuncios.</li>
+                                    <li><strong>📋 Políticas corporativas</strong> — Garantías, envíos y condiciones de venta.</li>
+                                    <li><strong>📦 Productos</strong> — Alta, edición y eliminación de productos del catálogo.</li>
+                                </ul>
+                                <h4 class="manual-h4">Botones de exportar / importar</h4>
+                                <p>En la parte inferior del menú lateral encontrarás dos botones clave:</p>
+                                <ul class="manual-list">
+                                    <li><strong>📤 Exportar Datos</strong> — Descarga un archivo <code>.json</code> con toda la configuración y los productos. Úsalo como copia de seguridad o para mover los datos a otro equipo.</li>
+                                    <li><strong>📥 Importar Datos</strong> — Carga un archivo <code>.json</code> exportado previamente. <em>Reemplaza todos los datos actuales</em>, así que úsalo con cuidado.</li>
+                                </ul>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Exporta tus datos regularmente como respaldo antes de hacer cambios importantes.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- 2. Configuración — Contacto -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">2. Configuración › Pestaña Contacto</summary>
+                            <div class="manual-section__body">
+                                <p>Esta pestaña define los datos de contacto que aparecerán en el catálogo público y en los botones de acción (ej. "Solicitar cotización por WhatsApp").</p>
+                                <h4 class="manual-h4">Información de contacto</h4>
+                                <ul class="manual-list">
+                                    <li><strong>Número de WhatsApp</strong> — Debe incluir el código de país sin espacios ni símbolos (ej. <code>573001234567</code> para Colombia). Este número se usa para generar el enlace directo de WhatsApp en el catálogo.</li>
+                                    <li><strong>Email de contacto</strong> — Se muestra en el pie de página y en la sección de contacto del catálogo.</li>
+                                    <li><strong>Teléfono de contacto</strong> — Número de teléfono visible para los clientes (puede tener formato libre, ej. <code>+57 300 123 4567</code>).</li>
+                                    <li><strong>Dirección</strong> — Opcional. Aparece en el pie de página si se completa.</li>
+                                </ul>
+                                <h4 class="manual-h4">Redes sociales</h4>
+                                <p>Puedes introducir la URL completa de tu perfil <em>o</em> solo el nombre de usuario (ej. <code>@amazoniaconcrete</code>). El campo mostrará una vista previa de la URL final que se publicará en el catálogo.</p>
+                                <ul class="manual-list">
+                                    <li><strong>Instagram</strong> — Enlace al perfil de Instagram.</li>
+                                    <li><strong>Facebook</strong> — Enlace a la página de Facebook.</li>
+                                    <li><strong>TikTok</strong> — Enlace al perfil de TikTok.</li>
+                                </ul>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> El botón de WhatsApp es uno de los elementos más importantes del catálogo. Verifica que el número esté correctamente formateado para que los clientes puedan contactarte con un solo clic.
+                                </div>
+                                <p>Cuando termines, haz clic en <strong>Guardar Configuración</strong> para aplicar los cambios.</p>
+                            </div>
+                        </details>
+
+                        <!-- 3. Configuración — Empresa -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">3. Configuración › Pestaña Empresa</summary>
+                            <div class="manual-section__body">
+                                <p>Configura la identidad web de tu catálogo: las URLs canónicas mejoran el SEO y el código QR facilita compartir el catálogo en formato físico.</p>
+                                <h4 class="manual-h4">URLs canónicas</h4>
+                                <p>Una URL canónica es la dirección web oficial de tu página. Ayuda a los motores de búsqueda (Google, Bing) a identificar correctamente tu contenido.</p>
+                                <ul class="manual-list">
+                                    <li><strong>URL canónica del catálogo</strong> — La dirección donde está publicado tu <code>index.html</code> (ej. <code>https://www.tumarca.com/</code>).</li>
+                                    <li><strong>URL canónica de "Sobre nosotros"</strong> — La dirección de la página de nosotros (ej. <code>https://www.tumarca.com/nosotros</code>).</li>
+                                </ul>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Si aún no tienes hosting, puedes dejar estas URLs vacías. Solo afectan al SEO, no al funcionamiento del catálogo.
+                                </div>
+                                <h4 class="manual-h4">Código QR del catálogo</h4>
+                                <p>Esta sección genera un código QR que apunta a la URL canónica de tu catálogo, ideal para imprimir en folletos, tarjetas o banners.</p>
+                                <ul class="manual-list">
+                                    <li><strong>URL para el QR</strong> — Se sincroniza automáticamente con la URL canónica. Puedes cambiarla manualmente si necesitas un enlace diferente.</li>
+                                    <li><strong>Tamaño</strong> — Elige entre Pequeño (200px), Mediano (300px, recomendado) o Grande (512px).</li>
+                                    <li><strong>Generar QR</strong> — Crea la imagen del código QR en pantalla.</li>
+                                    <li><strong>Descargar QR</strong> — Descarga el QR como imagen PNG lista para usar.</li>
+                                </ul>
+                            </div>
+                        </details>
+
+                        <!-- 4. Configuración — Apariencia -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">4. Configuración › Pestaña Apariencia</summary>
+                            <div class="manual-section__body">
+                                <p>Personaliza completamente los colores, fondos, texturas y modo visual del catálogo. Los cambios se reflejan en tiempo real en la vista previa.</p>
+                                <h4 class="manual-h4">Colores principales</h4>
+                                <ul class="manual-list">
+                                    <li><strong>Color de fondo</strong> — Color de fondo general de las páginas del catálogo.</li>
+                                    <li><strong>Color del encabezado</strong> — Color de la barra de navegación superior.</li>
+                                    <li><strong>Color primario</strong> — Usado en botones, títulos y elementos de acción.</li>
+                                    <li><strong>Color de acento</strong> — Usado en detalles, etiquetas y resaltados.</li>
+                                    <li><strong>Color del texto</strong> — Color principal del cuerpo del texto.</li>
+                                </ul>
+                                <h4 class="manual-h4">Imágenes de fondo</h4>
+                                <ul class="manual-list">
+                                    <li><strong>Imagen de fondo general</strong> — Se aplica como fondo de toda la página (por encima del color de fondo).</li>
+                                    <li><strong>Imagen del encabezado</strong> — Imagen de portada dentro del header.</li>
+                                    <li><strong>Imagen del pie de página</strong> — Imagen decorativa en el footer.</li>
+                                </ul>
+                                <p>Para cada imagen puedes pegar una URL o subir un archivo desde tu equipo. La opacidad (<strong>Fuerza de la superposición</strong>) controla cuánto se transparenta el color de fondo sobre la imagen.</p>
+                                <h4 class="manual-h4">Patrones de textura</h4>
+                                <p>Puedes aplicar patrones decorativos (texturas de concreto, líneas, puntos, etc.) sobre el fondo. Hay dos niveles de patrón:</p>
+                                <ul class="manual-list">
+                                    <li><strong>Patrón de fondo</strong> — Se aplica en toda la página.</li>
+                                    <li><strong>Patrón de secciones</strong> — Se aplica dentro de las tarjetas o secciones de contenido.</li>
+                                </ul>
+                                <h4 class="manual-h4">Modo de visualización</h4>
+                                <ul class="manual-list">
+                                    <li><strong>Modo claro</strong> — Fondo blanco/claro, texto oscuro.</li>
+                                    <li><strong>Modo oscuro</strong> — Fondo oscuro, texto claro.</li>
+                                </ul>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Usa el modo oscuro con colores de acento vibrantes para un look premium. El modo claro funciona mejor para catálogos con muchas fotos de productos.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- 5. Configuración — Promoción -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">5. Configuración › Pestaña Promoción</summary>
+                            <div class="manual-section__body">
+                                <p>Gestiona los descuentos globales y los filtros de precio del catálogo.</p>
+                                <h4 class="manual-h4">Banner de promoción</h4>
+                                <p>Activa un banner de descuento visible en el catálogo con un porcentaje y una fecha de vigencia (cuenta regresiva). Campos disponibles:</p>
+                                <ul class="manual-list">
+                                    <li><strong>Activar promoción</strong> — Checkbox para mostrar u ocultar el banner.</li>
+                                    <li><strong>Porcentaje de descuento</strong> — Número del 1 al 99 (ej. <code>15</code> para 15% OFF).</li>
+                                    <li><strong>Texto del banner</strong> — Mensaje personalizado que acompaña al descuento.</li>
+                                    <li><strong>Fecha de fin</strong> — El banner muestra una cuenta regresiva hasta esta fecha. Cuando vence, desaparece automáticamente.</li>
+                                </ul>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Las promociones con cuenta regresiva generan urgencia en los clientes. Úsalas en temporadas clave como liquidaciones, lanzamientos o fechas especiales.
+                                </div>
+                                <h4 class="manual-h4">Rangos de precios</h4>
+                                <p>Define los tramos que aparecerán en el filtro de precio del catálogo. Los clientes pueden filtrar productos por rango. Cada rango tiene:</p>
+                                <ul class="manual-list">
+                                    <li><strong>Etiqueta</strong> — El texto que verá el cliente (ej. "Hasta $150.000").</li>
+                                    <li><strong>Desde / Hasta</strong> — Los valores numéricos del rango (en la moneda configurada). Deja "Hasta" vacío para un rango abierto ("Más de X").</li>
+                                </ul>
+                                <p>Usa el botón <strong>➕ Añadir rango</strong> para crear nuevos tramos y los iconos de eliminar para borrar los existentes. Evita que los rangos se solapen para que cada producto aparezca en un solo filtro.</p>
+                            </div>
+                        </details>
+
+                        <!-- 6. Productos -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">6. Sección Productos</summary>
+                            <div class="manual-section__body">
+                                <p>Esta es la sección central del catálogo. Aquí creas, editas y organizas todos los productos que verán tus clientes.</p>
+                                <h4 class="manual-h4">Añadir un producto nuevo</h4>
+                                <ol class="manual-list manual-list--ordered">
+                                    <li>Haz clic en el botón <strong>➕ Nuevo producto</strong>.</li>
+                                    <li>Completa los campos del formulario: nombre, descripción, precio, categoría, etc.</li>
+                                    <li>Sube una o varias imágenes (se admiten JPG, PNG y WebP).</li>
+                                    <li>Haz clic en <strong>Guardar producto</strong>. El producto aparecerá inmediatamente en el catálogo.</li>
+                                </ol>
+                                <h4 class="manual-h4">Campos de un producto</h4>
+                                <ul class="manual-list">
+                                    <li><strong>Nombre</strong> — Título principal que aparece en la tarjeta del catálogo.</li>
+                                    <li><strong>Descripción</strong> — Texto detallado del producto. Puede incluir dimensiones, materiales, usos, etc.</li>
+                                    <li><strong>Precio</strong> — Precio de venta visible. Déjalo vacío si no quieres mostrar precio.</li>
+                                    <li><strong>Categoría</strong> — Agrupa el producto con otros del mismo tipo. Los clientes pueden filtrar por categoría.</li>
+                                    <li><strong>Imágenes</strong> — Puedes subir varias fotos. La primera será la imagen principal de la tarjeta.</li>
+                                    <li><strong>Destacado</strong> — Marca el producto como destacado para que aparezca primero o con un badge especial.</li>
+                                    <li><strong>Visible</strong> — Controla si el producto es visible en el catálogo público o está oculto.</li>
+                                </ul>
+                                <h4 class="manual-h4">Editar y eliminar productos</h4>
+                                <p>Desde la lista de productos, cada tarjeta tiene botones para <strong>Editar</strong> (abre el mismo formulario con los datos cargados) y <strong>Eliminar</strong> (pide confirmación antes de borrar).</p>
+                                <h4 class="manual-h4">Categorías</h4>
+                                <p>Las categorías se crean automáticamente al asignarlas a un producto. No necesitas crearlas por separado. Para renombrar una categoría, edita todos los productos que la usan y cambia el valor del campo.</p>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Usa imágenes de alta calidad con buena iluminación. El catálogo está diseñado para resaltar las fotos de producto: son lo primero que ven los clientes.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- 7. Nosotros -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">7. Sección Nosotros</summary>
+                            <div class="manual-section__body">
+                                <p>Configura el contenido de la página "Sobre nosotros" del catálogo público. Esta página presenta a tu empresa, su historia, valores y equipo.</p>
+                                <h4 class="manual-h4">Campos disponibles</h4>
+                                <ul class="manual-list">
+                                    <li><strong>Título de la sección</strong> — El encabezado principal de la página.</li>
+                                    <li><strong>Descripción / Historia</strong> — Texto libre donde puedes contar la historia de tu empresa, su misión y lo que la hace única.</li>
+                                    <li><strong>Imagen de portada</strong> — Foto de cabecera para la página (ej. taller, equipo, showroom).</li>
+                                    <li><strong>Valores corporativos</strong> — Lista de valores o pilares de la empresa (ej. Sostenibilidad, Calidad, Innovación).</li>
+                                    <li><strong>Miembros del equipo</strong> — Perfiles con foto, nombre y cargo de las personas detrás de la marca.</li>
+                                </ul>
+                                <p>Al guardar, los cambios se reflejan en <code>nosotros.html</code> (o en la sección correspondiente del catálogo).</p>
+                            </div>
+                        </details>
+
+                        <!-- 8. Inicio y Novedades -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">8. Sección Inicio y Novedades</summary>
+                            <div class="manual-section__body">
+                                <p>Define el contenido de la página de inicio del catálogo. Esta página actúa como "portada" del sitio y no muestra productos directamente, sino anuncios, llamadas a la acción y destacados.</p>
+                                <h4 class="manual-h4">Apariencia unificada</h4>
+                                <p>El checkbox <strong>"Aplicar la visualización de inicio y novedades en todo el sitio"</strong> hace que los estilos visuales del inicio (colores, texturas, formas decorativas) se apliquen también al catálogo, la página de políticas y la de nosotros. Desmárcalo si prefieres estilos independientes para cada sección.</p>
+                                <h4 class="manual-h4">Encabezado hero</h4>
+                                <ul class="manual-list">
+                                    <li><strong>Etiqueta superior</strong> — Texto pequeño sobre el título (ej. "Concreto sostenible").</li>
+                                    <li><strong>Título principal</strong> — El titular grande de la portada.</li>
+                                    <li><strong>Descripción corta</strong> — Un párrafo de introducción debajo del título.</li>
+                                    <li><strong>Botón de acción</strong> — Texto y enlace del botón principal (normalmente apunta al catálogo).</li>
+                                </ul>
+                                <h4 class="manual-h4">Novedades y anuncios</h4>
+                                <p>Puedes añadir tarjetas de novedad con imagen, título, texto y enlace. Estas aparecen como un carrusel o rejilla en la página de inicio, ideales para anunciar nuevos productos, colecciones o eventos.</p>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Mantén el mensaje del hero breve y directo. El objetivo es llevar al visitante al catálogo con un solo clic.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- 9. Políticas Corporativas -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">9. Sección Políticas Corporativas</summary>
+                            <div class="manual-section__body">
+                                <p>Gestiona los textos legales y de servicio que acompañan al catálogo: garantías, política de cambios, condiciones de envío, etc.</p>
+                                <h4 class="manual-h4">Cómo funciona</h4>
+                                <p>Cada política es un bloque de texto editable con título y contenido. Puedes añadir tantas políticas como necesites. En el catálogo público aparecen en una página dedicada accesible desde el pie de página.</p>
+                                <ul class="manual-list">
+                                    <li><strong>➕ Añadir política</strong> — Crea un nuevo bloque con título y contenido.</li>
+                                    <li><strong>Editar</strong> — Modifica el título o el texto de cualquier política existente.</li>
+                                    <li><strong>Eliminar</strong> — Borra la política (pide confirmación).</li>
+                                </ul>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Incluye al menos las políticas de garantía y formas de pago. Los clientes las consultan antes de hacer un pedido y aumentan la confianza en tu marca.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- 10. Flujo de datos y guardado -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">10. Cómo se guardan y publican los datos</summary>
+                            <div class="manual-section__body">
+                                <p>Entender cómo fluyen los datos te ayuda a evitar pérdidas y a publicar cambios correctamente.</p>
+                                <h4 class="manual-h4">Almacenamiento local (localStorage)</h4>
+                                <p>Todos los datos (configuración, productos, textos) se guardan en el <strong>localStorage</strong> del navegador bajo la clave <code>amazoniaData</code>. Esto significa:</p>
+                                <ul class="manual-list">
+                                    <li>Los datos <strong>no se sincronizan</strong> automáticamente entre diferentes equipos o navegadores.</li>
+                                    <li>Si borras los datos del navegador o usas el modo incógnito, los datos podrían perderse.</li>
+                                    <li>Los cambios guardados en el admin se reflejan <strong>inmediatamente</strong> en el catálogo público cuando lo abres en el mismo navegador.</li>
+                                </ul>
+                                <h4 class="manual-h4">Botón "Guardar Configuración"</h4>
+                                <p>Siempre que hagas cambios en las pestañas de Configuración (Contacto, Empresa, Apariencia o Promoción), debes hacer clic en <strong>Guardar Configuración</strong> para que se persistan. Los cambios <em>no se guardan automáticamente</em> al navegar entre pestañas.</p>
+                                <h4 class="manual-h4">Exportar para publicar en otro equipo</h4>
+                                <ol class="manual-list manual-list--ordered">
+                                    <li>En tu equipo de trabajo, haz clic en <strong>📤 Exportar Datos</strong>.</li>
+                                    <li>Se descargará un archivo <code>amazonia-data.json</code>.</li>
+                                    <li>En el equipo o servidor de destino, abre <code>admin.html</code> y haz clic en <strong>📥 Importar Datos</strong>.</li>
+                                    <li>Selecciona el archivo JSON exportado. Todos los datos quedarán cargados y el catálogo estará listo.</li>
+                                </ol>
+                                <div class="manual-tip">
+                                    <strong>Importante:</strong> Al importar datos, <em>se sobreescriben todos los datos actuales</em> del navegador de destino. Asegúrate de exportar primero si quieres conservar los datos existentes.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- 11. Preguntas frecuentes -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">11. Preguntas frecuentes (FAQ)</summary>
+                            <div class="manual-section__body">
+                                <dl class="manual-faq">
+                                    <dt>¿Puedo usar el catálogo sin conexión a internet?</dt>
+                                    <dd>Sí. El catálogo funciona completamente sin conexión. Solo necesitas internet para cargar imágenes alojadas en URLs externas o para generar el código QR (usa un servicio externo).</dd>
+
+                                    <dt>¿Los datos se pierden si cierro el navegador?</dt>
+                                    <dd>No, siempre que hayas guardado los cambios con el botón <strong>Guardar Configuración</strong>. El localStorage persiste aunque cierres el navegador.</dd>
+
+                                    <dt>¿Cómo actualizo el catálogo en mi web?</dt>
+                                    <dd>Exporta los datos desde el admin, importa en el servidor o equipo donde está publicado el catálogo, y vuelve a subir los archivos HTML al hosting.</dd>
+
+                                    <dt>¿Puedo tener varios catálogos independientes?</dt>
+                                    <dd>Sí. Copia la carpeta completa del proyecto en una nueva ubicación. Cada copia tiene su propio localStorage y sus propios datos independientes.</dd>
+
+                                    <dt>¿El catálogo es visible para todos mis clientes?</dt>
+                                    <dd>El catálogo público (<code>index.html</code>) es visible para cualquier persona que tenga acceso a la URL donde está alojado. El panel de administración (<code>admin.html</code>) solo debe compartirse con las personas autorizadas a gestionar el catálogo.</dd>
+
+                                    <dt>¿Puedo cambiar el logo de la empresa?</dt>
+                                    <dd>Sí. El logo se gestiona desde la sección <strong>Apariencia</strong> o directamente reemplazando el archivo de imagen en la carpeta <code>images/</code> del proyecto.</dd>
+                                </dl>
+                            </div>
+                        </details>
+
+                        <div class="manual-footer">
+                            <p>Panel de Administración · Catálogo Amazonia · <strong>v1.0</strong></p>
+                            <p>Para soporte o reportar errores, contacta al desarrollador del proyecto.</p>
+                        </div>
+
+                    </div><!-- /configTabPanel-manual -->
 
                 <button class="btn btn-primary" id="saveConfigButton">Guardar Configuración</button>
             </div>
