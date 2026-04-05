@@ -3462,6 +3462,11 @@
                 importDataButton.addEventListener('click', importData);
             }
 
+            const exportCsvButton = document.getElementById('exportCsvButton');
+            if (exportCsvButton) {
+                exportCsvButton.addEventListener('click', exportProductsCsv);
+            }
+
             const clearProcessStatusButton = document.getElementById('clearProcessStatusButton');
             if (clearProcessStatusButton) {
                 clearProcessStatusButton.addEventListener('click', () => {
@@ -3736,6 +3741,17 @@
             resetImagePreview();
             updateCatalogPreview();
             updatePolicyGenerationMeta();
+
+            // Detectar cambios en cualquier input/textarea/select del panel para marcar "sin guardar"
+            document.addEventListener('input', function(event) {
+                const tag = event.target && event.target.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                    // Excluir campos del modal de producto (se guardan explícitamente)
+                    // y el buscador de productos del admin
+                    const inModal = event.target.closest('#productModal, #categoryModal, #importFile');
+                    if (!inModal) { markDirty(); }
+                }
+            });
         });
 
         // Load saved data from localStorage
@@ -3788,6 +3804,35 @@
             loadProducts();
         }
 
+        // ─── Estado "datos modificados sin guardar" ───────────────────────────────
+        let _isDirty = false;
+
+        function markDirty() {
+            if (_isDirty) { return; }
+            _isDirty = true;
+            const btn = document.getElementById('saveDataButton');
+            if (btn) {
+                btn.classList.add('btn--dirty');
+                btn.setAttribute('title', 'Hay cambios sin guardar');
+            }
+        }
+
+        function clearDirty() {
+            _isDirty = false;
+            const btn = document.getElementById('saveDataButton');
+            if (btn) {
+                btn.classList.remove('btn--dirty');
+                btn.removeAttribute('title');
+            }
+        }
+
+        window.addEventListener('beforeunload', function(event) {
+            if (_isDirty) {
+                event.preventDefault();
+                event.returnValue = '¿Salir sin guardar? Los cambios no guardados se perderán.';
+            }
+        });
+
         // Save data to localStorage
         function saveData(options = {}) {
             const { silent = false } = options;
@@ -3814,6 +3859,7 @@
             stripLegacyImageData(catalogData.products);
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             localStorage.setItem(PRODUCT_SEARCH_STORAGE_KEY, productSearchTerm || '');
+            clearDirty();
             if (!silent) {
                 showMessage('Datos guardados correctamente', 'success');
             }
@@ -6451,6 +6497,80 @@
             } finally {
                 setExportButtonDisabled(false);
             }
+        }
+
+        // ─── Exportar productos a CSV ───────────────────────────────────────────
+        function exportProductsCsv() {
+            ensureCategoryStructure();
+
+            const categoryMap = {};
+            (catalogData.categories || []).forEach(cat => {
+                categoryMap[cat.id] = cat.name || cat.id;
+            });
+
+            // Cabeceras
+            const columns = [
+                'Categoría', 'Nombre', 'Descripción corta', 'Descripción larga',
+                'Precio', 'Agotado', 'Precio a consultar',
+                'Material', 'Ancho (cm)', 'Alto (cm)', 'Largo/Prof. (cm)', 'Peso (kg)',
+                'Especificaciones adicionales', 'Características', 'Variantes', 'Imágenes'
+            ];
+
+            function csvCell(value) {
+                const str = String(value === null || value === undefined ? '' : value);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            }
+
+            const rows = [columns.map(csvCell).join(',')];
+
+            Object.entries(catalogData.products || {}).forEach(([catId, productList]) => {
+                if (!Array.isArray(productList)) { return; }
+                const catName = categoryMap[catId] || catId;
+                productList.forEach(product => {
+                    const specs = product.specs || '';
+                    const dims = product.dimensions || {};
+                    const features = Array.isArray(product.features) ? product.features.join(' | ') : '';
+                    const variants = Array.isArray(product.variants) ? product.variants.join(' | ') : '';
+                    const images = Array.isArray(product.images)
+                        ? product.images.join(' | ')
+                        : (product.imageUrl || product.image || '');
+
+                    const row = [
+                        catName,
+                        product.name || '',
+                        product.description || '',
+                        product.longDesc || '',
+                        product.price || '',
+                        product.soldOut ? 'Sí' : 'No',
+                        product.priceOnRequest ? 'Sí' : 'No',
+                        dims.material || '',
+                        dims.ancho != null ? dims.ancho : '',
+                        dims.alto != null ? dims.alto : '',
+                        dims.largo != null ? dims.largo : '',
+                        dims.peso != null ? dims.peso : '',
+                        specs,
+                        features,
+                        variants,
+                        images
+                    ];
+                    rows.push(row.map(csvCell).join(','));
+                });
+            });
+
+            const csvContent = '\uFEFF' + rows.join('\r\n'); // BOM para Excel UTF-8
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'amazonia_productos_' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            showMessage('Productos exportados como CSV', 'success');
         }
 
         // Import data

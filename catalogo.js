@@ -3043,6 +3043,31 @@ function openCompareModal() {
    AUTOCOMPLETADO DE BÚSQUEDA
    ═══════════════════════════════════════════════════ */
 
+/* ─── Historial de búsquedas recientes ─── */
+
+const SEARCH_HISTORY_KEY = 'amazonia_search_history';
+const SEARCH_HISTORY_MAX = 5;
+
+function getSearchHistory() {
+    try {
+        return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]');
+    } catch { return []; }
+}
+
+function saveSearchHistory(term) {
+    if (!term || term.trim().length < 2) { return; }
+    const clean = term.trim();
+    const history = getSearchHistory().filter(h => h.toLowerCase() !== clean.toLowerCase());
+    history.unshift(clean);
+    try {
+        localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.slice(0, SEARCH_HISTORY_MAX)));
+    } catch { /* sin acceso a localStorage */ }
+}
+
+function clearSearchHistory() {
+    try { localStorage.removeItem(SEARCH_HISTORY_KEY); } catch { /* noop */ }
+}
+
 function setupSearchAutocomplete(searchInput) {
     if (!searchInput || document.getElementById('searchSuggestions')) { return; }
 
@@ -3059,6 +3084,51 @@ function setupSearchAutocomplete(searchInput) {
     function closeSuggestions() {
         dropdown.hidden = true;
         dropdown.innerHTML = '';
+    }
+
+    function openHistorySuggestions() {
+        const history = getSearchHistory();
+        if (history.length === 0) { closeSuggestions(); return; }
+
+        dropdown.innerHTML = '';
+
+        const header = document.createElement('div');
+        header.className = 'search-suggestions__header';
+
+        const label = document.createElement('span');
+        label.textContent = 'Búsquedas recientes';
+        header.appendChild(label);
+
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'search-suggestions__clear';
+        clearBtn.textContent = 'Borrar';
+        clearBtn.setAttribute('aria-label', 'Borrar historial de búsquedas');
+        clearBtn.addEventListener('mousedown', event => {
+            event.preventDefault();
+            clearSearchHistory();
+            closeSuggestions();
+        });
+        header.appendChild(clearBtn);
+        dropdown.appendChild(header);
+
+        history.forEach(term => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'search-suggestion-item search-suggestion-item--history';
+            item.setAttribute('role', 'option');
+            item.innerHTML = `<span class="search-suggestion-item__icon" aria-hidden="true">🕐</span>${escapeHtml(term)}`;
+            item.addEventListener('mousedown', event => {
+                event.preventDefault();
+                searchInput.value = term;
+                applyFilters({ search: term });
+                saveSearchHistory(term);
+                closeSuggestions();
+            });
+            dropdown.appendChild(item);
+        });
+
+        dropdown.hidden = false;
     }
 
     function openSuggestions(term) {
@@ -3093,6 +3163,7 @@ function setupSearchAutocomplete(searchInput) {
             }
             item.addEventListener('mousedown', event => {
                 event.preventDefault(); // prevent input blur
+                saveSearchHistory(product.name);
                 applyFilters({ search: product.name });
                 closeSuggestions();
             });
@@ -3101,15 +3172,27 @@ function setupSearchAutocomplete(searchInput) {
         dropdown.hidden = false;
     }
 
-    searchInput.addEventListener('input', debounce(event => {
-        openSuggestions(event.target.value.trim());
-    }, 150));
-
-    searchInput.addEventListener('blur', () => {
-        setTimeout(closeSuggestions, 200);
+    searchInput.addEventListener('focus', () => {
+        if (!searchInput.value.trim()) {
+            openHistorySuggestions();
+        }
     });
 
+    searchInput.addEventListener('input', debounce(event => {
+        const term = event.target.value.trim();
+        if (term.length === 0) {
+            openHistorySuggestions();
+        } else {
+            openSuggestions(term);
+        }
+    }, 150));
+
+    // Guardar en historial cuando se aplica una búsqueda (Enter o submit)
     searchInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            const term = searchInput.value.trim();
+            if (term.length >= 2) { saveSearchHistory(term); }
+        }
         if (!dropdown.hidden) {
             if (event.key === 'ArrowDown') {
                 event.preventDefault();
@@ -3119,6 +3202,10 @@ function setupSearchAutocomplete(searchInput) {
                 closeSuggestions();
             }
         }
+    });
+
+    searchInput.addEventListener('blur', () => {
+        setTimeout(closeSuggestions, 200);
     });
 
     dropdown.addEventListener('keydown', event => {

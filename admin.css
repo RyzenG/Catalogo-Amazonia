@@ -2088,3 +2088,30 @@ textarea {
     display: block;
     color: var(--text-muted);
 }
+
+/* ══════════════════════════════════════════
+   INDICADOR DE CAMBIOS SIN GUARDAR
+   ══════════════════════════════════════════ */
+
+.btn--dirty {
+    position: relative;
+    animation: dirty-pulse 2.5s ease-in-out infinite;
+}
+
+.btn--dirty::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    background: #e57373;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px rgba(229, 115, 115, 0.4);
+}
+
+@keyframes dirty-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(229, 115, 115, 0); }
+    50%       { box-shadow: 0 0 0 4px rgba(229, 115, 115, 0.3); }
+}

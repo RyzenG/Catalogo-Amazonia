@@ -2259,6 +2259,50 @@ mark {
     padding: 0 1px;
 }
 
+/* ─── Historial de búsquedas en sugerencias ─── */
+
+.search-suggestions__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.85rem 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--brand-accent, #9fcfb5);
+    opacity: 0.7;
+    border-bottom: 1px solid var(--border-soft, rgba(159, 207, 181, 0.15));
+}
+
+.search-suggestions__clear {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--brand-accent, #9fcfb5);
+    font-size: 0.75rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+}
+
+.search-suggestions__clear:hover {
+    opacity: 1;
+}
+
+.search-suggestion-item--history {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.85;
+}
+
+.search-suggestion-item__icon {
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
 /* ════════════════════════════════════════════════
    GALERÍA DE IMÁGENES EN MODAL DE PRODUCTO
    ════════════════════════════════════════════════ */
@@ -2874,3 +2918,147 @@ mark {
     display: block;
 }
 
+
+/* ════════════════════════════════════════════════════════════
+   MODO IMPRESIÓN — @media print
+   Oculta elementos interactivos y optimiza el layout para papel.
+   ════════════════════════════════════════════════════════════ */
+
+@media print {
+    /* Eliminar decoraciones de fondo */
+    *, *::before, *::after {
+        background-image: none !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body {
+        background: #fff !important;
+        color: #111 !important;
+        font-size: 10pt;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* ── Elementos a ocultar completamente ── */
+    .promo-top-bar,
+    .filter-group,
+    .tag,
+    .filter-chip,
+    .active-filters-bar,
+    .view-toggle-wrapper,
+    .sort-bar,
+    .cart-bubble,
+    .cart-drawer,
+    .selection-panel,
+    .compare-bar,
+    .compare-modal,
+    .image-lightbox,
+    .product-modal,
+    .quick-view-panel,
+    .toast-container,
+    .search-suggestions,
+    .scroll-to-top,
+    .product-card__add-to-cart,
+    .product-card__share,
+    .product-card__compare,
+    .product-card__cta,
+    .product-card__actions,
+    .catalog-back-btn,
+    nav,
+    [role="navigation"],
+    button:not(.no-print-hide) {
+        display: none !important;
+    }
+
+    /* ── Cabecera de la página: solo logo y nombre ── */
+    .hero {
+        padding: 1rem 0;
+        min-height: unset;
+        background: none !important;
+        break-after: avoid;
+    }
+
+    .hero__title,
+    .hero__tagline,
+    .hero__description {
+        color: #111 !important;
+    }
+
+    .hero__actions {
+        display: none !important;
+    }
+
+    /* ── Cuadrícula de productos: 3 columnas fijas ── */
+    .product-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 0.6rem !important;
+        padding: 0.5rem !important;
+    }
+
+    /* ── Tarjeta de producto ── */
+    .product-card {
+        border: 1px solid #ccc !important;
+        border-radius: 4px !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        padding: 0.4rem !important;
+        margin: 0 !important;
+    }
+
+    .product-card__image {
+        max-height: 120px !important;
+        width: 100% !important;
+        object-fit: contain !important;
+    }
+
+    .product-card__name {
+        font-size: 8pt !important;
+        font-weight: 700;
+        margin: 0.2rem 0 !important;
+    }
+
+    .product-card__price {
+        font-size: 8pt !important;
+        color: #333 !important;
+    }
+
+    .product-card__desc {
+        font-size: 7.5pt !important;
+        -webkit-line-clamp: unset !important;
+        display: block !important;
+        overflow: visible !important;
+    }
+
+    /* Insignias de agotado / descuento: imprimir en blanco y negro */
+    .product-card__badges .badge {
+        border: 1px solid #999 !important;
+        background: #eee !important;
+        color: #333 !important;
+        font-size: 7pt !important;
+    }
+
+    /* ── Encabezados de categoría ── */
+    .category-section__title,
+    .category-heading {
+        font-size: 12pt !important;
+        font-weight: 700;
+        border-bottom: 1px solid #999;
+        margin: 0.8rem 0 0.4rem !important;
+        break-after: avoid;
+        color: #111 !important;
+    }
+
+    /* ── Pie de página con URL ── */
+    @page {
+        margin: 1.5cm;
+        size: A4 portrait;
+    }
+
+    a[href]::after {
+        content: none !important; /* no imprimir URLs de enlaces de producto */
+    }
+}
