@@ -370,20 +370,22 @@
                                 <p>Abre el archivo <code>admin.html</code> en tu navegador. No requiere servidor ni conexión a internet para funcionar: todos los datos se guardan localmente en el navegador (localStorage). Para ver el catálogo público, abre <code>index.html</code> en el mismo navegador.</p>
                                 <h4 class="manual-h4">Estructura del menú lateral</h4>
                                 <ul class="manual-list">
-                                    <li><strong>⚙️ Configuración</strong> — Datos de contacto, empresa, apariencia visual y promociones.</li>
+                                    <li><strong>⚙️ Configuración</strong> — Datos de contacto, empresa, apariencia visual y promociones (5 pestañas internas).</li>
                                     <li><strong>👥 Nosotros</strong> — Contenido de la página "Sobre nosotros".</li>
                                     <li><strong>📰 Inicio y novedades</strong> — Página de inicio del catálogo con banners y anuncios.</li>
-                                    <li><strong>📋 Políticas corporativas</strong> — Garantías, envíos y condiciones de venta.</li>
+                                    <li><strong>📄 Políticas corporativas</strong> — Envíos, reembolso, privacidad y política adicional.</li>
                                     <li><strong>📦 Productos</strong> — Alta, edición y eliminación de productos del catálogo.</li>
                                 </ul>
-                                <h4 class="manual-h4">Botones de exportar / importar</h4>
-                                <p>En la parte inferior del menú lateral encontrarás dos botones clave:</p>
+                                <h4 class="manual-h4">Acciones rápidas del menú lateral</h4>
+                                <p>Debajo de los botones de navegación encontrarás cuatro acciones rápidas:</p>
                                 <ul class="manual-list">
-                                    <li><strong>📤 Exportar Datos</strong> — Descarga un archivo <code>.json</code> con toda la configuración y los productos. Úsalo como copia de seguridad o para mover los datos a otro equipo.</li>
+                                    <li><strong>💾 Guardar Cambios</strong> — Persiste en el navegador todos los datos actuales (configuración + productos).</li>
+                                    <li><strong>📂 Cargar Datos</strong> — Recarga los datos desde el localStorage (útil para deshacer cambios no guardados).</li>
+                                    <li><strong>📤 Exportar Datos</strong> — Descarga un archivo <code>amazonia-data.json</code> con toda la configuración y los productos. Úsalo como copia de seguridad o para mover los datos a otro equipo.</li>
                                     <li><strong>📥 Importar Datos</strong> — Carga un archivo <code>.json</code> exportado previamente. <em>Reemplaza todos los datos actuales</em>, así que úsalo con cuidado.</li>
                                 </ul>
                                 <div class="manual-tip">
-                                    <strong>Consejo:</strong> Exporta tus datos regularmente como respaldo antes de hacer cambios importantes.
+                                    <strong>Consejo:</strong> Exporta tus datos regularmente como respaldo antes de hacer cambios importantes. Recuerda hacer clic en <strong>💾 Guardar Cambios</strong> después de cada sesión de edición.
                                 </div>
                             </div>
                         </details>
@@ -538,16 +540,19 @@
                         <details class="manual-section">
                             <summary class="manual-section__title">7. Sección Nosotros</summary>
                             <div class="manual-section__body">
-                                <p>Configura el contenido de la página "Sobre nosotros" del catálogo público. Esta página presenta a tu empresa, su historia, valores y equipo.</p>
+                                <p>Configura el contenido de la página independiente <code>nosotros.html</code>, que presenta la identidad, historia y propósito de tu empresa.</p>
                                 <h4 class="manual-h4">Campos disponibles</h4>
                                 <ul class="manual-list">
-                                    <li><strong>Título de la sección</strong> — El encabezado principal de la página.</li>
-                                    <li><strong>Descripción / Historia</strong> — Texto libre donde puedes contar la historia de tu empresa, su misión y lo que la hace única.</li>
-                                    <li><strong>Imagen de portada</strong> — Foto de cabecera para la página (ej. taller, equipo, showroom).</li>
-                                    <li><strong>Valores corporativos</strong> — Lista de valores o pilares de la empresa (ej. Sostenibilidad, Calidad, Innovación).</li>
-                                    <li><strong>Miembros del equipo</strong> — Perfiles con foto, nombre y cargo de las personas detrás de la marca.</li>
+                                    <li><strong>Título principal de la página</strong> — Encabezado hero que se mostrará en la parte superior de la página (ej. "Nosotros en AMAZONIA CONCRETE").</li>
+                                    <li><strong>Historia de la empresa</strong> — Texto libre para contar los hitos, el origen y el propósito que guía a la compañía.</li>
+                                    <li><strong>Misión</strong> — Breve declaración del propósito central de la empresa.</li>
+                                    <li><strong>Visión</strong> — Descripción de la proyección y metas a largo plazo.</li>
+                                    <li><strong>Valores (uno por línea)</strong> — Lista de principios o pilares. Cada línea se convierte en un elemento de lista en la página publicada (ej. Innovación, Sostenibilidad, Calidad).</li>
                                 </ul>
-                                <p>Al guardar, los cambios se reflejan en <code>nosotros.html</code> (o en la sección correspondiente del catálogo).</p>
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Esta sección es opcional. Si dejas todos los campos vacíos, el enlace a "Nosotros" no aparecerá en la navegación del catálogo.
+                                </div>
+                                <p>Guarda los cambios con el botón <strong>Guardar Cambios</strong> y luego genera el catálogo para que <code>nosotros.html</code> se actualice.</p>
                             </div>
                         </details>
 
@@ -577,23 +582,76 @@
                         <details class="manual-section">
                             <summary class="manual-section__title">9. Sección Políticas Corporativas</summary>
                             <div class="manual-section__body">
-                                <p>Gestiona los textos legales y de servicio que acompañan al catálogo: garantías, política de cambios, condiciones de envío, etc.</p>
-                                <h4 class="manual-h4">Cómo funciona</h4>
-                                <p>Cada política es un bloque de texto editable con título y contenido. Puedes añadir tantas políticas como necesites. En el catálogo público aparecen en una página dedicada accesible desde el pie de página.</p>
+                                <p>Gestiona los textos legales y de servicio que se publicarán en <code>politicas.html</code>. La sección se divide en dos partes: la <strong>página dedicada de envíos</strong> y los <strong>cuatro paneles de política</strong> con sus propios formularios.</p>
+
+                                <h4 class="manual-h4">Página de política de envíos</h4>
+                                <p>Esta sub-sección genera una página propia para la política de envíos y tiene los siguientes campos:</p>
                                 <ul class="manual-list">
-                                    <li><strong>➕ Añadir política</strong> — Crea un nuevo bloque con título y contenido.</li>
-                                    <li><strong>Editar</strong> — Modifica el título o el texto de cualquier política existente.</li>
-                                    <li><strong>Eliminar</strong> — Borra la política (pide confirmación).</li>
+                                    <li><strong>Título principal</strong> — Encabezado hero de la página (ej. "Política de envíos").</li>
+                                    <li><strong>Descripción corta</strong> — Párrafo de introducción debajo del título.</li>
+                                    <li><strong>Bloques de información</strong> — Secciones detalladas (cobertura, empaque, costos, etc.). Usa <strong>➕ Añadir sección</strong> para crear bloques nuevos; cada bloque tiene título, descripción, lista de ítems y nota.</li>
+                                    <li><strong>Cierre de la página</strong> — Título final, descripción y nota complementaria que cierran la página de envíos.</li>
                                 </ul>
+
+                                <h4 class="manual-h4">Paneles de política (fijos)</h4>
+                                <p>Hay cuatro paneles predefinidos que aparecen en <code>politicas.html</code>. Cada uno tiene un interruptor <strong>"Mostrar en el catálogo"</strong> que controla su visibilidad:</p>
+                                <ul class="manual-list">
+                                    <li><strong>🚚 Política de envíos</strong> — Resumen, cobertura, tiempos, empaque, costos, método, entregas, daños, exclusiones y confirmación.</li>
+                                    <li><strong>💸 Política de reembolso</strong> — Resumen, ventana de tiempo, método, contacto, requisitos, detalles y puntos clave.</li>
+                                    <li><strong>🔒 Política de privacidad</strong> — Resumen, uso de datos, retención, terceros, contacto, detalles y puntos clave.</li>
+                                    <li><strong>✨ Política adicional</strong> — Política libre con título personalizable (ej. "Política ambiental"). Útil para certificaciones, garantías o lineamientos HSE.</li>
+                                </ul>
+
                                 <div class="manual-tip">
-                                    <strong>Consejo:</strong> Incluye al menos las políticas de garantía y formas de pago. Los clientes las consultan antes de hacer un pedido y aumentan la confianza en tu marca.
+                                    <strong>Consejo:</strong> Activa al menos la política de envíos y la de privacidad. Los clientes las consultan antes de finalizar un pedido y aumentan la confianza en tu marca.
+                                </div>
+                                <p>Guarda los cambios con el botón <strong>Guardar políticas</strong> que aparece al final de la sección.</p>
+                            </div>
+                        </details>
+
+                        <!-- 10. Generar Catálogo -->
+                        <details class="manual-section">
+                            <summary class="manual-section__title">10. Generar y publicar el catálogo</summary>
+                            <div class="manual-section__body">
+                                <p>El botón <strong>📥 Generar Catálogo</strong> del menú lateral es la acción principal del panel: compila toda la configuración y los productos y descarga los archivos listos para publicar en tu servidor o hosting.</p>
+
+                                <h4 class="manual-h4">Archivos generados</h4>
+                                <p>Al hacer clic en <strong>Generar Catálogo</strong> se descargarán automáticamente <strong>8 archivos</strong>:</p>
+                                <ul class="manual-list">
+                                    <li><code>index.html</code> — Página de inicio con el panel de novedades.</li>
+                                    <li><code>catalogo.html</code> — Catálogo de productos con filtros, carrito y favoritos.</li>
+                                    <li><code>politicas.html</code> — Página de políticas corporativas.</li>
+                                    <li><code>nosotros.html</code> — Página "Sobre nosotros".</li>
+                                    <li><code>manifest.json</code> — Manifiesto de PWA (para instalación en móviles).</li>
+                                    <li><code>sw.js</code> — Service Worker para funcionamiento offline.</li>
+                                    <li><code>sitemap.xml</code> — Mapa del sitio para motores de búsqueda.</li>
+                                    <li><code>robots.txt</code> — Directivas para rastreadores web.</li>
+                                </ul>
+
+                                <h4 class="manual-h4">Cómo publicar</h4>
+                                <ol class="manual-list manual-list--ordered">
+                                    <li>Haz clic en <strong>📥 Generar Catálogo</strong> y espera a que se descarguen los 8 archivos.</li>
+                                    <li>Coloca todos los archivos descargados en la misma carpeta junto a la carpeta <code>images/</code> y los archivos <code>catalogo.js</code> y <code>main.css</code>.</li>
+                                    <li>Sube esa carpeta completa a tu hosting (servidor web, GitHub Pages, Netlify, etc.).</li>
+                                    <li>La URL principal del catálogo apuntará a <code>index.html</code>.</li>
+                                </ol>
+
+                                <div class="manual-tip">
+                                    <strong>Importante:</strong> Los archivos HTML son <em>autocontenidos</em>: incluyen todo el CSS y el JavaScript necesario. Solo dependen de la carpeta <code>images/</code> para las imágenes locales.
+                                </div>
+
+                                <h4 class="manual-h4">Vista previa antes de generar</h4>
+                                <p>Usa el botón <strong>🔄 Actualizar vista previa</strong> para ver cómo lucirá el catálogo antes de descargarlo. La vista previa se muestra en el panel derecho del admin y refleja los cambios en tiempo real.</p>
+
+                                <div class="manual-tip">
+                                    <strong>Consejo:</strong> Configura la <strong>URL canónica</strong> en la pestaña Empresa antes de generar. Esto permite que el <code>sitemap.xml</code>, el <code>manifest.json</code> y el código QR apunten a la dirección correcta de tu sitio publicado.
                                 </div>
                             </div>
                         </details>
 
-                        <!-- 10. Flujo de datos y guardado -->
+                        <!-- 11. Flujo de datos y guardado -->
                         <details class="manual-section">
-                            <summary class="manual-section__title">10. Cómo se guardan y publican los datos</summary>
+                            <summary class="manual-section__title">11. Cómo se guardan y publican los datos</summary>
                             <div class="manual-section__body">
                                 <p>Entender cómo fluyen los datos te ayuda a evitar pérdidas y a publicar cambios correctamente.</p>
                                 <h4 class="manual-h4">Almacenamiento local (localStorage)</h4>
@@ -618,9 +676,9 @@
                             </div>
                         </details>
 
-                        <!-- 11. Preguntas frecuentes -->
+                        <!-- 12. Preguntas frecuentes -->
                         <details class="manual-section">
-                            <summary class="manual-section__title">11. Preguntas frecuentes (FAQ)</summary>
+                            <summary class="manual-section__title">12. Preguntas frecuentes (FAQ)</summary>
                             <div class="manual-section__body">
                                 <dl class="manual-faq">
                                     <dt>¿Puedo usar el catálogo sin conexión a internet?</dt>
@@ -639,13 +697,22 @@
                                     <dd>El catálogo público (<code>index.html</code>) es visible para cualquier persona que tenga acceso a la URL donde está alojado. El panel de administración (<code>admin.html</code>) solo debe compartirse con las personas autorizadas a gestionar el catálogo.</dd>
 
                                     <dt>¿Puedo cambiar el logo de la empresa?</dt>
-                                    <dd>Sí. El logo se gestiona desde la sección <strong>Apariencia</strong> o directamente reemplazando el archivo de imagen en la carpeta <code>images/</code> del proyecto.</dd>
+                                    <dd>Sí. El logo se gestiona desde la pestaña <strong>Empresa</strong> dentro de Configuración (campo "Logo de la empresa"). Puedes ingresar la URL de una imagen alojada externamente o usar un archivo local.</dd>
+
+                                    <dt>¿Cuántos archivos se generan al hacer clic en "Generar Catálogo"?</dt>
+                                    <dd>Se generan 8 archivos: <code>index.html</code>, <code>catalogo.html</code>, <code>politicas.html</code>, <code>nosotros.html</code>, <code>manifest.json</code>, <code>sw.js</code>, <code>sitemap.xml</code> y <code>robots.txt</code>. Todos deben alojarse en la misma carpeta del servidor junto a la carpeta <code>images/</code>.</dd>
+
+                                    <dt>¿Qué diferencia hay entre "Guardar Cambios" y "Exportar Datos"?</dt>
+                                    <dd><strong>Guardar Cambios</strong> persiste los datos en el localStorage del navegador actual (invisible para los visitantes). <strong>Exportar Datos</strong> descarga un archivo <code>.json</code> que puedes importar en otro equipo o guardar como copia de seguridad. Para publicar el catálogo en línea, debes usar <strong>Generar Catálogo</strong>.</dd>
+
+                                    <dt>¿Las imágenes locales (carpeta images/) funcionan en el catálogo generado?</dt>
+                                    <dd>Sí, siempre que la carpeta <code>images/</code> esté en la misma ubicación que los archivos HTML generados. En el admin, usa rutas relativas como <code>images/foto.webp</code>; para URLs externas usa la dirección completa (<code>https://...</code>).</dd>
                                 </dl>
                             </div>
                         </details>
 
                         <div class="manual-footer">
-                            <p>Panel de Administración · Catálogo Amazonia · <strong>v1.0</strong></p>
+                            <p>Panel de Administración · Catálogo Amazonia · <strong>v1.1</strong></p>
                             <p>Para soporte o reportar errores, contacta al desarrollador del proyecto.</p>
                         </div>
 

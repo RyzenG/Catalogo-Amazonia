@@ -383,8 +383,8 @@
                             : (typeof item.media === 'string' ? item.media.split(/\r?\n/) : []));
 
                     const normalizedMedia = mediaFromItem
-                        .map(url => typeof url === 'string' ? url.trim() : '')
-                        .filter(url => url.length > 0 && isValidUrl(url));
+                        .map(url => normalizeMediaUrl(typeof url === 'string' ? url : ''))
+                        .filter(url => url.length > 0);
 
                     const normalizedTarget = normalizeNavigationUrl(
                         typeof item.targetUrl === 'string' ? item.targetUrl : (typeof item.link === 'string' ? item.link : '')
@@ -398,7 +398,7 @@
                         tags: normalizedTags,
                         media: normalizedMedia.length > 0
                             ? normalizedMedia
-                            : (Array.isArray(base.media) ? base.media.filter(isValidUrl) : []),
+                            : (Array.isArray(base.media) ? base.media.map(u => normalizeMediaUrl(u)).filter(u => u.length > 0) : []),
                         targetUrl: normalizedTarget || fallbackTarget
                     };
                 }).filter(item => item.eyebrow || item.title || item.description || (Array.isArray(item.tags) && item.tags.length > 0) || (Array.isArray(item.media) && item.media.length > 0));
@@ -3932,6 +3932,29 @@
             }
         }
 
+        // Acepta tanto URLs absolutas (http/https) como rutas relativas de imagen
+        // (ej. "images/foto.webp" o "images/fondo principal.webp").
+        // Rechaza protocolos peligrosos (javascript:, data:).
+        function isValidMediaUrl(value) {
+            if (typeof value !== 'string') return false;
+            const trimmed = value.trim();
+            if (!trimmed) return false;
+            const lower = trimmed.toLowerCase();
+            if (lower.startsWith('javascript:') || lower.startsWith('data:')) return false;
+            if (isValidUrl(trimmed)) return true;
+            // Ruta relativa: empieza con letra/número, "./" o "../"
+            return /^(\.\.?\/|[a-zA-Z0-9_])/.test(trimmed);
+        }
+
+        // Normaliza una URL de media: codifica espacios en rutas relativas.
+        function normalizeMediaUrl(value) {
+            if (!isValidMediaUrl(value)) return '';
+            const trimmed = value.trim();
+            if (isValidUrl(trimmed)) return trimmed;
+            // Codificar espacios para que funcionen como src de <img>
+            return trimmed.replace(/ /g, '%20');
+        }
+
         function normalizeNavigationUrl(value) {
             if (typeof value !== 'string') {
                 return '';
@@ -7169,7 +7192,7 @@ self.addEventListener('fetch', function(event) {
             };
 
             const buildNewsMediaMarkup = (mediaList, titleText) => {
-                const validMedia = Array.isArray(mediaList) ? mediaList.filter(isValidUrl) : [];
+                const validMedia = Array.isArray(mediaList) ? mediaList.filter(isValidMediaUrl) : [];
                 if (!validMedia.length) {
                     return '';
                 }
@@ -7239,7 +7262,7 @@ self.addEventListener('fetch', function(event) {
                 const baseSlides = (Array.isArray(news.items) ? news.items : [])
                     .map(item => {
                         const slideUrl = normalizeNavigationUrl(item.targetUrl || '');
-                        const backgroundUrl = Array.isArray(item.media) && item.media.find(isValidUrl) ? item.media.find(isValidUrl) : '';
+                        const backgroundUrl = Array.isArray(item.media) && item.media.find(isValidMediaUrl) ? item.media.find(isValidMediaUrl) : '';
 
                         return {
                             eyebrow: escapeHtml(item.eyebrow || newsSectionEyebrow || 'Novedad'),
