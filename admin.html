@@ -1342,17 +1342,44 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="productSpecs">Especificaciones técnicas:</label>
+                        <label>Dimensiones y material:</label>
+                        <p class="field-hint">Campos estructurados que aparecerán como tabla en el catálogo.</p>
+                        <div class="dims-grid">
+                            <div class="form-group">
+                                <label for="specMaterial">Material</label>
+                                <input type="text" id="specMaterial" placeholder="Ej: Concreto reforzado" maxlength="80">
+                            </div>
+                            <div class="form-group">
+                                <label for="specAncho">Ancho (cm)</label>
+                                <input type="number" id="specAncho" min="0" step="0.1" placeholder="Ej: 30">
+                            </div>
+                            <div class="form-group">
+                                <label for="specAlto">Alto (cm)</label>
+                                <input type="number" id="specAlto" min="0" step="0.1" placeholder="Ej: 75">
+                            </div>
+                            <div class="form-group">
+                                <label for="specLargo">Largo / Prof. (cm)</label>
+                                <input type="number" id="specLargo" min="0" step="0.1" placeholder="Ej: 120">
+                            </div>
+                            <div class="form-group">
+                                <label for="specPeso">Peso (kg)</label>
+                                <input type="number" id="specPeso" min="0" step="0.1" placeholder="Ej: 25">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productSpecs">Especificaciones adicionales:</label>
                         <div class="warning-box">
                             Formato: Nombre: Valor (una por línea)<br>
                             Ejemplo:<br>
-                            Material: Concreto reforzado<br>
-                            Peso: 8 kg
+                            Acabado: Pulido mate<br>
+                            Resistencia: Exterior
                         </div>
                         <div class="input-meta">
-                            <textarea id="productSpecs" rows="6" placeholder="Material: Concreto reforzado&#10;Dimensiones: 30cm x 25cm&#10;Peso: 8 kg" aria-describedby="specsHint specsCounter"></textarea>
+                            <textarea id="productSpecs" rows="4" placeholder="Acabado: Pulido mate&#10;Resistencia: Exterior" aria-describedby="specsHint specsCounter"></textarea>
                             <div class="field-hint" id="specsHint">
-                                Añade cada especificación en el formato <strong>Nombre: Valor</strong> para que se muestre correctamente.
+                                Añade especificaciones extras en el formato <strong>Nombre: Valor</strong> además de las dimensiones.
                             </div>
                             <div class="char-counter" id="specsCounter" aria-live="polite">0 / 800 caracteres</div>
                         </div>
