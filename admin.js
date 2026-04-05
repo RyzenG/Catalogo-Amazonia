@@ -3462,6 +3462,11 @@
                 importDataButton.addEventListener('click', importData);
             }
 
+            const exportCsvButton = document.getElementById('exportCsvButton');
+            if (exportCsvButton) {
+                exportCsvButton.addEventListener('click', exportProductsCsv);
+            }
+
             const clearProcessStatusButton = document.getElementById('clearProcessStatusButton');
             if (clearProcessStatusButton) {
                 clearProcessStatusButton.addEventListener('click', () => {
@@ -3736,6 +3741,17 @@
             resetImagePreview();
             updateCatalogPreview();
             updatePolicyGenerationMeta();
+
+            // Detectar cambios en cualquier input/textarea/select del panel para marcar "sin guardar"
+            document.addEventListener('input', function(event) {
+                const tag = event.target && event.target.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                    // Excluir campos del modal de producto (se guardan explícitamente)
+                    // y el buscador de productos del admin
+                    const inModal = event.target.closest('#productModal, #categoryModal, #importFile');
+                    if (!inModal) { markDirty(); }
+                }
+            });
         });
 
         // Load saved data from localStorage
@@ -3788,6 +3804,35 @@
             loadProducts();
         }
 
+        // ─── Estado "datos modificados sin guardar" ───────────────────────────────
+        let _isDirty = false;
+
+        function markDirty() {
+            if (_isDirty) { return; }
+            _isDirty = true;
+            const btn = document.getElementById('saveDataButton');
+            if (btn) {
+                btn.classList.add('btn--dirty');
+                btn.setAttribute('title', 'Hay cambios sin guardar');
+            }
+        }
+
+        function clearDirty() {
+            _isDirty = false;
+            const btn = document.getElementById('saveDataButton');
+            if (btn) {
+                btn.classList.remove('btn--dirty');
+                btn.removeAttribute('title');
+            }
+        }
+
+        window.addEventListener('beforeunload', function(event) {
+            if (_isDirty) {
+                event.preventDefault();
+                event.returnValue = '¿Salir sin guardar? Los cambios no guardados se perderán.';
+            }
+        });
+
         // Save data to localStorage
         function saveData(options = {}) {
             const { silent = false } = options;
@@ -3814,6 +3859,7 @@
             stripLegacyImageData(catalogData.products);
             localStorage.setItem('amazoniaData', JSON.stringify(catalogData));
             localStorage.setItem(PRODUCT_SEARCH_STORAGE_KEY, productSearchTerm || '');
+            clearDirty();
             if (!silent) {
                 showMessage('Datos guardados correctamente', 'success');
             }
@@ -6059,6 +6105,18 @@
                     }
                     document.getElementById('productSpecs').value = product.specs || '';
                     document.getElementById('productId').value = productId;
+                    // Populate dimension fields
+                    const dims = product.dimensions || {};
+                    const specMaterialEl = document.getElementById('specMaterial');
+                    const specAnchoEl = document.getElementById('specAncho');
+                    const specAltoEl = document.getElementById('specAlto');
+                    const specLargoEl = document.getElementById('specLargo');
+                    const specPesoEl = document.getElementById('specPeso');
+                    if (specMaterialEl) specMaterialEl.value = dims.material || '';
+                    if (specAnchoEl) specAnchoEl.value = dims.ancho != null ? dims.ancho : '';
+                    if (specAltoEl) specAltoEl.value = dims.alto != null ? dims.alto : '';
+                    if (specLargoEl) specLargoEl.value = dims.largo != null ? dims.largo : '';
+                    if (specPesoEl) specPesoEl.value = dims.peso != null ? dims.peso : '';
 
                     currentIconFallback = product.icon || '';
                     const imageValues = getNormalizedProductImages(product);
@@ -6089,6 +6147,11 @@
                 updateProductImagePreview(null);
                 renderFeatureInputs();
                 updateProductPreviewCard();
+                // Clear dimension fields
+                ['specMaterial','specAncho','specAlto','specLargo','specPeso'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
             }
 
             refreshProductFormAssistants();
@@ -6298,6 +6361,13 @@
                 features: features,
                 variants: variantValues,
                 specs: document.getElementById('productSpecs').value,
+                dimensions: {
+                    material: (document.getElementById('specMaterial')?.value || '').trim(),
+                    ancho: parseFloat(document.getElementById('specAncho')?.value) || null,
+                    alto: parseFloat(document.getElementById('specAlto')?.value) || null,
+                    largo: parseFloat(document.getElementById('specLargo')?.value) || null,
+                    peso: parseFloat(document.getElementById('specPeso')?.value) || null,
+                },
                 available: !isSoldOut,
                 availability: isSoldOut ? 'sold-out' : 'available'
             };
@@ -6427,6 +6497,80 @@
             } finally {
                 setExportButtonDisabled(false);
             }
+        }
+
+        // ─── Exportar productos a CSV ───────────────────────────────────────────
+        function exportProductsCsv() {
+            ensureCategoryStructure();
+
+            const categoryMap = {};
+            (catalogData.categories || []).forEach(cat => {
+                categoryMap[cat.id] = cat.name || cat.id;
+            });
+
+            // Cabeceras
+            const columns = [
+                'Categoría', 'Nombre', 'Descripción corta', 'Descripción larga',
+                'Precio', 'Agotado', 'Precio a consultar',
+                'Material', 'Ancho (cm)', 'Alto (cm)', 'Largo/Prof. (cm)', 'Peso (kg)',
+                'Especificaciones adicionales', 'Características', 'Variantes', 'Imágenes'
+            ];
+
+            function csvCell(value) {
+                const str = String(value === null || value === undefined ? '' : value);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            }
+
+            const rows = [columns.map(csvCell).join(',')];
+
+            Object.entries(catalogData.products || {}).forEach(([catId, productList]) => {
+                if (!Array.isArray(productList)) { return; }
+                const catName = categoryMap[catId] || catId;
+                productList.forEach(product => {
+                    const specs = product.specs || '';
+                    const dims = product.dimensions || {};
+                    const features = Array.isArray(product.features) ? product.features.join(' | ') : '';
+                    const variants = Array.isArray(product.variants) ? product.variants.join(' | ') : '';
+                    const images = Array.isArray(product.images)
+                        ? product.images.join(' | ')
+                        : (product.imageUrl || product.image || '');
+
+                    const row = [
+                        catName,
+                        product.name || '',
+                        product.description || '',
+                        product.longDesc || '',
+                        product.price || '',
+                        product.soldOut ? 'Sí' : 'No',
+                        product.priceOnRequest ? 'Sí' : 'No',
+                        dims.material || '',
+                        dims.ancho != null ? dims.ancho : '',
+                        dims.alto != null ? dims.alto : '',
+                        dims.largo != null ? dims.largo : '',
+                        dims.peso != null ? dims.peso : '',
+                        specs,
+                        features,
+                        variants,
+                        images
+                    ];
+                    rows.push(row.map(csvCell).join(','));
+                });
+            });
+
+            const csvContent = '\uFEFF' + rows.join('\r\n'); // BOM para Excel UTF-8
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'amazonia_productos_' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            showMessage('Productos exportados como CSV', 'success');
         }
 
         // Import data
@@ -7990,6 +8134,15 @@ self.addEventListener('fetch', function(event) {
                             escapeHtml(spec[1])
                         ]);
 
+                        const rawDims = product.dimensions || {};
+                        const sanitizedDims = {
+                            material: typeof rawDims.material === 'string' ? escapeHtml(rawDims.material.trim()) : '',
+                            ancho: Number.isFinite(rawDims.ancho) ? rawDims.ancho : null,
+                            alto: Number.isFinite(rawDims.alto) ? rawDims.alto : null,
+                            largo: Number.isFinite(rawDims.largo) ? rawDims.largo : null,
+                            peso: Number.isFinite(rawDims.peso) ? rawDims.peso : null,
+                        };
+
                         productDataJS[resolvedProductId] = {
                             title: rawName,
                             image: imageSrc,
@@ -8001,6 +8154,7 @@ self.addEventListener('fetch', function(event) {
                                 : rawShortDesc,
                             shortDesc: rawShortDesc,
                             specs: sanitizedSpecs,
+                            dimensions: sanitizedDims,
                             price: Number.isFinite(numericPrice) ? numericPrice : null,
                             priceFormatted: formattedPrice,
                             priceDisplay,
@@ -8143,8 +8297,9 @@ self.addEventListener('fetch', function(event) {
                 <textarea id="cartOrderNote" class="selected-products-panel__note" rows="3" maxlength="500" placeholder="Ej: dirección de entrega, color preferido, fecha requerida…" aria-label="Indicaciones adicionales para el pedido"></textarea>
             </div>
             <p class="selected-products-panel__notice" id="whatsappConfigAlert" role="status" aria-live="polite" hidden></p>
-            <p class="selected-products-panel__hint">Revisa los productos seleccionados y finaliza tu compra por WhatsApp.</p>
-            <button type="button" class="selected-products-panel__checkout" id="checkoutButton" disabled>Finalizar compra</button>
+            <p class="selected-products-panel__hint">Revisa los productos seleccionados y finaliza tu compra.</p>
+            <button type="button" class="selected-products-panel__checkout" id="checkoutButton" disabled>Finalizar por WhatsApp</button>
+            <button type="button" class="selected-products-panel__email" id="emailQuoteButton" disabled>Cotizar por Email</button>
         </div>
     </aside>`;
 
@@ -8359,6 +8514,7 @@ self.addEventListener('fetch', function(event) {
                         <ul class="specs-list" id="modalSpecs">
                             <li><span>Material:</span><span>Concreto reforzado</span></li>
                         </ul>
+                        <div id="modalDimensions" class="modal-dimensions" hidden></div>
                     </div>
                 </div>
                 <div class="cta-section">
@@ -12398,6 +12554,55 @@ ${formatCssBlock(footerBackground)}
             box-shadow: none;
         }
 
+        .selected-products-panel__email {
+            background: ${theme.surfaceAlt};
+            color: ${theme.textBody};
+            border: 1px solid ${theme.borderColor};
+            border-radius: 14px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-top: 0.5rem;
+        }
+
+        .selected-products-panel__email:hover:not(:disabled) {
+            background: ${theme.borderColor};
+        }
+
+        .selected-products-panel__email:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal-dimensions {
+            margin-top: 1rem;
+        }
+
+        .dims-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .dims-table th,
+        .dims-table td {
+            padding: 0.4rem 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid ${theme.borderColor};
+        }
+
+        .dims-table th {
+            color: ${theme.categoryDescription};
+            font-weight: 600;
+            width: 45%;
+        }
+
+        .dims-table td {
+            color: ${theme.textBody};
+        }
+
         .selected-products-panel__empty {
             color: ${theme.categoryDescription};
             font-size: 0.95rem;
@@ -14375,6 +14580,19 @@ ${formatCssBlock(footerBackground)}
                 whatsappAlert.textContent = !state.canCheckout && state.disabledReason ? state.disabledReason : '';
                 whatsappAlert.hidden = state.canCheckout || !state.disabledReason;
             }
+
+            const emailQuoteButton = document.getElementById('emailQuoteButton');
+            if (emailQuoteButton) {
+                const hasEmail = Boolean((catalogConfig || {}).email);
+                emailQuoteButton.hidden = !hasEmail;
+                emailQuoteButton.disabled = !hasEmail || selectedProducts.length === 0;
+                emailQuoteButton.addEventListener('click', function() {
+                    if (selectedProducts.length > 0) {
+                        closeSelectionPanel();
+                        requestQuote();
+                    }
+                });
+            }
         }
 
         function triggerCartFlyAnimation(sourceEl) {
@@ -14810,6 +15028,13 @@ ${formatCssBlock(footerBackground)}
                 whatsappAlert.hidden = state.canCheckout || !state.disabledReason;
             }
 
+            const emailQuoteBtn = document.getElementById('emailQuoteButton');
+            if (emailQuoteBtn) {
+                const hasEmail = Boolean((catalogConfig || {}).email);
+                emailQuoteBtn.hidden = !hasEmail;
+                emailQuoteBtn.disabled = !hasEmail || uniqueCount === 0;
+            }
+
             if (panel) {
                 panel.setAttribute('data-empty', uniqueCount === 0 ? 'true' : 'false');
             }
@@ -15213,6 +15438,27 @@ ${formatCssBlock(footerBackground)}
                     ).join('');
                 } else {
                     specsList.innerHTML = '<li><span>Información:</span><span>Disponible a solicitud</span></li>';
+                }
+            }
+
+            const dimsEl = document.getElementById('modalDimensions');
+            if (dimsEl) {
+                const dims = product.dimensions || {};
+                const dimsRows = [
+                    ['Material', dims.material],
+                    ['Ancho', dims.ancho != null ? dims.ancho + ' cm' : null],
+                    ['Alto', dims.alto != null ? dims.alto + ' cm' : null],
+                    ['Largo / Prof.', dims.largo != null ? dims.largo + ' cm' : null],
+                    ['Peso', dims.peso != null ? dims.peso + ' kg' : null],
+                ].filter(function(r) { return r[1]; });
+                if (dimsRows.length > 0) {
+                    dimsEl.hidden = false;
+                    dimsEl.innerHTML = '<table class="dims-table"><tbody>' +
+                        dimsRows.map(function(r) { return \`<tr><th>\${r[0]}</th><td>\${r[1]}</td></tr>\`; }).join('') +
+                        '</tbody></table>';
+                } else {
+                    dimsEl.hidden = true;
+                    dimsEl.innerHTML = '';
                 }
             }
 
